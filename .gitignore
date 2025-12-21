@@ -1,0 +1,22 @@
+﻿# Build outputs
+**/bin/
+**/obj/
+
+# User-specific files
+**/.vs/
+**/.vscode/
+
+# Logs
+**/logs/
+
+# Local DB files
+*.mdf
+*.ldf
+
+# Secrets
+**/*secrets*.json
+**/appsettings.Development.json
+
+# OS junk
+.DS_Store
+Thumbs.db

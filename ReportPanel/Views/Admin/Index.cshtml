@@ -1,0 +1,416 @@
+@model ReportPanel.ViewModels.AdminIndexViewModel
+@{
+    Layout = "_AppLayout";
+    ViewData["Title"] = "Yonetim Paneli - BKM Rapor Paneli";
+}
+
+@functions {
+    private static string MaskConnString(string? connString)
+    {
+        if (string.IsNullOrWhiteSpace(connString))
+        {
+            return string.Empty;
+        }
+
+        const int keepStart = 8;
+        const int keepEnd = 6;
+        if (connString.Length <= keepStart + keepEnd + 3)
+        {
+            return new string('*', connString.Length);
+        }
+
+        return connString.Substring(0, keepStart) + "..." + connString.Substring(connString.Length - keepEnd);
+    }
+}
+
+<div class="mb-6 flex items-center justify-between">
+    <h1 class="text-3xl font-bold text-gray-900">Yonetim Paneli</h1>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.Message))
+{
+    <div class="mb-6">
+        <div class="@(Model.MessageType == "success" ? "bg-green-100 border-green-400 text-green-700" : "bg-red-100 border-red-400 text-red-700") px-4 py-3 rounded border">
+            @Model.Message
+        </div>
+    </div>
+}
+
+<div class="mb-8">
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-2">
+        <nav class="flex flex-wrap gap-2">
+            <a href="/Admin?tab=datasources"
+               class="@(Model.ActiveTab == "datasources" ? "bg-brand text-white shadow-brand-md" : "text-gray-600 hover:text-brand hover:bg-red-50") flex items-center px-6 py-3 rounded-lg font-medium text-sm transition-brand">
+                <i class="fas fa-database mr-3 text-lg"></i>
+                <span>Veri Kaynakları</span>
+                @if (Model.ActiveTab == "datasources")
+                {
+                    <span class="ml-2 bg-white/20 text-xs px-2 py-1 rounded-full">@Model.DataSources.Count</span>
+                }
+            </a>
+            <a href="/Admin?tab=reports"
+               class="@(Model.ActiveTab == "reports" ? "bg-brand text-white shadow-brand-md" : "text-gray-600 hover:text-brand hover:bg-red-50") flex items-center px-6 py-3 rounded-lg font-medium text-sm transition-brand">
+                <i class="fas fa-file-alt mr-3 text-lg"></i>
+                <span>Rapor Kataloğu</span>
+                @if (Model.ActiveTab == "reports")
+                {
+                    <span class="ml-2 bg-white/20 text-xs px-2 py-1 rounded-full">@Model.Reports.Count</span>
+                }
+            </a>
+            <a href="/Admin?tab=users"
+               class="@(Model.ActiveTab == "users" ? "bg-brand text-white shadow-brand-md" : "text-gray-600 hover:text-brand hover:bg-red-50") flex items-center px-6 py-3 rounded-lg font-medium text-sm transition-brand">
+                <i class="fas fa-users mr-3 text-lg"></i>
+                <span>Kullanici Yonetimi</span>
+                @if (Model.ActiveTab == "users")
+                {
+                    <span class="ml-2 bg-white/20 text-xs px-2 py-1 rounded-full">@Model.Users.Count</span>
+                }
+            </a>
+</nav>
+    </div>
+    <input type="hidden" value="@Model.TemplateConnString" />
+</div>
+
+@if (Model.ActiveTab == "datasources")
+{
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 mb-8 overflow-hidden">
+        <div class="bg-gradient-to-r from-red-50 to-pink-50 px-8 py-6 border-b border-gray-100">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <div class="w-12 h-12 bg-brand rounded-xl flex items-center justify-center shadow-brand">
+                        <i class="fas fa-database text-white text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-bold text-gray-900">Veri Kaynakları</h3>
+                        <p class="text-gray-600 text-sm">Veritabanı bağlantılarını yönetin</p>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <div class="text-2xl font-bold text-gray-900">@Model.DataSources.Count</div>
+                    <div class="text-sm text-gray-500">Toplam kaynak</div>
+                </div>
+            </div>
+        </div>
+        <div class="p-8">
+            <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+                <div class="text-sm text-gray-500">Yeni veritabani baglantisi olusturun</div>
+                <a href="/Admin/CreateDataSource" class="btn-brand inline-flex items-center px-6 py-3 rounded-xl text-sm font-bold shadow-brand-lg hover:shadow-brand-xl transition-brand transform hover:scale-105">
+                    <i class="fas fa-plus mr-2 text-base"></i>
+                    Yeni Veri Kaynagi Ekle
+                </a>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                                <div class="flex items-center space-x-2">
+                                    <i class="fas fa-key text-gray-400"></i>
+                                    <span>Anahtar</span>
+                                </div>
+                            </th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                                <div class="flex items-center space-x-2">
+                                    <i class="fas fa-tag text-gray-400"></i>
+                            <span>Başlık</span>
+                                </div>
+                            </th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                                <div class="flex items-center space-x-2">
+                                    <i class="fas fa-link text-gray-400"></i>
+                            <span>Bağlantı</span>
+                                </div>
+                            </th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                                <div class="flex items-center space-x-2">
+                                    <i class="fas fa-toggle-on text-gray-400"></i>
+                                    <span>Durum</span>
+                                </div>
+                            </th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                                <div class="flex items-center space-x-2">
+                                    <i class="fas fa-cogs text-gray-400"></i>
+                            <span>İşlemler</span>
+                                </div>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        @foreach (var ds in Model.DataSources)
+                        {
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-6 py-4 text-sm font-medium text-gray-900">@ds.DataSourceKey</td>
+                                <td class="px-6 py-4 text-sm text-gray-900">@ds.Title</td>
+                                <td class="px-6 py-4 text-sm text-gray-500">@MaskConnString(ds.ConnString)</td>
+                                <td class="px-6 py-4">
+                                    @if (ds.IsActive)
+                                    {
+                                        <div class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                            <div class="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
+                                            Aktif
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                            <div class="w-2 h-2 bg-red-500 rounded-full mr-2"></div>
+                                            Pasif
+                                        </div>
+                                    }
+                                </td>
+                                <td class="px-6 py-4">
+                                    <div class="flex items-center space-x-2">
+                                        <a href="/Admin/EditDataSource/@ds.DataSourceKey"
+                                           class="inline-flex items-center px-3 py-1.5 bg-red-50 text-brand hover:bg-red-100 rounded-lg text-sm font-medium transition-brand">
+                                            <i class="fas fa-edit mr-1.5"></i>
+                                            Düzenle
+                                        </a>
+                                        <form method="post" class="inline">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="action" value="test_datasource">
+                                            <input type="hidden" name="key" value="@ds.DataSourceKey">
+                                            <button type="submit"
+                                                    class="inline-flex items-center px-3 py-1.5 bg-green-50 text-green-700 hover:bg-green-100 rounded-lg text-sm font-medium transition-colors duration-200">
+                                                <i class="fas fa-plug mr-1.5"></i>
+                                                Test
+                                            </button>
+                                        </form>
+                                        <form method="post" class="inline" onsubmit="return confirm('Bu veri kaynağını silmek istediğinizden emin misiniz?')">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="action" value="delete_datasource">
+                                            <input type="hidden" name="key" value="@ds.DataSourceKey">
+                                            <button type="submit"
+                                                    class="inline-flex items-center px-3 py-1.5 bg-red-50 text-red-700 hover:bg-red-100 rounded-lg text-sm font-medium transition-colors duration-200">
+                                                <i class="fas fa-trash mr-1.5"></i>
+                                                Sil
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+}
+else if (Model.ActiveTab == "reports")
+{
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 mb-8 overflow-hidden">
+        <div class="bg-gradient-to-r from-blue-50 to-indigo-50 px-8 py-6 border-b border-gray-100">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <div class="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg">
+                        <i class="fas fa-file-alt text-white text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-bold text-gray-900">Rapor Kataloğu</h3>
+                        <p class="text-gray-600 text-sm">Sistem raporlarını yönetin</p>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <div class="text-2xl font-bold text-gray-900">@Model.Reports.Count</div>
+                    <div class="text-sm text-gray-500">Toplam rapor</div>
+                </div>
+            </div>
+        </div>
+        <div class="p-8">
+            <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+                <div class="text-sm text-gray-500">Yeni rapor tanimi olusturun</div>
+                <a href="/Admin/CreateReport" class="btn-brand inline-flex items-center px-6 py-3 rounded-xl text-sm font-bold shadow-brand-lg hover:shadow-brand-xl transition-brand transform hover:scale-105">
+                    <i class="fas fa-plus mr-2 text-base"></i>
+                    Yeni Rapor Ekle
+                </a>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                                <div class="flex items-center space-x-2">
+                                    <i class="fas fa-hashtag text-gray-400"></i>
+                                    <span>ID</span>
+                                </div>
+                            </th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                                <div class="flex items-center space-x-2">
+                                    <i class="fas fa-file-alt text-gray-400"></i>
+                            <span>Rapor Adı</span>
+                                </div>
+                            </th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                                <div class="flex items-center space-x-2">
+                                    <i class="fas fa-database text-gray-400"></i>
+                            <span>Veri Kaynağı</span>
+                                </div>
+                            </th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                                <div class="flex items-center space-x-2">
+                                    <i class="fas fa-code text-gray-400"></i>
+                            <span>Prosedür</span>
+                                </div>
+                            </th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                                <div class="flex items-center space-x-2">
+                                    <i class="fas fa-toggle-on text-gray-400"></i>
+                                    <span>Durum</span>
+                                </div>
+                            </th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                                <div class="flex items-center space-x-2">
+                                    <i class="fas fa-cogs text-gray-400"></i>
+                            <span>İşlemler</span>
+                                </div>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        @foreach (var report in Model.Reports)
+                        {
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-6 py-4 text-sm font-medium text-gray-900">@report.ReportId</td>
+                                <td class="px-6 py-4">
+                                    <div class="text-sm font-medium text-gray-900">@report.Title</div>
+                                    <div class="text-sm text-gray-500">@report.Description</div>
+                                </td>
+                                <td class="px-6 py-4 text-sm text-gray-900">@report.DataSourceKey</td>
+                                <td class="px-6 py-4 text-sm text-gray-500">@report.ProcName</td>
+                                <td class="px-6 py-4">
+                                    @if (report.IsActive)
+                                    {
+                                        <div class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                            <div class="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
+                                            Aktif
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                            <div class="w-2 h-2 bg-red-500 rounded-full mr-2"></div>
+                                            Pasif
+                                        </div>
+                                    }
+                                </td>
+                                <td class="px-6 py-4">
+                                    <div class="flex items-center space-x-2">
+                                        <a href="/Admin/EditReport/@report.ReportId"
+                                           class="inline-flex items-center px-3 py-1.5 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-lg text-sm font-medium transition-colors duration-200">
+                                            <i class="fas fa-edit mr-1.5"></i>
+                                            Düzenle
+                                        </a>
+                                        <form method="post" class="inline" onsubmit="return confirm('Bu raporu silmek istediğinizden emin misiniz?')">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="action" value="delete_report">
+                                            <input type="hidden" name="id" value="@report.ReportId">
+                                            <button type="submit"
+                                                    class="inline-flex items-center px-3 py-1.5 bg-red-50 text-red-700 hover:bg-red-100 rounded-lg text-sm font-medium transition-colors duration-200">
+                                                <i class="fas fa-trash mr-1.5"></i>
+                                                Sil
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+}
+else if (Model.ActiveTab == "users")
+{
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 mb-8 overflow-hidden">
+        <div class="bg-gradient-to-r from-emerald-50 to-green-50 px-8 py-6 border-b border-gray-100">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <div class="w-12 h-12 bg-green-600 rounded-xl flex items-center justify-center shadow-lg">
+                        <i class="fas fa-users text-white text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-bold text-gray-900">Kullanici Yonetimi</h3>
+                        <p class="text-gray-600 text-sm">Kullanicilari ekleyin, guncelleyin ve pasif edin</p>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <div class="text-2xl font-bold text-gray-900">@Model.Users.Count</div>
+                    <div class="text-sm text-gray-500">Toplam kullanici</div>
+                </div>
+            </div>
+        </div>
+        <div class="p-8">
+            <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+                <div class="text-sm text-gray-500">Yeni kullanici ve rol tanimlayin</div>
+                <a href="/Admin/CreateUser" class="btn-brand inline-flex items-center px-6 py-3 rounded-xl text-sm font-bold shadow-brand-lg hover:shadow-brand-xl transition-brand transform hover:scale-105">
+                    <i class="fas fa-user-plus mr-2 text-base"></i>
+                    Yeni Kullanici Ekle
+                </a>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Kullanici</th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Ad Soyad</th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">E-posta</th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Roller</th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Durum</th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Son Giris</th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Islemler</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        @foreach (var user in Model.Users)
+                        {
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-6 py-4 text-sm font-medium text-gray-900">@user.Username</td>
+                                <td class="px-6 py-4 text-sm text-gray-900">@user.FullName</td>
+                                <td class="px-6 py-4 text-sm text-gray-500">@user.Email</td>
+                                <td class="px-6 py-4 text-sm text-gray-500">@user.Roles</td>
+                                <td class="px-6 py-4">
+                                    @if (user.IsActive)
+                                    {
+                                        <div class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                            <div class="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
+                                            Aktif
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                            <div class="w-2 h-2 bg-red-500 rounded-full mr-2"></div>
+                                            Pasif
+                                        </div>
+                                    }
+                                </td>
+                                <td class="px-6 py-4 text-sm text-gray-500">@(user.LastLoginAt?.ToString("dd.MM.yyyy HH:mm") ?? "-")</td>
+                                <td class="px-6 py-4">
+                                    <div class="flex items-center space-x-2">
+                                        <a href="/Admin/EditUser/@user.UserId"
+                                           class="inline-flex items-center px-3 py-1.5 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 rounded-lg text-sm font-medium transition-colors duration-200">
+                                            <i class="fas fa-edit mr-1.5"></i>
+                                            Duzenle
+                                        </a>
+                                        <form method="post" class="inline" onsubmit="return confirm('Bu kullaniciyi silmek istediginizden emin misiniz?')">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="action" value="delete_user">
+                                            <input type="hidden" name="id" value="@user.UserId">
+                                            <button type="submit"
+                                                    class="inline-flex items-center px-3 py-1.5 bg-red-50 text-red-700 hover:bg-red-100 rounded-lg text-sm font-medium transition-colors duration-200">
+                                                <i class="fas fa-trash mr-1.5"></i>
+                                                Sil
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+}

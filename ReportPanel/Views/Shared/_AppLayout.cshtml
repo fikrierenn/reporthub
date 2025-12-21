@@ -1,0 +1,97 @@
+@using System.Security.Claims
+@{
+    var isAuthenticated = User?.Identity?.IsAuthenticated ?? false;
+    var user = isAuthenticated ? User?.Identity?.Name ?? "" : "";
+    var fullName = isAuthenticated
+        ? User?.Claims?.FirstOrDefault(claim => claim.Type == "full_name")?.Value ?? ""
+        : "";
+    var userRoles = isAuthenticated
+        ? User?.Claims?
+            .Where(claim => claim.Type == ClaimTypes.Role)
+            .Select(claim => claim.Value)
+            .Distinct()
+            .ToArray() ?? Array.Empty<string>()
+        : Array.Empty<string>();
+    var isAdminUser = userRoles.Any(role => role.Equals("admin", StringComparison.OrdinalIgnoreCase));
+    var controller = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
+    var isDashboard = controller.Equals("Dashboard", StringComparison.OrdinalIgnoreCase);
+    var isReports = controller.Equals("Reports", StringComparison.OrdinalIgnoreCase);
+    var isAdmin = controller.Equals("Admin", StringComparison.OrdinalIgnoreCase);
+    var isLogs = controller.Equals("Logs", StringComparison.OrdinalIgnoreCase);
+}
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light">
+    <title>@ViewData["Title"]</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="~/assets/css/style.css" rel="stylesheet">
+</head>
+<body class="bg-gray-50 @(ViewData["BodyClass"] as string ?? "")">
+    <header class="bg-white border-b border-gray-200 shadow-sm fixed top-0 inset-x-0 z-40">
+        <div class="max-w-7xl mx-auto px-6 py-4">
+            <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                <div class="flex flex-wrap items-center gap-6">
+                    <a href="/Dashboard" class="flex items-center gap-3">
+                        <img src="~/assets/img/logo.png" alt="BKM Kitap" class="h-8 w-auto">
+                    </a>
+                    <nav class="flex flex-wrap items-center gap-4 text-sm font-semibold text-gray-600">
+                        <a href="/Dashboard" class="px-3 py-2 rounded-lg hover:bg-gray-100 @(isDashboard ? "text-brand" : "")">Dashboard</a>
+                        <a href="/Reports" class="px-3 py-2 rounded-lg hover:bg-gray-100 @(isReports ? "text-brand" : "")">Raporlar</a>
+                        @if (isAdminUser)
+                        {
+                            <a href="/Logs" class="px-3 py-2 rounded-lg hover:bg-gray-100 @(isLogs ? "text-brand" : "")">Loglar</a>
+                            <a href="/Admin" class="px-3 py-2 rounded-lg hover:bg-gray-100 @(isAdmin ? "text-brand" : "")">Yonetim</a>
+                        }
+                    </nav>
+                </div>
+                <div class="flex flex-wrap items-center gap-4">
+                    @if (isAuthenticated)
+                    {
+                        <div class="text-right">
+                            <a href="/Profile/Index" class="text-sm font-semibold text-gray-900 hover:text-brand" title="Profil">
+                                @user
+                            </a>
+                            <div class="text-xs text-gray-600">@fullName</div>
+                            <div class="text-xs text-gray-500 max-w-[220px] truncate" title="@string.Join(", ", userRoles)">
+                                @string.Join(", ", userRoles)
+                            </div>
+                        </div>
+                        <a href="/Login?logout=1"
+                           class="btn-brand-outline inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg"
+                           title="Güvenli Çıkış">
+                            <i class="fas fa-sign-out-alt mr-2"></i>
+                            Çıkış
+                        </a>
+                    }
+                    else
+                    {
+                        <a href="/Login"
+                           class="btn-brand inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg"
+                           title="Giriş yap">
+                            <i class="fas fa-sign-in-alt mr-2"></i>
+                            Giriş
+                        </a>
+                    }
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-6 py-8 pt-24 pb-20">
+        @RenderBody()
+    </main>
+
+    <footer class="bg-white border-t border-gray-200 fixed bottom-0 inset-x-0 z-40">
+        <div class="max-w-7xl mx-auto px-6 py-4">
+            <div class="flex items-center justify-between text-sm text-gray-500">
+                <p>&copy; @DateTime.Now.Year BKM Kitap - Rapor Paneli.</p>
+                <p>Versiyon 1.0.0</p>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>

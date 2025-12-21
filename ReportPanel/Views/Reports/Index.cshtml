@@ -1,0 +1,46 @@
+@model ReportPanel.ViewModels.ReportsIndexViewModel
+@{
+    Layout = "_AppLayout";
+    ViewData["Title"] = "Raporlar - BKM Rapor Paneli";
+}
+
+<div class="mb-8">
+    <h1 class="text-3xl font-bold text-gray-900 mb-2">Raporlar</h1>
+    <p class="text-gray-600">Rolleriniz: @string.Join(", ", Model.UserRoles)</p>
+</div>
+
+<div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+    <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+        <h2 class="text-lg font-semibold text-gray-900">Raporlar (@Model.Reports.Count)</h2>
+    </div>
+    <div class="divide-y divide-gray-100">
+        @if (!Model.Reports.Any())
+        {
+            <div class="p-8 text-center text-gray-500">
+                Erisiminiz olan rapor bulunmamaktadir.
+            </div>
+        }
+        else
+        {
+            @foreach (var report in Model.Reports)
+            {
+                <a href="/Reports/Run?reportId=@report.ReportId"
+                   class="flex items-center justify-between px-6 py-5 hover:bg-gray-50 transition-brand">
+                    <div class="min-w-0">
+                        <div class="text-base font-semibold text-gray-900 truncate">@report.Title</div>
+                        <div class="text-sm text-gray-600 truncate">
+                            @(string.IsNullOrWhiteSpace(report.Description) ? "Aciklama bulunmuyor" : report.Description)
+                        </div>
+                        <div class="mt-2 text-xs text-gray-500">
+                            <i class="fas fa-database mr-1"></i>
+                            @(report.DataSource?.Title ?? report.DataSourceKey)
+                        </div>
+                    </div>
+                    <div class="text-sm text-gray-400">
+                        <i class="fas fa-chevron-right"></i>
+                    </div>
+                </a>
+            }
+        }
+    </div>
+</div>

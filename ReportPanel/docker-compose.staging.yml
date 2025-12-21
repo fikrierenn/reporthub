@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  reportpanel-staging:
+    build:
+      context: .
+      dockerfile: Dockerfile.staging
+    container_name: reportpanel-staging
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Staging
+      - ConnectionStrings__DefaultConnection=Server=sqlserver-staging;Database=ReportPanel_Staging;User Id=sa;Password=CHANGE_ME;TrustServerCertificate=true;
+    ports:
+      - "8080:80"
+    depends_on:
+      - sqlserver-staging
+    networks:
+      - staging-network
+    volumes:
+      - ./logs:/app/logs
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  sqlserver-staging:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: sqlserver-staging
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=CHANGE_ME
+      - MSSQL_PID=Express
+    ports:
+      - "1434:1433"
+    volumes:
+      - sqlserver-staging-data:/var/opt/mssql
+      - ./Database:/docker-entrypoint-initdb.d
+    networks:
+      - staging-network
+    restart: unless-stopped
+
+networks:
+  staging-network:
+    driver: bridge
+
+volumes:
+  sqlserver-staging-data:

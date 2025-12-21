@@ -1,0 +1,395 @@
+/**
+ * BKM Kitap - Rapor Paneli
+ * Global Stil ve Renk Paleti
+ * 
+ * Kırmızı-Siyah-Beyaz tema
+ * Logo ile uyumlu renk sistemi
+ */
+
+/* ============================================================================
+   RENK PALETİ - CSS Değişkenleri
+   ============================================================================ */
+:root {
+    color-scheme: light;
+    /* Ana Marka Renkleri - Logo'dan alınan */
+    --brand-red: #dc2626;           /* Ana kırmızı */
+    --brand-red-light: #ef4444;     /* Açık kırmızı */
+    --brand-red-dark: #b91c1c;      /* Koyu kırmızı */
+    --brand-red-darker: #991b1b;    /* Daha koyu kırmızı */
+    
+    /* Siyah Tonları */
+    --brand-black: #000000;         /* Saf siyah */
+    --brand-gray-900: #111827;      /* Çok koyu gri */
+    --brand-gray-800: #1f2937;      /* Koyu gri */
+    --brand-gray-700: #374151;      /* Orta koyu gri */
+    --brand-gray-600: #4b5563;      /* Orta gri */
+    --brand-gray-500: #6b7280;      /* Açık gri */
+    --brand-gray-400: #9ca3af;      /* Daha açık gri */
+    --brand-gray-300: #d1d5db;      /* Çok açık gri */
+    --brand-gray-200: #e5e7eb;      /* Neredeyse beyaz */
+    --brand-gray-100: #f3f4f6;      /* Çok açık */
+    --brand-gray-50: #f9fafb;       /* Neredeyse beyaz */
+    
+    /* Beyaz Tonları */
+    --brand-white: #ffffff;         /* Saf beyaz */
+    --brand-white-soft: #fefefe;    /* Yumuşak beyaz */
+    
+    /* Durum Renkleri */
+    --success: #10b981;             /* Yeşil - başarı */
+    --warning: #f59e0b;             /* Turuncu - uyarı */
+    --error: var(--brand-red);      /* Kırmızı - hata */
+    --info: #3b82f6;                /* Mavi - bilgi */
+    
+    /* Gölge ve Efektler */
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    
+    /* Geçişler */
+    --transition: all 0.2s ease-in-out;
+    --transition-fast: all 0.15s ease-in-out;
+    --transition-slow: all 0.3s ease-in-out;
+}
+
+/* ============================================================================
+   GENEL STILLER
+   ============================================================================ */
+
+/* Ana renk sınıfları */
+.bg-brand { background-color: var(--brand-red) !important; }
+.bg-brand-light { background-color: var(--brand-red-light) !important; }
+.bg-brand-dark { background-color: var(--brand-red-dark) !important; }
+.bg-brand-darker { background-color: var(--brand-red-darker) !important; }
+
+.text-brand { color: var(--brand-red) !important; }
+.text-brand-light { color: var(--brand-red-light) !important; }
+.text-brand-dark { color: var(--brand-red-dark) !important; }
+
+.border-brand { border-color: var(--brand-red) !important; }
+.border-brand-light { border-color: var(--brand-red-light) !important; }
+
+/* Hover efektleri */
+.hover-brand:hover { 
+    background-color: var(--brand-red) !important; 
+    color: var(--brand-white) !important;
+    transition: var(--transition);
+}
+
+.hover-brand-light:hover { 
+    background-color: var(--brand-red-light) !important; 
+    transition: var(--transition);
+}
+
+.hover-brand-dark:hover { 
+    background-color: var(--brand-red-dark) !important; 
+    transition: var(--transition);
+}
+
+/* Focus durumları */
+.focus-brand:focus {
+    outline: none !important;
+    border-color: var(--brand-red) !important;
+    box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1) !important;
+}
+
+/* ============================================================================
+   BUTON STİLLERİ
+   ============================================================================ */
+
+.btn-brand {
+    background-color: var(--brand-red);
+    color: var(--brand-white);
+    border: 1px solid var(--brand-red);
+    transition: var(--transition);
+}
+
+.btn-brand:hover {
+    background-color: var(--brand-red-dark);
+    border-color: var(--brand-red-dark);
+    transform: translateY(-1px);
+}
+
+.btn-brand-outline {
+    background-color: transparent;
+    color: var(--brand-red);
+    border: 1px solid var(--brand-red);
+    transition: var(--transition);
+}
+
+.btn-brand-outline:hover {
+    background-color: var(--brand-red);
+    color: var(--brand-white);
+}
+
+.btn-brand-light {
+    background-color: var(--brand-red-light);
+    color: var(--brand-white);
+    border: 1px solid var(--brand-red-light);
+    transition: var(--transition);
+}
+
+.btn-brand-light:hover {
+    background-color: var(--brand-red);
+    border-color: var(--brand-red);
+}
+
+/* ============================================================================
+   FORM ELEMENTLERİ
+   ============================================================================ */
+
+.form-input-brand {
+    border: 1px solid var(--brand-gray-300);
+    transition: var(--transition);
+}
+
+.form-input-brand:focus {
+    outline: none;
+    border-color: var(--brand-red);
+    box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
+}
+
+.form-input-brand:hover {
+    border-color: var(--brand-gray-400);
+}
+
+/* ============================================================================
+   ALERT/UYARI STİLLERİ
+   ============================================================================ */
+
+.alert-brand {
+    background-color: rgba(220, 38, 38, 0.1);
+    border: 1px solid rgba(220, 38, 38, 0.2);
+    color: var(--brand-red-darker);
+}
+
+.alert-success {
+    background-color: rgba(16, 185, 129, 0.1);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+    color: #065f46;
+}
+
+.alert-warning {
+    background-color: rgba(245, 158, 11, 0.1);
+    border: 1px solid rgba(245, 158, 11, 0.2);
+    color: #92400e;
+}
+
+.alert-info {
+    background-color: rgba(59, 130, 246, 0.1);
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    color: #1e40af;
+}
+
+/* ============================================================================
+   SIDEBAR VE NAVİGASYON
+   ============================================================================ */
+
+.sidebar-brand {
+    background: linear-gradient(180deg, var(--brand-white) 0%, var(--brand-gray-50) 100%);
+    border-right: 1px solid var(--brand-gray-200);
+}
+
+.nav-item-brand {
+    color: var(--brand-gray-700);
+    transition: var(--transition);
+}
+
+.nav-item-brand:hover {
+    background-color: rgba(220, 38, 38, 0.05);
+    color: var(--brand-red);
+}
+
+.nav-item-brand.active {
+    background-color: rgba(220, 38, 38, 0.1);
+    color: var(--brand-red);
+    border-right: 3px solid var(--brand-red);
+}
+
+/* ============================================================================
+   HEADER STİLLERİ
+   ============================================================================ */
+
+.header-brand {
+    background: var(--brand-white);
+    border-bottom: 1px solid var(--brand-gray-200);
+    box-shadow: var(--shadow-sm);
+}
+
+/* Logo alanı temiz ve düzenli */
+.logo-area {
+    background: var(--brand-white);
+    border-bottom: 1px solid var(--brand-gray-200);
+}
+
+.logo-link {
+    color: var(--brand-red);
+    text-decoration: none;
+    transition: var(--transition);
+}
+
+.logo-link:hover {
+    color: var(--brand-red-dark);
+}
+
+/* ============================================================================
+   KART VE PANEL STİLLERİ
+   ============================================================================ */
+
+.card-brand {
+    background: var(--brand-white);
+    border: 1px solid var(--brand-gray-200);
+    border-radius: 8px;
+    box-shadow: var(--shadow-sm);
+    transition: var(--transition);
+}
+
+.card-brand:hover {
+    box-shadow: var(--shadow-md);
+}
+
+.card-header-brand {
+    background: var(--brand-gray-50);
+    border-bottom: 1px solid var(--brand-gray-200);
+    padding: 1rem 1.5rem;
+}
+
+.card-body-brand {
+    padding: 1.5rem;
+}
+
+/* ============================================================================
+   TABLO STİLLERİ
+   ============================================================================ */
+
+.table-brand {
+    background: var(--brand-white);
+}
+
+.table-brand th {
+    background: var(--brand-gray-50);
+    color: var(--brand-gray-700);
+    font-weight: 600;
+    border-bottom: 1px solid var(--brand-gray-200);
+}
+
+.table-brand td {
+    border-bottom: 1px solid var(--brand-gray-100);
+}
+
+.table-brand tr:hover {
+    background: var(--brand-gray-50);
+}
+
+/* ============================================================================
+   RESPONSIVE YARDIMCI SINIFLAR
+   ============================================================================ */
+
+.shadow-brand { box-shadow: var(--shadow); }
+.shadow-brand-md { box-shadow: var(--shadow-md); }
+.shadow-brand-lg { box-shadow: var(--shadow-lg); }
+
+.transition-brand { transition: var(--transition); }
+.transition-brand-fast { transition: var(--transition-fast); }
+.transition-brand-slow { transition: var(--transition-slow); }
+
+/* ============================================================================
+   ÖZEL ANIMASYONLAR
+   ============================================================================ */
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animate-fadeInUp {
+    animation: fadeInUp 0.5s ease-out;
+}
+
+@keyframes pulse-brand {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.7;
+    }
+}
+
+.animate-pulse-brand {
+    animation: pulse-brand 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* ============================================================================
+   PRINT STİLLERİ
+   ============================================================================ */
+
+@media print {
+    .sidebar-brand,
+    .header-brand,
+    .btn-brand,
+    .no-print {
+        display: none !important;
+    }
+    
+    .card-brand {
+        box-shadow: none !important;
+        border: 1px solid var(--brand-gray-300) !important;
+    }
+}
+
+/* Report run view modes (moved from Run.cshtml). */
+body.wide-view main {
+    max-width: none !important;
+    padding-left: 2rem;
+    padding-right: 2rem;
+}
+
+body.full-screen header,
+body.full-screen footer {
+    display: none;
+}
+
+body.full-screen main {
+    padding-top: 2rem !important;
+    padding-bottom: 2rem !important;
+}
+
+body.table-focus main {
+    max-width: none !important;
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+}
+
+body.table-focus #resultsTableWrap {
+    max-height: 80vh;
+}
+
+body.table-focus #reportFormCard {
+    display: none;
+}
+
+#resultsTableWrap {
+    max-height: 75vh;
+}
+
+#resultsTableWrap thead th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background-color: #f9fafb;
+}
+
+#resultsTableWrap .result-table {
+    min-width: max-content;
+}
+
+body.wide-view #resultsTableWrap .result-table {
+    width: 100%;
+    min-width: 100%;
+}

@@ -1,0 +1,119 @@
+@model ReportPanel.ViewModels.AdminUserFormViewModel
+@using System.Linq
+@{
+    Layout = "_AppLayout";
+    ViewData["Title"] = "Kullanici Duzenle - BKM Rapor Paneli";
+    var message = Model.Message ?? "";
+    var messageType = Model.MessageType ?? "";
+    var availableRoles = Model.AvailableRoles ?? Array.Empty<string>();
+    var selectedRoles = (Model.User?.Roles ?? string.Empty)
+        .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+        .ToHashSet(StringComparer.OrdinalIgnoreCase);
+    var user = Model.User ?? new ReportPanel.Models.User();
+}
+
+<div class="mb-6 flex items-center justify-between">
+    <div>
+        <h1 class="text-3xl font-bold text-gray-900">Kullanici Duzenle</h1>
+        <p class="text-sm text-gray-500">Kullanici bilgilerini guncelleyin</p>
+    </div>
+    <a href="/Admin?tab=users" class="btn-brand-outline flex items-center px-4 py-2 text-sm font-medium rounded-lg">
+        <i class="fas fa-times mr-2"></i>Iptal
+    </a>
+</div>
+
+@if (!string.IsNullOrWhiteSpace(message))
+{
+    <div class="mb-6">
+        <div class="@(messageType == "success" ? "bg-green-100 border-green-400 text-green-700" : "bg-red-100 border-red-400 text-red-700") px-4 py-3 rounded border">
+            @message
+        </div>
+    </div>
+}
+
+<div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+    <div class="bg-gradient-to-r from-emerald-50 to-green-50 px-8 py-6 border-b border-gray-100">
+        <div class="flex items-center space-x-4">
+            <div class="w-12 h-12 bg-emerald-600 rounded-xl flex items-center justify-center shadow-lg">
+                <i class="fas fa-user-edit text-white text-xl"></i>
+            </div>
+            <div>
+                <h2 class="text-2xl font-bold text-gray-900">Kullanici Bilgileri</h2>
+                <p class="text-gray-600">Degisiklikleri kaydedin</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="p-8">
+        <form method="post" class="space-y-6">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="UserId" value="@user.UserId" />
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Kullanici Adi *</label>
+                    <input type="text" name="Username" value="@user.Username" required
+                           class="form-input-brand w-full px-4 py-3 rounded-lg">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Ad Soyad *</label>
+                    <input type="text" name="FullName" value="@user.FullName" required
+                           class="form-input-brand w-full px-4 py-3 rounded-lg">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">E-posta</label>
+                    <input type="email" name="Email" value="@user.Email"
+                           class="form-input-brand w-full px-4 py-3 rounded-lg">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Roller *</label>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        @if (!availableRoles.Any())
+                        {
+                            <div class="text-sm text-red-600">Rol listesi tanimli degil.</div>
+                        }
+                        else
+                        {
+                            foreach (var role in availableRoles)
+                            {
+                                var isChecked = selectedRoles.Contains(role);
+                                <label class="flex items-center gap-2 text-sm text-gray-700">
+                                    <input type="checkbox" name="SelectedRoles" value="@role" @(isChecked ? "checked" : "")
+                                           class="h-4 w-4 text-brand border-gray-300 rounded">
+                                    <span>@role</span>
+                                </label>
+                            }
+                        }
+                    </div>
+                    <p class="text-xs text-gray-500 mt-2">Birden fazla rol secilebilir.</p>
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Yeni Sifre</label>
+                <input type="password" name="Password"
+                       class="form-input-brand w-full px-4 py-3 rounded-lg"
+                       placeholder="Bos birakirsaniz sifre degismez">
+            </div>
+
+            <div class="flex items-center space-x-3">
+                <input type="hidden" name="IsActive" value="false">
+                <input type="checkbox" name="IsActive" value="true" @(user.IsActive ? "checked" : "")
+                       class="w-5 h-5 text-brand focus:ring-brand border-gray-300 rounded">
+                <label class="text-sm font-medium text-gray-700">Kullaniciyi aktif yap</label>
+            </div>
+
+            <div class="flex items-center justify-between pt-6 border-t border-gray-200">
+                <a href="/Admin?tab=users" class="btn-brand-outline flex items-center px-6 py-3 text-sm font-medium rounded-lg">
+                    <i class="fas fa-arrow-left mr-2"></i>Geri Don
+                </a>
+                <button type="submit" class="btn-brand flex items-center px-6 py-3 text-sm font-semibold rounded-lg">
+                    <i class="fas fa-save mr-2"></i>Kullanici Guncelle
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
