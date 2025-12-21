@@ -1,57 +1,69 @@
 ﻿# ReportHub
 
-ReportHub is an ASP.NET Core MVC application for running SQL-based reports with role-based access control, centralized audit logging, and an admin console for managing data sources, users, and reports. It is designed as a lightweight internal reporting panel with clear ownership, traceability, and operational visibility.
+ReportHub, rol tabanli erisim kontrolu, merkezi audit log ve admin paneli uzerinden rapor/kurulum yonetimi saglayan ASP.NET Core MVC tabanli bir rapor portalidir. Hedef; kurum ici rapor ihtiyacini hizli, izlenebilir ve guvenli sekilde karsilamaktir.
 
-## Highlights
-- Role-based access (admin, ik, mali, user) with per-report permissions.
-- Report runner supports parameterized stored procedures and export to Excel.
-- Central audit log captures user actions (login/logout, report runs, user/data source/report changes).
-- Admin console for data sources, report catalog, and user management.
-- Clean, responsive UI with shared layout and server-side filtering.
+## Neler sunar?
+- Rol tabanli yetkilendirme (admin, ik, mali, user) ve rapor bazli izinler.
+- Parametreli stored procedure calistirma ve Excel export.
+- Merkezi audit log: kullanici aksiyonlari ve sistem olaylari kayit altinda.
+- Admin paneli: veri kaynaklari, rapor katalugu, kullanici/rol yonetimi.
+- Ortak layout, responsive arayuz ve server-side filtreleme.
 
-## Requirements
+## Teknoloji yiginı
 - .NET 8 SDK
+- ASP.NET Core MVC
+- EF Core
 - SQL Server
+- Razor Views
 
-## Project structure
-- `ReportPanel/` - Main ASP.NET Core MVC app.
+## Proje yapisi
+- `ReportPanel/` - Ana uygulama.
 - `ReportPanel/Controllers` - Auth, admin, reports, profile, logs, dashboard.
-- `ReportPanel/Views` - Razor views for the UI.
-- `ReportPanel/Database` - Schema and seed scripts.
-- `ReportPanel/Models` - EF Core entities and DbContext.
-- `ReportPanel/Services` - Audit logging and password hashing.
-- `ReportPanel.Tests/` - Automated tests for core utilities.
+- `ReportPanel/Views` - Razor arayuzleri.
+- `ReportPanel/Models` - EF Core entity ve DbContext.
+- `ReportPanel/Services` - Audit log ve sifreleme servisleri.
+- `ReportPanel/Database` - Schema ve seed scriptleri.
+- `ReportPanel.Tests/` - Otomatik testler.
 
-## Local setup
-1) Configure connection strings in `ReportPanel/appsettings.json`.
-2) Create the database and tables using scripts in `ReportPanel/Database`.
-3) Run the app:
+## Kurulum (lokal)
+1) `ReportPanel/appsettings.json` icindeki connection string'i kendi ortamina gore guncelle.
+2) `ReportPanel/Database` altindaki scriptlerle veritabanini olustur.
+3) Uygulamayi calistir:
 
 ```
 cd ReportPanel
 dotnet run
 ```
 
-## Admin and roles
-- `Admin` area allows CRUD for users, reports, and data sources.
-- Report visibility is controlled by a comma-separated role list per report.
-- Logs are visible only to admin users.
+## Ortamlar ve connection string mantigi
+Bu projede ortamlar ayridir. Her ortam kendi connection string'ini kullanir:
+- `appsettings.json` -> varsayilan / genel ayarlar
+- `appsettings.Development.json` -> sadece lokal gelistirme (git ignore)
+- `appsettings.Staging.json` -> staging ortam ayarlari
+- `docker-compose.staging.yml` -> docker staging calistirmasi icin env override
 
-## Audit logging
-The audit log is centralized and stored in a single table. It captures:
-- Authentication events (login/logout).
-- Profile updates and password changes.
-- User, report, and data source CRUD.
-- Report runs and exports.
-- Data source connection tests.
+Amac: Herkesin ayni veritabanini kullanmasi degil, ortam bazli ayrim yapmaktir.
 
-## Tests
+## Admin ve roller
+- `Admin` alani: rapor, kullanici, veri kaynagi CRUD islemleri.
+- Rapor gorunurlugu: rapor bazinda role listesi (csv).
+- Loglar sadece admin rolune gorunur.
+
+## Audit log
+Audit log tek tabloda tutulur ve su aksiyonlari kapsar:
+- Login/logout
+- Profil guncelleme ve sifre degisikligi
+- Kullanici/rapor/veri kaynagi CRUD
+- Rapor calistirma ve export
+- Veri kaynagi testleri
+
+## Testler
 ```
 cd ..
 dotnet test reporthub.sln
 ```
 
-## Configuration notes
-- Do not commit real passwords or production connection strings.
-- Use placeholders in config files and keep secrets in `appsettings.Development.json` (ignored by git).
-- Build outputs are ignored via `.gitignore`.
+## Notlar
+- Gercek sifreleri ya da production connection string'lerini commit etmeyin.
+- Gizli bilgiler `appsettings.Development.json` icinde tutulur ve git'e eklenmez.
+- Build ciktilari `.gitignore` ile dislanir.
