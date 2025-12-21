@@ -63,4 +63,11 @@ Bu dosya yapilanlari ve kalanlari detayli takip icin kullanilir.
 ## Devam eden isler (aktif)
 
 ## Yapilacaklar (detayli)
+### 8) Iyilestirme onerileri
+- Performance: rapor sonuclari icin caching, buyuk sonuc setleri icin pagination.
+- Performance: connection pooling/timeout ayarlari gozenlemesi.
+- Guvenlik: rate limiting (brute force korumasi), HTTPS zorunlulugu, CSP, session timeout.
+- Ozellikler: scheduled reports, email export, dashboard grafiklerini zenginlestirme, rapor favorileri.
+- Test: integration testleri artirma, UI test otomasyonu (Selenium), load testing.
+- DevOps: CI/CD pipeline, otomatik deploy, monitoring/alerting, backup stratejisi.
 ### 7) Test ve kontrol
