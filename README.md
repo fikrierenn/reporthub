@@ -44,6 +44,19 @@ Bu projede ortamlar ayridir. Her ortam kendi connection string'ini kullanir:
 
 Amac: Herkesin ayni veritabanini kullanmasi degil, ortam bazli ayrim yapmaktir.
 
+## Sistemi ayaga kaldirma (prod/staging yaklasimi)
+1) SQL Server hazirla ve schema scriptlerini uygula (`ReportPanel/Database`).
+2) Uygulama icin connection string ve ortam ayarlarini belirle.
+3) UygulamayI calistir (IIS, Windows Service ya da container).
+4) Uygulama calistiktan sonra admin kullanici ile giris yap.
+5) Admin panelinden veri kaynaklari ve rapor kataloglarini tanimla.
+
+## Son kullanici akisi (kisa kullanim)
+1) Kullanici giris yapar.
+2) `Raporlar` sayfasinda yetkili oldugu raporlari gorur.
+3) Rapor secip parametreleri girer ve calistirir.
+4) Sonucu ekranda gorur veya Excel olarak export eder.
+
 ## Admin ve roller
 - `Admin` alani: rapor, kullanici, veri kaynagi CRUD islemleri.
 - Rapor gorunurlugu: rapor bazinda role listesi (csv).
