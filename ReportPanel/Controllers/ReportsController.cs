@@ -16,6 +16,12 @@ namespace ReportPanel.Controllers
     [Authorize]
     public class ReportsController : Controller
     {
+        // G-03: Multi-tenant data filter whitelist'leri.
+        // FilterKey SP parametre adina donustugu icin T-SQL identifier kurallarina uymali.
+        // FilterValue STRING_SPLIT ile CSV olarak parse ediliyor — sadece alfanumerik + virgul + tire + alt tire + nokta + bosluk.
+        private static readonly Regex FilterKeyRegex = new(@"^[a-zA-Z_][a-zA-Z0-9_]{0,62}$", RegexOptions.Compiled);
+        private static readonly Regex FilterValueRegex = new(@"^[a-zA-Z0-9,_\-\. ]+$", RegexOptions.Compiled);
+
         private readonly ReportPanelContext _context;
         private readonly AuditLogService _auditLog;
 
@@ -908,8 +914,29 @@ namespace ReportPanel.Controllers
 
             if (!filters.Any()) return; // filtre yok = tümünü gör
 
+            // G-03: Whitelist. FilterKey T-SQL identifier kurallarina uymali,
+            // FilterValue STRING_SPLIT safe karakter setinde olmali.
+            var validFilters = filters
+                .Where(f => FilterKeyRegex.IsMatch(f.FilterKey) && FilterValueRegex.IsMatch(f.FilterValue))
+                .ToList();
+
+            // Reject edilenleri audit log'a yaz (multi-tenant ihlal sinyali olabilir)
+            var rejected = filters.Except(validFilters).ToList();
+            foreach (var r in rejected)
+            {
+                await _auditLog.LogAsync(new AuditLogEntry
+                {
+                    EventType = "user_filter_rejected",
+                    TargetType = "user_data_filter",
+                    TargetKey = r.FilterId.ToString(),
+                    Description = $"G-03 whitelist rejected filter (key='{r.FilterKey}', valueLen={r.FilterValue?.Length ?? 0})"
+                });
+            }
+
+            if (!validFilters.Any()) return;
+
             // FilterKey bazında grupla ve virgülle birleştir
-            var grouped = filters
+            var grouped = validFilters
                 .GroupBy(f => f.FilterKey.ToLowerInvariant())
                 .ToDictionary(
                     g => g.Key,
@@ -923,7 +950,7 @@ namespace ReportPanel.Controllers
                 if (parameters.Any(p => p.ParameterName.Equals(paramName, StringComparison.OrdinalIgnoreCase)))
                     continue;
 
-                parameters.Add(new SqlParameter(paramName, System.Data.SqlDbType.NVarChar, 500)
+                parameters.Add(new SqlParameter(paramName, SqlDbType.NVarChar, 500)
                 {
                     Value = kvp.Value
                 });
@@ -990,7 +1017,11 @@ namespace ReportPanel.Controllers
 
         private IActionResult RedirectToLocal(string? returnUrl)
         {
-            if (!string.IsNullOrWhiteSpace(returnUrl) && Url.IsLocalUrl(returnUrl))
+            if (!string.IsNullOrWhiteSpace(returnUrl)
+                && Url.IsLocalUrl(returnUrl)
+                && returnUrl.StartsWith("/", StringComparison.Ordinal)
+                && !returnUrl.StartsWith("//", StringComparison.Ordinal)
+                && !returnUrl.StartsWith("/\\", StringComparison.Ordinal))
             {
                 return Redirect(returnUrl);
             }

@@ -284,7 +284,11 @@ namespace ReportPanel.Controllers
 
         private IActionResult RedirectToLocal(string? returnUrl)
         {
-            if (!string.IsNullOrWhiteSpace(returnUrl) && Url.IsLocalUrl(returnUrl))
+            if (!string.IsNullOrWhiteSpace(returnUrl)
+                && Url.IsLocalUrl(returnUrl)
+                && returnUrl.StartsWith("/", StringComparison.Ordinal)
+                && !returnUrl.StartsWith("//", StringComparison.Ordinal)
+                && !returnUrl.StartsWith("/\\", StringComparison.Ordinal))
             {
                 return Redirect(returnUrl);
             }
