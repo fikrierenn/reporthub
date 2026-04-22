@@ -6,9 +6,10 @@
     if (!configEl || !builderEl) return;
 
     // State
-    var config = { layout: "standard", tabs: [{ title: "Genel", components: [] }] };
+    var config = { schemaVersion: 1, layout: "standard", resultContract: {}, tabs: [{ title: "Genel", components: [] }] };
     var activeTab = 0;
     var editIndex = -1;
+    var jsonViewOpen = false;
 
     // Try parse existing config
     try {
@@ -18,6 +19,17 @@
             if (parsed && parsed.tabs && parsed.tabs.length > 0) config = parsed;
         }
     } catch (e) { }
+
+    // Forward-compat: eski config'lerde yeni alanlar olmayabilir.
+    if (!config.resultContract || typeof config.resultContract !== 'object') config.resultContract = {};
+    if (!config.schemaVersion) config.schemaVersion = 1;
+
+    // Widget id format: w_<type>_<hash8>. Stabil, auto-gen on first save, immutable.
+    function genWidgetId(type) {
+        var hash = Math.random().toString(16).slice(2, 10);
+        if (hash.length < 8) hash = (hash + "00000000").slice(0, 8);
+        return "w_" + (type || "x") + "_" + hash;
+    }
 
     // Color options
     var colors = [
@@ -49,6 +61,8 @@
         { value: "first", label: "Ilk Deger" }
     ];
 
+    var shapes = ["row", "table"];
+
     function sync() {
         configEl.value = JSON.stringify(config, null, 2);
     }
@@ -66,6 +80,51 @@
             icons.map(function (ic) {
                 return '<option value="' + ic + '"' + (ic === selected ? ' selected' : '') + '>' + ic.replace('fas fa-', '') + '</option>';
             }).join('') + '</select>';
+    }
+
+    function shapeSelect(selected, dataKey) {
+        var html = '<select class="w-full px-2 py-1 border border-gray-300 rounded text-sm" data-rc-key="' + dataKey + '" onchange="window._dbUpdateContractField(this, \'shape\')">';
+        html += '<option value=""' + (!selected ? ' selected' : '') + '>— yok —</option>';
+        shapes.forEach(function (s) {
+            html += '<option value="' + s + '"' + (selected === s ? ' selected' : '') + '>' + s + '</option>';
+        });
+        html += '</select>';
+        return html;
+    }
+
+    // Admin'in isim -> resultSet map'ini burada kurar. Widget.result bu sozlugu referans eder.
+    function renderContract() {
+        var keys = Object.keys(config.resultContract || {});
+        var html = '<div class="mb-4 border border-gray-200 rounded-lg p-3 bg-white">';
+        html += '<div class="flex items-center justify-between mb-2">';
+        html += '<h4 class="text-xs font-semibold text-gray-600 uppercase tracking-wide"><i class="fas fa-link mr-1"></i> Result Contract <span class="text-[10px] text-blue-600 normal-case">(isim -> result set)</span></h4>';
+        html += '<button type="button" class="text-xs text-blue-600 hover:text-blue-800 font-semibold" onclick="window._dbAddContractEntry()"><i class="fas fa-plus mr-1"></i>Ekle</button>';
+        html += '</div>';
+
+        if (keys.length === 0) {
+            html += '<p class="text-xs text-gray-400 italic">Henuz isim tanimi yok. Widget\'lar legacy resultSet index\'i kullaniyor. Isim tanimlarsan widget\'larda "Result" dropdown\'u dolacak.</p>';
+        } else {
+            html += '<div class="grid grid-cols-12 gap-2 text-[10px] font-semibold text-gray-500 uppercase mb-1 px-1">';
+            html += '<div class="col-span-4">Isim (camelCase)</div>';
+            html += '<div class="col-span-2">Result Set</div>';
+            html += '<div class="col-span-2 text-center">Zorunlu</div>';
+            html += '<div class="col-span-3">Sekil (hint)</div>';
+            html += '<div class="col-span-1"></div>';
+            html += '</div>';
+            keys.forEach(function (k) {
+                var e = config.resultContract[k] || {};
+                var kAttr = esc(k);
+                html += '<div class="grid grid-cols-12 gap-2 mb-2 items-center">';
+                html += '<div class="col-span-4"><input type="text" class="w-full px-2 py-1 border border-gray-300 rounded text-sm font-mono" value="' + kAttr + '" data-rc-key="' + kAttr + '" onblur="window._dbRenameContractEntry(this)"></div>';
+                html += '<div class="col-span-2"><input type="number" class="w-full px-2 py-1 border border-gray-300 rounded text-sm" value="' + (e.resultSet != null ? e.resultSet : 0) + '" min="0" max="20" data-rc-key="' + kAttr + '" onchange="window._dbUpdateContractField(this, \'resultSet\')"></div>';
+                html += '<div class="col-span-2 text-center"><input type="checkbox"' + (e.required ? ' checked' : '') + ' class="h-4 w-4 text-blue-600 border-gray-300 rounded" data-rc-key="' + kAttr + '" onchange="window._dbUpdateContractField(this, \'required\')"></div>';
+                html += '<div class="col-span-3">' + shapeSelect(e.shape, kAttr) + '</div>';
+                html += '<div class="col-span-1 text-right"><button type="button" class="text-red-500 hover:text-red-700 text-sm px-2" data-rc-key="' + kAttr + '" onclick="window._dbRemoveContractEntry(this)" title="Sil">&times;</button></div>';
+                html += '</div>';
+            });
+        }
+        html += '</div>';
+        return html;
     }
 
     function renderTabs() {
@@ -191,7 +250,12 @@
         var comp = editIndex >= 0 ? config.tabs[activeTab].components[editIndex] : null;
         var type = comp ? comp.type : (document.getElementById('compType') ? document.getElementById('compType').value : 'kpi');
 
-        var html = '<div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 items-end">';
+        var contractKeys = Object.keys(config.resultContract || {});
+        var hasContract = contractKeys.length > 0;
+        var currentResult = comp ? (comp.result || '') : '';
+        var legacyRsVal = comp && comp.resultSet != null ? comp.resultSet : 0;
+
+        var html = '<div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-3 items-end">';
 
         // Type
         html += '<div><label class="block text-xs font-semibold text-gray-600 mb-1">Tip</label>';
@@ -205,9 +269,18 @@
         html += '<div><label class="block text-xs font-semibold text-gray-600 mb-1">Baslik</label>';
         html += '<input type="text" id="compTitle" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" value="' + esc(comp ? comp.title : '') + '" placeholder="Ornek: Toplam Kadro"></div>';
 
-        // Result Set
-        html += '<div><label class="block text-xs font-semibold text-gray-600 mb-1">Result Set</label>';
-        html += '<input type="number" id="compResultSet" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" value="' + (comp ? comp.resultSet : 0) + '" min="0" max="20"></div>';
+        html += '<div><label class="block text-xs font-semibold text-gray-600 mb-1">Result <span class="text-[10px] text-blue-600 normal-case">(name)</span></label>';
+        html += '<select id="compResult" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" onchange="window._dbToggleLegacyRs()"' + (hasContract ? '' : ' disabled title="Once Result Contract tanimla"') + '>';
+        html += '<option value=""' + (!currentResult ? ' selected' : '') + '>— legacy index —</option>';
+        contractKeys.forEach(function (k) {
+            html += '<option value="' + esc(k) + '"' + (currentResult === k ? ' selected' : '') + '>' + esc(k) + '</option>';
+        });
+        html += '</select></div>';
+
+        // Legacy index. Result dropdown set oldugunda disabled — result > resultSet precedence.
+        var legacyDisabled = currentResult ? ' disabled' : '';
+        html += '<div><label class="block text-xs font-semibold text-gray-500 mb-1">Result Set <span class="text-[10px] text-gray-400 normal-case">(legacy)</span></label>';
+        html += '<input type="number" id="compResultSet" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm disabled:bg-gray-100 disabled:text-gray-400" value="' + legacyRsVal + '" min="0" max="20"' + legacyDisabled + '></div>';
 
         // Span
         html += '<div><label class="block text-xs font-semibold text-gray-600 mb-1">Genislik (1-4)</label>';
@@ -325,6 +398,17 @@
         });
         html += '</div>';
 
+        html += renderContract();
+
+        // JSON view toggle — admin debug + copy/paste icin.
+        html += '<div class="mb-3 flex justify-end">';
+        html += '<button type="button" id="dbJsonToggleBtn" class="text-xs text-gray-600 hover:text-gray-800 font-semibold" onclick="window._dbToggleJsonView()">' + (jsonViewOpen ? '<i class="fas fa-eye-slash mr-1"></i>JSON Gizle' : '<i class="fas fa-code mr-1"></i>JSON Goster') + '</button>';
+        html += '</div>';
+        html += '<div id="dbJsonView" class="mb-4' + (jsonViewOpen ? '' : ' hidden') + '">';
+        html += '<textarea readonly class="w-full h-64 px-3 py-2 border border-gray-300 rounded-lg text-xs font-mono bg-gray-50" placeholder="Config JSON"></textarea>';
+        html += '<p class="text-[10px] text-gray-500 mt-1">Salt-okunur snapshot. Degisiklikler UI\'dan yapilir.</p>';
+        html += '</div>';
+
         // Tabs (tam genislik)
         html += renderTabs();
 
@@ -365,6 +449,12 @@
         builderEl.innerHTML = html;
         attachDragDrop();
         sync();
+
+        // JSON view acik ise content'i refresh et (her render sonrasi).
+        if (jsonViewOpen) {
+            var ta = document.querySelector('#dbJsonView textarea');
+            if (ta) ta.value = JSON.stringify(config, null, 2);
+        }
     }
 
     // Global handlers
@@ -412,6 +502,87 @@
         render();
     };
     window._dbCancelEdit = function () { editIndex = -1; render(); };
+
+    window._dbToggleLegacyRs = function () {
+        var sel = document.getElementById('compResult');
+        var leg = document.getElementById('compResultSet');
+        if (sel && leg) leg.disabled = !!sel.value;
+    };
+
+    window._dbAddContractEntry = function () {
+        if (!config.resultContract) config.resultContract = {};
+        var n = 1;
+        while (config.resultContract['result_' + n]) n++;
+        config.resultContract['result_' + n] = { resultSet: 0, required: false };
+        render();
+    };
+
+    window._dbRemoveContractEntry = function (btn) {
+        var k = btn && btn.dataset ? btn.dataset.rcKey : null;
+        if (!k || !config.resultContract || !config.resultContract[k]) return;
+        var refs = [];
+        config.tabs.forEach(function (tab) {
+            (tab.components || []).forEach(function (c) {
+                if (c.result === k) refs.push(c.title || c.type);
+            });
+        });
+        if (refs.length > 0) {
+            if (!confirm("'" + k + "' icin " + refs.length + " widget baglantisi var (" + refs.slice(0, 3).join(', ') + (refs.length > 3 ? '...' : '') + "). Silince widget'lar bagsiz kalir. Devam?")) return;
+            // Unbind widget references
+            config.tabs.forEach(function (tab) {
+                (tab.components || []).forEach(function (c) {
+                    if (c.result === k) { delete c.result; c.resultSet = 0; }
+                });
+            });
+        }
+        delete config.resultContract[k];
+        render();
+    };
+
+    window._dbRenameContractEntry = function (input) {
+        var oldKey = input.getAttribute('data-rc-key');
+        var newKey = (input.value || '').trim();
+        if (!newKey || newKey === oldKey) { input.value = oldKey; return; }
+        if (!/^[a-z][a-zA-Z0-9_]*$/.test(newKey)) {
+            alert('Isim camelCase olmali ve harfle baslamali. Ornek: chartData, summary, storePerformance');
+            input.value = oldKey;
+            return;
+        }
+        if (config.resultContract[newKey]) {
+            alert('Bu isim zaten var: ' + newKey);
+            input.value = oldKey;
+            return;
+        }
+        config.resultContract[newKey] = config.resultContract[oldKey];
+        delete config.resultContract[oldKey];
+        // Rename widget.result references.
+        config.tabs.forEach(function (tab) {
+            (tab.components || []).forEach(function (c) {
+                if (c.result === oldKey) c.result = newKey;
+            });
+        });
+        render();
+    };
+
+    window._dbUpdateContractField = function (input, field) {
+        var k = input.getAttribute('data-rc-key');
+        if (!config.resultContract || !config.resultContract[k]) return;
+        if (field === 'required') {
+            config.resultContract[k].required = input.checked;
+        } else if (field === 'resultSet') {
+            config.resultContract[k].resultSet = parseInt(input.value) || 0;
+        } else if (field === 'shape') {
+            if (input.value) config.resultContract[k].shape = input.value;
+            else delete config.resultContract[k].shape;
+        }
+        sync();
+    };
+
+    // JSON view toggle — render() tail jsonViewOpen state'ini okuyup panel/textarea'yi senkronlar.
+    window._dbToggleJsonView = function () {
+        jsonViewOpen = !jsonViewOpen;
+        render();
+    };
     // Tip degisikligi formu yeniden cizer ama edit modundan cikarmaz
     window._dbTypeChange = function () {
         if (editIndex >= 0) {
@@ -465,12 +636,23 @@
 
     window._dbSaveComp = function () {
         var type = val('compType');
+        var existingComp = editIndex >= 0 ? config.tabs[activeTab].components[editIndex] : null;
+        var existingId = existingComp && existingComp.id ? existingComp.id : null;
+        var resultName = val('compResult') || null;
+
+        // Widget id immutable: edit path'inde korunur, yeni widget'ta gen edilir.
         var comp = {
+            id: existingId || genWidgetId(type),
             type: type,
             title: val('compTitle') || (type === 'kpi' ? 'KPI' : type === 'chart' ? 'Grafik' : 'Tablo'),
-            resultSet: parseInt(val('compResultSet')) || 0,
             span: parseInt(val('compSpan')) || 1
         };
+        // Binding: result (name) tercih edilir; yoksa legacy resultSet.
+        if (resultName) {
+            comp.result = resultName;
+        } else {
+            comp.resultSet = parseInt(val('compResultSet')) || 0;
+        }
 
         if (type === 'kpi') {
             comp.agg = val('compAgg') || 'count';
