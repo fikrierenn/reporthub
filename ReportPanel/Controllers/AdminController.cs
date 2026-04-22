@@ -84,6 +84,9 @@ namespace ReportPanel.Controllers
                         };
                         _context.DataSources.Add(newDs);
                         await _context.SaveChangesAsync();
+                        await AuditCrudAsync("datasource_create", "datasource", newDs.DataSourceKey, "Data source created",
+                            newValues: new { newDs.DataSourceKey, newDs.Title, newDs.IsActive },
+                            dataSourceKey: newDs.DataSourceKey);
                         TempData["Message"] = "Veri kaynağı eklendi";
                         TempData["MessageType"] = "success";
                         break;
@@ -92,10 +95,15 @@ namespace ReportPanel.Controllers
                         var ds = await _context.DataSources.FindAsync(key);
                         if (ds != null)
                         {
+                            var dsOld = new { ds.DataSourceKey, ds.Title, ds.IsActive };
                             ds.Title = Request.Form["Title"].ToString();
                             ds.ConnString = Request.Form["ConnString"].ToString();
                             ds.IsActive = ReadFormBool("IsActive");
                             await _context.SaveChangesAsync();
+                            await AuditCrudAsync("datasource_update", "datasource", ds.DataSourceKey, "Data source updated",
+                                oldValues: dsOld,
+                                newValues: new { ds.DataSourceKey, ds.Title, ds.IsActive },
+                                dataSourceKey: ds.DataSourceKey);
                             TempData["Message"] = "Veri kaynağı güncellendi";
                             TempData["MessageType"] = "success";
                         }
@@ -140,6 +148,10 @@ namespace ReportPanel.Controllers
                         _context.ReportCatalog.Add(newReport);
                         await _context.SaveChangesAsync();
                         await SyncReportRolesAndCategories(newReport.ReportId);
+                        await AuditCrudAsync("report_create", "report", newReport.ReportId.ToString(), "Report created",
+                            newValues: new { newReport.ReportId, newReport.Title, newReport.DataSourceKey, newReport.ProcName, newReport.AllowedRoles, newReport.IsActive },
+                            dataSourceKey: newReport.DataSourceKey,
+                            reportId: newReport.ReportId);
                         TempData["Message"] = "Rapor eklendi";
                         TempData["MessageType"] = "success";
                         break;
@@ -148,6 +160,7 @@ namespace ReportPanel.Controllers
                         var report = await _context.ReportCatalog.FindAsync(id);
                         if (report != null)
                         {
+                            var reportOld = new { report.ReportId, report.Title, report.DataSourceKey, report.ProcName, report.AllowedRoles, report.IsActive };
                             report.Title = Request.Form["Title"].ToString();
                             report.Description = Request.Form["Description"].ToString();
                             report.DataSourceKey = Request.Form["DataSourceKey"].ToString();
@@ -160,6 +173,11 @@ namespace ReportPanel.Controllers
                 report.DashboardConfigJson = report.ReportType == "dashboard" ? Request.Form["DashboardConfigJson"].ToString() : null;
                             await _context.SaveChangesAsync();
                             await SyncReportRolesAndCategories(report.ReportId);
+                            await AuditCrudAsync("report_update", "report", report.ReportId.ToString(), "Report updated",
+                                oldValues: reportOld,
+                                newValues: new { report.ReportId, report.Title, report.DataSourceKey, report.ProcName, report.AllowedRoles, report.IsActive },
+                                dataSourceKey: report.DataSourceKey,
+                                reportId: report.ReportId);
                             TempData["Message"] = "Rapor güncellendi";
                             TempData["MessageType"] = "success";
                         }
@@ -217,6 +235,8 @@ namespace ReportPanel.Controllers
                         };
                         _context.Roles.Add(newRole);
                         await _context.SaveChangesAsync();
+                        await AuditCrudAsync("role_create", "role", newRole.RoleId.ToString(), "Role created",
+                            newValues: new { newRole.RoleId, newRole.Name, newRole.Description, newRole.IsActive });
                         TempData["Message"] = "Rol eklendi.";
                         TempData["MessageType"] = "success";
                         break;
@@ -240,6 +260,7 @@ namespace ReportPanel.Controllers
                                 TempData["MessageType"] = "error";
                                 break;
                             }
+                            var roleOldSnap = new { role.RoleId, Name = oldName, role.Description, role.IsActive };
                             role.Name = newName;
                             role.Description = Request.Form["Description"].ToString();
                             role.IsActive = ReadFormBool("IsActive");
@@ -248,6 +269,9 @@ namespace ReportPanel.Controllers
                             {
                                 await ReplaceRoleNameInCsv(oldName, newName);
                             }
+                            await AuditCrudAsync("role_update", "role", role.RoleId.ToString(), "Role updated",
+                                oldValues: roleOldSnap,
+                                newValues: new { role.RoleId, role.Name, role.Description, role.IsActive });
                             TempData["Message"] = "Rol guncellendi.";
                             TempData["MessageType"] = "success";
                         }
@@ -259,6 +283,8 @@ namespace ReportPanel.Controllers
                             await RemoveRoleNameFromCsv(delRole.Name);
                             _context.Roles.Remove(delRole);
                             await _context.SaveChangesAsync();
+                            await AuditCrudAsync("role_delete", "role", delRole.RoleId.ToString(), "Role deleted",
+                                oldValues: new { delRole.RoleId, delRole.Name, delRole.Description, delRole.IsActive });
                             TempData["Message"] = "Rol silindi.";
                             TempData["MessageType"] = "success";
                         }
@@ -287,6 +313,8 @@ namespace ReportPanel.Controllers
                         };
                         _context.ReportCategories.Add(newCategory);
                         await _context.SaveChangesAsync();
+                        await AuditCrudAsync("category_create", "category", newCategory.CategoryId.ToString(), "Category created",
+                            newValues: new { newCategory.CategoryId, newCategory.Name, newCategory.Description, newCategory.IsActive });
                         TempData["Message"] = "Kategori eklendi.";
                         TempData["MessageType"] = "success";
                         break;
@@ -309,10 +337,14 @@ namespace ReportPanel.Controllers
                                 TempData["MessageType"] = "error";
                                 break;
                             }
+                            var categoryOldSnap = new { category.CategoryId, category.Name, category.Description, category.IsActive };
                             category.Name = newCategoryName;
                             category.Description = Request.Form["Description"].ToString();
                             category.IsActive = ReadFormBool("IsActive");
                             await _context.SaveChangesAsync();
+                            await AuditCrudAsync("category_update", "category", category.CategoryId.ToString(), "Category updated",
+                                oldValues: categoryOldSnap,
+                                newValues: new { category.CategoryId, category.Name, category.Description, category.IsActive });
                             TempData["Message"] = "Kategori guncellendi.";
                             TempData["MessageType"] = "success";
                         }
@@ -323,6 +355,8 @@ namespace ReportPanel.Controllers
                         {
                             _context.ReportCategories.Remove(delCategory);
                             await _context.SaveChangesAsync();
+                            await AuditCrudAsync("category_delete", "category", delCategory.CategoryId.ToString(), "Category deleted",
+                                oldValues: new { delCategory.CategoryId, delCategory.Name, delCategory.Description, delCategory.IsActive });
                             TempData["Message"] = "Kategori silindi.";
                             TempData["MessageType"] = "success";
                         }
@@ -1654,6 +1688,31 @@ ORDER BY p.parameter_id;";
         }
 
         // M-04: SyncUserRoles Services/UserRoleSyncService'e tasindi (testable).
+
+        // G-04: CRUD audit shortcut'u — HandlePostAction'da tekrarlayan AuditLogEntry dolumunu tek yere al.
+        private Task AuditCrudAsync(
+            string eventType,
+            string targetType,
+            string targetKey,
+            string description,
+            object? newValues = null,
+            object? oldValues = null,
+            string? dataSourceKey = null,
+            int? reportId = null)
+        {
+            return _auditLog.LogAsync(new AuditLogEntry
+            {
+                EventType = eventType,
+                TargetType = targetType,
+                TargetKey = targetKey,
+                Description = description,
+                NewValuesJson = newValues != null ? AuditLogService.ToJson(newValues) : null,
+                OldValuesJson = oldValues != null ? AuditLogService.ToJson(oldValues) : null,
+                DataSourceKey = dataSourceKey,
+                ReportId = reportId,
+                IsSuccess = true
+            });
+        }
 
         private async Task SyncUserDataFilters(int userId)
         {

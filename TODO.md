@@ -98,7 +98,7 @@ Bu liste asagidakilerin sentezidir:
 
 #### FAZ 2 — BU AY (4 hafta, orta oncelik)
 14. **M-01 · AdminController service extraction** (2 gun) — UserManagementService, ReportManagementService, DataSourceService. Controller endpoint'e inisin, 1736 → ~400 satir.
-15. **G-04 · Audit log genisletme** (2h) — datasource delete, category delete, role delete icin `_auditLog.LogAsync`. OldValuesJson snapshot.
+15. ✅ **G-04 · Audit log genisletme** — 10 CRUD audit eklendi (datasource create/update, report create/update, role create/update/delete, category create/update/delete). `AuditCrudAsync` private helper (AdminController 1876 -> her call 1-2 satir). Event tipler: `<entity>_create`, `<entity>_update`, `<entity>_delete`. OldValues + NewValues snapshot'lari.
 16. ✅ **G-05 · Cookie HttpOnly/Secure/SameSite/ExpireTimeSpan** — Program.cs AddCookie: HttpOnly=true, SecurePolicy=Always (prod) / SameAsRequest (dev), SameSite=Strict, ExpireTimeSpan=8h.
 17. ✅ **G-06 · TestController [Authorize(Roles="admin")] + [ValidateAntiForgeryToken]** — DEBUG-only controller bile olsa class-level yetki + POST CSRF koruma.
 18. **M-05 · DashboardHtml legacy retirement** (1 gun) — kolonu archive tablo'ya tasi, DashboardConfigJson mandatory, Form'dan DashboardHtml input kaldir.
