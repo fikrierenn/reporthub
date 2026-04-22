@@ -105,7 +105,7 @@ Bu liste asagidakilerin sentezidir:
 15. ✅ **G-04 · Audit log genisletme** — 10 CRUD audit eklendi, commit `effa7b5`. `AuditCrudAsync` private helper.
 16. ✅ **G-05 · Cookie HttpOnly/Secure/SameSite/ExpireTimeSpan** — commit `fdc97ca`. Program.cs AddCookie.
 17. ✅ **G-06 · TestController [Authorize(Roles="admin")] + [ValidateAntiForgeryToken]** — commit `fdc97ca` (G-05 ile birlesik).
-18. **M-05 · DashboardHtml legacy retirement** (1 gun) — kolonu archive tablo'ya tasi, DashboardConfigJson mandatory, Form'dan DashboardHtml input kaldir.
+18. ✅ **M-05 · DashboardHtml legacy retirement** — 3 faz tamamlandi: Faz A (CSV kaldir ~ ADR-005), Faz B (`a2feb5d`) legacy retirement + audit event, Faz C (`0f73478`) DB DROP COLUMN + model sil. Migration `17_DropDashboardHtml.sql`, ADR-005.
 19. **F-03 · dashboard-builder.js memory leak** (1h) — event delegation veya AbortController. Drag-drop listener re-attach sorunu. **Siradaki is — 23 Nisan ilk.**
 20. ✅ **F-04 · AGENT.md yaniltici icerik** — commit `7a7b81d` (silindi).
 21. **SP mimarisi · sp_PdksPano → inline TVF refactor** (3h) — `fn_PdksDetay`, `fn_PdksKpiOzet`, `fn_PdksDepartmanKirilim` + orkestrator SP. ADR-004.
@@ -115,7 +115,7 @@ Bu liste asagidakilerin sentezidir:
 25. **M-03 Faz C · User.Roles kolon drop** (30dk-1h) — `16_DropUserRolesCsv.sql` + model field sil. ADR-003 "cok sonra" — veri validation + Faz B'nin DB'de yayginlasmasi sonra.
 26. **ReportCatalog.AllowedRoles CSV deprecate** (1 gun) — ADR-004 adayi. ReportAllowedRole junction birincil, CSV kaldir.
 27. **dashboard-builder.js split** (2h) — dosya 567 satir (500 kirmizi cizgi). Mantikli split: `dashboard-builder-core.js` (state + render + events) + `dashboard-builder-forms.js` (component forms + validators).
-28. **DateTime.Now → DateTime.UtcNow sweep** (1-2h) — 24 hit (7 controller/service + 17 model default). Timezone konvansiyonu icin kucuk ADR gerek (SP'ler + seed'ler local time varsayiyor olabilir).
+28. **DateTime.Now → DateTime.UtcNow sweep** (1-2h) — kismen kapandi (`0f73478` dokunulan 4 usage). Kalan: DashboardController, AuthController, ProfileController, Models/* default'lari. Timezone konvansiyonu icin kucuk ADR gerek (SP'ler + seed'ler local time varsayiyor olabilir).
 
 #### FAZ 3 — BU CEYREK (3 ay, dusuk oncelik / temizlik)
 29. **M-06 · EF Core Migrations gecisi** (1 gun) — mevcut semayi baseline yap, yeni degisiklikler migration. Database/legacy/ olustur.
@@ -302,9 +302,7 @@ END
   - ReportPanel/Models/User.cs:27
   - ReportPanel/Controllers/DashboardController.cs:68-82 (CSV parse)
   - ReportPanel/Controllers/ReportsController.cs:73-75 (normalize)
-- [ ] **DashboardHtml vs DashboardConfigJson dual storage**: Hangisi source of truth belirsiz, ikisi de doldurulabiliyor. **Coz:** DashboardConfigJson'u birincil yap, DashboardHtml'i legacy isaretle veya kaldir. Migration script hazirla.
-  - ReportPanel/Models/ReportCatalog.cs (iki kolon)
-  - Database/10_AddDashboardColumns.sql + 11_AddDashboardConfigJson.sql
+- [x] ~~**DashboardHtml vs DashboardConfigJson dual storage**~~ → ✅ M-05 3 faz kapandi (Faz C commit `0f73478`, migration 17, ADR-005). DashboardConfigJson tek source-of-truth.
   - ReportsController.cs:238-249 (iki render path)
 - [ ] **Data access stratejisi belirsiz**: EF Core var, Dapper hic kullanilmamis (Program.cs'de register yok) ama SP'ler var (sp_PdksPano.sql, sp_SatisPano.sql). SP'ler ADO.NET ile mi, EF FromSqlRaw ile mi cagriliyor? **Coz:** Tek strateji sec - ya EF Core + SP'leri repository'ye al, ya Dapper ekle. Dokumante et.
 
@@ -412,7 +410,7 @@ END
 
 **P2 - Mimari:**
 - [ ] **Runtime JS ayir**: DashboardRenderer.cs icinden ~100 satir inline JS'i wwwroot/js/dashboard-runtime.js'e cikar, render sadece config + script src uretsin.
-- [ ] **Legacy DashboardHtml path**: ReportCatalog.DashboardHtml + RenderDashboardTemplate kullaniliyor mu? Kullanilmiyorsa kolonu ve code path'i kaldir (ReportsController.cs:247-248).
+- [x] ~~**Legacy DashboardHtml path**~~ → ✅ M-05 Faz C (`0f73478`) RenderDashboardTemplate silindi, kolon DROP.
 - [ ] **DashboardRenderer static -> DI**: Test edilebilirlik icin IDashboardRenderer interface.
 
 #### P3 - Sonra (nice-to-have)
