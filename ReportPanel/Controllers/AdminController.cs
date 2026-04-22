@@ -19,6 +19,7 @@ namespace ReportPanel.Controllers
         private readonly UserRoleSyncService _userRoleSync;
         private readonly CategoryManagementService _categoryService;
         private readonly RoleManagementService _roleService;
+        private readonly DataSourceManagementService _dataSourceService;
 
         public AdminController(
             ReportPanelContext context,
@@ -26,7 +27,8 @@ namespace ReportPanel.Controllers
             IConfiguration configuration,
             UserRoleSyncService userRoleSync,
             CategoryManagementService categoryService,
-            RoleManagementService roleService)
+            RoleManagementService roleService,
+            DataSourceManagementService dataSourceService)
         {
             _context = context;
             _auditLog = auditLog;
@@ -34,6 +36,7 @@ namespace ReportPanel.Controllers
             _userRoleSync = userRoleSync;
             _categoryService = categoryService;
             _roleService = roleService;
+            _dataSourceService = dataSourceService;
         }
 
         [HttpGet]
@@ -85,63 +88,23 @@ namespace ReportPanel.Controllers
                 switch (action)
                 {
                     case "create_datasource":
-                        var newDs = new DataSource
-                        {
-                            DataSourceKey = Request.Form["DataSourceKey"].ToString().ToUpper(),
-                            Title = Request.Form["Title"].ToString(),
-                            ConnString = Request.Form["ConnString"].ToString(),
-                            IsActive = ReadFormBool("IsActive")
-                        };
-                        _context.DataSources.Add(newDs);
-                        await _context.SaveChangesAsync();
-                        await AuditCrudAsync("datasource_create", "datasource", newDs.DataSourceKey, "Data source created",
-                            newValues: new { newDs.DataSourceKey, newDs.Title, newDs.IsActive },
-                            dataSourceKey: newDs.DataSourceKey);
-                        TempData["Message"] = "Veri kaynağı eklendi";
-                        TempData["MessageType"] = "success";
+                        ApplyResult(await _dataSourceService.CreateAsync(
+                            Request.Form["DataSourceKey"],
+                            Request.Form["Title"],
+                            Request.Form["ConnString"],
+                            ReadFormBool("IsActive")));
                         break;
 
                     case "update_datasource":
-                        var ds = await _context.DataSources.FindAsync(key);
-                        if (ds != null)
-                        {
-                            var dsOld = new { ds.DataSourceKey, ds.Title, ds.IsActive };
-                            ds.Title = Request.Form["Title"].ToString();
-                            ds.ConnString = Request.Form["ConnString"].ToString();
-                            ds.IsActive = ReadFormBool("IsActive");
-                            await _context.SaveChangesAsync();
-                            await AuditCrudAsync("datasource_update", "datasource", ds.DataSourceKey, "Data source updated",
-                                oldValues: dsOld,
-                                newValues: new { ds.DataSourceKey, ds.Title, ds.IsActive },
-                                dataSourceKey: ds.DataSourceKey);
-                            TempData["Message"] = "Veri kaynağı güncellendi";
-                            TempData["MessageType"] = "success";
-                        }
+                        ApplyResult(await _dataSourceService.UpdateAsync(
+                            key,
+                            Request.Form["Title"],
+                            Request.Form["ConnString"],
+                            ReadFormBool("IsActive")));
                         break;
 
                     case "delete_datasource":
-                        var delDs = await _context.DataSources.FindAsync(key);
-                        if (delDs != null)
-                        {
-                            _context.DataSources.Remove(delDs);
-                            await _context.SaveChangesAsync();
-                        await _auditLog.LogAsync(new AuditLogEntry
-                        {
-                            EventType = "datasource_delete",
-                            TargetType = "datasource",
-                            TargetKey = delDs.DataSourceKey,
-                            Description = "Data source deleted",
-                            OldValuesJson = AuditLogService.ToJson(new
-                            {
-                                delDs.DataSourceKey,
-                                delDs.Title,
-                                delDs.ConnString,
-                                delDs.IsActive
-                            })
-                        });
-                            TempData["Message"] = "Veri kaynağı silindi";
-                            TempData["MessageType"] = "success";
-                        }
+                        ApplyResult(await _dataSourceService.DeleteAsync(key));
                         break;
 
                     case "create_report":
@@ -285,44 +248,7 @@ namespace ReportPanel.Controllers
                         break;
 
                     case "test_datasource":
-                        var testDs = await _context.DataSources.FindAsync(key);
-                        if (testDs != null)
-                        {
-                            try
-                            {
-                                using var connection = new Microsoft.Data.SqlClient.SqlConnection(testDs.ConnString);
-                                await connection.OpenAsync();
-                                using var command = new Microsoft.Data.SqlClient.SqlCommand("SELECT 1", connection);
-                                await command.ExecuteScalarAsync();
-                                  await _auditLog.LogAsync(new AuditLogEntry
-                                  {
-                                      EventType = "datasource_test",
-                                      TargetType = "datasource",
-                                      TargetKey = testDs.DataSourceKey,
-                                      DataSourceKey = testDs.DataSourceKey,
-                                      Description = "Data source test OK",
-                                      IsSuccess = true
-                                  });
-                                TempData["Message"] = "Bağlantı testi başarılı";
-                                TempData["MessageType"] = "success";
-                            }
-                            catch (Exception ex)
-                            {
-                                await _auditLog.LogAsync(new AuditLogEntry
-                                {
-                                    EventType = "datasource_test",
-                                    TargetType = "datasource",
-                                    TargetKey = testDs.DataSourceKey,
-                                    DataSourceKey = testDs.DataSourceKey,
-                                    Description = "Data source test failed",
-                                    IsSuccess = false,
-                                    ErrorMessage = ex.Message
-                                });
-                                // M-02: ex.Message user'a gosterilmez (connection string sizabilir). Detay audit log'ta.
-                                TempData["Message"] = "Veri kaynağına bağlanılamadı. Bağlantı ayarlarını kontrol edin.";
-                                TempData["MessageType"] = "error";
-                            }
-                        }
+                        ApplyResult(await _dataSourceService.TestConnectionAsync(key));
                         break;
 
                 }
