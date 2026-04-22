@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "ReportPanel",
+      "runtimeExecutable": "dotnet",
+      "runtimeArgs": ["run", "--project", "ReportPanel", "--launch-profile", "http"],
+      "port": 5197
+    }
+  ]
+}

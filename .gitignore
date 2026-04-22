@@ -20,6 +20,9 @@
 # Cowork sandbox worktrees (isolated copies, not tracked)
 .claude/worktrees/
 
+# Per-user Claude Code permissions (not shared)
+.claude/settings.local.json
+
 # OS junk
 .DS_Store
 Thumbs.db
