@@ -504,6 +504,64 @@
         return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
 
+    // ---- Kolon datalist (SP onizleme sonrasi otomatik doldurulur) ----
+    // admin-report-form.js SP Onizle butonu basarili bittiginde document uzerinde
+    // "spPreviewReady" CustomEvent firlatir; detail: { resultSets: [{ index, columns }] }.
+    // Biz tum result set'lerden kolon adi setini (distinct) toplayip <datalist>'a yaziyoruz;
+    // ardindan form input'larina (compColumn, compLabelCol, ds-col, col-key) list attribute
+    // bagliyoruz ki admin kolon adini autocomplete gibi secebilsin.
+
+    function ensureDatalist() {
+        var dl = document.getElementById('spColumnsDl');
+        if (!dl) {
+            dl = document.createElement('datalist');
+            dl.id = 'spColumnsDl';
+            document.body.appendChild(dl);
+        }
+        return dl;
+    }
+
+    function populateColumnDatalist(detail) {
+        var dl = ensureDatalist();
+        dl.innerHTML = '';
+        if (!detail || !detail.resultSets) return;
+        var seen = {};
+        detail.resultSets.forEach(function (rs) {
+            (rs.columns || []).forEach(function (name) {
+                if (seen[name]) return;
+                seen[name] = true;
+                var opt = document.createElement('option');
+                opt.value = name;
+                dl.appendChild(opt);
+            });
+        });
+        attachListAttribute();
+    }
+
+    function attachListAttribute() {
+        var selectors = ['#compColumn', '#compLabelCol', '.ds-col', '.col-key'];
+        selectors.forEach(function (sel) {
+            document.querySelectorAll(sel).forEach(function (el) {
+                if (el.tagName === 'INPUT') el.setAttribute('list', 'spColumnsDl');
+            });
+        });
+    }
+
+    document.addEventListener('spPreviewReady', function (ev) {
+        populateColumnDatalist(ev.detail);
+    });
+
+    // Sayfa yuklendiginde __spPreview zaten varsa (F5 sonrasi tekrar SP Onizle basmadan), doldur.
+    if (window.__spPreview) populateColumnDatalist(window.__spPreview);
+
+    // Her render sonrasi yeni input'lara list attribute baglamak icin MutationObserver
+    // alternatifi yerine pragmatik: render()'dan sonra attach (render cagrilan her yerde).
+    var originalRender = render;
+    render = function () {
+        originalRender.apply(this, arguments);
+        attachListAttribute();
+    };
+
     // Initial render
     render();
 })();

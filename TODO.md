@@ -89,11 +89,12 @@ Bu liste asagidakilerin sentezidir:
 
 #### FAZ 1 — KALAN
 9. ⏳ **M-04 kismi · DashboardRenderer + UserDataFilter + UserRole sync unit tests** — DashboardRenderer XSS (9 test) ve UserDataFilterValidator (17 test) ✅ yazildi. Kalan: UserRole sync idempotency testi (AdminController.SyncUserRoles private method, refactor + test ayri is).
-10. **dashboard-builder.js: spPreviewReady event listener + kolon datalist** (1h) — yarim kalan is. SP onizleme sonrasi kolon listesi dashboard builder'a aktarilmali.
+10. ✅ **dashboard-builder.js: spPreviewReady event listener + kolon datalist** — (commit sonradan doldurulacak). document.addEventListener('spPreviewReady'), populateColumnDatalist, attachListAttribute (compColumn, compLabelCol, ds-col, col-key). Browser dogrulandi: 7 result set -> 51 distinct kolon datalist'te.
 11. **SP Onizle admin-override panel** (1-2h) — F-02 tamamlama. Admin default parametreleri override edebilsin (date picker, int input, vb.).
 12. **M-02 devam** (30dk-1h) — AuthController + Services + diger controller'larda kalan ex.Message leak'ler (pre-commit hook yakalar, ayrica tara).
 13. **M-03 Faz B · User.Roles nullable + [Obsolete]** (2h) — `15_NullableUserRolesCsv.sql` migration + model isaret. Faz C (kolonu drop) sonraki PR.
 14. **UserRole sync idempotency testi** — `AdminController.SyncUserRoles`'u testable helper'a cikar (Services/UserRoleSyncService), EF in-memory + 3 test (yeni user, rol degisimi, remove all). Ayri commit, yaklasik 2h.
+15. **dashboard-builder.js split** (Faz 2, 2h) — dosya 567 satir (yeni csharp-conventions 500 kirmizi cizgi kurali uygulanmali). Mantikli split: `dashboard-builder-core.js` (state + render + events) + `dashboard-builder-forms.js` (component forms + validators). JS'de de ayni 500 satir kurali.
 
 #### FAZ 2 — BU AY (4 hafta, orta oncelik)
 14. **M-01 · AdminController service extraction** (2 gun) — UserManagementService, ReportManagementService, DataSourceService. Controller endpoint'e inisin, 1736 → ~400 satir.
