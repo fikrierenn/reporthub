@@ -5,13 +5,16 @@ using ReportPanel.ViewModels;
 
 namespace ReportPanel.Controllers
 {
+#if DEBUG
     public class TestController : Controller
     {
         private readonly ReportPanelContext _context;
+        private readonly IConfiguration _configuration;
 
-        public TestController(ReportPanelContext context)
+        public TestController(ReportPanelContext context, IConfiguration configuration)
         {
             _context = context;
+            _configuration = configuration;
         }
 
         public async Task<IActionResult> Index()
@@ -47,7 +50,7 @@ namespace ReportPanel.Controllers
                 {
                     DataSourceKey = "MAIN",
                     Title = "Ana Veritabani",
-                    ConnString = "Server=localhost\\SQLEXPRESS;Database=PortalHUB;Integrated Security=true;TrustServerCertificate=true;",
+                    ConnString = _configuration.GetConnectionString("DefaultConnection") ?? string.Empty,
                     IsActive = true
                 };
 
@@ -66,4 +69,5 @@ namespace ReportPanel.Controllers
             }
         }
     }
+#endif
 }

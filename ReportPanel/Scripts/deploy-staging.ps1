@@ -5,7 +5,8 @@ param(
     [string]$ServerName = "staging-server\SQLEXPRESS",
     [string]$DatabaseName = "ReportPanel_Staging",
     [string]$Username = "staging_user",
-    [string]$Password = "staging_pass123!",
+    [Parameter(Mandatory = $true)]
+    [string]$Password,
     [string]$AppPath = "C:\inetpub\wwwroot\ReportPanel_Staging",
     [switch]$SkipDatabase,
     [switch]$SkipApp,
