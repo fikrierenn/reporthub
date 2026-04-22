@@ -17,6 +17,9 @@
 **/*secrets*.json
 **/appsettings.Development.json
 
+# MCP server config (plain-text DB credentials for local dev — not shared)
+.mcp.json
+
 # Cowork sandbox worktrees (isolated copies, not tracked)
 .claude/worktrees/
 
