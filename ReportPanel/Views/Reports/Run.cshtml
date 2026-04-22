@@ -9,40 +9,62 @@
     <a href="/Reports" class="text-gray-500 hover:text-brand transition-brand">
         <i class="fas fa-arrow-left text-xl"></i>
     </a>
-    <h1 class="text-3xl font-bold text-gray-900">Rapor Çalıştır</h1>
-    <div class="ml-auto flex flex-wrap gap-2">
-        <form method="post" action="/Reports/Run" class="flex flex-wrap gap-2">
-            @Html.AntiForgeryToken()
-            @if (Model.SelectedReport != null)
-            {
-                <input type="hidden" name="reportId" value="@Model.SelectedReport.ReportId" />
-            }
-            @foreach (var kvp in Model.ParamValues)
-            {
-                <input type="hidden" name="@kvp.Key" value="@kvp.Value" />
-            }
-            <button type="submit" name="viewMode" value="wide"
+    <h1 class="text-3xl font-bold text-gray-900">
+        @if (Model.IsDashboard)
+        {
+            <i class="fas fa-chart-pie text-purple-600 mr-2"></i>@:Dashboard
+        }
+        else
+        {
+            @:Rapor Çalıştır
+        }
+    </h1>
+    @if (!Model.IsDashboard)
+    {
+        <div class="ml-auto flex flex-wrap gap-2">
+            <form method="post" action="/Reports/Run" class="flex flex-wrap gap-2">
+                @Html.AntiForgeryToken()
+                @if (Model.SelectedReport != null)
+                {
+                    <input type="hidden" name="reportId" value="@Model.SelectedReport.ReportId" />
+                }
+                @foreach (var kvp in Model.ParamValues)
+                {
+                    <input type="hidden" name="@kvp.Key" value="@kvp.Value" />
+                }
+                <button type="submit" name="viewMode" value="wide"
+                        class="btn-brand-outline inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg">
+                    <i class="fas fa-expand-arrows-alt mr-2"></i>
+                    Geniş Görünüm
+                </button>
+                <button type="submit" name="viewMode" value="table"
+                        class="btn-brand-outline inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg">
+                    <i class="fas fa-table mr-2"></i>
+                    Tablo Odak
+                </button>
+                <button type="submit" name="viewMode" value="full"
+                        class="btn-brand-outline inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg">
+                    <i class="fas fa-expand mr-2"></i>
+                    Tam Ekran
+                </button>
+                <button type="submit" name="viewMode" value=""
+                        class="btn-brand-outline inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg">
+                    <i class="fas fa-compress mr-2"></i>
+                    Normal
+                </button>
+            </form>
+        </div>
+    }
+    else if (Model.RunSuccess)
+    {
+        <div class="ml-auto">
+            <button type="button" onclick="toggleDashboardFullscreen()"
                     class="btn-brand-outline inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg">
-                <i class="fas fa-expand-arrows-alt mr-2"></i>
-                Geniş Görünüm
-            </button>
-            <button type="submit" name="viewMode" value="table"
-                    class="btn-brand-outline inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg">
-                <i class="fas fa-table mr-2"></i>
-                Tablo Odak
-            </button>
-            <button type="submit" name="viewMode" value="full"
-                    class="btn-brand-outline inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg">
-                <i class="fas fa-expand mr-2"></i>
+                <i class="fas fa-expand mr-2" id="fsIcon"></i>
                 Tam Ekran
             </button>
-            <button type="submit" name="viewMode" value=""
-                    class="btn-brand-outline inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg">
-                <i class="fas fa-compress mr-2"></i>
-                Normal
-            </button>
-        </form>
-    </div>
+        </div>
+    }
 </div>
 
 @if (Model.SelectedReport == null)
@@ -123,10 +145,24 @@ else
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     @foreach (var field in Model.ParamFields)
                     {
+                        var normalizedType = (field.Type ?? "text").Trim().ToLowerInvariant();
+                        normalizedType = normalizedType switch
+                        {
+                            "int" => "number",
+                            "integer" => "number",
+                            "decimal" => "decimal",
+                            "float" => "decimal",
+                            "double" => "decimal",
+                            "bit" => "checkbox",
+                            "bool" => "checkbox",
+                            "boolean" => "checkbox",
+                            "datetime" => "date",
+                            _ => normalizedType
+                        };
                         var requiredAttr = field.Required ? "required" : "";
                         var fieldValue = Model.ParamValues.TryGetValue(field.Name, out var currentValue)
                             ? currentValue
-                            : (string.Equals(field.Type, "date", StringComparison.OrdinalIgnoreCase) &&
+                            : (string.Equals(normalizedType, "date", StringComparison.OrdinalIgnoreCase) &&
                                string.Equals(field.DefaultValue, "today", StringComparison.OrdinalIgnoreCase)
                                 ? DateTime.Today.ToString("yyyy-MM-dd")
                                 : field.DefaultValue);
@@ -138,7 +174,7 @@ else
                                     <span class="text-red-500 ml-1">*</span>
                                 }
                             </label>
-                            @switch (field.Type)
+                            @switch (normalizedType)
                             {
                                 case "number":
                                     <input type="number" name="@field.Name" id="@field.Name" @requiredAttr
@@ -201,22 +237,70 @@ else
                         </p>
                     </div>
                 </div>
-                <form method="post" action="/Reports/Export" class="ml-auto">
-                    @Html.AntiForgeryToken()
-                    <input type="hidden" name="reportId" value="@Model.SelectedReport.ReportId" />
-                    @foreach (var kvp in Model.ParamValues)
-                    {
-                        <input type="hidden" name="@kvp.Key" value="@kvp.Value" />
-                    }
-                    <button type="submit" class="btn-brand-outline px-4 py-2 text-sm font-medium rounded-lg">
-                        <i class="fas fa-file-excel mr-2"></i>Excel Dışa Aktar
-                    </button>
-                </form>
+                @if (!Model.IsDashboard)
+                {
+                    <form method="post" action="/Reports/Export" class="ml-auto">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="reportId" value="@Model.SelectedReport.ReportId" />
+                        @foreach (var kvp in Model.ParamValues)
+                        {
+                            <input type="hidden" name="@kvp.Key" value="@kvp.Value" />
+                        }
+                        <button type="submit" class="btn-brand-outline px-4 py-2 text-sm font-medium rounded-lg">
+                            <i class="fas fa-file-excel mr-2"></i>Excel Dışa Aktar
+                        </button>
+                    </form>
+                }
             </div>
         </div>
     }
 
-    @if (Model.RunSuccess && Model.RunData.Any())
+    @if (Model.RunSuccess && Model.IsDashboard && !string.IsNullOrWhiteSpace(Model.DashboardRenderedHtml))
+    {
+        <div class="rounded-2xl shadow-sm border border-gray-200 overflow-hidden" id="dashboardContainer">
+            <iframe id="dashboardFrame"
+                    class="w-full border-0"
+                    style="min-height: 700px;"
+                    sandbox="allow-scripts"
+                    srcdoc="@Model.DashboardRenderedHtml">
+            </iframe>
+        </div>
+        <script>
+        (function() {
+            var frame = document.getElementById('dashboardFrame');
+            function resizeFrame() {
+                try {
+                    var h = frame.contentDocument.documentElement.scrollHeight;
+                    if (h > 100) frame.style.height = (h + 40) + 'px';
+                } catch(e) {}
+            }
+            frame.addEventListener('load', function() {
+                resizeFrame();
+                setTimeout(resizeFrame, 500);
+                setTimeout(resizeFrame, 1500);
+            });
+        })();
+        function toggleDashboardFullscreen() {
+            var container = document.getElementById('dashboardContainer');
+            var icon = document.getElementById('fsIcon');
+            if (container.style.position === 'fixed') {
+                container.style.position = '';
+                container.style.inset = '';
+                container.style.zIndex = '';
+                container.style.borderRadius = '';
+                icon.className = 'fas fa-expand mr-2';
+            } else {
+                container.style.position = 'fixed';
+                container.style.inset = '0';
+                container.style.zIndex = '9999';
+                container.style.borderRadius = '0';
+                icon.className = 'fas fa-compress mr-2';
+            }
+        }
+        </script>
+    }
+
+    @if (Model.RunSuccess && !Model.IsDashboard && Model.RunData.Any())
     {
         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden" id="resultsCard">
             <div class="px-6 py-3 border-b border-gray-200 bg-gray-50">
