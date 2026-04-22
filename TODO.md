@@ -71,49 +71,55 @@ Bu liste asagidakilerin sentezidir:
 
 ---
 
-#### FAZ 0 — BUGUN "stop-the-world" (3 saat, blocker'lari kaldir)
-1. **G-01 · Hardcoded SA sifresi** (1h) — TestController.cs:50, appsettings.json:3, appsettings.Staging.json:4, AdminController.cs:401. Env var / User Secrets'a tasi. `#if DEBUG` ile TestController'i kapat. .gitignore guncelle. KRITIK guvenlik, her gecen dakika risk.
-2. **Baglam yonetimi uygula** (1.5h) — `docs/CONTEXT_MANAGEMENT.md` "Aksiyon 1-4":
-   - CLAUDE.md split (kimlik/kural/sureç ayrimi, 200 satir alti)
-   - `.claude/rules/*.md` olustur (architecture, security-principles, turkish-ui, commit-discipline, sql-conventions, razor-conventions, csharp-conventions, js-conventions)
-   - SessionStart hook kur (git log + TODO ozet enjeksiyonu)
-   - session-handoff skill yaz (`/handoff` → `docs/journal/YYYY-MM-DD.md`)
-3. **F-01 · SP Onizle click handler bug** (30dk) — admin-report-form.js initSpHelpers() outer IIFE'den cikar. Dun gece teshis yapildi.
+#### FAZ 0 — ✅ TAMAMLANDI (22 Nisan 2026)
+1. ✅ **G-01 · Hardcoded SA sifresi** — commit `8de22fd` (7 dosya: appsettings.json, Staging.json, TestController, AdminController.GetTemplateConnectionString, CreateDataSource.cshtml, deploy-staging.ps1, CLAUDE_TOOLING_PROPOSAL.md). Development.json gitignored, SA sifresi lokalde kaliyor.
+2. ✅ **Baglam yonetimi** — commit `e59e3a9` (CLAUDE.md yeniden duzenlendi §0 oturum basi rituel eklendi, `.claude/rules/` 10 dosya, `.claude/hooks/` 3 script, `.claude/agents/commit-splitter.md`, `.claude/skills/session-handoff/`, `docs/CONTEXT_MANAGEMENT.md`, `docs/CLAUDE_TOOLING_PROPOSAL.md`).
+3. ✅ **F-01 · SP Onizle click handler** — commit `07f4b91` (admin-report-form.js initSpHelpers outer IIFE'den cikarildi, top-level IIFE oldu). Browser'da dogrulandi.
+4. ✅ **32-dosyalik backlog commit-split** — 16 commit (`64259ed`..`7a7b81d`) ile bolundu. `commit-splitter` subagent yazildi.
+5. ✅ **Deprecated artifacts** — `7a7b81d` (Views/Auth/AGENT.md silindi, bos dizinler temizlendi).
+6. ✅ **Pre-commit/Post-commit hook'lar** — commit `59888db` ve onceki (antipattern scan + journal auto-update).
 
-#### FAZ 1 — BU HAFTA (5 gun, yuksek oncelik)
-4. **M-02 · Exception handling sanitize** (2h) — AdminController.cs:390, 707 ve diger `ex.Message` sizinti noktalari. SqlException ayri catch, user'a generic mesaj, logger.LogError detayli.
-5. **32-dosyalik backlog commit-split** (1 gun) — TODO 7 faz plani + `commit-splitter` subagent.
-6. **G-02 · Open redirect fix** (30dk) — ReportsController.cs:991, AuthController.cs:289. `IsLocalUrl` + `StartsWith("/") && !StartsWith("//")`.
-7. **G-03 · UserDataFilter whitelist + regex** (2h) — ReportsController.cs:894-930. FilterKey regex `^[a-zA-Z_][a-zA-Z0-9_]*$`, FilterValue regex. SP'de `STRING_SPLIT` kullan.
-8. **M-03 · User.Roles CSV deprecate** (1 gun) — `15_DropUserRolesCsv.sql` migration. AuthController.cs:173-180 CSV fallback kaldir. AdminController de-sync noktalari fix. ADR-003 yaz.
-9. **M-04 kismi · DashboardRenderer + UserDataFilter + UserRole sync unit tests** (1 gun) — regresyon korumasi. P0 XSS fix'leri icin test mutlak sart.
-10. **SP Onizle default parametre destegi** (1h) — F-02 kismi. SpPreview endpoint'te parametre tipine gore default (date→today, int→0, string→'', bool→0). @Tarih NULL patlamasini cozer.
-11. **dashboard-builder.js: spPreviewReady event listener + kolon datalist** (1h) — yarim kalan is.
+#### FAZ 1 — İLERLEYIS (bu hafta)
+✅ **M-02 kismi · Exception handling sanitize** — commit `b6ff43a` (AdminController 7 ex.Message leak) + `a047957` (ReportsController, TestController, AdminController SpList/SpPreview). Kalan: AuthController veya baska servisler varsa grep tara.
+✅ **G-02 · Open redirect fix** — commit `4c40f61` (AuthController.cs:285, ReportsController.cs:991 — `Url.IsLocalUrl` + `StartsWith("/")` + `!StartsWith("//")` + `!StartsWith("/\\")`).
+✅ **G-03 · UserDataFilter whitelist + regex** — commit `4c40f61` (ReportsController.cs:18-23 static regex fields, `InjectUserDataFilters` whitelist check, reject audit log `user_filter_rejected`).
+✅ **F-02 kismi · SP Onizle default parametre destegi** — commit `b6ff43a` (AdminController.SpPreview DATA_TYPE switch: date→today, int→0, string→'', bool→false, vb.). Browser dogrulandi: "7 result set dondu". Admin override UI hala yapilmadi (yarim).
+✅ **M-03 Faz A · User.Roles CSV deprecate (kod-duzeyi)** — commit `2d0c3fd` + `docs/ADR/003-role-model.md`. Auth/Profile/Reports/Admin de-sync noktalari temizlendi. Faz B (nullable kolon) + Faz C (drop) ileride.
+✅ **session-handoff skill auto-commit** — commit `5df75ff` (skill artik docs/journal dosyasini tek-path commit ediyor, commit-discipline.md istisna eklendi).
+
+#### FAZ 1 — KALAN
+9. **M-04 kismi · DashboardRenderer + UserDataFilter + UserRole sync unit tests** (1 gun) — regresyon korumasi. DashboardRenderer XSS (eval/innerHTML/onclick bypass), UserDataFilter FilterKey/Value regex edge case, UserRole sync idempotency. P0 XSS fix'leri icin test sart.
+10. **dashboard-builder.js: spPreviewReady event listener + kolon datalist** (1h) — yarim kalan is. SP onizleme sonrasi kolon listesi dashboard builder'a aktarilmali.
+11. **SP Onizle admin-override panel** (1-2h) — F-02 tamamlama. Admin default parametreleri override edebilsin (date picker, int input, vb.).
+12. **M-02 devam** (30dk-1h) — AuthController + Services + diger controller'larda kalan ex.Message leak'ler (pre-commit hook yakalar, ayrica tara).
+13. **M-03 Faz B · User.Roles nullable + [Obsolete]** (2h) — `15_NullableUserRolesCsv.sql` migration + model isaret. Faz C (kolonu drop) sonraki PR.
 
 #### FAZ 2 — BU AY (4 hafta, orta oncelik)
-12. **M-01 · AdminController service extraction** (2 gun) — UserManagementService, ReportManagementService, DataSourceService. Controller endpoint'e inisin, 1736 → ~400 satir.
-13. **G-04 · Audit log genisletme** (2h) — datasource delete, category delete, role delete icin `_auditLog.LogAsync`. OldValuesJson snapshot.
-14. **G-05 · Cookie HttpOnly/Secure/SameSite/ExpireTimeSpan** (30dk) — Program.cs:27.
-15. **G-06 · TestController [Authorize(Roles="admin")]** (15dk) — class-level + POST'a [ValidateAntiForgeryToken].
-16. **M-05 · DashboardHtml legacy retirement** (1 gun) — kolonu archive tablo'ya tasi, DashboardConfigJson mandatory, Form'dan DashboardHtml input kaldir.
-17. **F-03 · dashboard-builder.js memory leak** (1h) — event delegation veya AbortController. Drag-drop listener re-attach sorunu.
-18. **F-04 · AGENT.md yaniltici icerik** (5dk) — Views/Auth/AGENT.md sil veya "DEPRECATED" banner.
-19. **SP mimarisi · sp_PdksPano → inline TVF refactor** (3h) — `fn_PdksDetay`, `fn_PdksKpiOzet`, `fn_PdksDepartmanKirilim` + orkestrator SP. ADR-004.
-20. **Dashboard canli onizleme iframe** (4h) — builder'da gercek render preview.
-21. **User P1 · Admin listesi arama + filtre + son giris** (1 gun) — admin user tab'a arama kutusu, rol/aktif/AD filtresi, LastLoginAt gosterimi.
-22. **User P1 · User modeline Phone/Department/Position** (4h) — migration 16 + form alanlari.
+14. **M-01 · AdminController service extraction** (2 gun) — UserManagementService, ReportManagementService, DataSourceService. Controller endpoint'e inisin, 1736 → ~400 satir.
+15. **G-04 · Audit log genisletme** (2h) — datasource delete, category delete, role delete icin `_auditLog.LogAsync`. OldValuesJson snapshot.
+16. **G-05 · Cookie HttpOnly/Secure/SameSite/ExpireTimeSpan** (30dk) — Program.cs:27.
+17. **G-06 · TestController [Authorize(Roles="admin")]** (15dk) — class-level + POST'a [ValidateAntiForgeryToken].
+18. **M-05 · DashboardHtml legacy retirement** (1 gun) — kolonu archive tablo'ya tasi, DashboardConfigJson mandatory, Form'dan DashboardHtml input kaldir.
+19. **F-03 · dashboard-builder.js memory leak** (1h) — event delegation veya AbortController. Drag-drop listener re-attach sorunu.
+20. ✅ **F-04 · AGENT.md yaniltici icerik** — commit `7a7b81d` (silindi).
+21. **SP mimarisi · sp_PdksPano → inline TVF refactor** (3h) — `fn_PdksDetay`, `fn_PdksKpiOzet`, `fn_PdksDepartmanKirilim` + orkestrator SP. ADR-004.
+22. **Dashboard canli onizleme iframe** (4h) — builder'da gercek render preview.
+23. **User P1 · Admin listesi arama + filtre + son giris** (1 gun) — admin user tab'a arama kutusu, rol/aktif/AD filtresi, LastLoginAt gosterimi.
+24. **User P1 · User modeline Phone/Department/Position** (4h) — migration 16 + form alanlari.
+25. **M-03 Faz C · User.Roles kolon drop** (30dk-1h) — `16_DropUserRolesCsv.sql` + model field sil. Faz B'den sonra, veri validation sonra.
+26. **ReportCatalog.AllowedRoles CSV deprecate** (1 gun) — ADR-004 adayi. ReportAllowedRole junction birincil, CSV kaldir.
 
 #### FAZ 3 — BU CEYREK (3 ay, dusuk oncelik / temizlik)
-23. **M-06 · EF Core Migrations gecisi** (1 gun) — mevcut semayi baseline yap, yeni degisiklikler migration. Database/legacy/ olustur.
-24. **M-07 · ViewModel BindNever + DTO pattern** (4h) — mass assignment riski. UserId, PasswordHash gibi kritik alanlar bind edilmesin.
-25. **M-08 · Async/await tutarlilik** (2h) — AdminController.cs:1087-1091 vb. `.ToList()` → `.ToListAsync()`.
-26. **M-09 · AsNoTracking tutarlilik** (2h) — 15+ read-only query.
-27. **F-05 · Turkce UTF-8 normalize** (3h) — `turkish-ui-normalizer` skill'i ile tum "Duzenle"/"Bilesen" → "Düzenle"/"Bileşen".
-28. **F-06 · CSP politikasi** (1 gun) — opsiyonel; inline onclick/script temizle, header ekle.
-29. **Test coverage %30 hedefi** (1 hafta) — AdminController integration, ReportsController.Run, Admin SpPreview, PasswordHasher edge cases.
-30. **G-07 · Dashboard iframe policy sikisitirma** (30dk) — Referrer-policy + sandbox kombinasyonu gozden gecir.
-31. **G-08 · DashboardRenderer JSON escape regresyon testi** (1h) — `</script>`, `<!--`, case-insensitive bypass test.
-32. **3 ADR yazimi** (2h) — ADR-001 data-access, ADR-002 dashboard-architecture, ADR-003 role-model (M-03 ile birlikte).
+27. **M-06 · EF Core Migrations gecisi** (1 gun) — mevcut semayi baseline yap, yeni degisiklikler migration. Database/legacy/ olustur.
+28. **M-07 · ViewModel BindNever + DTO pattern** (4h) — mass assignment riski. UserId, PasswordHash gibi kritik alanlar bind edilmesin.
+29. **M-08 · Async/await tutarlilik** (2h) — AdminController.cs:1087-1091 vb. `.ToList()` → `.ToListAsync()`.
+30. **M-09 · AsNoTracking tutarlilik** (2h) — 15+ read-only query.
+31. **F-05 · Turkce UTF-8 normalize** (3h) — `turkish-ui-normalizer` skill'i ile tum "Duzenle"/"Bilesen" → "Düzenle"/"Bileşen".
+32. **F-06 · CSP politikasi** (1 gun) — opsiyonel; inline onclick/script temizle, header ekle.
+33. **Test coverage %30 hedefi** (1 hafta) — AdminController integration, ReportsController.Run, Admin SpPreview, PasswordHasher edge cases.
+34. **G-07 · Dashboard iframe policy sikisitirma** (30dk) — Referrer-policy + sandbox kombinasyonu gozden gecir.
+35. **G-08 · DashboardRenderer JSON escape regresyon testi** (1h) — `</script>`, `<!--`, case-insensitive bypass test.
+36. **ADR yazimi** (1h) — ADR-001 data-access, ADR-002 dashboard-architecture. (ADR-003 role-model ✅ yazildi bugun.)
 
 #### Toplam efor tahmini
 - Faz 0 (bugun): 3 saat — blocker'lari kaldir
