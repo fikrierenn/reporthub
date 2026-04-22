@@ -18,19 +18,22 @@ namespace ReportPanel.Controllers
         private readonly IConfiguration _configuration;
         private readonly UserRoleSyncService _userRoleSync;
         private readonly CategoryManagementService _categoryService;
+        private readonly RoleManagementService _roleService;
 
         public AdminController(
             ReportPanelContext context,
             AuditLogService auditLog,
             IConfiguration configuration,
             UserRoleSyncService userRoleSync,
-            CategoryManagementService categoryService)
+            CategoryManagementService categoryService,
+            RoleManagementService roleService)
         {
             _context = context;
             _auditLog = auditLog;
             _configuration = configuration;
             _userRoleSync = userRoleSync;
             _categoryService = categoryService;
+            _roleService = roleService;
         }
 
         [HttpGet]
@@ -219,82 +222,20 @@ namespace ReportPanel.Controllers
                         }
                         break;
                     case "create_role":
-                        var roleName = Request.Form["Name"].ToString().Trim();
-                        if (string.IsNullOrWhiteSpace(roleName))
-                        {
-                            TempData["Message"] = "Rol adi zorunludur.";
-                            TempData["MessageType"] = "error";
-                            break;
-                        }
-                        var roleExists = await _context.Roles
-                            .AnyAsync(r => r.Name.ToLower() == roleName.ToLower());
-                        if (roleExists)
-                        {
-                            TempData["Message"] = "Ayni isimde rol zaten var.";
-                            TempData["MessageType"] = "error";
-                            break;
-                        }
-                        var newRole = new Role
-                        {
-                            Name = roleName,
-                            Description = Request.Form["Description"].ToString(),
-                            IsActive = ReadFormBool("IsActive")
-                        };
-                        _context.Roles.Add(newRole);
-                        await _context.SaveChangesAsync();
-                        await AuditCrudAsync("role_create", "role", newRole.RoleId.ToString(), "Role created",
-                            newValues: new { newRole.RoleId, newRole.Name, newRole.Description, newRole.IsActive });
-                        TempData["Message"] = "Rol eklendi.";
-                        TempData["MessageType"] = "success";
+                        ApplyResult(await _roleService.CreateAsync(
+                            Request.Form["Name"],
+                            Request.Form["Description"],
+                            ReadFormBool("IsActive")));
                         break;
                     case "update_role":
-                        var role = await _context.Roles.FindAsync(id);
-                        if (role != null)
-                        {
-                            var oldName = role.Name;
-                            var newName = Request.Form["Name"].ToString().Trim();
-                            if (string.IsNullOrWhiteSpace(newName))
-                            {
-                                TempData["Message"] = "Rol adi zorunludur.";
-                                TempData["MessageType"] = "error";
-                                break;
-                            }
-                            var duplicate = await _context.Roles
-                                .AnyAsync(r => r.RoleId != role.RoleId && r.Name.ToLower() == newName.ToLower());
-                            if (duplicate)
-                            {
-                                TempData["Message"] = "Ayni isimde rol zaten var.";
-                                TempData["MessageType"] = "error";
-                                break;
-                            }
-                            var roleOldSnap = new { role.RoleId, Name = oldName, role.Description, role.IsActive };
-                            role.Name = newName;
-                            role.Description = Request.Form["Description"].ToString();
-                            role.IsActive = ReadFormBool("IsActive");
-                            await _context.SaveChangesAsync();
-                            if (!string.Equals(oldName, newName, StringComparison.OrdinalIgnoreCase))
-                            {
-                                await ReplaceRoleNameInCsv(oldName, newName);
-                            }
-                            await AuditCrudAsync("role_update", "role", role.RoleId.ToString(), "Role updated",
-                                oldValues: roleOldSnap,
-                                newValues: new { role.RoleId, role.Name, role.Description, role.IsActive });
-                            TempData["Message"] = "Rol guncellendi.";
-                            TempData["MessageType"] = "success";
-                        }
+                        ApplyResult(await _roleService.UpdateAsync(
+                            id,
+                            Request.Form["Name"],
+                            Request.Form["Description"],
+                            ReadFormBool("IsActive")));
                         break;
                     case "delete_role":
-                        var delRole = await _context.Roles.FindAsync(id);
-                        if (delRole != null)
-                        {
-                            await RemoveRoleNameFromCsv(delRole.Name);
-                            _context.Roles.Remove(delRole);
-                            await _context.SaveChangesAsync();
-                            await AuditCrudAsync("role_delete", "role", delRole.RoleId.ToString(), "Role deleted",
-                                oldValues: new { delRole.RoleId, delRole.Name, delRole.Description, delRole.IsActive });
-                            TempData["Message"] = "Rol silindi.";
-                            TempData["MessageType"] = "success";
-                        }
+                        ApplyResult(await _roleService.DeleteAsync(id));
                         break;
                     case "create_category":
                         ApplyResult(await _categoryService.CreateAsync(
@@ -1487,7 +1428,7 @@ ORDER BY p.parameter_id;";
             await _context.SaveChangesAsync();
             if (!string.Equals(oldName, name, StringComparison.OrdinalIgnoreCase))
             {
-                await ReplaceRoleNameInCsv(oldName, name);
+                await _roleService.PropagateRenameToReportAllowedRolesAsync(oldName, name);
             }
 
             TempData["Message"] = "Rol guncellendi.";
@@ -1755,80 +1696,6 @@ ORDER BY p.parameter_id;";
             return names.Count == 0 ? "" : string.Join(",", names);
         }
 
-        private async Task ReplaceRoleNameInCsv(string oldName, string newName)
-        {
-            if (string.IsNullOrWhiteSpace(oldName) || string.IsNullOrWhiteSpace(newName))
-            {
-                return;
-            }
-
-            // M-03: User.Roles CSV deprecate — UserRole junction FK ile otomatik guncellenir, loop gerek yok.
-            var reports = await _context.ReportCatalog.ToListAsync();
-            foreach (var report in reports)
-            {
-                var updated = ReplaceCsvValue(report.AllowedRoles, oldName, newName);
-                if (!string.Equals(updated, report.AllowedRoles, StringComparison.Ordinal))
-                {
-                    report.AllowedRoles = updated;
-                }
-            }
-
-            await _context.SaveChangesAsync();
-        }
-
-        private async Task RemoveRoleNameFromCsv(string roleName)
-        {
-            if (string.IsNullOrWhiteSpace(roleName))
-            {
-                return;
-            }
-
-            // M-03: User.Roles CSV deprecate — UserRole junction FK ile otomatik yonetilir.
-            var reports = await _context.ReportCatalog.ToListAsync();
-            foreach (var report in reports)
-            {
-                var updated = RemoveCsvValue(report.AllowedRoles, roleName);
-                if (!string.Equals(updated, report.AllowedRoles, StringComparison.Ordinal))
-                {
-                    report.AllowedRoles = updated;
-                }
-            }
-
-            await _context.SaveChangesAsync();
-        }
-
-        private static string ReplaceCsvValue(string csv, string oldValue, string newValue)
-        {
-            if (string.IsNullOrWhiteSpace(csv))
-            {
-                return "";
-            }
-
-            var values = csv
-                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-                .Select(v => string.Equals(v, oldValue, StringComparison.OrdinalIgnoreCase) ? newValue : v)
-                .Where(v => !string.IsNullOrWhiteSpace(v))
-                .Distinct(StringComparer.OrdinalIgnoreCase)
-                .ToList();
-
-            return values.Count == 0 ? "" : string.Join(",", values);
-        }
-
-        private static string RemoveCsvValue(string csv, string valueToRemove)
-        {
-            if (string.IsNullOrWhiteSpace(csv))
-            {
-                return "";
-            }
-
-            var values = csv
-                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-                .Where(v => !string.Equals(v, valueToRemove, StringComparison.OrdinalIgnoreCase))
-                .Where(v => !string.IsNullOrWhiteSpace(v))
-                .Distinct(StringComparer.OrdinalIgnoreCase)
-                .ToList();
-
-            return values.Count == 0 ? "" : string.Join(",", values);
-        }
+        // M-01: Role CSV propagation helper'lari Services/RoleManagementService'e tasindi.
     }
 }
