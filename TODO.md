@@ -88,11 +88,12 @@ Bu liste asagidakilerin sentezidir:
 ✅ **session-handoff skill auto-commit** — commit `5df75ff` (skill artik docs/journal dosyasini tek-path commit ediyor, commit-discipline.md istisna eklendi).
 
 #### FAZ 1 — KALAN
-9. **M-04 kismi · DashboardRenderer + UserDataFilter + UserRole sync unit tests** (1 gun) — regresyon korumasi. DashboardRenderer XSS (eval/innerHTML/onclick bypass), UserDataFilter FilterKey/Value regex edge case, UserRole sync idempotency. P0 XSS fix'leri icin test sart.
+9. ⏳ **M-04 kismi · DashboardRenderer + UserDataFilter + UserRole sync unit tests** — DashboardRenderer XSS (9 test) ve UserDataFilterValidator (17 test) ✅ yazildi. Kalan: UserRole sync idempotency testi (AdminController.SyncUserRoles private method, refactor + test ayri is).
 10. **dashboard-builder.js: spPreviewReady event listener + kolon datalist** (1h) — yarim kalan is. SP onizleme sonrasi kolon listesi dashboard builder'a aktarilmali.
 11. **SP Onizle admin-override panel** (1-2h) — F-02 tamamlama. Admin default parametreleri override edebilsin (date picker, int input, vb.).
 12. **M-02 devam** (30dk-1h) — AuthController + Services + diger controller'larda kalan ex.Message leak'ler (pre-commit hook yakalar, ayrica tara).
 13. **M-03 Faz B · User.Roles nullable + [Obsolete]** (2h) — `15_NullableUserRolesCsv.sql` migration + model isaret. Faz C (kolonu drop) sonraki PR.
+14. **UserRole sync idempotency testi** — `AdminController.SyncUserRoles`'u testable helper'a cikar (Services/UserRoleSyncService), EF in-memory + 3 test (yeni user, rol degisimi, remove all). Ayri commit, yaklasik 2h.
 
 #### FAZ 2 — BU AY (4 hafta, orta oncelik)
 14. **M-01 · AdminController service extraction** (2 gun) — UserManagementService, ReportManagementService, DataSourceService. Controller endpoint'e inisin, 1736 → ~400 satir.

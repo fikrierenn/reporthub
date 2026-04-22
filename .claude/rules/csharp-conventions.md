@@ -6,6 +6,21 @@ paths:
 
 # C# Konvansiyonları
 
+## Dosya Boyutu Disiplini
+
+**Kural:** Yeni yazılan/düzenlenen C# dosyaları **300 satırın altında** kalmalı. 500 satır **kırmızı çizgi** — bir sonraki PR'da split zorunlu.
+
+**Neden:** Tek dosyada iç içe 7 feature (AdminController 1736 satır örneği) merge conflict, test zorluğu, yeni geliştirici onboarding yükü üretir. Solo dev için bile context switch maliyeti.
+
+**Uygulama:**
+- Yeni controller: endpoint çoksa servis/service layer'a bölme (örn. `UserManagementService`, `ReportManagementService`).
+- Yeni model: ilgili olmayan alt modeller ayrı dosyaya.
+- Util/helper: 5+ public method varsa scope bazlı ayır.
+- **Mevcut büyük dosyalar** (legacy): TODO maddesi + ADR "Known debt" + faz planla. Touch ettikçe azaltmaya çalış.
+
+**Snapshot (22 Nisan 2026):**
+- `AdminController.cs` 1736 satır — **anti-pattern**. TODO M-01 (Faz 2) service extraction.
+
 ## Controller Action'ları
 
 - **Async:** `public async Task<IActionResult> ActionName(...)`.

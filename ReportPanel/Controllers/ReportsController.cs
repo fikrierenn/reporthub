@@ -16,11 +16,7 @@ namespace ReportPanel.Controllers
     [Authorize]
     public class ReportsController : Controller
     {
-        // G-03: Multi-tenant data filter whitelist'leri.
-        // FilterKey SP parametre adina donustugu icin T-SQL identifier kurallarina uymali.
-        // FilterValue STRING_SPLIT ile CSV olarak parse ediliyor — sadece alfanumerik + virgul + tire + alt tire + nokta + bosluk.
-        private static readonly Regex FilterKeyRegex = new(@"^[a-zA-Z_][a-zA-Z0-9_]{0,62}$", RegexOptions.Compiled);
-        private static readonly Regex FilterValueRegex = new(@"^[a-zA-Z0-9,_\-\. ]+$", RegexOptions.Compiled);
+        // G-03: Multi-tenant data filter whitelist'i UserDataFilterValidator'da (test edilebilir).
 
         private readonly ReportPanelContext _context;
         private readonly AuditLogService _auditLog;
@@ -891,10 +887,9 @@ namespace ReportPanel.Controllers
 
             if (!filters.Any()) return; // filtre yok = tümünü gör
 
-            // G-03: Whitelist. FilterKey T-SQL identifier kurallarina uymali,
-            // FilterValue STRING_SPLIT safe karakter setinde olmali.
+            // G-03: UserDataFilterValidator (whitelist + regex).
             var validFilters = filters
-                .Where(f => FilterKeyRegex.IsMatch(f.FilterKey) && FilterValueRegex.IsMatch(f.FilterValue))
+                .Where(f => UserDataFilterValidator.IsValid(f.FilterKey, f.FilterValue))
                 .ToList();
 
             // Reject edilenleri audit log'a yaz (multi-tenant ihlal sinyali olabilir)
