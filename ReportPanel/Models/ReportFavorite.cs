@@ -10,7 +10,7 @@ namespace ReportPanel.Models
         [Required]
         public int ReportId { get; set; }
 
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         public User? User { get; set; }
         public ReportCatalog? Report { get; set; }

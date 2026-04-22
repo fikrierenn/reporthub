@@ -21,7 +21,7 @@ namespace ReportPanel.Models
         [Required]
         public string ParamsJson { get; set; } = string.Empty;
         
-        public DateTime RunAt { get; set; } = DateTime.Now;
+        public DateTime RunAt { get; set; } = DateTime.UtcNow;
         
         public int? DurationMs { get; set; }
         

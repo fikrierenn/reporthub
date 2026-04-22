@@ -115,7 +115,9 @@ Bu liste asagidakilerin sentezidir:
 25. **M-03 Faz C · User.Roles kolon drop** (30dk-1h) — `16_DropUserRolesCsv.sql` + model field sil. ADR-003 "cok sonra" — veri validation + Faz B'nin DB'de yayginlasmasi sonra.
 26. **ReportCatalog.AllowedRoles CSV deprecate** (1 gun) — ADR-004 adayi. ReportAllowedRole junction birincil, CSV kaldir.
 27. **dashboard-builder.js split** (2h) — dosya 567 satir (500 kirmizi cizgi). Mantikli split: `dashboard-builder-core.js` (state + render + events) + `dashboard-builder-forms.js` (component forms + validators).
-28. **DateTime.Now → DateTime.UtcNow sweep** (1-2h) — kismen kapandi (`0f73478` dokunulan 4 usage). Kalan: DashboardController, AuthController, ProfileController, Models/* default'lari. Timezone konvansiyonu icin kucuk ADR gerek (SP'ler + seed'ler local time varsayiyor olabilir).
+28. ✅ **DateTime.Now → DateTime.UtcNow sweep (app kodu / ADR-006 Faz C)** — tum 19 usage UtcNow'a cevrildi. ADR-006 yazildi. Takip eden iki ayri is:
+    - **Faz D · DB DEFAULT `GETDATE()` → `GETUTCDATE()`** (2-3h) — 14+ DEFAULT constraint (02_CreateTables.sql + Migrations/*). ALTER TABLE DROP CONSTRAINT + ADD CONSTRAINT migration + backup gerekli.
+    - **Faz E · Veri shift + SP/seed hizalama** (yarim gun) — eski "naive-local" satirlari UtcNow ile hizala (tum tarih kolonlarinda `-180 dk`). SP'lerde `GETDATE()` → `GETUTCDATE()` audit. 03_SeedData.sql guncelleme. Backup/rollback plani sart.
 
 #### FAZ 3 — BU CEYREK (3 ay, dusuk oncelik / temizlik)
 29. **M-06 · EF Core Migrations gecisi** (1 gun) — mevcut semayi baseline yap, yeni degisiklikler migration. Database/legacy/ olustur.

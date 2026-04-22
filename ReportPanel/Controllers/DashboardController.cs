@@ -46,7 +46,8 @@ namespace ReportPanel.Controllers
             model.ReportCount = accessibleReports.Count;
             model.RecentReports = accessibleReports.Take(5).ToList();
 
-            var startOfMonth = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
+            var nowUtc = DateTime.UtcNow;
+            var startOfMonth = new DateTime(nowUtc.Year, nowUtc.Month, 1, 0, 0, 0, DateTimeKind.Utc);
             var monthlyRunCount = await _context.AuditLogs
                 .CountAsync(l => l.Username == userName &&
                                  l.EventType == "report_run" &&

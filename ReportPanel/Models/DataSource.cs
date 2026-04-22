@@ -17,7 +17,7 @@ namespace ReportPanel.Models
         
         public bool IsActive { get; set; } = true;
         
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         
         // Navigation property
         public virtual ICollection<ReportCatalog> Reports { get; set; } = new List<ReportCatalog>();

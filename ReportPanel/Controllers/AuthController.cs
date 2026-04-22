@@ -101,8 +101,8 @@ namespace ReportPanel.Controllers
                         IsAdUser = true,
                         IsActive = false,
                         PasswordHash = PasswordHasher.CreateHash(Guid.NewGuid().ToString("N")),
-                        CreatedAt = DateTime.Now,
-                        UpdatedAt = DateTime.Now
+                        CreatedAt = DateTime.UtcNow,
+                        UpdatedAt = DateTime.UtcNow
                     };
 
                     _context.Users.Add(pendingUser);
@@ -232,8 +232,8 @@ namespace ReportPanel.Controllers
                 return;
             }
 
-            user.LastLoginAt = DateTime.Now;
-            user.UpdatedAt = DateTime.Now;
+            user.LastLoginAt = DateTime.UtcNow;
+            user.UpdatedAt = DateTime.UtcNow;
             await _context.SaveChangesAsync();
         }
 
