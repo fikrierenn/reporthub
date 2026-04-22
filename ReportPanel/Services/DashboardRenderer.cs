@@ -81,6 +81,27 @@ namespace ReportPanel.Services
                 sb.AppendLine("</div>");
             }
 
+            // ADR-007 Faz 1: required detect (enforce Faz 4). Contract'taki required:true bir result
+            // SP'den dönmüyorsa veya 0 satırsa uyari banner'i bas — throw yok.
+            if (config.ResultContract != null && config.ResultContract.Count > 0)
+            {
+                var missingRequired = new List<string>();
+                foreach (var kv in config.ResultContract)
+                {
+                    if (!kv.Value.Required) continue;
+                    var idx = kv.Value.ResultSet;
+                    if (idx < 0 || idx >= resultSets.Count || resultSets[idx].Count == 0)
+                        missingRequired.Add(kv.Key);
+                }
+                if (missingRequired.Count > 0)
+                {
+                    sb.AppendLine("<div class='bg-yellow-50 border border-yellow-300 rounded-lg p-3 mb-4 flex items-start gap-2'>");
+                    sb.AppendLine("  <i class='fas fa-exclamation-triangle text-yellow-600 mt-0.5'></i>");
+                    sb.AppendLine($"  <span class='text-sm text-yellow-800'>Eksik zorunlu veri: {Esc(string.Join(", ", missingRequired))}. Dashboard kısmi gösteriliyor.</span>");
+                    sb.AppendLine("</div>");
+                }
+            }
+
             // Tab contents
             var gridCols = config.Layout == "compact" ? "grid-cols-2" : config.Layout == "wide" ? "grid-cols-1" : "grid-cols-4";
 
@@ -93,17 +114,22 @@ namespace ReportPanel.Services
                 foreach (var comp in config.Tabs[t].Components)
                 {
                     var spanCls = comp.Span > 1 ? $" col-span-{comp.Span}" : "";
-                    var rs = config.ResolveResultSet(comp);
+                    var rs = config.ResolveResultSet(comp, resultSets.Count);
+                    if (rs is null)
+                    {
+                        RenderMissingResultPlaceholder(sb, comp, spanCls);
+                        continue;
+                    }
                     switch (comp.Type)
                     {
                         case "kpi":
-                            RenderKpi(sb, comp, spanCls, rs);
+                            RenderKpi(sb, comp, spanCls, rs.Value);
                             break;
                         case "chart":
-                            RenderChart(sb, comp, spanCls, rs);
+                            RenderChart(sb, comp, spanCls, rs.Value);
                             break;
                         case "table":
-                            RenderTable(sb, comp, spanCls, rs);
+                            RenderTable(sb, comp, spanCls, rs.Value);
                             break;
                         default:
                             RenderRemovedWidget(sb, comp, spanCls);
@@ -342,6 +368,7 @@ document.querySelectorAll('[data-tbl]').forEach(function(el) {
         }
 
         // ADR-007: bilinmeyen widget type icin placeholder (Codaxy pattern). Throw yok, dashboard cokmesin.
+        // Debug suresini azaltmak icin type + id gorunur yazilir.
         private static void RenderRemovedWidget(StringBuilder sb, DashboardComponent comp, string spanCls)
         {
             sb.AppendLine($"<div class='bg-yellow-50 border border-yellow-200 rounded-xl p-5{spanCls}'>");
@@ -349,9 +376,37 @@ document.querySelectorAll('[data-tbl]').forEach(function(el) {
             sb.AppendLine($"    <i class='fas fa-exclamation-triangle text-yellow-500 mt-1'></i>");
             sb.AppendLine($"    <div>");
             sb.AppendLine($"      <h3 class='text-sm font-semibold text-yellow-800'>Bilinmeyen bileşen tipi</h3>");
-            sb.AppendLine($"      <p class='text-xs text-yellow-700 mt-1'>\"{Esc(comp.Type)}\" tipi bu sürümde desteklenmiyor.</p>");
+            sb.AppendLine($"      <p class='text-xs text-yellow-700 mt-1'>Tip: <code class='bg-yellow-100 px-1 rounded'>{Esc(comp.Type)}</code>");
+            if (!string.IsNullOrWhiteSpace(comp.Id))
+                sb.Append($" &middot; Id: <code class='bg-yellow-100 px-1 rounded'>{Esc(comp.Id)}</code>");
+            sb.AppendLine("</p>");
             if (!string.IsNullOrWhiteSpace(comp.Title))
                 sb.AppendLine($"      <p class='text-xs text-yellow-600 mt-1'>Başlık: {Esc(comp.Title)}</p>");
+            sb.AppendLine($"    </div>");
+            sb.AppendLine($"  </div>");
+            sb.AppendLine($"</div>");
+        }
+
+        // ADR-007 Faz 1: binding cozumlenemedi (unknown contract name / out-of-bounds / hic binding yok).
+        // Faz 4'te dashboard_result_unresolved audit event eklenecek.
+        private static void RenderMissingResultPlaceholder(StringBuilder sb, DashboardComponent comp, string spanCls)
+        {
+            string bindInfo;
+            if (!string.IsNullOrEmpty(comp.Result))
+                bindInfo = $"result: &quot;{Esc(comp.Result)}&quot;";
+            else if (comp.ResultSet.HasValue)
+                bindInfo = $"resultSet: {comp.ResultSet.Value}";
+            else
+                bindInfo = "(binding yok)";
+
+            sb.AppendLine($"<div class='bg-orange-50 border border-orange-200 rounded-xl p-5{spanCls}'>");
+            sb.AppendLine($"  <div class='flex items-start gap-3'>");
+            sb.AppendLine($"    <i class='fas fa-unlink text-orange-500 mt-1'></i>");
+            sb.AppendLine($"    <div>");
+            sb.AppendLine($"      <h3 class='text-sm font-semibold text-orange-800'>Veri bağlantısı çözümlenemedi</h3>");
+            sb.AppendLine($"      <p class='text-xs text-orange-700 mt-1'>Widget: <code class='bg-orange-100 px-1 rounded'>{Esc(string.IsNullOrWhiteSpace(comp.Title) ? comp.Type : comp.Title)}</code> &middot; {bindInfo}</p>");
+            if (!string.IsNullOrWhiteSpace(comp.Id))
+                sb.AppendLine($"      <p class='text-xs text-orange-600 mt-1'>Id: <code class='bg-orange-100 px-1 rounded'>{Esc(comp.Id)}</code></p>");
             sb.AppendLine($"    </div>");
             sb.AppendLine($"  </div>");
             sb.AppendLine($"</div>");

@@ -45,17 +45,43 @@ Sorunlar:
 - `shape` ve `required` schema'da **şimdi** tanımlı — ileride runtime validation eklendiğinde config rewrite gerekmez.
 - Runtime enforcement **Faz 4**'te devreye girer (bkz. faz tablosu).
 
-### Precedence (backward-compat)
+### Precedence (backward-compat + bounds check)
 
-Renderer resolve kuralı:
+Renderer resolve kuralı — `DashboardConfig.ResolveResultSet(comp, resultSetCount)` nullable int döner:
 
 ```csharp
-if (comp.Result != null && ResultContract.ContainsKey(comp.Result))
-    return ResultContract[comp.Result].ResultSet;
-return comp.ResultSet;  // legacy fallback
+public int? ResolveResultSet(DashboardComponent comp, int resultSetCount)
+{
+    // 1. name-based binding
+    if (!string.IsNullOrEmpty(comp.Result))
+    {
+        if (ResultContract == null || !ResultContract.TryGetValue(comp.Result, out var entry))
+            return null; // unknown name
+        if (entry.ResultSet < 0 || entry.ResultSet >= resultSetCount)
+            return null; // out of bounds
+        return entry.ResultSet;
+    }
+
+    // 2. legacy index binding
+    if (comp.ResultSet.HasValue)
+    {
+        var idx = comp.ResultSet.Value;
+        if (idx < 0 || idx >= resultSetCount) return null;
+        return idx;
+    }
+
+    // 3. no binding
+    return null;
+}
 ```
 
+**`null` döndüğünde** renderer `RenderMissingResultPlaceholder` basar (throw yok). `-1` sentinel **kullanılmaz** — contract UI davranışına bağlı kalmasın. Faz 4'te null case `dashboard_result_unresolved` audit event tetikleyecek.
+
 Yeni config'ler `result` kullanır. Eski `resultSet: N` yazan config'ler Faz 5 migration'ı öncesine kadar çalışmaya devam eder. Faz 6'da legacy fallback kaldırılır.
+
+### `required` detect (enforce Faz 4)
+
+Render başında `ResultContract`'taki `required: true` entry'ler kontrol edilir — ilgili result set SP'den dönmedi veya 0 satırsa dashboard üstüne sarı uyarı banner'i ("Eksik zorunlu veri: X, Y") basılır. Dashboard bütünüyle çökmez. Faz 4'te audit event + kullanıcı mesajı sertleştirilir.
 
 ### Unknown widget type → placeholder (Codaxy pattern)
 

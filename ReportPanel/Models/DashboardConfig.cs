@@ -16,27 +16,38 @@ namespace ReportPanel.Models
         [JsonPropertyName("tabs")]
         public List<DashboardTab> Tabs { get; set; } = new();
 
-        // ADR-007: Widget.Result > Widget.ResultSet precedence. Legacy fallback open until Faz 6.
+        // ADR-007 Faz 1: Widget.Result > Widget.ResultSet precedence + bounds check.
         //
-        // Final net kural:
-        //   1. comp.Result != null + contract hit     -> contract[name].ResultSet
-        //   2. comp.ResultSet.HasValue                -> comp.ResultSet.Value (legacy)
-        //   3. else                                   -> -1 (soft-fail sinyali, renderer placeholder'a dusurur)
+        // Resolver kurali:
+        //   1. comp.Result != null        ->  contract hit + bounds OK  ? entry.ResultSet : null
+        //   2. comp.ResultSet.HasValue    ->  bounds OK                 ? comp.ResultSet.Value : null
+        //   3. hicbir binding yok         ->  null
         //
-        // Faz 4'te (-1) durumu audit event ile loglanacak (dashboard_result_unresolved).
-        public int ResolveResultSet(DashboardComponent comp)
+        // null donen durumda renderer placeholder basar (Faz 4'te audit event eklenecek).
+        // -1 sentinel KULLANILMIYOR — contract UI davranisina bagli kalmasin.
+        public int? ResolveResultSet(DashboardComponent comp, int resultSetCount)
         {
-            if (!string.IsNullOrEmpty(comp.Result)
-                && ResultContract != null
-                && ResultContract.TryGetValue(comp.Result, out var entry))
+            // 1. name-based binding
+            if (!string.IsNullOrEmpty(comp.Result))
             {
+                if (ResultContract == null || !ResultContract.TryGetValue(comp.Result, out var entry))
+                    return null; // unknown name
+                if (entry.ResultSet < 0 || entry.ResultSet >= resultSetCount)
+                    return null; // out of bounds
                 return entry.ResultSet;
             }
+
+            // 2. legacy index binding
             if (comp.ResultSet.HasValue)
             {
-                return comp.ResultSet.Value;
+                var idx = comp.ResultSet.Value;
+                if (idx < 0 || idx >= resultSetCount)
+                    return null;
+                return idx;
             }
-            return -1;
+
+            // 3. no binding
+            return null;
         }
     }
 
