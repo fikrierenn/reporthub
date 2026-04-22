@@ -5,6 +5,7 @@ _Kapsam: Commit/branch/merge pratikleri. `paths:` yok — compact sonrası bile 
 ## Commit Kuralları
 
 1. **Kullanıcı açıkça istemedikçe commit etme.** `"commit et"`, `"commit'le"`, `"git commit"` gibi net komut gelmeden commit yok.
+   - **İstisna:** `session-handoff` skill'i, yalnızca `docs/journal/YYYY-MM-DD.md` dosyasını otomatik commit eder (başka path'e dokunmaz). Gerekçe: handoff artifactı dosyaya yazılıp bırakılırsa her oturum başında uncommitted olarak görünür ve pre-commit hook'u gürültü yapar.
 
 2. **Bir commit = bir konu.** AI 3 katman birden çıkarırsa → 3 ayrı commit'e böl.
 
