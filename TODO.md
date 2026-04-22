@@ -90,7 +90,7 @@ Bu liste asagidakilerin sentezidir:
 #### FAZ 1 — KALAN
 9. ⏳ **M-04 kismi · DashboardRenderer + UserDataFilter + UserRole sync unit tests** — DashboardRenderer XSS (9 test) ve UserDataFilterValidator (17 test) ✅ yazildi. Kalan: UserRole sync idempotency testi (AdminController.SyncUserRoles private method, refactor + test ayri is).
 10. ✅ **dashboard-builder.js: spPreviewReady event listener + kolon datalist** — (commit sonradan doldurulacak). document.addEventListener('spPreviewReady'), populateColumnDatalist, attachListAttribute (compColumn, compLabelCol, ds-col, col-key). Browser dogrulandi: 7 result set -> 51 distinct kolon datalist'te.
-11. **SP Onizle admin-override panel** (1-2h) — F-02 tamamlama. Admin default parametreleri override edebilsin (date picker, int input, vb.).
+11. ✅ **SP Onizle admin-override panel** — F-02 tamamlandi. ProcParams short-name destegi, SpPreview paramsJson overrride, frontend inline typed inputs (date/number/text/checkbox). Browser dogrulandi: `paramsJson={"Tarih":"2026-04-20","FmTop":"5"}` override -> SP 7 result set dondu.
 12. **M-02 devam** (30dk-1h) — AuthController + Services + diger controller'larda kalan ex.Message leak'ler (pre-commit hook yakalar, ayrica tara).
 13. **M-03 Faz B · User.Roles nullable + [Obsolete]** (2h) — `15_NullableUserRolesCsv.sql` migration + model isaret. Faz C (kolonu drop) sonraki PR.
 14. **UserRole sync idempotency testi** — `AdminController.SyncUserRoles`'u testable helper'a cikar (Services/UserRoleSyncService), EF in-memory + 3 test (yeni user, rol degisimi, remove all). Ayri commit, yaklasik 2h.

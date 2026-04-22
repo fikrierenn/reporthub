@@ -313,6 +313,74 @@
         dsSelect.addEventListener('change', loadSpList);
         loadSpList();
 
+        // ---- F-02 override paneli: admin SP parametrelerini default yerine ozel deger verebilsin ----
+        var overridePanel = document.createElement('div');
+        overridePanel.id = 'spPreviewParams';
+        overridePanel.className = 'mt-2 p-3 bg-gray-50 rounded-lg border border-gray-200 text-xs hidden';
+        if (previewBtn) previewBtn.parentNode.insertBefore(overridePanel, previewBtn);
+
+        function loadSpParams() {
+            var dsKey = dsSelect.value;
+            var proc = (procInput.value || '').trim();
+            if (!dsKey || !proc) { overridePanel.classList.add('hidden'); return; }
+            fetch('/Admin/ProcParams?dataSourceKey=' + encodeURIComponent(dsKey) + '&procName=' + encodeURIComponent(proc))
+                .then(function (r) { return r.ok ? r.json() : null; })
+                .then(function (data) {
+                    if (!data || !data.fields || data.fields.length === 0) { overridePanel.classList.add('hidden'); return; }
+                    renderOverridePanel(data.fields);
+                })
+                .catch(function () { overridePanel.classList.add('hidden'); });
+        }
+
+        function renderOverridePanel(fields) {
+            overridePanel.textContent = '';
+            overridePanel.classList.remove('hidden');
+            var header = document.createElement('div');
+            header.className = 'font-semibold text-gray-600 mb-2';
+            header.textContent = 'Önizleme parametreleri (opsiyonel — boş bırakılırsa tip-bazlı default kullanılır)';
+            overridePanel.appendChild(header);
+            var grid = document.createElement('div');
+            grid.className = 'grid grid-cols-2 md:grid-cols-3 gap-2';
+            overridePanel.appendChild(grid);
+            fields.forEach(function (p) {
+                var wrap = document.createElement('div');
+                var lbl = document.createElement('label');
+                lbl.className = 'block text-gray-500 text-[11px] mb-0.5';
+                lbl.textContent = '@' + p.name + ' (' + p.type + ')';
+                var inp = document.createElement('input');
+                inp.className = 'sp-override w-full px-2 py-1 border border-gray-300 rounded text-xs';
+                inp.dataset.paramName = p.name;
+                inp.dataset.paramType = p.type;
+                switch (p.type) {
+                    case 'date': inp.type = 'date'; break;
+                    case 'number': inp.type = 'number'; break;
+                    case 'decimal': inp.type = 'number'; inp.step = 'any'; break;
+                    case 'checkbox': inp.type = 'checkbox'; break;
+                    default: inp.type = 'text';
+                }
+                inp.placeholder = 'default';
+                wrap.appendChild(lbl);
+                wrap.appendChild(inp);
+                grid.appendChild(wrap);
+            });
+        }
+
+        dsSelect.addEventListener('change', loadSpParams);
+        procInput.addEventListener('change', loadSpParams);
+        procInput.addEventListener('blur', loadSpParams);
+        loadSpParams();
+
+        function collectOverrides() {
+            var overrides = {};
+            overridePanel.querySelectorAll('.sp-override').forEach(function (el) {
+                var name = el.dataset.paramName;
+                var type = el.dataset.paramType;
+                var value = type === 'checkbox' ? (el.checked ? '1' : '') : (el.value || '');
+                if (value !== '') overrides[name] = value;
+            });
+            return overrides;
+        }
+
         // Preview: SP'yi calistir, sonuclari panelde goster
         if (previewBtn && previewPanel) {
             previewBtn.addEventListener('click', function () {
@@ -326,6 +394,10 @@
 
                 var url = '/Admin/SpPreview?dataSourceKey=' + encodeURIComponent(dsKey) +
                           '&procName=' + encodeURIComponent(proc);
+                var overrides = collectOverrides();
+                if (Object.keys(overrides).length > 0) {
+                    url += '&paramsJson=' + encodeURIComponent(JSON.stringify(overrides));
+                }
                 fetch(url)
                     .then(function (r) { return r.json(); })
                     .then(function (data) { renderPreview(data); })

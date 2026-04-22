@@ -432,8 +432,22 @@ namespace ReportPanel.Controllers
                 return BadRequest("Missing parameters.");
             }
 
-            var match = Regex.Match(procName.Trim(), @"^(?<schema>[A-Za-z_][A-Za-z0-9_]*)\.(?<proc>[A-Za-z_][A-Za-z0-9_]*)$");
-            if (!match.Success)
+            // F-02 takip: SP adi schema.proc formatinda veya sadece proc adi olarak gelebilir.
+            // Sadece proc verilmisse varsayilan schema = dbo.
+            var trimmed = procName.Trim();
+            var match = Regex.Match(trimmed, @"^(?<schema>[A-Za-z_][A-Za-z0-9_]*)\.(?<proc>[A-Za-z_][A-Za-z0-9_]*)$");
+            string schemaName, procShortName;
+            if (match.Success)
+            {
+                schemaName = match.Groups["schema"].Value;
+                procShortName = match.Groups["proc"].Value;
+            }
+            else if (Regex.IsMatch(trimmed, @"^[A-Za-z_][A-Za-z0-9_]*$"))
+            {
+                schemaName = "dbo";
+                procShortName = trimmed;
+            }
+            else
             {
                 return BadRequest("Invalid procedure name.");
             }
@@ -446,9 +460,6 @@ namespace ReportPanel.Controllers
             {
                 return BadRequest("Data source not found.");
             }
-
-            var schemaName = match.Groups["schema"].Value;
-            var procShortName = match.Groups["proc"].Value;
 
             var parameters = new List<object>();
             const string sql = @"
@@ -618,10 +629,12 @@ ORDER BY p.parameter_id;";
             return Json(new { success = true, procedures = procs });
         }
 
-        // Stored procedure onizleme: SP'yi bos parametrelerle calistir, result set'lerin kolon adlari + ilk 10 satirini don
+        // Stored procedure onizleme: SP'yi tip-bazli default'larla calistir; admin override
+        // isterse paramsJson query parametresiyle (key = param adi @ prefix'siz, value = string)
+        // belirli parametrelerin degerini gecersiz kilar.
         [HttpGet]
         [Route("Admin/SpPreview")]
-        public async Task<IActionResult> SpPreview(string dataSourceKey, string procName, int maxRows = 10)
+        public async Task<IActionResult> SpPreview(string dataSourceKey, string procName, int maxRows = 10, string? paramsJson = null)
         {
             if (string.IsNullOrWhiteSpace(dataSourceKey) || string.IsNullOrWhiteSpace(procName))
                 return Json(new { success = false, error = "DataSource ve ProcName gerekli." });
@@ -634,6 +647,24 @@ ORDER BY p.parameter_id;";
             // maxRows guvenlik: 1..100 arasinda olsun
             if (maxRows < 1) maxRows = 10;
             if (maxRows > 100) maxRows = 100;
+
+            // Admin override: parametre adi -> string deger haritasi (case-insensitive).
+            Dictionary<string, string> overrides = new(StringComparer.OrdinalIgnoreCase);
+            if (!string.IsNullOrWhiteSpace(paramsJson))
+            {
+                try
+                {
+                    var parsed = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(paramsJson);
+                    if (parsed != null)
+                    {
+                        foreach (var kv in parsed)
+                        {
+                            if (!string.IsNullOrWhiteSpace(kv.Key)) overrides[kv.Key.TrimStart('@')] = kv.Value ?? "";
+                        }
+                    }
+                }
+                catch { /* gecersiz JSON -> override yok, default'larla devam */ }
+            }
 
             var resultSets = new List<object>();
             try
@@ -660,8 +691,7 @@ ORDER BY p.parameter_id;";
                         if (string.IsNullOrWhiteSpace(pname)) continue;
                         var ptype = metaReader["DATA_TYPE"]?.ToString()?.ToLowerInvariant() ?? "";
 
-                        // F-02: SP NULL kabul etmezse patlamasin diye tip-bazli sensible default ver.
-                        // Admin gercek parametre degerini preview panelinden override edebilir (TODO).
+                        // F-02: SP NULL kabul etmezse patlamasin diye tip-bazli sensible default.
                         object defaultValue = ptype switch
                         {
                             "date" or "datetime" or "datetime2" or "smalldatetime" or "datetimeoffset" => DateTime.UtcNow.Date,
@@ -674,7 +704,31 @@ ORDER BY p.parameter_id;";
                             _ => DBNull.Value
                         };
 
-                        paramList.Add(new SqlParameter(pname, defaultValue));
+                        // F-02 override: admin'in verdigi deger varsa tip'e cast ederek default yerine kullan.
+                        var pnameClean = pname.TrimStart('@');
+                        object finalValue = defaultValue;
+                        if (overrides.TryGetValue(pnameClean, out var overrideRaw) && !string.IsNullOrWhiteSpace(overrideRaw))
+                        {
+                            finalValue = ptype switch
+                            {
+                                "date" or "datetime" or "datetime2" or "smalldatetime" or "datetimeoffset"
+                                    => DateTime.TryParse(overrideRaw, out var d) ? (object)d : defaultValue,
+                                "time"
+                                    => TimeSpan.TryParse(overrideRaw, out var t) ? (object)t : defaultValue,
+                                "int" or "bigint" or "smallint" or "tinyint"
+                                    => long.TryParse(overrideRaw, out var n) ? (object)n : defaultValue,
+                                "bit"
+                                    => overrideRaw == "1" || overrideRaw.Equals("true", StringComparison.OrdinalIgnoreCase),
+                                "decimal" or "numeric" or "money" or "smallmoney" or "float" or "real"
+                                    => decimal.TryParse(overrideRaw, System.Globalization.NumberStyles.Number, System.Globalization.CultureInfo.InvariantCulture, out var m) ? (object)m : defaultValue,
+                                "uniqueidentifier"
+                                    => Guid.TryParse(overrideRaw, out var g) ? (object)g : defaultValue,
+                                _
+                                    => overrideRaw
+                            };
+                        }
+
+                        paramList.Add(new SqlParameter(pname, finalValue));
                     }
                 }
                 catch { /* parametre cikartma basarisiz olursa yine de SP'yi parametresiz deneriz */ }
