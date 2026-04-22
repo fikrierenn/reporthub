@@ -63,6 +63,7 @@ Ayrıntılı kurallar `.claude/rules/` altında — burada sadece değişmez pre
 
 2. **Skill + agent + MCP aktif kullan.**
    - Multi-agent: `Explore` (keşif, audit), `Plan` (tasarım), `general-purpose` (araştırma). Paralel 2-3'e kadar.
+   - Proje skill'leri: `session-handoff` (oturum sonu journal + auto-commit), `plan-tracker` (TodoWrite ↔ TODO.md senkron).
    - Hazır skill'ler: `security-review`, `review`, `simplify`, `init`, `consolidate-memory`, `schedule`, `loop`, `claude-api`.
    - Gereken skill yoksa: `WebFetch`/`WebSearch` araştır, veya `.claude/skills/` altına yarat.
    - MCP'ler: `mcp__sqlserver__*` (DB), `mcp__Claude_in_Chrome__tabs_context_mcp` (browser test), `mcp__Claude_Preview__*` (live preview).
