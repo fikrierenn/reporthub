@@ -118,6 +118,13 @@ Bu liste asagidakilerin sentezidir:
 28. ✅ **DateTime.Now → DateTime.UtcNow sweep (app kodu / ADR-006 Faz C)** — tum 19 usage UtcNow'a cevrildi. ADR-006 yazildi. Takip eden iki ayri is:
     - **Faz D · DB DEFAULT `GETDATE()` → `GETUTCDATE()`** (2-3h) — 14+ DEFAULT constraint (02_CreateTables.sql + Migrations/*). ALTER TABLE DROP CONSTRAINT + ADD CONSTRAINT migration + backup gerekli.
     - **Faz E · Veri shift + SP/seed hizalama** (yarim gun) — eski "naive-local" satirlari UtcNow ile hizala (tum tarih kolonlarinda `-180 dk`). SP'lerde `GETDATE()` → `GETUTCDATE()` audit. 03_SeedData.sql guncelleme. Backup/rollback plani sart.
+29. **M-10 · ADR-007 Named Result Contract** (6 faz, ~1.5 gun toplam) — dashboard widget'larda index bagimliligini kaldir. `resultSet: N` → `result: "chartData"` name-based binding. Scope daraltildi (frontend rewrite / event bus / metadata-first SP REDDEDILDI). Kural: **declare now, enforce later** — shape field schema'da, enforcement Faz 4. Naming: camelCase. Fazlar:
+    - **Faz 1** (~2h) · ADR-007 doc + `DashboardConfig.ResultContract` dictionary + `DashboardComponent.Result` field + `DashboardRenderer` resolver (precedence: `Result > ResultSet`, legacy fallback).
+    - **Faz 2** (~3h) · `dashboard-builder.js` + admin form UI name-based binding. Widget editor'da result dropdown (isim listesi).
+    - **Faz 3** (~2h) · Admin save validation — hard: name unique, resultSet index valid, widget.result resolve. Soft: required-ama-kullanilmayan uyari.
+    - **Faz 4** (~1h) · Runtime **soft-fail** (direkt throw DEGIL): required result eksik/bos → kullaniciya "Veri bulunamadi" + `dashboard_required_result_missing` audit event.
+    - **Faz 5** (~2h) · Migration 18 — PDKS (7 RS) + Satis (7 RS) ConfigJson rewrite. **Idempotent**: `resultContract` yoksa uret, varsa atla. `Explore` agent ile her resultSet icin camelCase isim onerisi.
+    - **Faz 6** (~1h) · Legacy `resultSet: N` binding deprecate + renderer fallback kaldir (ayri PR, tum configler migrate edildikten sonra).
 
 #### FAZ 3 — BU CEYREK (3 ay, dusuk oncelik / temizlik)
 29. **M-06 · EF Core Migrations gecisi** (1 gun) — mevcut semayi baseline yap, yeni degisiklikler migration. Database/legacy/ olustur.

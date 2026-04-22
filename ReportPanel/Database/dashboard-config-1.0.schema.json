@@ -1,0 +1,102 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://reporthub.local/schemas/dashboard-config-1.0.schema.json",
+  "title": "Dashboard Config (v1)",
+  "description": "ADR-005 + ADR-007. ReportCatalog.DashboardConfigJson icin schema. Monaco/ACE editor autocomplete icin.",
+  "type": "object",
+  "required": ["tabs"],
+  "properties": {
+    "schemaVersion": {
+      "type": "integer",
+      "const": 1,
+      "description": "Config sema versiyonu. ADR-007 ile eklendi."
+    },
+    "layout": {
+      "type": "string",
+      "enum": ["standard", "compact", "wide"],
+      "default": "standard"
+    },
+    "resultContract": {
+      "type": "object",
+      "description": "Named result-set contract. Widget.result bu sozlukteki anahtarlari referans eder.",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["resultSet"],
+        "properties": {
+          "resultSet": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "SP'nin dondurdugu result set index'i (0-based)."
+          },
+          "required": {
+            "type": "boolean",
+            "default": false,
+            "description": "True ise runtime'da bu result eksik/bos olursa placeholder + audit event (Faz 4)."
+          },
+          "shape": {
+            "type": "string",
+            "enum": ["row", "table"],
+            "description": "Beklenen sekil. KPI widget'lari 'row' bekler, table/chart 'table'. Enforcement Faz 4."
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "tabs": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/definitions/tab" }
+    }
+  },
+  "definitions": {
+    "tab": {
+      "type": "object",
+      "required": ["components"],
+      "properties": {
+        "title": { "type": "string", "default": "Genel" },
+        "components": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/component" }
+        }
+      }
+    },
+    "component": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^w_[a-z]+_[a-z0-9]{6,}$",
+          "description": "Stabil widget id. Auto-gen on first save. Format: w_<type>_<hash>"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["kpi", "chart", "table"],
+          "description": "Bilinmeyen tipler 'removed widget' placeholder olarak render edilir (Codaxy pattern)."
+        },
+        "title": { "type": "string" },
+        "span": { "type": "integer", "minimum": 1, "maximum": 4, "default": 1 },
+        "color": { "type": "string" },
+        "icon": { "type": "string" },
+        "result": {
+          "type": "string",
+          "description": "ADR-007 name-based binding. resultContract'daki anahtari referans eder. Varsa resultSet'e tercih edilir."
+        },
+        "resultSet": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Legacy index-based binding. Faz 6'da kaldirilacak. result field'i varsa yok sayilir."
+        },
+        "agg": { "type": "string", "enum": ["count", "sum", "avg", "min", "max", "first", "countWhere"] },
+        "column": { "type": ["string", "null"] },
+        "condition": { "type": ["string", "null"], "enum": ["notNull", "isNull", null] },
+        "subtitle": { "type": ["string", "null"] },
+        "chartType": { "type": "string", "enum": ["line", "bar", "doughnut", "pie"] },
+        "labelColumn": { "type": ["string", "null"] },
+        "datasets": { "type": ["array", "null"] },
+        "columns": { "type": ["array", "null"] },
+        "clickDetail": { "type": "boolean", "default": false }
+      }
+    }
+  }
+}

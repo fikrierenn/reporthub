@@ -93,16 +93,20 @@ namespace ReportPanel.Services
                 foreach (var comp in config.Tabs[t].Components)
                 {
                     var spanCls = comp.Span > 1 ? $" col-span-{comp.Span}" : "";
+                    var rs = config.ResolveResultSet(comp);
                     switch (comp.Type)
                     {
                         case "kpi":
-                            RenderKpi(sb, comp, spanCls);
+                            RenderKpi(sb, comp, spanCls, rs);
                             break;
                         case "chart":
-                            RenderChart(sb, comp, spanCls);
+                            RenderChart(sb, comp, spanCls, rs);
                             break;
                         case "table":
-                            RenderTable(sb, comp, spanCls);
+                            RenderTable(sb, comp, spanCls, rs);
+                            break;
+                        default:
+                            RenderRemovedWidget(sb, comp, spanCls);
                             break;
                     }
                 }
@@ -273,10 +277,10 @@ document.querySelectorAll('[data-tbl]').forEach(function(el) {
             return sb.ToString();
         }
 
-        private static void RenderKpi(StringBuilder sb, DashboardComponent comp, string spanCls)
+        private static void RenderKpi(StringBuilder sb, DashboardComponent comp, string spanCls, int rs)
         {
             var c = GetColor(comp.Color);
-            var kpiData = JsonSerializer.Serialize(new { rs = comp.ResultSet, agg = comp.Agg, col = comp.Column ?? "", cond = comp.Condition ?? "" });
+            var kpiData = JsonSerializer.Serialize(new { rs, agg = comp.Agg, col = comp.Column ?? "", cond = comp.Condition ?? "" });
             kpiData = kpiData.Replace("\"", "&quot;");
 
             sb.AppendLine($"<div class='bg-white rounded-xl border border-gray-200 shadow-sm p-5{spanCls}'>");
@@ -292,7 +296,7 @@ document.querySelectorAll('[data-tbl]').forEach(function(el) {
             sb.AppendLine("</div>");
         }
 
-        private static void RenderChart(StringBuilder sb, DashboardComponent comp, string spanCls)
+        private static void RenderChart(StringBuilder sb, DashboardComponent comp, string spanCls, int rs)
         {
             var chartId = "chart_" + Guid.NewGuid().ToString("N")[..8];
             var datasets = (comp.Datasets ?? new()).Select(ds => new
@@ -303,7 +307,7 @@ document.querySelectorAll('[data-tbl]').forEach(function(el) {
             });
             var chartData = JsonSerializer.Serialize(new
             {
-                rs = comp.ResultSet,
+                rs,
                 type = comp.ChartType,
                 labelCol = comp.LabelColumn ?? "",
                 datasets
@@ -316,12 +320,12 @@ document.querySelectorAll('[data-tbl]').forEach(function(el) {
             sb.AppendLine("</div>");
         }
 
-        private static void RenderTable(StringBuilder sb, DashboardComponent comp, string spanCls)
+        private static void RenderTable(StringBuilder sb, DashboardComponent comp, string spanCls, int rs)
         {
             var cols = (comp.Columns ?? new()).Select(c => new { key = c.Key, label = c.Label, align = c.Align, color = c.Color ?? "" });
             var tblData = JsonSerializer.Serialize(new
             {
-                rs = comp.ResultSet,
+                rs,
                 cols,
                 click = comp.ClickDetail
             });
@@ -335,6 +339,22 @@ document.querySelectorAll('[data-tbl]').forEach(function(el) {
             sb.AppendLine($"    <table class='w-full text-sm' data-tbl='{tblData}'></table>");
             sb.AppendLine($"  </div>");
             sb.AppendLine("</div>");
+        }
+
+        // ADR-007: bilinmeyen widget type icin placeholder (Codaxy pattern). Throw yok, dashboard cokmesin.
+        private static void RenderRemovedWidget(StringBuilder sb, DashboardComponent comp, string spanCls)
+        {
+            sb.AppendLine($"<div class='bg-yellow-50 border border-yellow-200 rounded-xl p-5{spanCls}'>");
+            sb.AppendLine($"  <div class='flex items-start gap-3'>");
+            sb.AppendLine($"    <i class='fas fa-exclamation-triangle text-yellow-500 mt-1'></i>");
+            sb.AppendLine($"    <div>");
+            sb.AppendLine($"      <h3 class='text-sm font-semibold text-yellow-800'>Bilinmeyen bileşen tipi</h3>");
+            sb.AppendLine($"      <p class='text-xs text-yellow-700 mt-1'>\"{Esc(comp.Type)}\" tipi bu sürümde desteklenmiyor.</p>");
+            if (!string.IsNullOrWhiteSpace(comp.Title))
+                sb.AppendLine($"      <p class='text-xs text-yellow-600 mt-1'>Başlık: {Esc(comp.Title)}</p>");
+            sb.AppendLine($"    </div>");
+            sb.AppendLine($"  </div>");
+            sb.AppendLine($"</div>");
         }
 
         private static (string Bg, string Text, string Border, string Light) GetColor(string color)

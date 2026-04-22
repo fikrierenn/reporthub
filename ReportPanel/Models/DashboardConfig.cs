@@ -4,11 +4,52 @@ namespace ReportPanel.Models
 {
     public class DashboardConfig
     {
+        [JsonPropertyName("schemaVersion")]
+        public int SchemaVersion { get; set; } = 1;
+
         [JsonPropertyName("layout")]
         public string Layout { get; set; } = "standard";
 
+        [JsonPropertyName("resultContract")]
+        public Dictionary<string, ResultContractEntry>? ResultContract { get; set; }
+
         [JsonPropertyName("tabs")]
         public List<DashboardTab> Tabs { get; set; } = new();
+
+        // ADR-007: Widget.Result > Widget.ResultSet precedence. Legacy fallback open until Faz 6.
+        //
+        // Final net kural:
+        //   1. comp.Result != null + contract hit     -> contract[name].ResultSet
+        //   2. comp.ResultSet.HasValue                -> comp.ResultSet.Value (legacy)
+        //   3. else                                   -> -1 (soft-fail sinyali, renderer placeholder'a dusurur)
+        //
+        // Faz 4'te (-1) durumu audit event ile loglanacak (dashboard_result_unresolved).
+        public int ResolveResultSet(DashboardComponent comp)
+        {
+            if (!string.IsNullOrEmpty(comp.Result)
+                && ResultContract != null
+                && ResultContract.TryGetValue(comp.Result, out var entry))
+            {
+                return entry.ResultSet;
+            }
+            if (comp.ResultSet.HasValue)
+            {
+                return comp.ResultSet.Value;
+            }
+            return -1;
+        }
+    }
+
+    public class ResultContractEntry
+    {
+        [JsonPropertyName("resultSet")]
+        public int ResultSet { get; set; }
+
+        [JsonPropertyName("required")]
+        public bool Required { get; set; } = false;
+
+        [JsonPropertyName("shape")]
+        public string? Shape { get; set; } // "row" | "table" — enforcement Faz 4 (declare now, enforce later)
     }
 
     public class DashboardTab
@@ -22,8 +63,12 @@ namespace ReportPanel.Models
 
     public class DashboardComponent
     {
+        // ADR-007: Stabil widget id (auto-gen on first save). Immutable once set.
+        [JsonPropertyName("id")]
+        public string? Id { get; set; }
+
         [JsonPropertyName("type")]
-        public string Type { get; set; } = "kpi"; // kpi, chart, table
+        public string Type { get; set; } = "kpi"; // kpi, chart, table — unknown types render as "removed widget" placeholder
 
         [JsonPropertyName("title")]
         public string Title { get; set; } = "";
@@ -31,15 +76,20 @@ namespace ReportPanel.Models
         [JsonPropertyName("span")]
         public int Span { get; set; } = 1; // 1-4 grid span
 
+        // ADR-007: Name-based binding (preferred). If null, falls back to ResultSet int.
+        [JsonPropertyName("result")]
+        public string? Result { get; set; }
+
         [JsonPropertyName("color")]
         public string Color { get; set; } = "blue";
 
         [JsonPropertyName("icon")]
         public string Icon { get; set; } = "fas fa-chart-bar";
 
-        // KPI fields
+        // ADR-007 (Faz 6'da kaldirilacak): legacy index binding. Result field'i varsa yok sayilir.
+        // int? — "hic set edilmemis" ile "0'a set edilmis" ayirt edilebilsin diye nullable.
         [JsonPropertyName("resultSet")]
-        public int ResultSet { get; set; }
+        public int? ResultSet { get; set; }
 
         [JsonPropertyName("agg")]
         public string Agg { get; set; } = "count"; // count, sum, avg, min, max, first, countWhere
