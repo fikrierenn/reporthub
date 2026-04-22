@@ -6,11 +6,13 @@ Bu rehberde her adimin ne yaptigi aciklanmistir.
 
 ## 1) On kosullar (neden gerekli?)
 - Windows Server: Uygulama burada calisacak.
-- .NET 8 Hosting Bundle: .NET runtime + ASP.NET Core runtime icerir; uygulamanin calismasi icin gereklidir.
+- .NET 10 Hosting Bundle (preview): .NET runtime + ASP.NET Core runtime icerir; uygulamanin calismasi icin gereklidir.
+- .NET 10 SDK (preview): publish almak icin gelistirme makinesinde gerekir.
 - NSSM: Uygulamayi Windows Service olarak kaydeder (sunucu yeniden baslasa bile otomatik calisir).
 
 Indirme linkleri:
-- .NET 8 Hosting Bundle: https://dotnet.microsoft.com/en-us/download/dotnet/8.0
+- .NET 10 Hosting Bundle (preview): https://dotnet.microsoft.com/en-us/download/dotnet/10.0
+- .NET 10 SDK (preview): https://dotnet.microsoft.com/en-us/download/dotnet/10.0
 - NSSM: https://nssm.cc/download
 
 ## 2) Yayina alma (publish) - uygulamayi paketleme
@@ -85,17 +87,31 @@ Tarayicidan:
 http://SUNUCU_IP:5197
 ```
 
-## 9) IP ile erisim ornegi
+## 8) Ilk kurulum adimlari
+1) Admin kullanici ile giris yapin.
+2) Admin panelinden veri kaynaklarini tanimlayin.
+3) Rapor kataloglarini ekleyin ve rollerini belirleyin.
+
+## 9) Guncelleme / deploy adimlari
+1) Yerelde publish alin:
+```
+cd D:\Dev\reporthub\ReportPanel
+dotnet publish -c Release -o C:\Deploy\ReportHub
+```
+2) `C:\Deploy\ReportHub` icerigini sunucudaki `C:\Apps\ReportHub` klasorune kopyalayin (ustune yazabilirsiniz).
+3) Windows Service'i yeniden baslatin:
+```
+nssm restart ReportHub
+```
+4) Yeni bir veritabani degisikligi varsa ilgili SQL scriptini calistirin.
+   - Favoriler tablosu icin: `ReportPanel/Database/06_CreateReportFavorites.sql`
+
+## 10) IP ile erisim ornegi
 Eger domain/DNS tanimlamadan dogrudan IP ile baglanmak istersen:
 ```
 http://192.168.40.201:5197
 ```
 Bu calisabilmesi icin uygulama `--urls http://0.0.0.0:5197` ile dinlemeli ve firewall portu acik olmali.
-
-## 8) Ilk kurulum adimlari
-1) Admin kullanici ile giris yapin.
-2) Admin panelinden veri kaynaklarini tanimlayin.
-3) Rapor kataloglarini ekleyin ve rollerini belirleyin.
 
 ## Notlar
 - Gercek sifreleri dokumanlara koymayin.

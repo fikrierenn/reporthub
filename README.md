@@ -10,7 +10,7 @@ ReportHub, rol tabanli erisim kontrolu, merkezi audit log ve admin paneli uzerin
 - Ortak layout, responsive arayuz ve server-side filtreleme.
 
 ## Teknoloji yiginı
-- .NET 8 SDK
+- .NET 10 SDK (preview, global.json ile sabit)
 - ASP.NET Core MVC
 - EF Core
 - SQL Server
