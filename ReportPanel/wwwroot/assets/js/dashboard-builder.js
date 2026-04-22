@@ -112,52 +112,78 @@
         return html;
     }
 
-    function attachDragDrop() {
+    // F-03: Event delegation — builderEl stable, .comp-row'lar her render'da
+    // yeniden olusur. Eskiden her row'a 5 closure'li listener eklenirdi ve
+    // closure'lar stale DOM node'larini tutardi (GC gecikmesi). Simdi tek set
+    // listener + e.target.closest ile row bulma.
+    var dragDropBound = false;
+    var draggedIdx = null;
+
+    function clearDragOverMarkers() {
         var area = document.getElementById('componentListArea');
         if (!area) return;
         var rows = area.querySelectorAll('.comp-row');
-        var draggedIdx = null;
+        for (var i = 0; i < rows.length; i++) {
+            rows[i].classList.remove('border-t-4', 'border-t-blue-500');
+        }
+    }
 
-        rows.forEach(function (row) {
-            row.addEventListener('dragstart', function (e) {
-                draggedIdx = parseInt(row.dataset.idx);
-                row.classList.add('opacity-40');
+    function attachDragDrop() {
+        if (dragDropBound) return;
+        dragDropBound = true;
+
+        builderEl.addEventListener('dragstart', function (e) {
+            var row = e.target.closest && e.target.closest('.comp-row');
+            if (!row) return;
+            draggedIdx = parseInt(row.dataset.idx, 10);
+            row.classList.add('opacity-40');
+            if (e.dataTransfer) {
                 e.dataTransfer.effectAllowed = 'move';
                 // Chrome icin gerekli
                 e.dataTransfer.setData('text/plain', row.dataset.idx);
-            });
-            row.addEventListener('dragend', function () {
-                row.classList.remove('opacity-40');
-                rows.forEach(function (r) { r.classList.remove('border-t-4', 'border-t-blue-500'); });
-            });
-            row.addEventListener('dragover', function (e) {
-                e.preventDefault();
-                e.dataTransfer.dropEffect = 'move';
-                rows.forEach(function (r) { r.classList.remove('border-t-4', 'border-t-blue-500'); });
-                row.classList.add('border-t-4', 'border-t-blue-500');
-            });
-            row.addEventListener('dragleave', function () {
-                row.classList.remove('border-t-4', 'border-t-blue-500');
-            });
-            row.addEventListener('drop', function (e) {
-                e.preventDefault();
-                var targetIdx = parseInt(row.dataset.idx);
-                if (draggedIdx === null || draggedIdx === targetIdx) return;
+            }
+        });
 
-                var comps = config.tabs[activeTab].components;
-                var moved = comps.splice(draggedIdx, 1)[0];
-                // Hedef index asagidaysa, splice sonrasi duzeltme
-                var insertAt = draggedIdx < targetIdx ? targetIdx - 1 : targetIdx;
-                comps.splice(insertAt, 0, moved);
+        builderEl.addEventListener('dragend', function (e) {
+            var row = e.target.closest && e.target.closest('.comp-row');
+            if (row) row.classList.remove('opacity-40');
+            clearDragOverMarkers();
+        });
 
-                // editIndex'i de takip et
-                if (editIndex === draggedIdx) editIndex = insertAt;
-                else if (draggedIdx < editIndex && editIndex <= insertAt) editIndex--;
-                else if (insertAt <= editIndex && editIndex < draggedIdx) editIndex++;
+        builderEl.addEventListener('dragover', function (e) {
+            var row = e.target.closest && e.target.closest('.comp-row');
+            if (!row) return;
+            e.preventDefault();
+            if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
+            clearDragOverMarkers();
+            row.classList.add('border-t-4', 'border-t-blue-500');
+        });
 
-                draggedIdx = null;
-                render();
-            });
+        builderEl.addEventListener('dragleave', function (e) {
+            var row = e.target.closest && e.target.closest('.comp-row');
+            if (row) row.classList.remove('border-t-4', 'border-t-blue-500');
+        });
+
+        builderEl.addEventListener('drop', function (e) {
+            var row = e.target.closest && e.target.closest('.comp-row');
+            if (!row) return;
+            e.preventDefault();
+            var targetIdx = parseInt(row.dataset.idx, 10);
+            if (draggedIdx === null || draggedIdx === targetIdx) return;
+
+            var comps = config.tabs[activeTab].components;
+            var moved = comps.splice(draggedIdx, 1)[0];
+            // Hedef index asagidaysa, splice sonrasi duzeltme
+            var insertAt = draggedIdx < targetIdx ? targetIdx - 1 : targetIdx;
+            comps.splice(insertAt, 0, moved);
+
+            // editIndex'i de takip et
+            if (editIndex === draggedIdx) editIndex = insertAt;
+            else if (draggedIdx < editIndex && editIndex <= insertAt) editIndex--;
+            else if (insertAt <= editIndex && editIndex < draggedIdx) editIndex++;
+
+            draggedIdx = null;
+            render();
         });
     }
 
