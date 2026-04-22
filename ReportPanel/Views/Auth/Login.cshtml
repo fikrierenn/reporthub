@@ -1,4 +1,4 @@
-@model ReportPanel.ViewModels.LoginViewModel
+﻿@model ReportPanel.ViewModels.LoginViewModel
 @{
     Layout = null;
     ViewData["Title"] = "Giriş - BKM Rapor Paneli";
@@ -37,6 +37,14 @@
                             <span class="text-red-700 text-sm">Giriş bilgileri hatalı.</span>
                         </div>
                     }
+                    @if (ViewData["LoginWarning"] is string warning && !string.IsNullOrWhiteSpace(warning))
+                    {
+                        <div class="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg flex items-center">
+                            <i class="fas fa-exclamation-triangle text-yellow-600 mr-3"></i>
+                            <span class="text-yellow-800 text-sm">@warning</span>
+                        </div>
+                    }
+
 
                     <form method="post" class="space-y-6">
                         @Html.AntiForgeryToken()
@@ -51,7 +59,8 @@
                                    required
                                    autocomplete="username"
                                    class="form-input-brand w-full px-4 py-3 rounded-lg"
-                                   placeholder="Kullanıcı adınızı girin">
+                                   placeholder="DOMAIN\\kullanici veya kullanici">
+                            <p class="text-xs text-gray-500 mt-2">AD kullanicilari DOMAIN\\kullanici formatini kullanir.</p>
                         </div>
 
                         <div>
@@ -78,5 +87,28 @@
             </div>
         </div>
     </div>
+
+    <script>
+        (function () {
+            const input = document.getElementById('Username');
+            if (!input || input.value) {
+                return;
+            }
+
+            fetch('/Login/WindowsIdentity', { credentials: 'include' })
+                .then((response) => {
+                    if (response.ok) {
+                        return response.json();
+                    }
+                    return null;
+                })
+                .then((data) => {
+                    if (data && data.username) {
+                        input.value = data.username;
+                    }
+                })
+                .catch(() => {});
+        })();
+    </script>
 </body>
 </html>
