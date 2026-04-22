@@ -10,5 +10,7 @@ namespace ReportPanel.ViewModels
         public HashSet<int> SelectedRoleIds { get; set; } = new();
         public List<ReportCategory> AvailableCategories { get; set; } = new();
         public HashSet<int> SelectedCategoryIds { get; set; } = new();
+        public string? Message { get; set; }
+        public string? MessageType { get; set; }
     }
 }

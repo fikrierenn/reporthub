@@ -20,6 +20,7 @@ namespace ReportPanel.Controllers
         private readonly CategoryManagementService _categoryService;
         private readonly RoleManagementService _roleService;
         private readonly DataSourceManagementService _dataSourceService;
+        private readonly ReportManagementService _reportService;
 
         public AdminController(
             ReportPanelContext context,
@@ -28,7 +29,8 @@ namespace ReportPanel.Controllers
             UserRoleSyncService userRoleSync,
             CategoryManagementService categoryService,
             RoleManagementService roleService,
-            DataSourceManagementService dataSourceService)
+            DataSourceManagementService dataSourceService,
+            ReportManagementService reportService)
         {
             _context = context;
             _auditLog = auditLog;
@@ -37,6 +39,7 @@ namespace ReportPanel.Controllers
             _categoryService = categoryService;
             _roleService = roleService;
             _dataSourceService = dataSourceService;
+            _reportService = reportService;
         }
 
         [HttpGet]
@@ -108,81 +111,13 @@ namespace ReportPanel.Controllers
                         break;
 
                     case "create_report":
-                        var newReport = new ReportCatalog
-                        {
-                            Title = Request.Form["Title"].ToString(),
-                            Description = Request.Form["Description"].ToString(),
-                                                        DataSourceKey = Request.Form["DataSourceKey"].ToString(),
-                            ProcName = Request.Form["ProcName"].ToString(),
-                            AllowedRoles = NormalizeRolesByRoleIds(Request.Form["SelectedRoles"]),
-                            IsActive = ReadFormBool("IsActive"),
-                            ParamSchemaJson = NormalizeParamSchema(Request.Form["ParamSchemaJson"].ToString())
-                        };
-                        _context.ReportCatalog.Add(newReport);
-                        await _context.SaveChangesAsync();
-                        await SyncReportRolesAndCategories(newReport.ReportId);
-                        await AuditCrudAsync("report_create", "report", newReport.ReportId.ToString(), "Report created",
-                            newValues: new { newReport.ReportId, newReport.Title, newReport.DataSourceKey, newReport.ProcName, newReport.AllowedRoles, newReport.IsActive },
-                            dataSourceKey: newReport.DataSourceKey,
-                            reportId: newReport.ReportId);
-                        TempData["Message"] = "Rapor eklendi";
-                        TempData["MessageType"] = "success";
+                        ApplyResult(await _reportService.CreateAsync(BuildReportFormInput()));
                         break;
-
                     case "update_report":
-                        var report = await _context.ReportCatalog.FindAsync(id);
-                        if (report != null)
-                        {
-                            var reportOld = new { report.ReportId, report.Title, report.DataSourceKey, report.ProcName, report.AllowedRoles, report.IsActive };
-                            report.Title = Request.Form["Title"].ToString();
-                            report.Description = Request.Form["Description"].ToString();
-                            report.DataSourceKey = Request.Form["DataSourceKey"].ToString();
-                            report.ProcName = Request.Form["ProcName"].ToString();
-                            report.AllowedRoles = NormalizeRolesByRoleIds(Request.Form["SelectedRoles"]);
-                            report.IsActive = ReadFormBool("IsActive");
-                            report.ParamSchemaJson = NormalizeParamSchema(Request.Form["ParamSchemaJson"].ToString(), report.ParamSchemaJson);
-                            report.ReportType = Request.Form["ReportType"].ToString() is "dashboard" ? "dashboard" : "table";
-                            report.DashboardHtml = report.ReportType == "dashboard" ? Request.Form["DashboardHtml"].ToString() : null;
-                report.DashboardConfigJson = report.ReportType == "dashboard" ? Request.Form["DashboardConfigJson"].ToString() : null;
-                            await _context.SaveChangesAsync();
-                            await SyncReportRolesAndCategories(report.ReportId);
-                            await AuditCrudAsync("report_update", "report", report.ReportId.ToString(), "Report updated",
-                                oldValues: reportOld,
-                                newValues: new { report.ReportId, report.Title, report.DataSourceKey, report.ProcName, report.AllowedRoles, report.IsActive },
-                                dataSourceKey: report.DataSourceKey,
-                                reportId: report.ReportId);
-                            TempData["Message"] = "Rapor güncellendi";
-                            TempData["MessageType"] = "success";
-                        }
+                        ApplyResult(await _reportService.UpdateAsync(id, BuildReportFormInput()));
                         break;
-
                     case "delete_report":
-                        var delReport = await _context.ReportCatalog.FindAsync(id);
-                        if (delReport != null)
-                        {
-                            _context.ReportCatalog.Remove(delReport);
-                            await _context.SaveChangesAsync();
-                        await _auditLog.LogAsync(new AuditLogEntry
-                        {
-                            EventType = "report_delete",
-                            TargetType = "report",
-                            TargetKey = delReport.ReportId.ToString(),
-                            ReportId = delReport.ReportId,
-                            DataSourceKey = delReport.DataSourceKey,
-                            Description = "Report deleted",
-                            OldValuesJson = AuditLogService.ToJson(new
-                            {
-                                delReport.ReportId,
-                                delReport.Title,
-                                delReport.DataSourceKey,
-                                delReport.ProcName,
-                                delReport.AllowedRoles,
-                                delReport.IsActive
-                            })
-                        });
-                            TempData["Message"] = "Rapor silindi";
-                            TempData["MessageType"] = "success";
-                        }
+                        ApplyResult(await _reportService.DeleteAsync(id));
                         break;
                     case "create_role":
                         ApplyResult(await _roleService.CreateAsync(
@@ -271,16 +206,6 @@ namespace ReportPanel.Controllers
                 "current" => _configuration.GetConnectionString("DefaultConnection") ?? "",
                 _ => ""
             };
-        }
-
-        private static string NormalizeParamSchema(string? raw, string? fallback = "{}")
-        {
-            if (string.IsNullOrWhiteSpace(raw))
-            {
-                return string.IsNullOrWhiteSpace(fallback) ? "{}" : fallback;
-            }
-
-            return raw.Trim();
         }
 
         [HttpGet]
@@ -869,60 +794,16 @@ ORDER BY p.parameter_id;";
         [Route("Admin/CreateReport")]
         public async Task<IActionResult> CreateReport(ReportCatalog report)
         {
-            try
+            var input = BuildReportFormInput();
+            var result = await _reportService.CreateAsync(input);
+            if (result.Success)
             {
-                // Manuel olarak IsActive değerini set et
-                report.IsActive = ReadFormBool("IsActive");
-                report.AllowedRoles = NormalizeRolesByRoleIds(Request.Form["SelectedRoles"]);
-                report.ParamSchemaJson = NormalizeParamSchema(Request.Form["ParamSchemaJson"].ToString());
-                report.ReportType = Request.Form["ReportType"].ToString() is "dashboard" ? "dashboard" : "table";
-                report.DashboardHtml = report.ReportType == "dashboard" ? Request.Form["DashboardHtml"].ToString() : null;
-                report.DashboardConfigJson = report.ReportType == "dashboard" ? Request.Form["DashboardConfigJson"].ToString() : null;
-
-                _context.ReportCatalog.Add(report);
-                await _context.SaveChangesAsync();
-                await SyncReportRolesAndCategories(report.ReportId);
-                await _auditLog.LogAsync(new AuditLogEntry
-                {
-                    EventType = "report_create",
-                    TargetType = "report",
-                    TargetKey = report.ReportId.ToString(),
-                    ReportId = report.ReportId,
-                    DataSourceKey = report.DataSourceKey,
-                    Description = "Report created",
-                    NewValuesJson = AuditLogService.ToJson(new
-                    {
-                        report.ReportId,
-                        report.Title,
-                        report.DataSourceKey,
-                        report.ProcName,
-                        report.AllowedRoles,
-                        report.IsActive
-                    })
-                });
-                TempData["Message"] = "Rapor başarıyla eklendi";
+                TempData["Message"] = result.Message;
                 TempData["MessageType"] = "success";
                 return RedirectToAction("Index", new { tab = "reports" });
             }
-            catch (Exception ex)
-            {
-                // M-02: CreateReport.
-                _ = ex;
-                TempData["Message"] = "Rapor oluşturulurken hata oluştu.";
-                TempData["MessageType"] = "error";
-                var dataSources = await _context.DataSources.Where(d => d.IsActive).ToListAsync();
-                var roles = await _context.Roles.Where(r => r.IsActive).OrderBy(r => r.Name).ToListAsync();
-                var categories = await _context.ReportCategories.Where(c => c.IsActive).OrderBy(c => c.Name).ToListAsync();
-                return View(new AdminReportFormViewModel
-                {
-                    Report = report,
-                    DataSources = dataSources,
-                    AvailableRoles = roles,
-                    SelectedRoleIds = ParseIds(Request.Form["SelectedRoles"]),
-                    AvailableCategories = categories,
-                    SelectedCategoryIds = ParseIds(Request.Form["SelectedCategories"])
-                });
-            }
+
+            return View(await BuildReportFormViewModel(report, input, result.Message));
         }
         [Route("Admin/EditReport/{id}")]
         public async Task<IActionResult> EditReport(int id)
@@ -980,63 +861,37 @@ ORDER BY p.parameter_id;";
         [Route("Admin/EditReport/{id}")]
         public async Task<IActionResult> EditReport(ReportCatalog report)
         {
-            try
+            var input = BuildReportFormInput();
+            var result = await _reportService.UpdateAsync(report.ReportId, input);
+            if (result.Success)
             {
-                // Manuel olarak IsActive değerini set et
-                report.IsActive = ReadFormBool("IsActive");
-                report.AllowedRoles = NormalizeRolesByRoleIds(Request.Form["SelectedRoles"]);
-                report.ParamSchemaJson = NormalizeParamSchema(Request.Form["ParamSchemaJson"].ToString(), report.ParamSchemaJson);
-                report.ReportType = Request.Form["ReportType"].ToString() is "dashboard" ? "dashboard" : "table";
-                report.DashboardHtml = report.ReportType == "dashboard" ? Request.Form["DashboardHtml"].ToString() : null;
-                report.DashboardConfigJson = report.ReportType == "dashboard" ? Request.Form["DashboardConfigJson"].ToString() : null;
-
-                _context.ReportCatalog.Update(report);
-                await _context.SaveChangesAsync();
-                await SyncReportRolesAndCategories(report.ReportId);
-                await _auditLog.LogAsync(new AuditLogEntry
-                {
-                    EventType = "report_update",
-                    TargetType = "report",
-                    TargetKey = report.ReportId.ToString(),
-                    ReportId = report.ReportId,
-                    DataSourceKey = report.DataSourceKey,
-                    Description = "Report updated",
-                    NewValuesJson = AuditLogService.ToJson(new
-                    {
-                        report.ReportId,
-                        report.Title,
-                        report.Description,
-                        report.DataSourceKey,
-                        report.ProcName,
-                        report.AllowedRoles,
-                        report.IsActive,
-                        report.ParamSchemaJson
-                    })
-                });
-                TempData["Message"] = "Rapor başarıyla güncellendi";
+                TempData["Message"] = result.Message;
                 TempData["MessageType"] = "success";
                 return RedirectToAction("Index", new { tab = "reports" });
             }
-            catch (Exception ex)
-            {
-                // M-02: EditReport.
-                _ = ex;
-                TempData["Message"] = "Rapor güncellenirken hata oluştu.";
-                TempData["MessageType"] = "error";
-                var dataSources = await _context.DataSources.Where(d => d.IsActive).ToListAsync();
-                var roles = await _context.Roles.Where(r => r.IsActive).OrderBy(r => r.Name).ToListAsync();
-                var categories = await _context.ReportCategories.Where(c => c.IsActive).OrderBy(c => c.Name).ToListAsync();
-                return View(new AdminReportFormViewModel
-                {
-                    Report = report,
-                    DataSources = dataSources,
-                    AvailableRoles = roles,
-                    SelectedRoleIds = ParseIds(Request.Form["SelectedRoles"]),
-                    AvailableCategories = categories,
-                    SelectedCategoryIds = ParseIds(Request.Form["SelectedCategories"])
-                });
-            }
+
+            return View(await BuildReportFormViewModel(report, input, result.Message));
         }
+
+        // Referans placeholder — asagidaki bloklar ayri actions'in bitimini mulayim tutmak icin.
+        private async Task<AdminReportFormViewModel> BuildReportFormViewModel(ReportCatalog report, ReportFormInput input, string message)
+        {
+            var dataSources = await _context.DataSources.Where(d => d.IsActive).ToListAsync();
+            var roles = await _context.Roles.Where(r => r.IsActive).OrderBy(r => r.Name).ToListAsync();
+            var categories = await _context.ReportCategories.Where(c => c.IsActive).OrderBy(c => c.Name).ToListAsync();
+            return new AdminReportFormViewModel
+            {
+                Report = report,
+                DataSources = dataSources,
+                AvailableRoles = roles,
+                SelectedRoleIds = input.SelectedRoleIds,
+                AvailableCategories = categories,
+                SelectedCategoryIds = input.SelectedCategoryIds,
+                Message = message,
+                MessageType = "error"
+            };
+        }
+
         [Route("Admin/CreateUser")]
         public IActionResult CreateUser()
         {
@@ -1457,20 +1312,6 @@ ORDER BY p.parameter_id;";
             return ids;
         }
 
-        private async Task<string> BuildRolesCsv(HashSet<int> roleIds)
-        {
-            if (roleIds.Count == 0)
-            {
-                return "";
-            }
-
-            var names = await _context.Roles
-                .Where(r => roleIds.Contains(r.RoleId))
-                .Select(r => r.Name)
-                .ToListAsync();
-            return string.Join(",", names);
-        }
-
         private async Task<AdminUserFormViewModel> BuildCreateUserFormAsync(User user, HashSet<int> selectedRoleIds, string message, string messageType)
         {
             var roles = await _context.Roles.Where(r => r.IsActive).OrderBy(r => r.Name).ToListAsync();
@@ -1513,6 +1354,20 @@ ORDER BY p.parameter_id;";
             TempData["Message"] = result.Message;
             TempData["MessageType"] = result.TempDataType;
         }
+
+        // M-01: ReportManagementService icin form -> DTO donusumu.
+        private ReportFormInput BuildReportFormInput() => new(
+            Title: Request.Form["Title"],
+            Description: Request.Form["Description"],
+            DataSourceKey: Request.Form["DataSourceKey"],
+            ProcName: Request.Form["ProcName"],
+            SelectedRoleIds: ParseIds(Request.Form["SelectedRoles"]),
+            SelectedCategoryIds: ParseIds(Request.Form["SelectedCategories"]),
+            IsActive: ReadFormBool("IsActive"),
+            ReportType: Request.Form["ReportType"],
+            ParamSchemaJson: Request.Form["ParamSchemaJson"],
+            DashboardHtml: Request.Form["DashboardHtml"],
+            DashboardConfigJson: Request.Form["DashboardConfigJson"]);
 
         // G-04: CRUD audit shortcut'u — HandlePostAction'da tekrarlayan AuditLogEntry dolumunu tek yere al.
         private Task AuditCrudAsync(
@@ -1573,54 +1428,8 @@ ORDER BY p.parameter_id;";
             await _context.SaveChangesAsync();
         }
 
-        private async Task SyncReportRolesAndCategories(int reportId)
-        {
-            var selectedRoleIds = ParseIds(Request.Form["SelectedRoles"]);
-            var selectedCategoryIds = ParseIds(Request.Form["SelectedCategories"]);
-
-            var existingRoles = await _context.ReportAllowedRoles
-                .Where(ar => ar.ReportId == reportId)
-                .ToListAsync();
-            _context.ReportAllowedRoles.RemoveRange(existingRoles);
-
-            foreach (var roleId in selectedRoleIds)
-            {
-                _context.ReportAllowedRoles.Add(new ReportAllowedRole
-                {
-                    ReportId = reportId,
-                    RoleId = roleId,
-                    CreatedAt = DateTime.Now
-                });
-            }
-
-            var existingCategories = await _context.ReportCategoryLinks
-                .Where(rc => rc.ReportId == reportId)
-                .ToListAsync();
-            _context.ReportCategoryLinks.RemoveRange(existingCategories);
-
-            foreach (var categoryId in selectedCategoryIds)
-            {
-                _context.ReportCategoryLinks.Add(new ReportCategoryLink
-                {
-                    ReportId = reportId,
-                    CategoryId = categoryId,
-                    CreatedAt = DateTime.Now
-                });
-            }
-
-            await _context.SaveChangesAsync();
-        }
-
-        private string NormalizeRolesByRoleIds(Microsoft.Extensions.Primitives.StringValues selectedRoles)
-        {
-            var ids = ParseIds(selectedRoles);
-            var names = _context.Roles
-                .Where(r => ids.Contains(r.RoleId))
-                .Select(r => r.Name)
-                .ToList();
-
-            return names.Count == 0 ? "" : string.Join(",", names);
-        }
+        // M-01: SyncReportRolesAndCategories + NormalizeRolesByRoleIds + NormalizeParamSchema
+        // ReportManagementService'e tasindi (servis ici private).
 
         // M-01: Role CSV propagation helper'lari Services/RoleManagementService'e tasindi.
     }

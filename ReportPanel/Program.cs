@@ -18,6 +18,7 @@ builder.Services.AddScoped<ReportPanel.Services.UserRoleSyncService>();
 builder.Services.AddScoped<ReportPanel.Services.CategoryManagementService>();
 builder.Services.AddScoped<ReportPanel.Services.RoleManagementService>();
 builder.Services.AddScoped<ReportPanel.Services.DataSourceManagementService>();
+builder.Services.AddScoped<ReportPanel.Services.ReportManagementService>();
 
 // Add Entity Framework
 builder.Services.AddDbContext<ReportPanelContext>(options =>
