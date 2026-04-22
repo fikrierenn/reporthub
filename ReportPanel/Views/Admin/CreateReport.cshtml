@@ -254,9 +254,7 @@
                 </div>
             </div>
 
-            @* M-05: DashboardHtml legacy retirement. Mode switcher (builder/html) ve
-               Gelismis HTML textarea kaldirildi. Tek yol: yapilandirici (DashboardConfigJson). *@
-            <div id="dashboardHtmlSection" style="display:none;">
+            <div id="dashboardConfigSection" style="display:none;">
                 <div class="bg-white rounded-2xl border border-gray-200 p-6">
                     <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center">
                         <i class="fas fa-th-large mr-3 text-purple-600"></i> Dashboard Olusturucu
@@ -288,7 +286,7 @@
 <script src="~/assets/js/dashboard-builder.js"></script>
 <script>
 function toggleReportType(type) {
-    var dashSection = document.getElementById('dashboardHtmlSection');
+    var dashSection = document.getElementById('dashboardConfigSection');
     var labelTable = document.getElementById('radioLabelTable');
     var labelDash = document.getElementById('radioLabelDashboard');
     if (type === 'dashboard') {
@@ -305,5 +303,4 @@ function toggleReportType(type) {
         labelDash.style.background = '';
     }
 }
-// M-05: switchDashMode kaldirildi — tek mode (builder) var.
 </script>

@@ -1,7 +1,6 @@
 using System.Data;
 using System.Security.Claims;
 using System.Text.Json;
-using System.Text.RegularExpressions;
 using ClosedXML.Excel;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -87,7 +86,7 @@ namespace ReportPanel.Controllers
                 {
                     UserId = userId.Value,
                     ReportId = reportId,
-                    CreatedAt = DateTime.Now
+                    CreatedAt = DateTime.UtcNow
                 });
                 await _context.SaveChangesAsync();
                 await _auditLog.LogAsync(new AuditLogEntry
@@ -219,14 +218,8 @@ namespace ReportPanel.Controllers
             try
             {
                 var hasConfig = isDashboard && !string.IsNullOrWhiteSpace(context.SelectedReport.DashboardConfigJson);
-                // M-05: DashboardHtml legacy retirement. Yeni yazim yollari bu alana
-                // dokunmaz ama mevcut DB kayitlari icin fallback render korunuyor.
-                // Kullanim audit log'a yazilir, Faz C'de (kolon drop) kaldirilacak.
-#pragma warning disable CS0618
-                var hasHtml = isDashboard && !string.IsNullOrWhiteSpace(context.SelectedReport.DashboardHtml);
-#pragma warning restore CS0618
 
-                if (isDashboard && (hasConfig || hasHtml))
+                if (isDashboard)
                 {
                     var resultSets = await ExecuteStoredProcedureMultiResultSets(
                         context.SelectedReport.DataSource.ConnString,
@@ -242,9 +235,9 @@ namespace ReportPanel.Controllers
                     model.RunRowCount = totalRows;
                     model.RunDurationMs = stopwatch.ElapsedMilliseconds;
 
+                    DashboardConfig? dashConfig = null;
                     if (hasConfig)
                     {
-                        DashboardConfig? dashConfig = null;
                         try
                         {
                             dashConfig = JsonSerializer.Deserialize<DashboardConfig>(
@@ -265,27 +258,23 @@ namespace ReportPanel.Controllers
                             model.RunMessage = (model.RunMessage ?? "") +
                                 " (UYARI: Dashboard yapilandirmasi bozuk, bos sablonla gosteriliyor. Admin'e bildirin.)";
                         }
-                        model.DashboardRenderedHtml = DashboardRenderer.Render(
-                            dashConfig ?? new DashboardConfig(), resultSets);
                     }
                     else
                     {
-                        // M-05: legacy HTML render yolu. Audit log'a yazilir ki ileride
-                        // (Faz C) kaldirmadan once gercek kullanim var mi gorelim.
                         await _auditLog.LogAsync(new AuditLogEntry
                         {
-                            EventType = "dashboard_html_legacy_render",
+                            EventType = "dashboard_config_missing",
                             TargetType = "report",
                             TargetKey = context.SelectedReport.ReportId.ToString(),
                             ReportId = context.SelectedReport.ReportId,
-                            Description = "Legacy DashboardHtml template rendered (DashboardConfigJson yok). M-05 Faz C'de kaldirilacak.",
-                            IsSuccess = true
+                            Description = "Dashboard report has no DashboardConfigJson. Bos sablon render edildi.",
+                            IsSuccess = false
                         });
-#pragma warning disable CS0618
-                        model.DashboardRenderedHtml = RenderDashboardTemplate(
-                            context.SelectedReport.DashboardHtml!, resultSets);
-#pragma warning restore CS0618
+                        model.RunMessage = (model.RunMessage ?? "") +
+                            " (UYARI: Dashboard yapilandirmasi yok, bos sablonla gosteriliyor. Admin'e bildirin.)";
                     }
+                    model.DashboardRenderedHtml = DashboardRenderer.Render(
+                        dashConfig ?? new DashboardConfig(), resultSets);
 
                     await LogRun(
                         context.SelectedReport,
@@ -390,9 +379,9 @@ namespace ReportPanel.Controllers
                 result.Rows,
                 context.SelectedReport.Title ?? "",
                 CurrentUserName,
-                DateTime.Now,
+                DateTime.UtcNow,
                 validation.ParamValues);
-            var fileName = $"report_{context.SelectedReport.ReportId}_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+            var fileName = $"report_{context.SelectedReport.ReportId}_{DateTime.UtcNow:yyyyMMdd_HHmmss}.xlsx";
 
             await _auditLog.LogAsync(new AuditLogEntry
             {
@@ -819,67 +808,6 @@ namespace ReportPanel.Controllers
             } while (await reader.NextResultAsync());
 
             return allResultSets;
-        }
-
-        private static string RenderDashboardTemplate(
-            string template,
-            List<List<Dictionary<string, object>>> resultSets)
-        {
-            var options = new JsonSerializerOptions
-            {
-                PropertyNamingPolicy = null,
-                WriteIndented = false
-            };
-
-            // Build JS variable declarations for each result set
-            var dataScript = new System.Text.StringBuilder();
-            dataScript.AppendLine("<script>");
-            for (var i = 0; i < resultSets.Count; i++)
-            {
-                var json = JsonSerializer.Serialize(resultSets[i], options);
-                // Escape </script> in JSON data to prevent premature tag closure
-                json = json.Replace("</script>", "<\\/script>");
-                dataScript.AppendLine($"const RESULT_{i} = {json};");
-            }
-            dataScript.AppendLine("</script>");
-
-            // Replace placeholders like {{RESULT_0}} with variable references
-            var html = template;
-            for (var i = 0; i < resultSets.Count; i++)
-            {
-                html = html.Replace($"{{{{RESULT_{i}}}}}", $"RESULT_{i}");
-            }
-
-            // Replace any remaining unreferenced placeholders with empty arrays
-            html = Regex.Replace(html, @"\{\{RESULT_\d+\}\}", "[]");
-
-            // Inject Chart.js CDN if not already present
-            if (!html.Contains("chart.js", StringComparison.OrdinalIgnoreCase) &&
-                !html.Contains("Chart.min.js", StringComparison.OrdinalIgnoreCase))
-            {
-                var chartCdn = "<script src=\"https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js\"></script>";
-                if (html.Contains("</head>", StringComparison.OrdinalIgnoreCase))
-                {
-                    html = html.Replace("</head>", chartCdn + "\n</head>");
-                }
-                else
-                {
-                    html = chartCdn + "\n" + html;
-                }
-            }
-
-            // Inject data script right after <body> tag, or at the beginning
-            if (html.Contains("<body", StringComparison.OrdinalIgnoreCase))
-            {
-                var bodyCloseIdx = html.IndexOf('>', html.IndexOf("<body", StringComparison.OrdinalIgnoreCase)) + 1;
-                html = html.Insert(bodyCloseIdx, "\n" + dataScript.ToString());
-            }
-            else
-            {
-                html = dataScript.ToString() + html;
-            }
-
-            return html;
         }
 
         /// <summary>
