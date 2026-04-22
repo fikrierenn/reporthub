@@ -3,6 +3,20 @@
 USE [PortalHUB];
 GO
 
+-- Roles
+MERGE INTO [dbo].[Roles] AS target
+USING (VALUES
+    ('admin', 'Tam yetki'),
+    ('ik', 'IK raporlari ve islemleri'),
+    ('mali', 'Mali raporlar ve islemler'),
+    ('user', 'Standart kullanici')
+) AS source (Name, Description)
+ON target.Name = source.Name
+WHEN NOT MATCHED BY TARGET THEN
+    INSERT (Name, Description, IsActive, CreatedAt)
+    VALUES (source.Name, source.Description, 1, GETDATE());
+GO
+
 -- DataSources
 MERGE INTO [dbo].[DataSources] AS target
 USING (VALUES
@@ -36,12 +50,12 @@ GO
 -- Users
 MERGE INTO [dbo].[Users] AS target
 USING (VALUES
-    ('admin_staging', 'PBKDF2$100000$ZwUdULSNAcmfixdnxVg6Zg==$fqcUJwpCBMezKDoZ60050EGvKyHh0DnFpQIigNBSWg8=', 'Staging Admin', 'admin@staging.bkm.com', 'admin', 1),
-    ('ik_staging', 'PBKDF2$100000$4sdIBFsFMo9EgCMCUGBkCg==$TPE3RuG2zWOWYhdJdkKMFi+Nj7qkmQX/szfruffawmk=', 'Staging IK', 'ik@staging.bkm.com', 'ik', 1),
-    ('mali_staging', 'PBKDF2$100000$X/5deb14Cl0nENXyYHFz5w==$ZXCfNzAVwf3kENtK1s/xeGuAQsr5x2HnLE0riRLVQy4=', 'Staging Mali', 'mali@staging.bkm.com', 'mali', 1),
-    ('user_staging', 'PBKDF2$100000$vzeoqV+YtXNFGxsVqilqyQ==$EN6fnkfbRLYeL4PE4zsSs3ycubCViQTi8kJY+im48Sk=', 'Staging User', 'user@staging.bkm.com', 'user', 1),
-    ('test_staging', 'PBKDF2$100000$R8Xyj0VCRcSVfhxLM5nxEQ==$iBZVhefKhFqxiImqazN7UrKMz9sS/3nF4LCyvZoEgX8=', 'Staging Test', 'test@staging.bkm.com', 'admin,ik,mali', 1)
-) AS source (Username, PasswordHash, FullName, Email, Roles, IsActive)
+    ('admin_staging', 'PBKDF2$100000$ZwUdULSNAcmfixdnxVg6Zg==$fqcUJwpCBMezKDoZ60050EGvKyHh0DnFpQIigNBSWg8=', 'Staging Admin', 'admin@staging.bkm.com', 'admin', 0, 1),
+    ('ik_staging', 'PBKDF2$100000$4sdIBFsFMo9EgCMCUGBkCg==$TPE3RuG2zWOWYhdJdkKMFi+Nj7qkmQX/szfruffawmk=', 'Staging IK', 'ik@staging.bkm.com', 'ik', 0, 1),
+    ('mali_staging', 'PBKDF2$100000$X/5deb14Cl0nENXyYHFz5w==$ZXCfNzAVwf3kENtK1s/xeGuAQsr5x2HnLE0riRLVQy4=', 'Staging Mali', 'mali@staging.bkm.com', 'mali', 0, 1),
+    ('user_staging', 'PBKDF2$100000$vzeoqV+YtXNFGxsVqilqyQ==$EN6fnkfbRLYeL4PE4zsSs3ycubCViQTi8kJY+im48Sk=', 'Staging User', 'user@staging.bkm.com', 'user', 0, 1),
+    ('test_staging', 'PBKDF2$100000$R8Xyj0VCRcSVfhxLM5nxEQ==$iBZVhefKhFqxiImqazN7UrKMz9sS/3nF4LCyvZoEgX8=', 'Staging Test', 'test@staging.bkm.com', 'admin,ik,mali', 0, 1)
+) AS source (Username, PasswordHash, FullName, Email, Roles, IsAdUser, IsActive)
 ON target.Username = source.Username
 WHEN MATCHED THEN
     UPDATE SET
@@ -49,10 +63,11 @@ WHEN MATCHED THEN
         FullName = source.FullName,
         Email = source.Email,
         Roles = source.Roles,
+        IsAdUser = source.IsAdUser,
         IsActive = source.IsActive
 WHEN NOT MATCHED BY TARGET THEN
-    INSERT (Username, PasswordHash, FullName, Email, Roles, IsActive)
-    VALUES (source.Username, source.PasswordHash, source.FullName, source.Email, source.Roles, source.IsActive);
+    INSERT (Username, PasswordHash, FullName, Email, Roles, IsAdUser, IsActive)
+    VALUES (source.Username, source.PasswordHash, source.FullName, source.Email, source.Roles, source.IsAdUser, source.IsActive);
 GO
 
 -- ReportRunLog (sample)

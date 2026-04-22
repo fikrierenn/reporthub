@@ -4,8 +4,14 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// URL launchSettings.json'dan okunuyor
+
 // Add services to the container.
-builder.Services.AddControllersWithViews();
+var mvcBuilder = builder.Services.AddControllersWithViews();
+if (builder.Environment.IsDevelopment())
+{
+    mvcBuilder.AddRazorRuntimeCompilation();
+}
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ReportPanel.Services.AuditLogService>();
 
@@ -13,7 +19,11 @@ builder.Services.AddScoped<ReportPanel.Services.AuditLogService>();
 builder.Services.AddDbContext<ReportPanelContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+builder.Services.AddAuthentication(options =>
+    {
+        options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+    })
     .AddCookie(options =>
     {
         options.LoginPath = "/Login";

@@ -25,7 +25,15 @@ namespace ReportPanel.Models
         
         [Required]
         public string ParamSchemaJson { get; set; } = string.Empty;
-        
+
+        [Required]
+        [MaxLength(20)]
+        public string ReportType { get; set; } = "table";
+
+        public string? DashboardHtml { get; set; }
+
+        public string? DashboardConfigJson { get; set; }
+
         [Required]
         [MaxLength(200)]
         public string AllowedRoles { get; set; } = string.Empty;
@@ -39,5 +47,9 @@ namespace ReportPanel.Models
         public virtual DataSource? DataSource { get; set; }
         
         public virtual ICollection<ReportRunLog> RunLogs { get; set; } = new List<ReportRunLog>();
+
+        public virtual ICollection<ReportAllowedRole> ReportAllowedRoles { get; set; } = new List<ReportAllowedRole>();
+
+        public virtual ICollection<ReportCategoryLink> ReportCategories { get; set; } = new List<ReportCategoryLink>();
     }
 }

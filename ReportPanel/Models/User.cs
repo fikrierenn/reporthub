@@ -26,6 +26,8 @@ namespace ReportPanel.Models
         [MaxLength(200)]
         public string Roles { get; set; } = string.Empty;
 
+        public bool IsAdUser { get; set; }
+
         public bool IsActive { get; set; } = true;
 
         public DateTime? LastLoginAt { get; set; }
