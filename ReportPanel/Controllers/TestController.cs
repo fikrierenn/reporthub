@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ReportPanel.Models;
@@ -6,6 +7,8 @@ using ReportPanel.ViewModels;
 namespace ReportPanel.Controllers
 {
 #if DEBUG
+    // G-06: DEBUG olsa bile admin-only + CSRF koruma. Prod'da #if DEBUG ile butun sinif excluded.
+    [Authorize(Roles = "admin")]
     public class TestController : Controller
     {
         private readonly ReportPanelContext _context;
@@ -44,6 +47,7 @@ namespace ReportPanel.Controllers
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> AddSampleData()
         {
             try

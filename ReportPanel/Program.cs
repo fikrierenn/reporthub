@@ -30,6 +30,15 @@ builder.Services.AddAuthentication(options =>
         options.LoginPath = "/Login";
         options.AccessDeniedPath = "/AccessDenied";
         options.SlidingExpiration = true;
+
+        // G-05: Auth cookie sertlestirme
+        options.Cookie.HttpOnly = true;
+        // Dev'de HTTPS olmadan calisiyoruz; prod'da Always.
+        options.Cookie.SecurePolicy = builder.Environment.IsDevelopment()
+            ? CookieSecurePolicy.SameAsRequest
+            : CookieSecurePolicy.Always;
+        options.Cookie.SameSite = SameSiteMode.Strict;
+        options.ExpireTimeSpan = TimeSpan.FromHours(8);
     });
 
 builder.Services.AddAuthorization();

@@ -99,8 +99,8 @@ Bu liste asagidakilerin sentezidir:
 #### FAZ 2 — BU AY (4 hafta, orta oncelik)
 14. **M-01 · AdminController service extraction** (2 gun) — UserManagementService, ReportManagementService, DataSourceService. Controller endpoint'e inisin, 1736 → ~400 satir.
 15. **G-04 · Audit log genisletme** (2h) — datasource delete, category delete, role delete icin `_auditLog.LogAsync`. OldValuesJson snapshot.
-16. **G-05 · Cookie HttpOnly/Secure/SameSite/ExpireTimeSpan** (30dk) — Program.cs:27.
-17. **G-06 · TestController [Authorize(Roles="admin")]** (15dk) — class-level + POST'a [ValidateAntiForgeryToken].
+16. ✅ **G-05 · Cookie HttpOnly/Secure/SameSite/ExpireTimeSpan** — Program.cs AddCookie: HttpOnly=true, SecurePolicy=Always (prod) / SameAsRequest (dev), SameSite=Strict, ExpireTimeSpan=8h.
+17. ✅ **G-06 · TestController [Authorize(Roles="admin")] + [ValidateAntiForgeryToken]** — DEBUG-only controller bile olsa class-level yetki + POST CSRF koruma.
 18. **M-05 · DashboardHtml legacy retirement** (1 gun) — kolonu archive tablo'ya tasi, DashboardConfigJson mandatory, Form'dan DashboardHtml input kaldir.
 19. **F-03 · dashboard-builder.js memory leak** (1h) — event delegation veya AbortController. Drag-drop listener re-attach sorunu.
 20. ✅ **F-04 · AGENT.md yaniltici icerik** — commit `7a7b81d` (silindi).
