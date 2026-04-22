@@ -379,7 +379,8 @@ namespace ReportPanel.Controllers
                                     IsSuccess = false,
                                     ErrorMessage = ex.Message
                                 });
-                                TempData["Message"] = "Bağlantı hatası: " + ex.Message;
+                                // M-02: ex.Message user'a gosterilmez (connection string sizabilir). Detay audit log'ta.
+                                TempData["Message"] = "Veri kaynağına bağlanılamadı. Bağlantı ayarlarını kontrol edin.";
                                 TempData["MessageType"] = "error";
                             }
                         }
@@ -389,7 +390,9 @@ namespace ReportPanel.Controllers
             }
             catch (Exception ex)
             {
-                TempData["Message"] = "Hata: " + ex.Message;
+                // M-02: ex.Message user'a gosterilmez. HandlePostAction'in generic hata yolu.
+                _ = ex;
+                TempData["Message"] = "Beklenmedik bir hata oluştu. Lütfen sistem yöneticisine bildirin.";
                 TempData["MessageType"] = "error";
             }
         }
@@ -649,7 +652,23 @@ ORDER BY p.parameter_id;";
                     {
                         var pname = metaReader["PARAMETER_NAME"]?.ToString() ?? "";
                         if (string.IsNullOrWhiteSpace(pname)) continue;
-                        paramList.Add(new SqlParameter(pname, DBNull.Value));
+                        var ptype = metaReader["DATA_TYPE"]?.ToString()?.ToLowerInvariant() ?? "";
+
+                        // F-02: SP NULL kabul etmezse patlamasin diye tip-bazli sensible default ver.
+                        // Admin gercek parametre degerini preview panelinden override edebilir (TODO).
+                        object defaultValue = ptype switch
+                        {
+                            "date" or "datetime" or "datetime2" or "smalldatetime" or "datetimeoffset" => DateTime.UtcNow.Date,
+                            "time" => TimeSpan.Zero,
+                            "int" or "bigint" or "smallint" or "tinyint" => 0,
+                            "bit" => false,
+                            "decimal" or "numeric" or "money" or "smallmoney" or "float" or "real" => 0m,
+                            "char" or "varchar" or "nchar" or "nvarchar" or "text" or "ntext" => string.Empty,
+                            "uniqueidentifier" => Guid.Empty,
+                            _ => DBNull.Value
+                        };
+
+                        paramList.Add(new SqlParameter(pname, defaultValue));
                     }
                 }
                 catch { /* parametre cikartma basarisiz olursa yine de SP'yi parametresiz deneriz */ }
@@ -764,7 +783,9 @@ ORDER BY p.parameter_id;";
             }
             catch (Exception ex)
             {
-                TempData["Message"] = "Hata: " + ex.Message;
+                // M-02: CreateDataSource (EF SaveChangesAsync fail path).
+                _ = ex;
+                TempData["Message"] = "Veri kaynağı oluşturulurken hata oluştu.";
                 TempData["MessageType"] = "error";
                 return View(new AdminDataSourceFormViewModel
                 {
@@ -832,7 +853,9 @@ ORDER BY p.parameter_id;";
             }
             catch (Exception ex)
             {
-                TempData["Message"] = "Hata: " + ex.Message;
+                // M-02: EditDataSource.
+                _ = ex;
+                TempData["Message"] = "Veri kaynağı güncellenirken hata oluştu.";
                 TempData["MessageType"] = "error";
                 return View(new AdminDataSourceFormViewModel
                 {
@@ -899,7 +922,9 @@ ORDER BY p.parameter_id;";
             }
             catch (Exception ex)
             {
-                TempData["Message"] = "Veri kaynaklari yuklenirken hata: " + ex.Message;
+                // M-02: generic mesaj, detay log'a.
+                _ = ex;
+                TempData["Message"] = "Veri kaynakları yüklenirken hata oluştu.";
                 TempData["MessageType"] = "error";
                 return View(new AdminReportFormViewModel
                 {
@@ -956,7 +981,9 @@ ORDER BY p.parameter_id;";
             }
             catch (Exception ex)
             {
-                TempData["Message"] = "Hata: " + ex.Message;
+                // M-02: CreateReport.
+                _ = ex;
+                TempData["Message"] = "Rapor oluşturulurken hata oluştu.";
                 TempData["MessageType"] = "error";
                 var dataSources = await _context.DataSources.Where(d => d.IsActive).ToListAsync();
                 var roles = await _context.Roles.Where(r => r.IsActive).OrderBy(r => r.Name).ToListAsync();
@@ -1067,7 +1094,9 @@ ORDER BY p.parameter_id;";
             }
             catch (Exception ex)
             {
-                TempData["Message"] = "Hata: " + ex.Message;
+                // M-02: EditReport.
+                _ = ex;
+                TempData["Message"] = "Rapor güncellenirken hata oluştu.";
                 TempData["MessageType"] = "error";
                 var dataSources = await _context.DataSources.Where(d => d.IsActive).ToListAsync();
                 var roles = await _context.Roles.Where(r => r.IsActive).OrderBy(r => r.Name).ToListAsync();
