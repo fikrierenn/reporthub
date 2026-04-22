@@ -330,13 +330,17 @@ namespace ReportPanel.Controllers
                                   TargetType = "user",
                                   TargetKey = delUser.UserId.ToString(),
                                   Description = "User deleted",
+                                  // M-03: Audit snapshot rolleri UserRole junction'dan (deprecate CSV yerine).
                                   OldValuesJson = AuditLogService.ToJson(new
                                   {
                                       delUser.UserId,
                                       delUser.Username,
                                       delUser.FullName,
                                       delUser.Email,
-                                      delUser.Roles,
+                                      Roles = _context.UserRoles
+                                          .Where(ur => ur.UserId == delUser.UserId)
+                                          .Select(ur => ur.Role!.Name)
+                                          .ToList(),
                                       delUser.IsActive
                                   })
                               });
@@ -1149,16 +1153,16 @@ ORDER BY p.parameter_id;";
             var password = Request.Form["Password"].ToString();
             user.IsAdUser = ReadFormBool("IsAdUser");
             var selectedRoleIds = ParseIds(Request.Form["SelectedRoles"]);
-            var rolesCsv = await BuildRolesCsv(selectedRoleIds);
             user.Username = NormalizeUsername(user.Username);
             user.FullName = user.FullName?.Trim() ?? "";
             user.Email = string.IsNullOrWhiteSpace(user.Email) ? null : user.Email.Trim();
-            user.Roles = rolesCsv;
+            // M-03: User.Roles CSV deprecate — rol bilgisi UserRole junction'a SyncUserRoles ile yazilir (asagida).
+            user.Roles = string.Empty;
             user.IsActive = ReadFormBool("IsActive");
 
             if (string.IsNullOrWhiteSpace(user.Username) ||
                 string.IsNullOrWhiteSpace(user.FullName) ||
-                string.IsNullOrWhiteSpace(user.Roles))
+                selectedRoleIds.Count == 0)
             {
                 return View(await BuildCreateUserFormAsync(user, selectedRoleIds, "Zorunlu alanlar bos birakilamaz.", "error"));
             }
@@ -1184,6 +1188,13 @@ ORDER BY p.parameter_id;";
             await _context.SaveChangesAsync();
             await SyncUserRoles(user.UserId, selectedRoleIds);
             await SyncUserDataFilters(user.UserId);
+
+            // M-03: Audit snapshot'ta rol isimleri UserRole junction'dan hesaplanir.
+            var createdRoleNames = await _context.Roles
+                .Where(r => selectedRoleIds.Contains(r.RoleId))
+                .Select(r => r.Name)
+                .ToListAsync();
+
             await _auditLog.LogAsync(new AuditLogEntry
             {
                 EventType = "user_create",
@@ -1196,7 +1207,7 @@ ORDER BY p.parameter_id;";
                     user.Username,
                     user.FullName,
                     user.Email,
-                    user.Roles,
+                    Roles = createdRoleNames,
                     user.IsAdUser,
                     user.IsActive
                 })
@@ -1261,14 +1272,14 @@ ORDER BY p.parameter_id;";
             var username = NormalizeUsername(user.Username);
             var fullName = user.FullName?.Trim() ?? "";
             var selectedRoleIds = ParseIds(Request.Form["SelectedRoles"]);
-            var roles = await BuildRolesCsv(selectedRoleIds);
+            // M-03: User.Roles CSV deprecate — rol yazimi SyncUserRoles'ta.
             var email = string.IsNullOrWhiteSpace(user.Email) ? null : user.Email.Trim();
             var isAdUser = ReadFormBool("IsAdUser");
             var wasAdUser = existing.IsAdUser;
 
             if (string.IsNullOrWhiteSpace(username) ||
                 string.IsNullOrWhiteSpace(fullName) ||
-                string.IsNullOrWhiteSpace(roles))
+                selectedRoleIds.Count == 0)
             {
                 var allRoles = await _context.Roles.Where(r => r.IsActive).OrderBy(r => r.Name).ToListAsync();
                 return View(new AdminUserFormViewModel
@@ -1298,7 +1309,7 @@ ORDER BY p.parameter_id;";
             existing.Username = username;
             existing.FullName = fullName;
             existing.Email = email;
-            existing.Roles = roles;
+            // M-03: existing.Roles yazilmaz (UserRole junction kullanilir).
             existing.IsAdUser = isAdUser;
             existing.IsActive = ReadFormBool("IsActive");
             if (existing.IsAdUser)
@@ -1329,6 +1340,13 @@ ORDER BY p.parameter_id;";
             await _context.SaveChangesAsync();
             await SyncUserRoles(existing.UserId, selectedRoleIds);
             await SyncUserDataFilters(existing.UserId);
+
+            // M-03: Audit snapshot rolleri UserRole junction'dan hesaplar.
+            var updatedRoleNames = await _context.Roles
+                .Where(r => selectedRoleIds.Contains(r.RoleId))
+                .Select(r => r.Name)
+                .ToListAsync();
+
             await _auditLog.LogAsync(new AuditLogEntry
             {
                 EventType = "user_update",
@@ -1341,7 +1359,7 @@ ORDER BY p.parameter_id;";
                     existing.Username,
                     existing.FullName,
                     existing.Email,
-                    existing.Roles,
+                    Roles = updatedRoleNames,
                     existing.IsAdUser,
                     existing.IsActive
                 })
@@ -1683,16 +1701,7 @@ ORDER BY p.parameter_id;";
                 return;
             }
 
-            var users = await _context.Users.ToListAsync();
-            foreach (var user in users)
-            {
-                var updated = ReplaceCsvValue(user.Roles, oldName, newName);
-                if (!string.Equals(updated, user.Roles, StringComparison.Ordinal))
-                {
-                    user.Roles = updated;
-                }
-            }
-
+            // M-03: User.Roles CSV deprecate — UserRole junction FK ile otomatik guncellenir, loop gerek yok.
             var reports = await _context.ReportCatalog.ToListAsync();
             foreach (var report in reports)
             {
@@ -1713,16 +1722,7 @@ ORDER BY p.parameter_id;";
                 return;
             }
 
-            var users = await _context.Users.ToListAsync();
-            foreach (var user in users)
-            {
-                var updated = RemoveCsvValue(user.Roles, roleName);
-                if (!string.Equals(updated, user.Roles, StringComparison.Ordinal))
-                {
-                    user.Roles = updated;
-                }
-            }
-
+            // M-03: User.Roles CSV deprecate — UserRole junction FK ile otomatik yonetilir.
             var reports = await _context.ReportCatalog.ToListAsync();
             foreach (var report in reports)
             {

@@ -34,12 +34,18 @@ namespace ReportPanel.Controllers
                 return NotFound();
             }
 
+            // M-03: Rolleri UserRole junction'dan al (CSV deprecate).
+            var roleNames = await _context.UserRoles
+                .Where(ur => ur.UserId == user.UserId)
+                .Select(ur => ur.Role!.Name)
+                .ToListAsync();
+
             var model = new ProfileViewModel
             {
                 Username = user.Username,
                 FullName = user.FullName,
                 Email = user.Email,
-                Roles = user.Roles,
+                Roles = string.Join(", ", roleNames),
                 IsActive = user.IsActive,
                 LastLoginAt = user.LastLoginAt,
                 Message = TempData["Message"]?.ToString() ?? "",
@@ -65,12 +71,19 @@ namespace ReportPanel.Controllers
                 return NotFound();
             }
 
+            // M-03: Rol listesi — re-render sırasında view'e geri koymak için.
+            var roleNamesForRender = await _context.UserRoles
+                .Where(ur => ur.UserId == user.UserId)
+                .Select(ur => ur.Role!.Name)
+                .ToListAsync();
+            var rolesJoined = string.Join(", ", roleNamesForRender);
+
             if (string.IsNullOrWhiteSpace(model.FullName))
             {
                 model.Message = "Ad soyad bos birakilamaz.";
                 model.MessageType = "error";
                 model.Username = user.Username;
-                model.Roles = user.Roles;
+                model.Roles = rolesJoined;
                 model.IsActive = user.IsActive;
                 model.LastLoginAt = user.LastLoginAt;
                 return View(model);
@@ -84,7 +97,7 @@ namespace ReportPanel.Controllers
                     model.Message = "Yeni sifreler eslesmiyor.";
                     model.MessageType = "error";
                     model.Username = user.Username;
-                    model.Roles = user.Roles;
+                    model.Roles = rolesJoined;
                     model.IsActive = user.IsActive;
                     model.LastLoginAt = user.LastLoginAt;
                     return View(model);

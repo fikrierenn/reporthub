@@ -403,34 +403,10 @@ namespace ReportPanel.Controllers
                 return new List<int>();
             }
 
-            var roleIds = await _context.UserRoles
+            // M-03: Rol kaynağı artık yalnızca UserRole junction. CSV fallback kaldırıldı.
+            return await _context.UserRoles
                 .Where(ur => ur.UserId == CurrentUserId.Value)
                 .Select(ur => ur.RoleId)
-                .ToListAsync();
-
-            if (roleIds.Count > 0)
-            {
-                return roleIds;
-            }
-
-            var userRolesCsv = await _context.Users
-                .Where(u => u.UserId == CurrentUserId.Value)
-                .Select(u => u.Roles)
-                .FirstOrDefaultAsync();
-            if (string.IsNullOrWhiteSpace(userRolesCsv))
-            {
-                return new List<int>();
-            }
-
-            var names = userRolesCsv
-                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-                .Select(r => r.Trim())
-                .Where(r => !string.IsNullOrWhiteSpace(r))
-                .ToList();
-
-            return await _context.Roles
-                .Where(r => names.Contains(r.Name))
-                .Select(r => r.RoleId)
                 .ToListAsync();
         }
 

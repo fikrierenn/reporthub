@@ -165,19 +165,11 @@ namespace ReportPanel.Controllers
                 new("full_name", user.FullName)
             };
 
+            // M-03: Rol kaynağı artık yalnızca UserRole junction tablosu. User.Roles CSV kolonu deprecate.
             var roles = await _context.UserRoles
                 .Where(ur => ur.UserId == user.UserId)
                 .Select(ur => ur.Role!.Name)
                 .ToListAsync();
-
-            if (roles.Count == 0 && !string.IsNullOrWhiteSpace(user.Roles))
-            {
-                roles = user.Roles
-                    .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-                    .Select(r => r.Trim())
-                    .Where(r => !string.IsNullOrWhiteSpace(r))
-                    .ToList();
-            }
 
             foreach (var role in roles)
             {
