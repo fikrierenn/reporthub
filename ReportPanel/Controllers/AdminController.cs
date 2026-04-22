@@ -606,7 +606,9 @@ ORDER BY p.parameter_id;";
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, error = $"Baglanti hatasi: {ex.Message}", procedures = Array.Empty<object>() });
+                // M-02: connection exception message user'a gosterilmez (credentials sizinti riski).
+                _ = ex;
+                return Json(new { success = false, error = "Veri kaynağına bağlanılamadı. Bağlantı ayarlarını kontrol edin.", procedures = Array.Empty<object>() });
             }
 
             return Json(new { success = true, procedures = procs });
@@ -723,11 +725,15 @@ ORDER BY p.parameter_id;";
             }
             catch (SqlException sx)
             {
-                return Json(new { success = false, error = $"SQL hatasi: {sx.Message}", resultSets });
+                // Admin-only endpoint: SQL hatasini admin'e gostermek SP debug icin faydali.
+                // Number ile birlikte gonderiyoruz; Message zaten SqlException'in kisa ozeti.
+                return Json(new { success = false, error = $"SQL hatası ({sx.Number}): {sx.Message}", resultSets });
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, error = $"Baglanti hatasi: {ex.Message}", resultSets });
+                // M-02: generic connection exception user'a sizintisiz.
+                _ = ex;
+                return Json(new { success = false, error = "Veri kaynağına bağlanılamadı.", resultSets });
             }
 
             return Json(new { success = true, resultSets });

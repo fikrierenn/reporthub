@@ -317,7 +317,8 @@ namespace ReportPanel.Controllers
             catch (Exception ex)
             {
                 stopwatch.Stop();
-                model.RunError = "Rapor calistirma hatasi: " + ex.Message;
+                // M-02: user'a generic mesaj, detay audit log'a gider.
+                model.RunError = "Rapor çalıştırılırken hata oluştu. Parametreleri kontrol edin veya sistem yöneticisine başvurun.";
 
                 await LogRun(
                     context.SelectedReport,

@@ -35,7 +35,9 @@ namespace ReportPanel.Controllers
             }
             catch (Exception ex)
             {
-                model.Error = ex.Message;
+                // M-02: DEBUG-only controller olsa bile disiplin icin generic mesaj.
+                _ = ex;
+                model.Error = "Veritabanı bağlantısı kurulamadı.";
                 model.CanConnect = false;
                 return View(model);
             }
@@ -65,7 +67,9 @@ namespace ReportPanel.Controllers
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = ex.Message });
+                // M-02: generic mesaj.
+                _ = ex;
+                return Json(new { success = false, message = "Örnek veri eklenirken hata oluştu." });
             }
         }
     }
