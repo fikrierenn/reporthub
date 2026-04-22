@@ -7,6 +7,9 @@ namespace ReportPanel.ViewModels
         public User User { get; set; } = new();
         public string Message { get; set; } = "";
         public string MessageType { get; set; } = "";
-        public string[] AvailableRoles { get; set; } = Array.Empty<string>();
+        public List<Role> AvailableRoles { get; set; } = new();
+        public HashSet<int> SelectedRoleIds { get; set; } = new();
+        public List<UserDataFilter> DataFilters { get; set; } = new();
+        public List<DataSource> DataSources { get; set; } = new();
     }
 }

@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using ReportPanel.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Data.SqlClient;
+using System.Data;
 using System.Text.RegularExpressions;
 using ReportPanel.Services;
 using ReportPanel.ViewModels;
@@ -14,19 +15,13 @@ namespace ReportPanel.Controllers
     {
         private readonly ReportPanelContext _context;
         private readonly AuditLogService _auditLog;
-        private static readonly string[] AvailableRoles = { "admin", "ik", "mali", "user" };
-        private static readonly Dictionary<string, string> RoleDescriptions = new(StringComparer.OrdinalIgnoreCase)
-        {
-            { "admin", "Tam yetki" },
-            { "ik", "IK raporlari ve islemleri" },
-            { "mali", "Mali raporlar ve islemler" },
-            { "user", "Standart kullanici" }
-        };
+        private readonly IConfiguration _configuration;
 
-        public AdminController(ReportPanelContext context, AuditLogService auditLog)
+        public AdminController(ReportPanelContext context, AuditLogService auditLog, IConfiguration configuration)
         {
             _context = context;
             _auditLog = auditLog;
+            _configuration = configuration;
         }
 
         [HttpGet]
@@ -42,8 +37,15 @@ namespace ReportPanel.Controllers
                 Message = TempData["Message"]?.ToString() ?? "",
                 MessageType = TempData["MessageType"]?.ToString() ?? "",
                 DataSources = await _context.DataSources.OrderBy(d => d.DataSourceKey).ToListAsync(),
-                Reports = await _context.ReportCatalog.Include(r => r.DataSource).OrderBy(r => r.ReportId).ToListAsync(),
-                Users = await _context.Users.OrderBy(u => u.Username).ToListAsync()
+                Reports = await _context.ReportCatalog
+                    .Include(r => r.DataSource)
+                    .Include(r => r.ReportCategories)
+                        .ThenInclude(rc => rc.Category)
+                    .OrderBy(r => r.ReportId)
+                    .ToListAsync(),
+                Users = await _context.Users.OrderBy(u => u.Username).ToListAsync(),
+                Roles = await _context.Roles.OrderBy(r => r.Name).ToListAsync(),
+                Categories = await _context.ReportCategories.OrderBy(c => c.Name).ToListAsync()
             };
 
             return View(model);
@@ -69,7 +71,7 @@ namespace ReportPanel.Controllers
                             DataSourceKey = Request.Form["DataSourceKey"].ToString().ToUpper(),
                             Title = Request.Form["Title"].ToString(),
                             ConnString = Request.Form["ConnString"].ToString(),
-                            IsActive = Request.Form["IsActive"].ToString() == "true"
+                            IsActive = ReadFormBool("IsActive")
                         };
                         _context.DataSources.Add(newDs);
                         await _context.SaveChangesAsync();
@@ -83,7 +85,7 @@ namespace ReportPanel.Controllers
                         {
                             ds.Title = Request.Form["Title"].ToString();
                             ds.ConnString = Request.Form["ConnString"].ToString();
-                            ds.IsActive = Request.Form["IsActive"].ToString() == "true";
+                            ds.IsActive = ReadFormBool("IsActive");
                             await _context.SaveChangesAsync();
                             TempData["Message"] = "Veri kaynağı güncellendi";
                             TempData["MessageType"] = "success";
@@ -120,14 +122,15 @@ namespace ReportPanel.Controllers
                         {
                             Title = Request.Form["Title"].ToString(),
                             Description = Request.Form["Description"].ToString(),
-                            DataSourceKey = Request.Form["DataSourceKey"].ToString(),
+                                                        DataSourceKey = Request.Form["DataSourceKey"].ToString(),
                             ProcName = Request.Form["ProcName"].ToString(),
-                            AllowedRoles = NormalizeRoles(Request.Form["SelectedRoles"]),
-                            IsActive = Request.Form["IsActive"].ToString() == "true",
+                            AllowedRoles = NormalizeRolesByRoleIds(Request.Form["SelectedRoles"]),
+                            IsActive = ReadFormBool("IsActive"),
                             ParamSchemaJson = NormalizeParamSchema(Request.Form["ParamSchemaJson"].ToString())
                         };
                         _context.ReportCatalog.Add(newReport);
                         await _context.SaveChangesAsync();
+                        await SyncReportRolesAndCategories(newReport.ReportId);
                         TempData["Message"] = "Rapor eklendi";
                         TempData["MessageType"] = "success";
                         break;
@@ -140,10 +143,14 @@ namespace ReportPanel.Controllers
                             report.Description = Request.Form["Description"].ToString();
                             report.DataSourceKey = Request.Form["DataSourceKey"].ToString();
                             report.ProcName = Request.Form["ProcName"].ToString();
-                            report.AllowedRoles = NormalizeRoles(Request.Form["SelectedRoles"]);
-                            report.IsActive = Request.Form["IsActive"].ToString() == "true";
+                            report.AllowedRoles = NormalizeRolesByRoleIds(Request.Form["SelectedRoles"]);
+                            report.IsActive = ReadFormBool("IsActive");
                             report.ParamSchemaJson = NormalizeParamSchema(Request.Form["ParamSchemaJson"].ToString(), report.ParamSchemaJson);
+                            report.ReportType = Request.Form["ReportType"].ToString() is "dashboard" ? "dashboard" : "table";
+                            report.DashboardHtml = report.ReportType == "dashboard" ? Request.Form["DashboardHtml"].ToString() : null;
+                report.DashboardConfigJson = report.ReportType == "dashboard" ? Request.Form["DashboardConfigJson"].ToString() : null;
                             await _context.SaveChangesAsync();
+                            await SyncReportRolesAndCategories(report.ReportId);
                             TempData["Message"] = "Rapor güncellendi";
                             TempData["MessageType"] = "success";
                         }
@@ -174,6 +181,140 @@ namespace ReportPanel.Controllers
                             })
                         });
                             TempData["Message"] = "Rapor silindi";
+                            TempData["MessageType"] = "success";
+                        }
+                        break;
+                    case "create_role":
+                        var roleName = Request.Form["Name"].ToString().Trim();
+                        if (string.IsNullOrWhiteSpace(roleName))
+                        {
+                            TempData["Message"] = "Rol adi zorunludur.";
+                            TempData["MessageType"] = "error";
+                            break;
+                        }
+                        var roleExists = await _context.Roles
+                            .AnyAsync(r => r.Name.ToLower() == roleName.ToLower());
+                        if (roleExists)
+                        {
+                            TempData["Message"] = "Ayni isimde rol zaten var.";
+                            TempData["MessageType"] = "error";
+                            break;
+                        }
+                        var newRole = new Role
+                        {
+                            Name = roleName,
+                            Description = Request.Form["Description"].ToString(),
+                            IsActive = ReadFormBool("IsActive")
+                        };
+                        _context.Roles.Add(newRole);
+                        await _context.SaveChangesAsync();
+                        TempData["Message"] = "Rol eklendi.";
+                        TempData["MessageType"] = "success";
+                        break;
+                    case "update_role":
+                        var role = await _context.Roles.FindAsync(id);
+                        if (role != null)
+                        {
+                            var oldName = role.Name;
+                            var newName = Request.Form["Name"].ToString().Trim();
+                            if (string.IsNullOrWhiteSpace(newName))
+                            {
+                                TempData["Message"] = "Rol adi zorunludur.";
+                                TempData["MessageType"] = "error";
+                                break;
+                            }
+                            var duplicate = await _context.Roles
+                                .AnyAsync(r => r.RoleId != role.RoleId && r.Name.ToLower() == newName.ToLower());
+                            if (duplicate)
+                            {
+                                TempData["Message"] = "Ayni isimde rol zaten var.";
+                                TempData["MessageType"] = "error";
+                                break;
+                            }
+                            role.Name = newName;
+                            role.Description = Request.Form["Description"].ToString();
+                            role.IsActive = ReadFormBool("IsActive");
+                            await _context.SaveChangesAsync();
+                            if (!string.Equals(oldName, newName, StringComparison.OrdinalIgnoreCase))
+                            {
+                                await ReplaceRoleNameInCsv(oldName, newName);
+                            }
+                            TempData["Message"] = "Rol guncellendi.";
+                            TempData["MessageType"] = "success";
+                        }
+                        break;
+                    case "delete_role":
+                        var delRole = await _context.Roles.FindAsync(id);
+                        if (delRole != null)
+                        {
+                            await RemoveRoleNameFromCsv(delRole.Name);
+                            _context.Roles.Remove(delRole);
+                            await _context.SaveChangesAsync();
+                            TempData["Message"] = "Rol silindi.";
+                            TempData["MessageType"] = "success";
+                        }
+                        break;
+                    case "create_category":
+                        var categoryName = Request.Form["Name"].ToString().Trim();
+                        if (string.IsNullOrWhiteSpace(categoryName))
+                        {
+                            TempData["Message"] = "Kategori adi zorunludur.";
+                            TempData["MessageType"] = "error";
+                            break;
+                        }
+                        var categoryExists = await _context.ReportCategories
+                            .AnyAsync(c => c.Name.ToLower() == categoryName.ToLower());
+                        if (categoryExists)
+                        {
+                            TempData["Message"] = "Ayni isimde kategori zaten var.";
+                            TempData["MessageType"] = "error";
+                            break;
+                        }
+                        var newCategory = new ReportCategory
+                        {
+                            Name = categoryName,
+                            Description = Request.Form["Description"].ToString(),
+                            IsActive = ReadFormBool("IsActive")
+                        };
+                        _context.ReportCategories.Add(newCategory);
+                        await _context.SaveChangesAsync();
+                        TempData["Message"] = "Kategori eklendi.";
+                        TempData["MessageType"] = "success";
+                        break;
+                    case "update_category":
+                        var category = await _context.ReportCategories.FindAsync(id);
+                        if (category != null)
+                        {
+                            var newCategoryName = Request.Form["Name"].ToString().Trim();
+                            if (string.IsNullOrWhiteSpace(newCategoryName))
+                            {
+                                TempData["Message"] = "Kategori adi zorunludur.";
+                                TempData["MessageType"] = "error";
+                                break;
+                            }
+                            var duplicateCategory = await _context.ReportCategories
+                                .AnyAsync(c => c.CategoryId != category.CategoryId && c.Name.ToLower() == newCategoryName.ToLower());
+                            if (duplicateCategory)
+                            {
+                                TempData["Message"] = "Ayni isimde kategori zaten var.";
+                                TempData["MessageType"] = "error";
+                                break;
+                            }
+                            category.Name = newCategoryName;
+                            category.Description = Request.Form["Description"].ToString();
+                            category.IsActive = ReadFormBool("IsActive");
+                            await _context.SaveChangesAsync();
+                            TempData["Message"] = "Kategori guncellendi.";
+                            TempData["MessageType"] = "success";
+                        }
+                        break;
+                    case "delete_category":
+                        var delCategory = await _context.ReportCategories.FindAsync(id);
+                        if (delCategory != null)
+                        {
+                            _context.ReportCategories.Remove(delCategory);
+                            await _context.SaveChangesAsync();
+                            TempData["Message"] = "Kategori silindi.";
                             TempData["MessageType"] = "success";
                         }
                         break;
@@ -259,7 +400,7 @@ namespace ReportPanel.Controllers
             {
                 "local_windows" => "Server=localhost\\SQLEXPRESS;Database=TestDB;Integrated Security=true;TrustServerCertificate=true;",
                 "local_sql" => "Server=localhost\\SQLEXPRESS;Database=TestDB;User Id=sa;Password=;TrustServerCertificate=true;",
-                "current" => "Server=localhost\\SQLEXPRESS;Database=PortalHUB;User Id=sa;Password=CHANGE_ME;TrustServerCertificate=true;",
+                "current" => _configuration.GetConnectionString("DefaultConnection") ?? "",
                 _ => ""
             };
         }
@@ -370,6 +511,209 @@ ORDER BY p.parameter_id;";
             };
         }
 
+        [HttpGet]
+        [Authorize(Roles = "admin")]
+        [Route("Admin/FilterOptions")]
+        public async Task<IActionResult> FilterOptions(string filterKey, string? dataSourceKey = null)
+        {
+            if (string.IsNullOrWhiteSpace(filterKey))
+                return BadRequest("FilterKey gerekli.");
+
+            // Data source bul — belirtilmişse onu, yoksa PDKS'i dene
+            var dsKey = dataSourceKey;
+            if (string.IsNullOrWhiteSpace(dsKey))
+            {
+                // İlk aktif data source'u bul
+                var first = await _context.DataSources.AsNoTracking()
+                    .FirstOrDefaultAsync(d => d.IsActive);
+                dsKey = first?.DataSourceKey;
+            }
+
+            var ds = await _context.DataSources.AsNoTracking()
+                .FirstOrDefaultAsync(d => d.DataSourceKey == dsKey && d.IsActive);
+            if (ds == null)
+                return Json(new { options = Array.Empty<object>() });
+
+            string sql = filterKey.ToLowerInvariant() switch
+            {
+                "sube" => "SELECT CAST(SubeNo AS varchar(10)) AS Value, SubeAd AS Label FROM vrd.SubeListe ORDER BY SubeAd",
+                "bolum" => "SELECT DISTINCT Bolum AS Value, Bolum AS Label FROM vrd.VardiyaDetay WHERE Bolum IS NOT NULL AND Bolum <> '' ORDER BY Bolum",
+                _ => ""
+            };
+
+            if (string.IsNullOrEmpty(sql))
+                return Json(new { options = Array.Empty<object>() });
+
+            var options = new List<object>();
+            try
+            {
+                await using var conn = new SqlConnection(ds.ConnString);
+                await conn.OpenAsync();
+                await using var cmd = new SqlCommand(sql, conn);
+                await using var reader = await cmd.ExecuteReaderAsync();
+                while (await reader.ReadAsync())
+                {
+                    options.Add(new
+                    {
+                        value = reader["Value"]?.ToString() ?? "",
+                        label = reader["Label"]?.ToString() ?? ""
+                    });
+                }
+            }
+            catch
+            {
+                // Bağlantı hatası — boş liste dön
+            }
+
+            return Json(new { options });
+        }
+
+        // DataSource'taki stored procedure listesi (builder dropdown'i icin)
+        [HttpGet]
+        [Route("Admin/SpList")]
+        public async Task<IActionResult> SpList(string dataSourceKey)
+        {
+            if (string.IsNullOrWhiteSpace(dataSourceKey))
+                return Json(new { success = false, error = "DataSource secilmedi.", procedures = Array.Empty<object>() });
+
+            var ds = await _context.DataSources.AsNoTracking()
+                .FirstOrDefaultAsync(d => d.DataSourceKey == dataSourceKey && d.IsActive);
+            if (ds == null)
+                return Json(new { success = false, error = "DataSource bulunamadi veya pasif.", procedures = Array.Empty<object>() });
+
+            var procs = new List<object>();
+            try
+            {
+                await using var conn = new SqlConnection(ds.ConnString);
+                await conn.OpenAsync();
+                const string sql = @"
+                    SELECT SCHEMA_NAME(schema_id) AS SchemaName, name AS ProcName
+                    FROM sys.procedures
+                    WHERE is_ms_shipped = 0
+                    ORDER BY SCHEMA_NAME(schema_id), name";
+                await using var cmd = new SqlCommand(sql, conn) { CommandTimeout = 15 };
+                await using var reader = await cmd.ExecuteReaderAsync();
+                while (await reader.ReadAsync())
+                {
+                    var schema = reader["SchemaName"]?.ToString() ?? "dbo";
+                    var name = reader["ProcName"]?.ToString() ?? "";
+                    var full = schema == "dbo" ? name : $"{schema}.{name}";
+                    procs.Add(new { name = full, schema, shortName = name });
+                }
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, error = $"Baglanti hatasi: {ex.Message}", procedures = Array.Empty<object>() });
+            }
+
+            return Json(new { success = true, procedures = procs });
+        }
+
+        // Stored procedure onizleme: SP'yi bos parametrelerle calistir, result set'lerin kolon adlari + ilk 10 satirini don
+        [HttpGet]
+        [Route("Admin/SpPreview")]
+        public async Task<IActionResult> SpPreview(string dataSourceKey, string procName, int maxRows = 10)
+        {
+            if (string.IsNullOrWhiteSpace(dataSourceKey) || string.IsNullOrWhiteSpace(procName))
+                return Json(new { success = false, error = "DataSource ve ProcName gerekli." });
+
+            var ds = await _context.DataSources.AsNoTracking()
+                .FirstOrDefaultAsync(d => d.DataSourceKey == dataSourceKey && d.IsActive);
+            if (ds == null)
+                return Json(new { success = false, error = "DataSource bulunamadi." });
+
+            // maxRows guvenlik: 1..100 arasinda olsun
+            if (maxRows < 1) maxRows = 10;
+            if (maxRows > 100) maxRows = 100;
+
+            var resultSets = new List<object>();
+            try
+            {
+                await using var conn = new SqlConnection(ds.ConnString);
+                await conn.OpenAsync();
+
+                // SP parametrelerini bul, zorunlu olanlari NULL ile doldur (SP NULL kabul etmezse hata verecek, mesaj iletilir)
+                var paramList = new List<SqlParameter>();
+                try
+                {
+                    await using var metaCmd = new SqlCommand(
+                        @"SELECT PARAMETER_NAME, DATA_TYPE
+                          FROM INFORMATION_SCHEMA.PARAMETERS
+                          WHERE SPECIFIC_NAME = @sp
+                          ORDER BY ORDINAL_POSITION", conn) { CommandTimeout = 10 };
+                    // SCHEMA.NAME formatinda gelirse kisa adi al
+                    var shortName = procName.Contains('.') ? procName[(procName.LastIndexOf('.') + 1)..] : procName;
+                    metaCmd.Parameters.AddWithValue("@sp", shortName);
+                    await using var metaReader = await metaCmd.ExecuteReaderAsync();
+                    while (await metaReader.ReadAsync())
+                    {
+                        var pname = metaReader["PARAMETER_NAME"]?.ToString() ?? "";
+                        if (string.IsNullOrWhiteSpace(pname)) continue;
+                        paramList.Add(new SqlParameter(pname, DBNull.Value));
+                    }
+                }
+                catch { /* parametre cikartma basarisiz olursa yine de SP'yi parametresiz deneriz */ }
+
+                await using var cmd = new SqlCommand(procName, conn)
+                {
+                    CommandType = CommandType.StoredProcedure,
+                    CommandTimeout = 30
+                };
+                if (paramList.Count > 0) cmd.Parameters.AddRange(paramList.ToArray());
+
+                await using var reader = await cmd.ExecuteReaderAsync();
+                var rsIndex = 0;
+                do
+                {
+                    var columns = new List<object>();
+                    for (var i = 0; i < reader.FieldCount; i++)
+                    {
+                        columns.Add(new
+                        {
+                            name = reader.GetName(i),
+                            type = reader.GetFieldType(i)?.Name ?? "object"
+                        });
+                    }
+
+                    var rows = new List<Dictionary<string, object?>>();
+                    var rowCount = 0;
+                    while (await reader.ReadAsync() && rowCount < maxRows)
+                    {
+                        var row = new Dictionary<string, object?>();
+                        for (var i = 0; i < reader.FieldCount; i++)
+                        {
+                            row[reader.GetName(i)] = await reader.IsDBNullAsync(i) ? null : reader.GetValue(i);
+                        }
+                        rows.Add(row);
+                        rowCount++;
+                    }
+                    // geri kalan satirlari at (sayim icin)
+                    var totalRows = rowCount;
+                    while (await reader.ReadAsync()) totalRows++;
+
+                    resultSets.Add(new
+                    {
+                        index = rsIndex,
+                        columns,
+                        rows,
+                        rowCount = totalRows,
+                        truncated = totalRows > maxRows
+                    });
+                    rsIndex++;
+                } while (await reader.NextResultAsync());
+            }
+            catch (SqlException sx)
+            {
+                return Json(new { success = false, error = $"SQL hatasi: {sx.Message}", resultSets });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, error = $"Baglanti hatasi: {ex.Message}", resultSets });
+            }
+
+            return Json(new { success = true, resultSets });
+        }
+
         // Ayrı sayfa action'ları
         [Route("Admin/CreateDataSource")]
         public IActionResult CreateDataSource()
@@ -394,7 +738,7 @@ ORDER BY p.parameter_id;";
                 Console.WriteLine($"Model IsActive değeri: {dataSource.IsActive}");
                 
                 // Manuel olarak IsActive değerini set et
-                dataSource.IsActive = Request.Form["IsActive"].ToString().Contains("true");
+                dataSource.IsActive = ReadFormBool("IsActive");
                 
                 Console.WriteLine($"Final IsActive değeri: {dataSource.IsActive}");
                 
@@ -464,7 +808,7 @@ ORDER BY p.parameter_id;";
             try
             {
                 // Manuel olarak IsActive değerini set et
-                dataSource.IsActive = Request.Form["IsActive"].ToString().Contains("true");
+                dataSource.IsActive = ReadFormBool("IsActive");
                 
                 _context.DataSources.Update(dataSource);
                 await _context.SaveChangesAsync();
@@ -502,21 +846,35 @@ ORDER BY p.parameter_id;";
         {
             try
             {
-                // T??m veri kaynaklar??n?? kontrol et
+                // Tum veri kaynaklarini kontrol et
                 var allDataSources = await _context.DataSources.ToListAsync();
                 var activeDataSources = allDataSources.Where(d => d.IsActive).ToList();
+                var roles = await _context.Roles
+                    .AsNoTracking()
+                    .Where(r => r.IsActive)
+                    .OrderBy(r => r.Name)
+                    .ToListAsync();
+                var categories = await _context.ReportCategories
+                    .AsNoTracking()
+                    .Where(c => c.IsActive)
+                    .OrderBy(c => c.Name)
+                    .ToListAsync();
 
                 var model = new AdminReportFormViewModel
                 {
                     Report = new ReportCatalog { IsActive = true, AllowedRoles = "admin" },
                     DataSources = activeDataSources,
-                    AvailableRoles = AvailableRoles,
-                    SelectedRoles = ParseRoles("admin")
+                    AvailableRoles = roles,
+                    SelectedRoleIds = new HashSet<int>(roles
+                        .Where(r => string.Equals(r.Name, "admin", StringComparison.OrdinalIgnoreCase))
+                        .Select(r => r.RoleId)),
+                    AvailableCategories = categories,
+                    SelectedCategoryIds = new HashSet<int>()
                 };
 
                 // Debug bilgisi
-                Console.WriteLine($"Toplam veri kayna?Y??: {allDataSources.Count}");
-                Console.WriteLine($"Aktif veri kayna?Y??: {activeDataSources.Count}");
+                Console.WriteLine($"Toplam veri kaynagi: {allDataSources.Count}");
+                Console.WriteLine($"Aktif veri kaynagi: {activeDataSources.Count}");
 
                 foreach (var ds in allDataSources)
                 {
@@ -527,12 +885,12 @@ ORDER BY p.parameter_id;";
                 {
                     if (allDataSources.Any())
                     {
-                        TempData["Message"] = $"Toplam {allDataSources.Count} veri kayna?Y?? var ama hi??biri aktif de?Yil. Veri kaynaklar??n?? aktif hale getirin.";
+                        TempData["Message"] = $"Toplam {allDataSources.Count} veri kaynagi var ama hicbiri aktif degil. Veri kaynaklarini aktif hale getirin.";
                         TempData["MessageType"] = "warning";
                     }
                     else
                     {
-                        TempData["Message"] = "Hi?? veri kayna?Y?? bulunamad??. ?-nce veri kayna?Y?? eklemeniz gerekiyor.";
+                        TempData["Message"] = "Hic veri kaynagi bulunamadi. Once veri kaynagi eklemeniz gerekiyor.";
                         TempData["MessageType"] = "warning";
                     }
                 }
@@ -541,14 +899,16 @@ ORDER BY p.parameter_id;";
             }
             catch (Exception ex)
             {
-                TempData["Message"] = "Veri kaynaklar?? y??klenirken hata: " + ex.Message;
+                TempData["Message"] = "Veri kaynaklari yuklenirken hata: " + ex.Message;
                 TempData["MessageType"] = "error";
                 return View(new AdminReportFormViewModel
                 {
                     Report = new ReportCatalog { IsActive = true, AllowedRoles = "admin" },
                     DataSources = new List<DataSource>(),
-                    AvailableRoles = AvailableRoles,
-                    SelectedRoles = ParseRoles("admin")
+                    AvailableRoles = new List<Role>(),
+                    SelectedRoleIds = new HashSet<int>(),
+                    AvailableCategories = new List<ReportCategory>(),
+                    SelectedCategoryIds = new HashSet<int>()
                 });
             }
         }
@@ -562,12 +922,16 @@ ORDER BY p.parameter_id;";
             try
             {
                 // Manuel olarak IsActive değerini set et
-                report.IsActive = Request.Form["IsActive"].ToString().Contains("true");
-                report.AllowedRoles = NormalizeRoles(Request.Form["SelectedRoles"]);
+                report.IsActive = ReadFormBool("IsActive");
+                report.AllowedRoles = NormalizeRolesByRoleIds(Request.Form["SelectedRoles"]);
                 report.ParamSchemaJson = NormalizeParamSchema(Request.Form["ParamSchemaJson"].ToString());
-                
+                report.ReportType = Request.Form["ReportType"].ToString() is "dashboard" ? "dashboard" : "table";
+                report.DashboardHtml = report.ReportType == "dashboard" ? Request.Form["DashboardHtml"].ToString() : null;
+                report.DashboardConfigJson = report.ReportType == "dashboard" ? Request.Form["DashboardConfigJson"].ToString() : null;
+
                 _context.ReportCatalog.Add(report);
                 await _context.SaveChangesAsync();
+                await SyncReportRolesAndCategories(report.ReportId);
                 await _auditLog.LogAsync(new AuditLogEntry
                 {
                     EventType = "report_create",
@@ -595,12 +959,16 @@ ORDER BY p.parameter_id;";
                 TempData["Message"] = "Hata: " + ex.Message;
                 TempData["MessageType"] = "error";
                 var dataSources = await _context.DataSources.Where(d => d.IsActive).ToListAsync();
+                var roles = await _context.Roles.Where(r => r.IsActive).OrderBy(r => r.Name).ToListAsync();
+                var categories = await _context.ReportCategories.Where(c => c.IsActive).OrderBy(c => c.Name).ToListAsync();
                 return View(new AdminReportFormViewModel
                 {
                     Report = report,
                     DataSources = dataSources,
-                    AvailableRoles = AvailableRoles,
-                    SelectedRoles = ParseRoles(report.AllowedRoles)
+                    AvailableRoles = roles,
+                    SelectedRoleIds = ParseIds(Request.Form["SelectedRoles"]),
+                    AvailableCategories = categories,
+                    SelectedCategoryIds = ParseIds(Request.Form["SelectedCategories"])
                 });
             }
         }
@@ -610,24 +978,44 @@ ORDER BY p.parameter_id;";
             var report = await _context.ReportCatalog.FindAsync(id);
             if (report == null)
             {
-                TempData["Message"] = "Rapor bulunamad??";
+                TempData["Message"] = "Rapor bulunamadi";
                 TempData["MessageType"] = "error";
                 return RedirectToAction("Index", new { tab = "reports" });
             }
 
             var dataSources = await _context.DataSources.Where(d => d.IsActive).ToListAsync();
+            var roles = await _context.Roles
+                .AsNoTracking()
+                .Where(r => r.IsActive)
+                .OrderBy(r => r.Name)
+                .ToListAsync();
+            var categories = await _context.ReportCategories
+                .AsNoTracking()
+                .Where(c => c.IsActive)
+                .OrderBy(c => c.Name)
+                .ToListAsync();
+            var selectedRoleIds = await _context.ReportAllowedRoles
+                .Where(ar => ar.ReportId == report.ReportId)
+                .Select(ar => ar.RoleId)
+                .ToListAsync();
+            var selectedCategoryIds = await _context.ReportCategoryLinks
+                .Where(rc => rc.ReportId == report.ReportId)
+                .Select(rc => rc.CategoryId)
+                .ToListAsync();
             var model = new AdminReportFormViewModel
             {
                 Report = report,
                 DataSources = dataSources,
-                AvailableRoles = AvailableRoles,
-                SelectedRoles = ParseRoles(report.AllowedRoles)
+                AvailableRoles = roles,
+                SelectedRoleIds = selectedRoleIds.ToHashSet(),
+                AvailableCategories = categories,
+                SelectedCategoryIds = selectedCategoryIds.ToHashSet()
             };
 
-            // Debug i??in
+            // Debug icin
             if (!dataSources.Any())
             {
-                TempData["Message"] = "Aktif veri kayna?Y?? bulunamad??. ?-nce veri kayna?Y?? eklemeniz gerekiyor.";
+                TempData["Message"] = "Aktif veri kaynagi bulunamadi. Once veri kaynagi eklemeniz gerekiyor.";
                 TempData["MessageType"] = "warning";
             }
 
@@ -643,12 +1031,16 @@ ORDER BY p.parameter_id;";
             try
             {
                 // Manuel olarak IsActive değerini set et
-                report.IsActive = Request.Form["IsActive"].ToString().Contains("true");
-                report.AllowedRoles = NormalizeRoles(Request.Form["SelectedRoles"]);
+                report.IsActive = ReadFormBool("IsActive");
+                report.AllowedRoles = NormalizeRolesByRoleIds(Request.Form["SelectedRoles"]);
                 report.ParamSchemaJson = NormalizeParamSchema(Request.Form["ParamSchemaJson"].ToString(), report.ParamSchemaJson);
+                report.ReportType = Request.Form["ReportType"].ToString() is "dashboard" ? "dashboard" : "table";
+                report.DashboardHtml = report.ReportType == "dashboard" ? Request.Form["DashboardHtml"].ToString() : null;
+                report.DashboardConfigJson = report.ReportType == "dashboard" ? Request.Form["DashboardConfigJson"].ToString() : null;
 
                 _context.ReportCatalog.Update(report);
                 await _context.SaveChangesAsync();
+                await SyncReportRolesAndCategories(report.ReportId);
                 await _auditLog.LogAsync(new AuditLogEntry
                 {
                     EventType = "report_update",
@@ -678,22 +1070,39 @@ ORDER BY p.parameter_id;";
                 TempData["Message"] = "Hata: " + ex.Message;
                 TempData["MessageType"] = "error";
                 var dataSources = await _context.DataSources.Where(d => d.IsActive).ToListAsync();
+                var roles = await _context.Roles.Where(r => r.IsActive).OrderBy(r => r.Name).ToListAsync();
+                var categories = await _context.ReportCategories.Where(c => c.IsActive).OrderBy(c => c.Name).ToListAsync();
                 return View(new AdminReportFormViewModel
                 {
                     Report = report,
                     DataSources = dataSources,
-                    AvailableRoles = AvailableRoles,
-                    SelectedRoles = ParseRoles(report.AllowedRoles)
+                    AvailableRoles = roles,
+                    SelectedRoleIds = ParseIds(Request.Form["SelectedRoles"]),
+                    AvailableCategories = categories,
+                    SelectedCategoryIds = ParseIds(Request.Form["SelectedCategories"])
                 });
             }
         }
         [Route("Admin/CreateUser")]
         public IActionResult CreateUser()
         {
+            var roles = _context.Roles
+                .AsNoTracking()
+                .Where(r => r.IsActive)
+                .OrderBy(r => r.Name)
+                .ToList();
+            var dataSources = _context.DataSources
+                .AsNoTracking()
+                .Where(ds => ds.IsActive)
+                .OrderBy(ds => ds.Title)
+                .ToList();
             return View(new AdminUserFormViewModel
             {
                 User = new User { IsActive = true },
-                AvailableRoles = AvailableRoles
+                AvailableRoles = roles,
+                SelectedRoleIds = new HashSet<int>(),
+                DataFilters = new List<UserDataFilter>(),
+                DataSources = dataSources
             });
         }
 
@@ -703,55 +1112,43 @@ ORDER BY p.parameter_id;";
         public async Task<IActionResult> CreateUser(User user)
         {
             var password = Request.Form["Password"].ToString();
-            var rolesCsv = NormalizeRoles(Request.Form["SelectedRoles"]);
-            user.Username = user.Username?.Trim() ?? "";
+            user.IsAdUser = ReadFormBool("IsAdUser");
+            var selectedRoleIds = ParseIds(Request.Form["SelectedRoles"]);
+            var rolesCsv = await BuildRolesCsv(selectedRoleIds);
+            user.Username = NormalizeUsername(user.Username);
             user.FullName = user.FullName?.Trim() ?? "";
             user.Email = string.IsNullOrWhiteSpace(user.Email) ? null : user.Email.Trim();
             user.Roles = rolesCsv;
-            user.IsActive = Request.Form["IsActive"].ToString().Contains("true");
+            user.IsActive = ReadFormBool("IsActive");
 
             if (string.IsNullOrWhiteSpace(user.Username) ||
                 string.IsNullOrWhiteSpace(user.FullName) ||
                 string.IsNullOrWhiteSpace(user.Roles))
             {
-                return View(new AdminUserFormViewModel
-                {
-                    User = user,
-                    AvailableRoles = AvailableRoles,
-                    Message = "Zorunlu alanlar bos birakilamaz.",
-                    MessageType = "error"
-                });
+                return View(await BuildCreateUserFormAsync(user, selectedRoleIds, "Zorunlu alanlar bos birakilamaz.", "error"));
             }
 
-            if (string.IsNullOrWhiteSpace(password))
+            if (!user.IsAdUser && string.IsNullOrWhiteSpace(password))
             {
-                return View(new AdminUserFormViewModel
-                {
-                    User = user,
-                    AvailableRoles = AvailableRoles,
-                    Message = "Sifre alani zorunludur.",
-                    MessageType = "error"
-                });
+                return View(await BuildCreateUserFormAsync(user, selectedRoleIds, "Sifre alani zorunludur.", "error"));
             }
 
             var exists = await _context.Users.AnyAsync(u => u.Username == user.Username);
             if (exists)
             {
-                return View(new AdminUserFormViewModel
-                {
-                    User = user,
-                    AvailableRoles = AvailableRoles,
-                    Message = "Bu kullanici adi zaten mevcut.",
-                    MessageType = "error"
-                });
+                return View(await BuildCreateUserFormAsync(user, selectedRoleIds, "Bu kullanici adi zaten mevcut.", "error"));
             }
 
-            user.PasswordHash = PasswordHasher.CreateHash(password);
+            user.PasswordHash = user.IsAdUser
+                ? PasswordHasher.CreateHash(Guid.NewGuid().ToString("N"))
+                : PasswordHasher.CreateHash(password);
             user.CreatedAt = DateTime.Now;
             user.UpdatedAt = DateTime.Now;
 
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
+            await SyncUserRoles(user.UserId, selectedRoleIds);
+            await SyncUserDataFilters(user.UserId);
             await _auditLog.LogAsync(new AuditLogEntry
             {
                 EventType = "user_create",
@@ -765,6 +1162,7 @@ ORDER BY p.parameter_id;";
                     user.FullName,
                     user.Email,
                     user.Roles,
+                    user.IsAdUser,
                     user.IsActive
                 })
             });
@@ -783,10 +1181,31 @@ ORDER BY p.parameter_id;";
                 return RedirectToAction("Index", new { tab = "users" });
             }
 
+            var roles = await _context.Roles
+                .AsNoTracking()
+                .Where(r => r.IsActive)
+                .OrderBy(r => r.Name)
+                .ToListAsync();
+            var selectedRoleIds = await _context.UserRoles
+                .Where(ur => ur.UserId == user.UserId)
+                .Select(ur => ur.RoleId)
+                .ToListAsync();
+            var dataFilters = await _context.UserDataFilters
+                .Where(f => f.UserId == user.UserId)
+                .OrderBy(f => f.FilterKey)
+                .ThenBy(f => f.FilterValue)
+                .ToListAsync();
+            var dataSources = await _context.DataSources
+                .Where(ds => ds.IsActive)
+                .OrderBy(ds => ds.Title)
+                .ToListAsync();
             return View(new AdminUserFormViewModel
             {
                 User = user,
-                AvailableRoles = AvailableRoles
+                AvailableRoles = roles,
+                SelectedRoleIds = selectedRoleIds.ToHashSet(),
+                DataFilters = dataFilters,
+                DataSources = dataSources
             });
         }
 
@@ -804,19 +1223,24 @@ ORDER BY p.parameter_id;";
                 return RedirectToAction("Index", new { tab = "users" });
             }
 
-            var username = user.Username?.Trim() ?? "";
+            var username = NormalizeUsername(user.Username);
             var fullName = user.FullName?.Trim() ?? "";
-            var roles = NormalizeRoles(Request.Form["SelectedRoles"]);
+            var selectedRoleIds = ParseIds(Request.Form["SelectedRoles"]);
+            var roles = await BuildRolesCsv(selectedRoleIds);
             var email = string.IsNullOrWhiteSpace(user.Email) ? null : user.Email.Trim();
+            var isAdUser = ReadFormBool("IsAdUser");
+            var wasAdUser = existing.IsAdUser;
 
             if (string.IsNullOrWhiteSpace(username) ||
                 string.IsNullOrWhiteSpace(fullName) ||
                 string.IsNullOrWhiteSpace(roles))
             {
+                var allRoles = await _context.Roles.Where(r => r.IsActive).OrderBy(r => r.Name).ToListAsync();
                 return View(new AdminUserFormViewModel
                 {
                     User = user,
-                    AvailableRoles = AvailableRoles,
+                    AvailableRoles = allRoles,
+                    SelectedRoleIds = selectedRoleIds,
                     Message = "Zorunlu alanlar bos birakilamaz.",
                     MessageType = "error"
                 });
@@ -825,10 +1249,12 @@ ORDER BY p.parameter_id;";
             var exists = await _context.Users.AnyAsync(u => u.Username == username && u.UserId != existing.UserId);
             if (exists)
             {
+                var allRoles = await _context.Roles.Where(r => r.IsActive).OrderBy(r => r.Name).ToListAsync();
                 return View(new AdminUserFormViewModel
                 {
                     User = user,
-                    AvailableRoles = AvailableRoles,
+                    AvailableRoles = allRoles,
+                    SelectedRoleIds = selectedRoleIds,
                     Message = "Bu kullanici adi zaten mevcut.",
                     MessageType = "error"
                 });
@@ -838,14 +1264,36 @@ ORDER BY p.parameter_id;";
             existing.FullName = fullName;
             existing.Email = email;
             existing.Roles = roles;
-            existing.IsActive = Request.Form["IsActive"].ToString().Contains("true");
-            if (!string.IsNullOrWhiteSpace(password))
+            existing.IsAdUser = isAdUser;
+            existing.IsActive = ReadFormBool("IsActive");
+            if (existing.IsAdUser)
+            {
+                if (!string.IsNullOrWhiteSpace(password))
+                {
+                    existing.PasswordHash = PasswordHasher.CreateHash(Guid.NewGuid().ToString("N"));
+                }
+            }
+            else if (!string.IsNullOrWhiteSpace(password))
             {
                 existing.PasswordHash = PasswordHasher.CreateHash(password);
+            }
+            else if (!existing.IsAdUser && wasAdUser && string.IsNullOrWhiteSpace(password))
+            {
+                var allRoles = await _context.Roles.Where(r => r.IsActive).OrderBy(r => r.Name).ToListAsync();
+                return View(new AdminUserFormViewModel
+                {
+                    User = user,
+                    AvailableRoles = allRoles,
+                    SelectedRoleIds = selectedRoleIds,
+                    Message = "Sifre alani zorunludur.",
+                    MessageType = "error"
+                });
             }
             existing.UpdatedAt = DateTime.Now;
 
             await _context.SaveChangesAsync();
+            await SyncUserRoles(existing.UserId, selectedRoleIds);
+            await SyncUserDataFilters(existing.UserId);
             await _auditLog.LogAsync(new AuditLogEntry
             {
                 EventType = "user_update",
@@ -859,6 +1307,7 @@ ORDER BY p.parameter_id;";
                     existing.FullName,
                     existing.Email,
                     existing.Roles,
+                    existing.IsAdUser,
                     existing.IsActive
                 })
             });
@@ -867,42 +1316,423 @@ ORDER BY p.parameter_id;";
             return RedirectToAction("Index", new { tab = "users" });
         }
 
-        private static List<object> BuildRoleCatalog()
+        private static string NormalizeUsername(string? raw)
         {
-            var items = new List<object>();
-            foreach (var role in AvailableRoles)
+            var value = raw?.Trim() ?? "";
+            var slashIndex = value.IndexOf('\\');
+            if (slashIndex > 0 && slashIndex < value.Length - 1)
             {
-                RoleDescriptions.TryGetValue(role, out var description);
-                items.Add(new { Name = role, Description = description ?? "" });
+                return value.Substring(slashIndex + 1);
             }
-            return items;
+            return value;
         }
 
-        private static HashSet<string> ParseRoles(string? rolesCsv)
+        [Route("Admin/EditRole/{id}")]
+        public async Task<IActionResult> EditRole(int id)
         {
-            if (string.IsNullOrWhiteSpace(rolesCsv))
+            var role = await _context.Roles.FindAsync(id);
+            if (role == null)
             {
-                return new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                TempData["Message"] = "Rol bulunamadi.";
+                TempData["MessageType"] = "error";
+                return RedirectToAction("Index", new { tab = "roles" });
             }
 
-            return rolesCsv
-                .Split(',', StringSplitOptions.RemoveEmptyEntries)
-                .Select(role => role.Trim())
-                .Where(role => !string.IsNullOrWhiteSpace(role))
-                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+            return View(new AdminRoleFormViewModel
+            {
+                Role = role
+            });
         }
 
-        private static string NormalizeRoles(Microsoft.Extensions.Primitives.StringValues selectedRoles)
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Route("Admin/EditRole/{id}")]
+        public async Task<IActionResult> EditRole(Role role)
         {
-            var roles = selectedRoles
-                .Select(role => role?.Trim())
-                .Where(role => !string.IsNullOrWhiteSpace(role))
-                .Select(role => role!.ToLowerInvariant())
+            var existing = await _context.Roles.FindAsync(role.RoleId);
+            if (existing == null)
+            {
+                TempData["Message"] = "Rol bulunamadi.";
+                TempData["MessageType"] = "error";
+                return RedirectToAction("Index", new { tab = "roles" });
+            }
+
+            var name = role.Name?.Trim() ?? "";
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                return View(new AdminRoleFormViewModel
+                {
+                    Role = role,
+                    Message = "Rol adi zorunludur.",
+                    MessageType = "error"
+                });
+            }
+
+            var duplicate = await _context.Roles
+                .AnyAsync(r => r.RoleId != existing.RoleId && r.Name.ToLower() == name.ToLower());
+            if (duplicate)
+            {
+                return View(new AdminRoleFormViewModel
+                {
+                    Role = role,
+                    Message = "Ayni isimde rol zaten var.",
+                    MessageType = "error"
+                });
+            }
+
+            var oldName = existing.Name;
+            existing.Name = name;
+            existing.Description = role.Description?.Trim();
+            existing.IsActive = ReadFormBool("IsActive");
+            await _context.SaveChangesAsync();
+            if (!string.Equals(oldName, name, StringComparison.OrdinalIgnoreCase))
+            {
+                await ReplaceRoleNameInCsv(oldName, name);
+            }
+
+            TempData["Message"] = "Rol guncellendi.";
+            TempData["MessageType"] = "success";
+            return RedirectToAction("Index", new { tab = "roles" });
+        }
+
+        [Route("Admin/EditCategory/{id}")]
+        public async Task<IActionResult> EditCategory(int id)
+        {
+            var category = await _context.ReportCategories.FindAsync(id);
+            if (category == null)
+            {
+                TempData["Message"] = "Kategori bulunamadi.";
+                TempData["MessageType"] = "error";
+                return RedirectToAction("Index", new { tab = "categories" });
+            }
+
+            return View(new AdminCategoryFormViewModel
+            {
+                Category = category
+            });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Route("Admin/EditCategory/{id}")]
+        public async Task<IActionResult> EditCategory(ReportCategory category)
+        {
+            var existing = await _context.ReportCategories.FindAsync(category.CategoryId);
+            if (existing == null)
+            {
+                TempData["Message"] = "Kategori bulunamadi.";
+                TempData["MessageType"] = "error";
+                return RedirectToAction("Index", new { tab = "categories" });
+            }
+
+            var name = category.Name?.Trim() ?? "";
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                return View(new AdminCategoryFormViewModel
+                {
+                    Category = category,
+                    Message = "Kategori adi zorunludur.",
+                    MessageType = "error"
+                });
+            }
+
+            var duplicate = await _context.ReportCategories
+                .AnyAsync(c => c.CategoryId != existing.CategoryId && c.Name.ToLower() == name.ToLower());
+            if (duplicate)
+            {
+                return View(new AdminCategoryFormViewModel
+                {
+                    Category = category,
+                    Message = "Ayni isimde kategori zaten var.",
+                    MessageType = "error"
+                });
+            }
+
+            existing.Name = name;
+            existing.Description = category.Description?.Trim();
+            existing.IsActive = ReadFormBool("IsActive");
+            await _context.SaveChangesAsync();
+
+            TempData["Message"] = "Kategori guncellendi.";
+            TempData["MessageType"] = "success";
+            return RedirectToAction("Index", new { tab = "categories" });
+        }
+
+        private bool ReadFormBool(string key)
+        {
+            return ReadBool(Request.Form[key]);
+        }
+
+        private static bool ReadBool(Microsoft.Extensions.Primitives.StringValues values)
+        {
+            foreach (var value in values)
+            {
+                if (string.Equals(value, "true", StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(value, "on", StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(value, "1", StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        private static HashSet<int> ParseIds(Microsoft.Extensions.Primitives.StringValues values)
+        {
+            var ids = new HashSet<int>();
+            foreach (var value in values)
+            {
+                if (int.TryParse(value, out var id))
+                {
+                    ids.Add(id);
+                }
+            }
+            return ids;
+        }
+
+        private async Task<string> BuildRolesCsv(HashSet<int> roleIds)
+        {
+            if (roleIds.Count == 0)
+            {
+                return "";
+            }
+
+            var names = await _context.Roles
+                .Where(r => roleIds.Contains(r.RoleId))
+                .Select(r => r.Name)
+                .ToListAsync();
+            return string.Join(",", names);
+        }
+
+        private async Task<AdminUserFormViewModel> BuildCreateUserFormAsync(User user, HashSet<int> selectedRoleIds, string message, string messageType)
+        {
+            var roles = await _context.Roles.Where(r => r.IsActive).OrderBy(r => r.Name).ToListAsync();
+            var dataSources = await _context.DataSources.Where(ds => ds.IsActive).OrderBy(ds => ds.Title).ToListAsync();
+            // Form tarafindan gonderilen filtreleri geri yukle ki kullanici kayip hissetmesin
+            var filterKeys = Request.Form["FilterKeys"].ToArray();
+            var filterValues = Request.Form["FilterValues"].ToArray();
+            var filterDataSources = Request.Form["FilterDataSources"].ToArray();
+            var postedFilters = new List<UserDataFilter>();
+            for (var i = 0; i < filterKeys.Length; i++)
+            {
+                var key = filterKeys[i]?.Trim();
+                var value = i < filterValues.Length ? filterValues[i]?.Trim() : null;
+                var ds = i < filterDataSources.Length ? filterDataSources[i]?.Trim() : null;
+                if (string.IsNullOrWhiteSpace(key) || string.IsNullOrWhiteSpace(value)) continue;
+                postedFilters.Add(new UserDataFilter
+                {
+                    FilterKey = key!,
+                    FilterValue = value!,
+                    DataSourceKey = string.IsNullOrWhiteSpace(ds) ? null : ds
+                });
+            }
+            return new AdminUserFormViewModel
+            {
+                User = user,
+                AvailableRoles = roles,
+                SelectedRoleIds = selectedRoleIds,
+                DataFilters = postedFilters,
+                DataSources = dataSources,
+                Message = message,
+                MessageType = messageType
+            };
+        }
+
+        private async Task SyncUserRoles(int userId, HashSet<int> roleIds)
+        {
+            var existing = await _context.UserRoles
+                .Where(ur => ur.UserId == userId)
+                .ToListAsync();
+            _context.UserRoles.RemoveRange(existing);
+
+            foreach (var roleId in roleIds)
+            {
+                _context.UserRoles.Add(new UserRole
+                {
+                    UserId = userId,
+                    RoleId = roleId,
+                    CreatedAt = DateTime.Now
+                });
+            }
+
+            await _context.SaveChangesAsync();
+        }
+
+        private async Task SyncUserDataFilters(int userId)
+        {
+            // Form'dan filtre verilerini oku: FilterKeys[], FilterValues[], FilterDataSources[]
+            var keys = Request.Form["FilterKeys"].ToArray();
+            var values = Request.Form["FilterValues"].ToArray();
+            var dataSources = Request.Form["FilterDataSources"].ToArray();
+
+            // Mevcut filtreleri sil
+            var existing = await _context.UserDataFilters
+                .Where(f => f.UserId == userId)
+                .ToListAsync();
+            _context.UserDataFilters.RemoveRange(existing);
+
+            // Yeni filtreleri ekle
+            for (var i = 0; i < keys.Length; i++)
+            {
+                var key = keys[i]?.Trim();
+                var value = i < values.Length ? values[i]?.Trim() : null;
+                if (string.IsNullOrWhiteSpace(key) || string.IsNullOrWhiteSpace(value)) continue;
+
+                var ds = i < dataSources.Length ? dataSources[i]?.Trim() : null;
+                _context.UserDataFilters.Add(new UserDataFilter
+                {
+                    UserId = userId,
+                    FilterKey = key,
+                    FilterValue = value,
+                    DataSourceKey = string.IsNullOrWhiteSpace(ds) ? null : ds,
+                    CreatedAt = DateTime.Now
+                });
+            }
+
+            await _context.SaveChangesAsync();
+        }
+
+        private async Task SyncReportRolesAndCategories(int reportId)
+        {
+            var selectedRoleIds = ParseIds(Request.Form["SelectedRoles"]);
+            var selectedCategoryIds = ParseIds(Request.Form["SelectedCategories"]);
+
+            var existingRoles = await _context.ReportAllowedRoles
+                .Where(ar => ar.ReportId == reportId)
+                .ToListAsync();
+            _context.ReportAllowedRoles.RemoveRange(existingRoles);
+
+            foreach (var roleId in selectedRoleIds)
+            {
+                _context.ReportAllowedRoles.Add(new ReportAllowedRole
+                {
+                    ReportId = reportId,
+                    RoleId = roleId,
+                    CreatedAt = DateTime.Now
+                });
+            }
+
+            var existingCategories = await _context.ReportCategoryLinks
+                .Where(rc => rc.ReportId == reportId)
+                .ToListAsync();
+            _context.ReportCategoryLinks.RemoveRange(existingCategories);
+
+            foreach (var categoryId in selectedCategoryIds)
+            {
+                _context.ReportCategoryLinks.Add(new ReportCategoryLink
+                {
+                    ReportId = reportId,
+                    CategoryId = categoryId,
+                    CreatedAt = DateTime.Now
+                });
+            }
+
+            await _context.SaveChangesAsync();
+        }
+
+        private string NormalizeRolesByRoleIds(Microsoft.Extensions.Primitives.StringValues selectedRoles)
+        {
+            var ids = ParseIds(selectedRoles);
+            var names = _context.Roles
+                .Where(r => ids.Contains(r.RoleId))
+                .Select(r => r.Name)
+                .ToList();
+
+            return names.Count == 0 ? "" : string.Join(",", names);
+        }
+
+        private async Task ReplaceRoleNameInCsv(string oldName, string newName)
+        {
+            if (string.IsNullOrWhiteSpace(oldName) || string.IsNullOrWhiteSpace(newName))
+            {
+                return;
+            }
+
+            var users = await _context.Users.ToListAsync();
+            foreach (var user in users)
+            {
+                var updated = ReplaceCsvValue(user.Roles, oldName, newName);
+                if (!string.Equals(updated, user.Roles, StringComparison.Ordinal))
+                {
+                    user.Roles = updated;
+                }
+            }
+
+            var reports = await _context.ReportCatalog.ToListAsync();
+            foreach (var report in reports)
+            {
+                var updated = ReplaceCsvValue(report.AllowedRoles, oldName, newName);
+                if (!string.Equals(updated, report.AllowedRoles, StringComparison.Ordinal))
+                {
+                    report.AllowedRoles = updated;
+                }
+            }
+
+            await _context.SaveChangesAsync();
+        }
+
+        private async Task RemoveRoleNameFromCsv(string roleName)
+        {
+            if (string.IsNullOrWhiteSpace(roleName))
+            {
+                return;
+            }
+
+            var users = await _context.Users.ToListAsync();
+            foreach (var user in users)
+            {
+                var updated = RemoveCsvValue(user.Roles, roleName);
+                if (!string.Equals(updated, user.Roles, StringComparison.Ordinal))
+                {
+                    user.Roles = updated;
+                }
+            }
+
+            var reports = await _context.ReportCatalog.ToListAsync();
+            foreach (var report in reports)
+            {
+                var updated = RemoveCsvValue(report.AllowedRoles, roleName);
+                if (!string.Equals(updated, report.AllowedRoles, StringComparison.Ordinal))
+                {
+                    report.AllowedRoles = updated;
+                }
+            }
+
+            await _context.SaveChangesAsync();
+        }
+
+        private static string ReplaceCsvValue(string csv, string oldValue, string newValue)
+        {
+            if (string.IsNullOrWhiteSpace(csv))
+            {
+                return "";
+            }
+
+            var values = csv
+                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Select(v => string.Equals(v, oldValue, StringComparison.OrdinalIgnoreCase) ? newValue : v)
+                .Where(v => !string.IsNullOrWhiteSpace(v))
                 .Distinct(StringComparer.OrdinalIgnoreCase)
-                .Where(role => AvailableRoles.Contains(role, StringComparer.OrdinalIgnoreCase))
-                .ToArray();
+                .ToList();
 
-            return roles.Length == 0 ? "" : string.Join(",", roles);
+            return values.Count == 0 ? "" : string.Join(",", values);
+        }
+
+        private static string RemoveCsvValue(string csv, string valueToRemove)
+        {
+            if (string.IsNullOrWhiteSpace(csv))
+            {
+                return "";
+            }
+
+            var values = csv
+                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Where(v => !string.Equals(v, valueToRemove, StringComparison.OrdinalIgnoreCase))
+                .Where(v => !string.IsNullOrWhiteSpace(v))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            return values.Count == 0 ? "" : string.Join(",", values);
         }
     }
 }
