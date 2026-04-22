@@ -14,6 +14,7 @@ if (builder.Environment.IsDevelopment())
 }
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ReportPanel.Services.AuditLogService>();
+builder.Services.AddScoped<ReportPanel.Services.UserRoleSyncService>();
 
 // Add Entity Framework
 builder.Services.AddDbContext<ReportPanelContext>(options =>

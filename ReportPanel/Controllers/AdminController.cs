@@ -16,12 +16,14 @@ namespace ReportPanel.Controllers
         private readonly ReportPanelContext _context;
         private readonly AuditLogService _auditLog;
         private readonly IConfiguration _configuration;
+        private readonly UserRoleSyncService _userRoleSync;
 
-        public AdminController(ReportPanelContext context, AuditLogService auditLog, IConfiguration configuration)
+        public AdminController(ReportPanelContext context, AuditLogService auditLog, IConfiguration configuration, UserRoleSyncService userRoleSync)
         {
             _context = context;
             _auditLog = auditLog;
             _configuration = configuration;
+            _userRoleSync = userRoleSync;
         }
 
         [HttpGet]
@@ -1246,7 +1248,7 @@ ORDER BY p.parameter_id;";
 
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
-            await SyncUserRoles(user.UserId, selectedRoleIds);
+            await _userRoleSync.SyncAsync(user.UserId, selectedRoleIds);
             await SyncUserDataFilters(user.UserId);
 
             // M-03: Audit snapshot'ta rol isimleri UserRole junction'dan hesaplanir.
@@ -1398,7 +1400,7 @@ ORDER BY p.parameter_id;";
             existing.UpdatedAt = DateTime.Now;
 
             await _context.SaveChangesAsync();
-            await SyncUserRoles(existing.UserId, selectedRoleIds);
+            await _userRoleSync.SyncAsync(existing.UserId, selectedRoleIds);
             await SyncUserDataFilters(existing.UserId);
 
             // M-03: Audit snapshot rolleri UserRole junction'dan hesaplar.
@@ -1651,25 +1653,7 @@ ORDER BY p.parameter_id;";
             };
         }
 
-        private async Task SyncUserRoles(int userId, HashSet<int> roleIds)
-        {
-            var existing = await _context.UserRoles
-                .Where(ur => ur.UserId == userId)
-                .ToListAsync();
-            _context.UserRoles.RemoveRange(existing);
-
-            foreach (var roleId in roleIds)
-            {
-                _context.UserRoles.Add(new UserRole
-                {
-                    UserId = userId,
-                    RoleId = roleId,
-                    CreatedAt = DateTime.Now
-                });
-            }
-
-            await _context.SaveChangesAsync();
-        }
+        // M-04: SyncUserRoles Services/UserRoleSyncService'e tasindi (testable).
 
         private async Task SyncUserDataFilters(int userId)
         {
