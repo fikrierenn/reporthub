@@ -43,7 +43,11 @@ namespace ReportPanel.Models
                 entity.Property(e => e.ProcName).HasMaxLength(200).IsRequired();
                 entity.Property(e => e.AllowedRoles).HasMaxLength(200).IsRequired();
                 entity.Property(e => e.ReportType).HasMaxLength(20).IsRequired().HasDefaultValue("table");
+                // M-05: DashboardHtml legacy retirement — [Obsolete]. Legacy render fallback
+                // icin alan korunuyor ama yeni yazim yollari dokunmaz.
+#pragma warning disable CS0618
                 entity.Property(e => e.DashboardHtml);
+#pragma warning restore CS0618
                 entity.Property(e => e.DashboardConfigJson);
                 entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETDATE()");
                 

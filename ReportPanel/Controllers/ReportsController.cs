@@ -219,7 +219,12 @@ namespace ReportPanel.Controllers
             try
             {
                 var hasConfig = isDashboard && !string.IsNullOrWhiteSpace(context.SelectedReport.DashboardConfigJson);
+                // M-05: DashboardHtml legacy retirement. Yeni yazim yollari bu alana
+                // dokunmaz ama mevcut DB kayitlari icin fallback render korunuyor.
+                // Kullanim audit log'a yazilir, Faz C'de (kolon drop) kaldirilacak.
+#pragma warning disable CS0618
                 var hasHtml = isDashboard && !string.IsNullOrWhiteSpace(context.SelectedReport.DashboardHtml);
+#pragma warning restore CS0618
 
                 if (isDashboard && (hasConfig || hasHtml))
                 {
@@ -265,8 +270,21 @@ namespace ReportPanel.Controllers
                     }
                     else
                     {
+                        // M-05: legacy HTML render yolu. Audit log'a yazilir ki ileride
+                        // (Faz C) kaldirmadan once gercek kullanim var mi gorelim.
+                        await _auditLog.LogAsync(new AuditLogEntry
+                        {
+                            EventType = "dashboard_html_legacy_render",
+                            TargetType = "report",
+                            TargetKey = context.SelectedReport.ReportId.ToString(),
+                            ReportId = context.SelectedReport.ReportId,
+                            Description = "Legacy DashboardHtml template rendered (DashboardConfigJson yok). M-05 Faz C'de kaldirilacak.",
+                            IsSuccess = true
+                        });
+#pragma warning disable CS0618
                         model.DashboardRenderedHtml = RenderDashboardTemplate(
                             context.SelectedReport.DashboardHtml!, resultSets);
+#pragma warning restore CS0618
                     }
 
                     await LogRun(

@@ -1212,7 +1212,6 @@ ORDER BY p.parameter_id;";
             IsActive: ReadFormBool("IsActive"),
             ReportType: Request.Form["ReportType"],
             ParamSchemaJson: Request.Form["ParamSchemaJson"],
-            DashboardHtml: Request.Form["DashboardHtml"],
             DashboardConfigJson: Request.Form["DashboardConfigJson"]);
 
         // G-04: CRUD audit shortcut'u — HandlePostAction'da tekrarlayan AuditLogEntry dolumunu tek yere al.

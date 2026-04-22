@@ -3,6 +3,9 @@ using ReportPanel.Models;
 
 namespace ReportPanel.Services
 {
+    // M-05: DashboardHtml parametresi kaldirildi (legacy retirement). DashboardConfigJson
+    // birincil. Mevcut DB'deki HTML kayitlari ReportsController legacy fallback ile render
+    // edilir ama yeni yazim yollari dokunmaz.
     public record ReportFormInput(
         string? Title,
         string? Description,
@@ -13,7 +16,6 @@ namespace ReportPanel.Services
         bool IsActive,
         string? ReportType,
         string? ParamSchemaJson,
-        string? DashboardHtml,
         string? DashboardConfigJson);
 
     /// <summary>
@@ -49,7 +51,6 @@ namespace ReportPanel.Services
             };
             if (entity.ReportType == "dashboard")
             {
-                entity.DashboardHtml = input.DashboardHtml;
                 entity.DashboardConfigJson = input.DashboardConfigJson;
             }
 
@@ -90,7 +91,9 @@ namespace ReportPanel.Services
             report.IsActive = input.IsActive;
             report.ParamSchemaJson = NormalizeParamSchema(input.ParamSchemaJson, report.ParamSchemaJson);
             report.ReportType = NormalizeReportType(input.ReportType);
-            report.DashboardHtml = report.ReportType == "dashboard" ? input.DashboardHtml : null;
+            // M-05: DashboardHtml'e yeni yazim yok. ReportType dashboard degilse ConfigJson
+            // null'a cekilir; legacy DashboardHtml DB'de oldugu gibi kalir (migration 16
+            // orphan check ile tespit edilir, Faz C'de drop).
             report.DashboardConfigJson = report.ReportType == "dashboard" ? input.DashboardConfigJson : null;
 
             await _context.SaveChangesAsync();

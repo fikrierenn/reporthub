@@ -30,6 +30,15 @@ namespace ReportPanel.Models
         [MaxLength(20)]
         public string ReportType { get; set; } = "table";
 
+        /// <summary>
+        /// DEPRECATED (M-05). Legacy HTML template dashboard rendering yolu.
+        /// DashboardConfigJson birincil source-of-truth, inline HTML destek kaldiriliyor.
+        /// Yeni yazim yollari bu alana dokunmaz. Faz C'de DB'den drop edilecek
+        /// (tum aktif dashboard'lar DashboardConfigJson'a migrate edildikten sonra).
+        /// Mevcut DB kayitlari icin ReportsController.Run legacy fallback log'luyor.
+        /// Migration: Database/16_DeprecateDashboardHtml.sql. ADR: docs/ADR/005-dashboard-architecture.md (TODO).
+        /// </summary>
+        [Obsolete("DashboardHtml legacy. DashboardConfigJson kullan. Faz C'de drop edilecek.")]
         public string? DashboardHtml { get; set; }
 
         public string? DashboardConfigJson { get; set; }
