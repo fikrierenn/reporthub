@@ -17,13 +17,20 @@ namespace ReportPanel.Controllers
         private readonly AuditLogService _auditLog;
         private readonly IConfiguration _configuration;
         private readonly UserRoleSyncService _userRoleSync;
+        private readonly CategoryManagementService _categoryService;
 
-        public AdminController(ReportPanelContext context, AuditLogService auditLog, IConfiguration configuration, UserRoleSyncService userRoleSync)
+        public AdminController(
+            ReportPanelContext context,
+            AuditLogService auditLog,
+            IConfiguration configuration,
+            UserRoleSyncService userRoleSync,
+            CategoryManagementService categoryService)
         {
             _context = context;
             _auditLog = auditLog;
             _configuration = configuration;
             _userRoleSync = userRoleSync;
+            _categoryService = categoryService;
         }
 
         [HttpGet]
@@ -290,76 +297,20 @@ namespace ReportPanel.Controllers
                         }
                         break;
                     case "create_category":
-                        var categoryName = Request.Form["Name"].ToString().Trim();
-                        if (string.IsNullOrWhiteSpace(categoryName))
-                        {
-                            TempData["Message"] = "Kategori adi zorunludur.";
-                            TempData["MessageType"] = "error";
-                            break;
-                        }
-                        var categoryExists = await _context.ReportCategories
-                            .AnyAsync(c => c.Name.ToLower() == categoryName.ToLower());
-                        if (categoryExists)
-                        {
-                            TempData["Message"] = "Ayni isimde kategori zaten var.";
-                            TempData["MessageType"] = "error";
-                            break;
-                        }
-                        var newCategory = new ReportCategory
-                        {
-                            Name = categoryName,
-                            Description = Request.Form["Description"].ToString(),
-                            IsActive = ReadFormBool("IsActive")
-                        };
-                        _context.ReportCategories.Add(newCategory);
-                        await _context.SaveChangesAsync();
-                        await AuditCrudAsync("category_create", "category", newCategory.CategoryId.ToString(), "Category created",
-                            newValues: new { newCategory.CategoryId, newCategory.Name, newCategory.Description, newCategory.IsActive });
-                        TempData["Message"] = "Kategori eklendi.";
-                        TempData["MessageType"] = "success";
+                        ApplyResult(await _categoryService.CreateAsync(
+                            Request.Form["Name"],
+                            Request.Form["Description"],
+                            ReadFormBool("IsActive")));
                         break;
                     case "update_category":
-                        var category = await _context.ReportCategories.FindAsync(id);
-                        if (category != null)
-                        {
-                            var newCategoryName = Request.Form["Name"].ToString().Trim();
-                            if (string.IsNullOrWhiteSpace(newCategoryName))
-                            {
-                                TempData["Message"] = "Kategori adi zorunludur.";
-                                TempData["MessageType"] = "error";
-                                break;
-                            }
-                            var duplicateCategory = await _context.ReportCategories
-                                .AnyAsync(c => c.CategoryId != category.CategoryId && c.Name.ToLower() == newCategoryName.ToLower());
-                            if (duplicateCategory)
-                            {
-                                TempData["Message"] = "Ayni isimde kategori zaten var.";
-                                TempData["MessageType"] = "error";
-                                break;
-                            }
-                            var categoryOldSnap = new { category.CategoryId, category.Name, category.Description, category.IsActive };
-                            category.Name = newCategoryName;
-                            category.Description = Request.Form["Description"].ToString();
-                            category.IsActive = ReadFormBool("IsActive");
-                            await _context.SaveChangesAsync();
-                            await AuditCrudAsync("category_update", "category", category.CategoryId.ToString(), "Category updated",
-                                oldValues: categoryOldSnap,
-                                newValues: new { category.CategoryId, category.Name, category.Description, category.IsActive });
-                            TempData["Message"] = "Kategori guncellendi.";
-                            TempData["MessageType"] = "success";
-                        }
+                        ApplyResult(await _categoryService.UpdateAsync(
+                            id,
+                            Request.Form["Name"],
+                            Request.Form["Description"],
+                            ReadFormBool("IsActive")));
                         break;
                     case "delete_category":
-                        var delCategory = await _context.ReportCategories.FindAsync(id);
-                        if (delCategory != null)
-                        {
-                            _context.ReportCategories.Remove(delCategory);
-                            await _context.SaveChangesAsync();
-                            await AuditCrudAsync("category_delete", "category", delCategory.CategoryId.ToString(), "Category deleted",
-                                oldValues: new { delCategory.CategoryId, delCategory.Name, delCategory.Description, delCategory.IsActive });
-                            TempData["Message"] = "Kategori silindi.";
-                            TempData["MessageType"] = "success";
-                        }
+                        ApplyResult(await _categoryService.DeleteAsync(id));
                         break;
                     case "delete_user":
                         var delUser = await _context.Users.FindAsync(id);
@@ -1688,6 +1639,13 @@ ORDER BY p.parameter_id;";
         }
 
         // M-04: SyncUserRoles Services/UserRoleSyncService'e tasindi (testable).
+
+        // M-01: Admin servislerinden donen AdminOperationResult'u TempData'ya yansitir.
+        private void ApplyResult(AdminOperationResult result)
+        {
+            TempData["Message"] = result.Message;
+            TempData["MessageType"] = result.TempDataType;
+        }
 
         // G-04: CRUD audit shortcut'u — HandlePostAction'da tekrarlayan AuditLogEntry dolumunu tek yere al.
         private Task AuditCrudAsync(
