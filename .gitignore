@@ -17,6 +17,9 @@
 **/*secrets*.json
 **/appsettings.Development.json
 
+# Cowork sandbox worktrees (isolated copies, not tracked)
+.claude/worktrees/
+
 # OS junk
 .DS_Store
 Thumbs.db
