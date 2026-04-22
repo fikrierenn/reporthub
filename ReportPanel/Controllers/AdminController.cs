@@ -21,6 +21,7 @@ namespace ReportPanel.Controllers
         private readonly RoleManagementService _roleService;
         private readonly DataSourceManagementService _dataSourceService;
         private readonly ReportManagementService _reportService;
+        private readonly UserManagementService _userService;
 
         public AdminController(
             ReportPanelContext context,
@@ -30,7 +31,8 @@ namespace ReportPanel.Controllers
             CategoryManagementService categoryService,
             RoleManagementService roleService,
             DataSourceManagementService dataSourceService,
-            ReportManagementService reportService)
+            ReportManagementService reportService,
+            UserManagementService userService)
         {
             _context = context;
             _auditLog = auditLog;
@@ -40,6 +42,7 @@ namespace ReportPanel.Controllers
             _roleService = roleService;
             _dataSourceService = dataSourceService;
             _reportService = reportService;
+            _userService = userService;
         }
 
         [HttpGet]
@@ -152,34 +155,7 @@ namespace ReportPanel.Controllers
                         ApplyResult(await _categoryService.DeleteAsync(id));
                         break;
                     case "delete_user":
-                        var delUser = await _context.Users.FindAsync(id);
-                        if (delUser != null)
-                        {
-                            _context.Users.Remove(delUser);
-                            await _context.SaveChangesAsync();
-                              await _auditLog.LogAsync(new AuditLogEntry
-                              {
-                                  EventType = "user_delete",
-                                  TargetType = "user",
-                                  TargetKey = delUser.UserId.ToString(),
-                                  Description = "User deleted",
-                                  // M-03: Audit snapshot rolleri UserRole junction'dan (deprecate CSV yerine).
-                                  OldValuesJson = AuditLogService.ToJson(new
-                                  {
-                                      delUser.UserId,
-                                      delUser.Username,
-                                      delUser.FullName,
-                                      delUser.Email,
-                                      Roles = _context.UserRoles
-                                          .Where(ur => ur.UserId == delUser.UserId)
-                                          .Select(ur => ur.Role!.Name)
-                                          .ToList(),
-                                      delUser.IsActive
-                                  })
-                              });
-                            TempData["Message"] = "Kullanici silindi";
-                            TempData["MessageType"] = "success";
-                        }
+                        ApplyResult(await _userService.DeleteAsync(id));
                         break;
 
                     case "test_datasource":
@@ -920,70 +896,15 @@ ORDER BY p.parameter_id;";
         [Route("Admin/CreateUser")]
         public async Task<IActionResult> CreateUser(User user)
         {
-            var password = Request.Form["Password"].ToString();
-            user.IsAdUser = ReadFormBool("IsAdUser");
-            var selectedRoleIds = ParseIds(Request.Form["SelectedRoles"]);
-            user.Username = NormalizeUsername(user.Username);
-            user.FullName = user.FullName?.Trim() ?? "";
-            user.Email = string.IsNullOrWhiteSpace(user.Email) ? null : user.Email.Trim();
-            // M-03 Faz B: User.Roles deprecate + nullable — bos atama gereksiz, default null.
-            user.IsActive = ReadFormBool("IsActive");
-
-            if (string.IsNullOrWhiteSpace(user.Username) ||
-                string.IsNullOrWhiteSpace(user.FullName) ||
-                selectedRoleIds.Count == 0)
+            var input = BuildUserFormInput(user);
+            var result = await _userService.CreateAsync(input);
+            if (result.Success)
             {
-                return View(await BuildCreateUserFormAsync(user, selectedRoleIds, "Zorunlu alanlar bos birakilamaz.", "error"));
+                TempData["Message"] = result.Message;
+                TempData["MessageType"] = "success";
+                return RedirectToAction("Index", new { tab = "users" });
             }
-
-            if (!user.IsAdUser && string.IsNullOrWhiteSpace(password))
-            {
-                return View(await BuildCreateUserFormAsync(user, selectedRoleIds, "Sifre alani zorunludur.", "error"));
-            }
-
-            var exists = await _context.Users.AnyAsync(u => u.Username == user.Username);
-            if (exists)
-            {
-                return View(await BuildCreateUserFormAsync(user, selectedRoleIds, "Bu kullanici adi zaten mevcut.", "error"));
-            }
-
-            user.PasswordHash = user.IsAdUser
-                ? PasswordHasher.CreateHash(Guid.NewGuid().ToString("N"))
-                : PasswordHasher.CreateHash(password);
-            user.CreatedAt = DateTime.Now;
-            user.UpdatedAt = DateTime.Now;
-
-            _context.Users.Add(user);
-            await _context.SaveChangesAsync();
-            await _userRoleSync.SyncAsync(user.UserId, selectedRoleIds);
-            await SyncUserDataFilters(user.UserId);
-
-            // M-03: Audit snapshot'ta rol isimleri UserRole junction'dan hesaplanir.
-            var createdRoleNames = await _context.Roles
-                .Where(r => selectedRoleIds.Contains(r.RoleId))
-                .Select(r => r.Name)
-                .ToListAsync();
-
-            await _auditLog.LogAsync(new AuditLogEntry
-            {
-                EventType = "user_create",
-                TargetType = "user",
-                TargetKey = user.UserId.ToString(),
-                Description = "User created",
-                NewValuesJson = AuditLogService.ToJson(new
-                {
-                    user.UserId,
-                    user.Username,
-                    user.FullName,
-                    user.Email,
-                    Roles = createdRoleNames,
-                    user.IsAdUser,
-                    user.IsActive
-                })
-            });
-            TempData["Message"] = "Kullanici eklendi";
-            TempData["MessageType"] = "success";
-            return RedirectToAction("Index", new { tab = "users" });
+            return View(await BuildCreateUserFormAsync(user, input.SelectedRoleIds, result.Message, "error"));
         }
         [Route("Admin/EditUser/{id}")]
         public async Task<IActionResult> EditUser(int id)
@@ -1029,124 +950,49 @@ ORDER BY p.parameter_id;";
         [Route("Admin/EditUser/{id}")]
         public async Task<IActionResult> EditUser(User user)
         {
-            var password = Request.Form["Password"].ToString();
-            var existing = await _context.Users.FindAsync(user.UserId);
-            if (existing == null)
+            var input = BuildUserFormInput(user);
+            var result = await _userService.UpdateAsync(user.UserId, input);
+            if (result.Success)
             {
-                TempData["Message"] = "Kullanici bulunamadi";
-                TempData["MessageType"] = "error";
+                TempData["Message"] = result.Message;
+                TempData["MessageType"] = "success";
                 return RedirectToAction("Index", new { tab = "users" });
             }
-
-            var username = NormalizeUsername(user.Username);
-            var fullName = user.FullName?.Trim() ?? "";
-            var selectedRoleIds = ParseIds(Request.Form["SelectedRoles"]);
-            // M-03: User.Roles CSV deprecate — rol yazimi SyncUserRoles'ta.
-            var email = string.IsNullOrWhiteSpace(user.Email) ? null : user.Email.Trim();
-            var isAdUser = ReadFormBool("IsAdUser");
-            var wasAdUser = existing.IsAdUser;
-
-            if (string.IsNullOrWhiteSpace(username) ||
-                string.IsNullOrWhiteSpace(fullName) ||
-                selectedRoleIds.Count == 0)
+            var allRoles = await _context.Roles.Where(r => r.IsActive).OrderBy(r => r.Name).ToListAsync();
+            return View(new AdminUserFormViewModel
             {
-                var allRoles = await _context.Roles.Where(r => r.IsActive).OrderBy(r => r.Name).ToListAsync();
-                return View(new AdminUserFormViewModel
-                {
-                    User = user,
-                    AvailableRoles = allRoles,
-                    SelectedRoleIds = selectedRoleIds,
-                    Message = "Zorunlu alanlar bos birakilamaz.",
-                    MessageType = "error"
-                });
-            }
-
-            var exists = await _context.Users.AnyAsync(u => u.Username == username && u.UserId != existing.UserId);
-            if (exists)
-            {
-                var allRoles = await _context.Roles.Where(r => r.IsActive).OrderBy(r => r.Name).ToListAsync();
-                return View(new AdminUserFormViewModel
-                {
-                    User = user,
-                    AvailableRoles = allRoles,
-                    SelectedRoleIds = selectedRoleIds,
-                    Message = "Bu kullanici adi zaten mevcut.",
-                    MessageType = "error"
-                });
-            }
-
-            existing.Username = username;
-            existing.FullName = fullName;
-            existing.Email = email;
-            // M-03: existing.Roles yazilmaz (UserRole junction kullanilir).
-            existing.IsAdUser = isAdUser;
-            existing.IsActive = ReadFormBool("IsActive");
-            if (existing.IsAdUser)
-            {
-                if (!string.IsNullOrWhiteSpace(password))
-                {
-                    existing.PasswordHash = PasswordHasher.CreateHash(Guid.NewGuid().ToString("N"));
-                }
-            }
-            else if (!string.IsNullOrWhiteSpace(password))
-            {
-                existing.PasswordHash = PasswordHasher.CreateHash(password);
-            }
-            else if (!existing.IsAdUser && wasAdUser && string.IsNullOrWhiteSpace(password))
-            {
-                var allRoles = await _context.Roles.Where(r => r.IsActive).OrderBy(r => r.Name).ToListAsync();
-                return View(new AdminUserFormViewModel
-                {
-                    User = user,
-                    AvailableRoles = allRoles,
-                    SelectedRoleIds = selectedRoleIds,
-                    Message = "Sifre alani zorunludur.",
-                    MessageType = "error"
-                });
-            }
-            existing.UpdatedAt = DateTime.Now;
-
-            await _context.SaveChangesAsync();
-            await _userRoleSync.SyncAsync(existing.UserId, selectedRoleIds);
-            await SyncUserDataFilters(existing.UserId);
-
-            // M-03: Audit snapshot rolleri UserRole junction'dan hesaplar.
-            var updatedRoleNames = await _context.Roles
-                .Where(r => selectedRoleIds.Contains(r.RoleId))
-                .Select(r => r.Name)
-                .ToListAsync();
-
-            await _auditLog.LogAsync(new AuditLogEntry
-            {
-                EventType = "user_update",
-                TargetType = "user",
-                TargetKey = existing.UserId.ToString(),
-                Description = "User updated",
-                NewValuesJson = AuditLogService.ToJson(new
-                {
-                    existing.UserId,
-                    existing.Username,
-                    existing.FullName,
-                    existing.Email,
-                    Roles = updatedRoleNames,
-                    existing.IsAdUser,
-                    existing.IsActive
-                })
+                User = user,
+                AvailableRoles = allRoles,
+                SelectedRoleIds = input.SelectedRoleIds,
+                Message = result.Message,
+                MessageType = "error"
             });
-            TempData["Message"] = "Kullanici guncellendi";
-            TempData["MessageType"] = "success";
-            return RedirectToAction("Index", new { tab = "users" });
         }
 
-        private static string NormalizeUsername(string? raw)
+        // M-01: Form -> UserFormInput. UserManagementService.NormalizeUsername static.
+        private UserFormInput BuildUserFormInput(User user)
         {
-            var value = raw?.Trim() ?? "";
-            var slashIndex = value.IndexOf('\\');
-            if (slashIndex > 0 && slashIndex < value.Length - 1)
+            var filterKeys = Request.Form["FilterKeys"].ToArray();
+            var filterValues = Request.Form["FilterValues"].ToArray();
+            var filterDataSources = Request.Form["FilterDataSources"].ToArray();
+            var filters = new List<UserFilterInput>();
+            for (var i = 0; i < filterKeys.Length; i++)
             {
-                return value.Substring(slashIndex + 1);
+                var k = filterKeys[i]?.Trim() ?? "";
+                var v = i < filterValues.Length ? (filterValues[i]?.Trim() ?? "") : "";
+                var ds = i < filterDataSources.Length ? filterDataSources[i]?.Trim() : null;
+                if (string.IsNullOrWhiteSpace(k) || string.IsNullOrWhiteSpace(v)) continue;
+                filters.Add(new UserFilterInput(k, v, ds));
             }
-            return value;
+            return new UserFormInput(
+                Username: user.Username,
+                FullName: user.FullName,
+                Email: user.Email,
+                IsAdUser: ReadFormBool("IsAdUser"),
+                IsActive: ReadFormBool("IsActive"),
+                Password: Request.Form["Password"],
+                SelectedRoleIds: ParseIds(Request.Form["SelectedRoles"]),
+                DataFilters: filters);
         }
 
         [Route("Admin/EditRole/{id}")]
@@ -1394,39 +1240,7 @@ ORDER BY p.parameter_id;";
             });
         }
 
-        private async Task SyncUserDataFilters(int userId)
-        {
-            // Form'dan filtre verilerini oku: FilterKeys[], FilterValues[], FilterDataSources[]
-            var keys = Request.Form["FilterKeys"].ToArray();
-            var values = Request.Form["FilterValues"].ToArray();
-            var dataSources = Request.Form["FilterDataSources"].ToArray();
-
-            // Mevcut filtreleri sil
-            var existing = await _context.UserDataFilters
-                .Where(f => f.UserId == userId)
-                .ToListAsync();
-            _context.UserDataFilters.RemoveRange(existing);
-
-            // Yeni filtreleri ekle
-            for (var i = 0; i < keys.Length; i++)
-            {
-                var key = keys[i]?.Trim();
-                var value = i < values.Length ? values[i]?.Trim() : null;
-                if (string.IsNullOrWhiteSpace(key) || string.IsNullOrWhiteSpace(value)) continue;
-
-                var ds = i < dataSources.Length ? dataSources[i]?.Trim() : null;
-                _context.UserDataFilters.Add(new UserDataFilter
-                {
-                    UserId = userId,
-                    FilterKey = key,
-                    FilterValue = value,
-                    DataSourceKey = string.IsNullOrWhiteSpace(ds) ? null : ds,
-                    CreatedAt = DateTime.Now
-                });
-            }
-
-            await _context.SaveChangesAsync();
-        }
+        // M-01: SyncUserDataFilters UserManagementService.SyncDataFiltersAsync'e tasindi.
 
         // M-01: SyncReportRolesAndCategories + NormalizeRolesByRoleIds + NormalizeParamSchema
         // ReportManagementService'e tasindi (servis ici private).

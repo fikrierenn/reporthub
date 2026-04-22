@@ -19,6 +19,7 @@ builder.Services.AddScoped<ReportPanel.Services.CategoryManagementService>();
 builder.Services.AddScoped<ReportPanel.Services.RoleManagementService>();
 builder.Services.AddScoped<ReportPanel.Services.DataSourceManagementService>();
 builder.Services.AddScoped<ReportPanel.Services.ReportManagementService>();
+builder.Services.AddScoped<ReportPanel.Services.UserManagementService>();
 
 // Add Entity Framework
 builder.Services.AddDbContext<ReportPanelContext>(options =>
