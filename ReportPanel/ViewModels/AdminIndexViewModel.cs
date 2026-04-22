@@ -11,6 +11,8 @@ namespace ReportPanel.ViewModels
         public List<DataSource> DataSources { get; set; } = new();
         public List<ReportCatalog> Reports { get; set; } = new();
         public List<User> Users { get; set; } = new();
+        // M-03 Faz B: UserId -> ["admin","ik",...] (UserRole junction'dan dolduruldu). View icin.
+        public Dictionary<int, List<string>> UserRoleNames { get; set; } = new();
         public List<Role> Roles { get; set; } = new();
         public List<ReportCategory> Categories { get; set; } = new();
     }

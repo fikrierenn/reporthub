@@ -97,7 +97,7 @@ namespace ReportPanel.Controllers
                         Username = normalizedUsername,
                         FullName = normalizedUsername,
                         Email = null,
-                        Roles = "",
+                        // M-03 Faz B: Roles deprecate, nullable. Default null.
                         IsAdUser = true,
                         IsActive = false,
                         PasswordHash = PasswordHasher.CreateHash(Guid.NewGuid().ToString("N")),

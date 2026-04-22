@@ -48,6 +48,13 @@ namespace ReportPanel.Controllers
                 Categories = await _context.ReportCategories.OrderBy(c => c.Name).ToListAsync()
             };
 
+            // M-03 Faz B: user -> rol isimleri UserRole junction'dan (deprecate User.Roles CSV yerine).
+            model.UserRoleNames = await _context.UserRoles
+                .Include(ur => ur.Role)
+                .GroupBy(ur => ur.UserId)
+                .Select(g => new { UserId = g.Key, Names = g.Where(x => x.Role != null).Select(x => x.Role!.Name).ToList() })
+                .ToDictionaryAsync(x => x.UserId, x => x.Names);
+
             return View(model);
         }
 
@@ -1210,8 +1217,7 @@ ORDER BY p.parameter_id;";
             user.Username = NormalizeUsername(user.Username);
             user.FullName = user.FullName?.Trim() ?? "";
             user.Email = string.IsNullOrWhiteSpace(user.Email) ? null : user.Email.Trim();
-            // M-03: User.Roles CSV deprecate — rol bilgisi UserRole junction'a SyncUserRoles ile yazilir (asagida).
-            user.Roles = string.Empty;
+            // M-03 Faz B: User.Roles deprecate + nullable — bos atama gereksiz, default null.
             user.IsActive = ReadFormBool("IsActive");
 
             if (string.IsNullOrWhiteSpace(user.Username) ||
