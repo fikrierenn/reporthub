@@ -121,10 +121,42 @@ Bu liste asagidakilerin sentezidir:
 29. **M-10 · ADR-007 Named Result Contract** (6 faz, ~1.5 gun toplam) — dashboard widget'larda index bagimliligini kaldir. `resultSet: N` → `result: "chartData"` name-based binding. Scope daraltildi (frontend rewrite / event bus / metadata-first SP REDDEDILDI). Kural: **declare now, enforce later** — shape field schema'da, enforcement Faz 4. Naming: camelCase. Fazlar:
     - **Faz 1** (~2h) · ADR-007 doc + `DashboardConfig.ResultContract` dictionary + `DashboardComponent.Result` field + `DashboardRenderer` resolver (precedence: `Result > ResultSet`, legacy fallback).
     - **Faz 2** (~3h) · `dashboard-builder.js` + admin form UI name-based binding. Widget editor'da result dropdown (isim listesi).
-    - **Faz 3** (~2h) · Admin save validation — hard: name unique, resultSet index valid, widget.result resolve. Soft: required-ama-kullanilmayan uyari.
+    - ✅ **Faz 3** · Admin save validation — hard: name unique, resultSet index valid, widget.result resolve. Soft: required-ama-kullanilmayan uyari. 10 hard + 3 soft rule, admin-dostu TR mesajlar. `DashboardConfigValidator` + 19 unit test. 96/96 yesil.
     - **Faz 4** (~1h) · Runtime **soft-fail** (direkt throw DEGIL): required result eksik/bos → kullaniciya "Veri bulunamadi" + `dashboard_required_result_missing` audit event.
     - **Faz 5** (~2h) · Migration 18 — PDKS (7 RS) + Satis (7 RS) ConfigJson rewrite. **Idempotent**: `resultContract` yoksa uret, varsa atla. `Explore` agent ile her resultSet icin camelCase isim onerisi.
     - **Faz 6** (~1h) · Legacy `resultSet: N` binding deprecate + renderer fallback kaldir (ayri PR, tum configler migrate edildikten sonra).
+
+29.5. **M-11 · Dashboard Builder UX Redesign + Chart Expansion** (13 faz, ~60h toplam / 1.5-2 hafta solo) — Apache Superset'ten esinlenen modern admin builder. Plan dosyasi: `C:/Users/fikri.eren/.claude/plans/imdi-planlama-yap-bu-optimized-hippo.md`. Mockup: `ReportPanel/wwwroot/mockups/dashboard-builder-v3.html` (BKM kirmizi-siyah-beyaz brand, _AppLayout uyumlu). Branch: `feature/m-11-dashboard-builder-redesign`.
+
+    **Superset'ten alinan 10 pattern:** Veri|Gorunum drawer tab'i · kategorili chart gallery (arama + chip filter) · Native Filter Bar (param chip'leri) · 3-tab inspect preview (Cikti|Sorgu|JSON) · widget hover menu · loading/empty/error state · kisayol modali (?) · sablon market · dark mode (M-12'ye) · duplicate action.
+
+    **v2 tasarimdan alinan gorsel kit:** topbar kbd hints · collapsible contract bar · component-card · type badge · tab-strip · swatch/icon grid · span toggle · suggest-pill · section-hd · preview panel animasyonu.
+
+    **Widget matrisi:** KPI 4 varyant (basic/delta/sparkline/progress), Chart 10 tip (line/area/bar/hbar/stacked/pie/doughnut/radar/polar/scatter), Table kosullu format (veri bari/renk skalasi/ikon/negatif kirmizi) + ayarlar (satir detay/toplam/cizgili/sticky/arama/sayfalama). Heatmap + Gauge M-12 disabled.
+
+    **YENI unsurlar** (plan disi, 23 Nisan eklendi):
+    - **Turetilmis Alanlar** (formul → yeni kolon) — admin `DeltaCiro = BugunCiro - GecenYilBugun` gibi client-side hesaplanan alan tanimlar, suggest pill'lere `fx DeltaCiro` olarak girer. Fonksiyonlar: `+ - * /`, SUM, AVG, ROUND, IF, COALESCE, CONCAT. Hatali formul inline error banner.
+    - **Veri Kaynagi bar** (drawer ustunde) — Baglanti (DerinSIS) · SP · RS sayisi · son calisma suresi · Onizle + Ayar butonlari.
+
+    **Fazlar:**
+    - **F-0** (~1h) · M-10 Faz 3 bekleyen commit + ADR-008 yaz + branch kurulum.
+    - **F-1** (~3h) · Migration 18 v1→v2 schema + table→dashboard auto-convert (idempotent, audit log'lu).
+    - **F-1.5** (~4h) · `ReportCatalog.ReportType` [Obsolete] → SIL. `isDashboard` dallanmasi 5+ yerden temizle (ReportsController/ReportManagementService/Run.cshtml/EditReport.cshtml). Migration 19 drop.
+    - **F-2** (~5h) · `DashboardRenderer.cs` (422) → `Rendering/` altinda IWidgetRenderer + Kpi/Chart/Table/Shell + Factory + DI refactor.
+    - **F-3** (~4h) · Schema v2 model (variant + numberFormat + axisOptions + tableOptions + calculatedFields) + validator genisletme.
+    - **F-4** (~5h) · 10 chart tipi renderer (Chart.js native; plugin YOK) + axisOptions + numberFormat emit.
+    - **F-5** (~4h) · 4 KPI variant renderer (basic/delta/sparkline/progress).
+    - **F-6** (~4h) · Tablo kosullu format (dataBar/colorScale/iconUpDown/negativeRed) + tableOptions.
+    - **F-7** (~10h) · UI redesign — `dashboard-builder.js` (775) → 6 modul (core/list/drawer/contract/preview/templates) + split-pane Razor + BKM brand CSS.
+    - **F-8** (~6h) · Drawer form — type switcher, variant/chart picker, swatch+icon grid, span toggle, suggest pills, **Turetilmis Alanlar editoru**.
+    - **F-9** (~5h) · Live preview endpoint + validation banner + dirty chip + toast + Geri Al (last-save snapshot).
+    - **F-10** (~3h) · Sablon sistemi (KPI Trio/Trend Grafik/Detay Tablo preset) + kbd shortcuts (Ctrl+S/P, Esc, Delete, ?).
+    - **F-11** (~3h) · Smart defaults (SP preview → suggest pills + chart tipi onerisi).
+    - **F-12** (~3h) · E2E smoke + screenshot + journal.
+
+    **Commit sayisi:** ~19. Her commit <15 dosya (commit-discipline.md).
+
+    **M-12'ye ertelenenler:** dark mode · Cmd+K fuzzy palette · structure widgets (markdown/iframe/divider) · Gridstack drag-resize · heatmap/gauge/treemap/sankey/funnel/bubble ileri chart tipleri · tam undo/redo stack · cross-chart filter.
 
 #### FAZ 3 — BU CEYREK (3 ay, dusuk oncelik / temizlik)
 29. **M-06 · EF Core Migrations gecisi** (1 gun) — mevcut semayi baseline yap, yeni degisiklikler migration. Database/legacy/ olustur.

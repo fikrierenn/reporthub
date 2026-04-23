@@ -38,6 +38,13 @@ namespace ReportPanel.Services
             var err = Validate(input);
             if (err != null) return AdminOperationResult.Fail(err);
 
+            var reportType = NormalizeReportType(input.ReportType);
+            if (reportType == "dashboard")
+            {
+                var dashErr = await ValidateDashboardConfigAsync(input.DashboardConfigJson, reportId: null, input);
+                if (dashErr != null) return AdminOperationResult.Fail(dashErr);
+            }
+
             var entity = new ReportCatalog
             {
                 Title = (input.Title ?? "").Trim(),
@@ -46,7 +53,7 @@ namespace ReportPanel.Services
                 ProcName = (input.ProcName ?? "").Trim(),
                 AllowedRoles = await BuildAllowedRolesCsv(input.SelectedRoleIds),
                 IsActive = input.IsActive,
-                ReportType = NormalizeReportType(input.ReportType),
+                ReportType = reportType,
                 ParamSchemaJson = NormalizeParamSchema(input.ParamSchemaJson, null)
             };
             if (entity.ReportType == "dashboard")
@@ -81,6 +88,13 @@ namespace ReportPanel.Services
             var err = Validate(input);
             if (err != null) return AdminOperationResult.Fail(err);
 
+            var reportType = NormalizeReportType(input.ReportType);
+            if (reportType == "dashboard")
+            {
+                var dashErr = await ValidateDashboardConfigAsync(input.DashboardConfigJson, reportId, input);
+                if (dashErr != null) return AdminOperationResult.Fail(dashErr);
+            }
+
             var oldSnap = new { report.ReportId, report.Title, report.DataSourceKey, report.ProcName, report.AllowedRoles, report.IsActive };
 
             report.Title = (input.Title ?? "").Trim();
@@ -90,7 +104,7 @@ namespace ReportPanel.Services
             report.AllowedRoles = await BuildAllowedRolesCsv(input.SelectedRoleIds);
             report.IsActive = input.IsActive;
             report.ParamSchemaJson = NormalizeParamSchema(input.ParamSchemaJson, report.ParamSchemaJson);
-            report.ReportType = NormalizeReportType(input.ReportType);
+            report.ReportType = reportType;
             // M-05: DashboardHtml'e yeni yazim yok. ReportType dashboard degilse ConfigJson
             // null'a cekilir; legacy DashboardHtml DB'de oldugu gibi kalir (migration 16
             // orphan check ile tespit edilir, Faz C'de drop).
@@ -144,6 +158,47 @@ namespace ReportPanel.Services
             if (string.IsNullOrWhiteSpace(input.Title)) return "Baslik zorunludur.";
             if (string.IsNullOrWhiteSpace(input.DataSourceKey)) return "Veri kaynagi secilmeli.";
             if (string.IsNullOrWhiteSpace(input.ProcName)) return "Prosedur adi zorunludur.";
+            return null;
+        }
+
+        // M-10 Faz 3: Hard error save'i bloke eder + dashboard_config_invalid audit.
+        // Soft warning save'e izin verir ama dashboard_config_warnings audit'e dusurulur.
+        private async Task<string?> ValidateDashboardConfigAsync(string? configJson, int? reportId, ReportFormInput input)
+        {
+            var r = DashboardConfigValidator.Validate(configJson);
+            var targetKey = reportId?.ToString() ?? "(yeni)";
+
+            if (r.HasErrors)
+            {
+                await _auditLog.LogAsync(new AuditLogEntry
+                {
+                    EventType = "dashboard_config_invalid",
+                    TargetType = "report",
+                    TargetKey = targetKey,
+                    ReportId = reportId,
+                    DataSourceKey = input.DataSourceKey,
+                    Description = "Pano yapılandırması kaydedilemedi (validasyon hatası).",
+                    NewValuesJson = AuditLogService.ToJson(new { errors = r.Errors, warnings = r.Warnings }),
+                    IsSuccess = false
+                });
+                return r.Errors[0];
+            }
+
+            if (r.HasWarnings)
+            {
+                await _auditLog.LogAsync(new AuditLogEntry
+                {
+                    EventType = "dashboard_config_warnings",
+                    TargetType = "report",
+                    TargetKey = targetKey,
+                    ReportId = reportId,
+                    DataSourceKey = input.DataSourceKey,
+                    Description = "Pano yapılandırması uyarılarla kaydedildi.",
+                    NewValuesJson = AuditLogService.ToJson(new { warnings = r.Warnings }),
+                    IsSuccess = true
+                });
+            }
+
             return null;
         }
 

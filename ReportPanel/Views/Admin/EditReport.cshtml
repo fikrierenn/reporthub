@@ -1,7 +1,7 @@
 @model ReportPanel.ViewModels.AdminReportFormViewModel
 @{
     Layout = "_AppLayout";
-    ViewData["Title"] = $"Duzenle: {Model.Report.Title} - BKM Rapor Paneli";
+    ViewData["Title"] = $"Düzenle: {Model.Report.Title} - BKM Rapor Paneli";
     var dataSources = Model.DataSources ?? new List<ReportPanel.Models.DataSource>();
     var availableRoles = Model.AvailableRoles ?? new List<ReportPanel.Models.Role>();
     var selectedRoleIds = Model.SelectedRoleIds ?? new HashSet<int>();
@@ -12,7 +12,7 @@
 
 <div class="mb-6 flex items-center justify-between">
     <div>
-        <h1 class="text-3xl font-bold text-gray-900">Rapor Duzenle</h1>
+        <h1 class="text-3xl font-bold text-gray-900">Rapor Düzenle</h1>
         <p class="text-sm text-gray-500">ID: @Model.Report.ReportId - @Model.Report.Title</p>
     </div>
     <a href="/Admin?tab=reports" class="btn-brand-outline flex items-center px-4 py-2 text-sm font-medium rounded-lg">
@@ -27,13 +27,26 @@
                 <i class="fas fa-edit text-white text-2xl"></i>
             </div>
             <div>
-                <h2 class="text-2xl font-bold text-gray-900">Rapor Guncelle</h2>
+                <h2 class="text-2xl font-bold text-gray-900">Rapor Güncelle</h2>
                 <p class="text-gray-600">Mevcut rapor ayarlarını düzenleyin</p>
             </div>
         </div>
     </div>
 
     <div class="p-8">
+        @if (!string.IsNullOrWhiteSpace(Model.Message))
+        {
+            var isError = Model.MessageType == "error";
+            var bannerClasses = isError
+                ? "bg-red-50 border-red-200 text-red-800"
+                : "bg-emerald-50 border-emerald-200 text-emerald-800";
+            var bannerIcon = isError ? "fa-circle-exclamation" : "fa-circle-check";
+            <div class="mb-6 border rounded-xl px-4 py-3 flex items-start @bannerClasses" role="alert">
+                <i class="fas @bannerIcon mt-0.5 mr-3"></i>
+                <div class="text-sm font-medium">@Model.Message</div>
+            </div>
+        }
+
         @using (Html.BeginForm("EditReport", "Admin", new { id = Model.Report.ReportId }, FormMethod.Post, true, new { @class = "space-y-8" }))
         {
             @Html.AntiForgeryToken()
@@ -47,12 +60,12 @@
                     </label>
                     <input type="text" value="@Model.Report.ReportId" disabled
                            class="w-full px-4 py-4 border border-gray-300 rounded-xl bg-gray-100 text-lg font-medium text-gray-600">
-                    <p class="text-xs text-gray-500 mt-2">ID degistirilemez</p>
+                    <p class="text-xs text-gray-500 mt-2">ID değiştirilemez</p>
                 </div>
 
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 mb-3">
-                        <i class="fas fa-file-alt mr-2 text-blue-600"></i>Rapor Adi *
+                        <i class="fas fa-file-alt mr-2 text-blue-600"></i>Rapor Adı *
                     </label>
                     <input type="text" name="Title" value="@Model.Report.Title" required
                            class="w-full px-4 py-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-600 focus:border-blue-600 text-lg font-medium"
@@ -62,7 +75,7 @@
 
             <div>
                 <label class="block text-sm font-semibold text-gray-700 mb-3">
-                    <i class="fas fa-database mr-2 text-blue-600"></i>Veri Kaynagi *
+                    <i class="fas fa-database mr-2 text-blue-600"></i>Veri Kaynağı *
                 </label>
                 <select name="DataSourceKey" required
                         class="w-full px-4 py-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-600 focus:border-blue-600 text-lg">
@@ -78,7 +91,7 @@
 
             <div>
                 <label class="block text-sm font-semibold text-gray-700 mb-3">
-                    <i class="fas fa-align-left mr-2 text-blue-600"></i>Aciklama
+                    <i class="fas fa-align-left mr-2 text-blue-600"></i>Açıklama
                 </label>
                 <textarea name="Description" rows="4"
                           class="w-full px-4 py-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-600 focus:border-blue-600 text-lg"
@@ -92,7 +105,7 @@
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     @if (!availableCategories.Any())
                     {
-                        <div class="text-sm text-red-600">Kategori listesi tanimli degil.</div>
+                        <div class="text-sm text-red-600">Kategori listesi tanımlı değil.</div>
                     }
                     else
                     {
@@ -146,7 +159,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                         <label class="block text-sm font-semibold text-gray-700 mb-3">
-                            <i class="fas fa-code mr-2 text-blue-600"></i>Prosedur Adi *
+                            <i class="fas fa-code mr-2 text-blue-600"></i>Prosedür Adı *
                         </label>
                         <div class="flex gap-2">
                             <input type="text" name="ProcName" id="ProcName" value="@Model.Report.ProcName" required list="spList"
@@ -155,21 +168,21 @@
                             <datalist id="spList"></datalist>
                             <button type="button" id="spPreviewBtn" title="SP'yi calistir ve donen kolonlari/veriyi gor"
                                     class="px-4 py-4 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-sm font-semibold whitespace-nowrap transition-colors">
-                                <i class="fas fa-play mr-1"></i> SP Onizle
+                                <i class="fas fa-play mr-1"></i> SP Önizle
                             </button>
                         </div>
-                        <p class="text-xs text-gray-500 mt-2">Data source secildiginde buradaki liste otomatik dolar. Onizle ile SP'yi test calistirip kolonlari gorebilirsin.</p>
+                        <p class="text-xs text-gray-500 mt-2">Veri kaynağı seçildiğinde buradaki liste otomatik dolar. Önizle ile SP'yi test çalıştırıp kolonları görebilirsin.</p>
                         <div id="spPreviewPanel" class="mt-4 hidden"></div>
                     </div>
 
                     <div>
                         <label class="block text-sm font-semibold text-gray-700 mb-3">
-                            <i class="fas fa-users mr-2 text-blue-600"></i>Izinli Roller
+                            <i class="fas fa-users mr-2 text-blue-600"></i>İzinli Roller
                         </label>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             @if (!availableRoles.Any())
                             {
-                                <div class="text-sm text-red-600">Rol listesi tanimli degil.</div>
+                                <div class="text-sm text-red-600">Rol listesi tanımlı değil.</div>
                             }
                             else
                             {
@@ -205,7 +218,7 @@
 
             <div class="bg-white rounded-2xl border border-gray-200 p-6">
                 <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center">
-                    <i class="fas fa-list mr-3 text-blue-600"></i> Parametre Olusturucu
+                    <i class="fas fa-list mr-3 text-blue-600"></i> Parametre Oluşturucu
                 </h3>
 
                 <div class="grid grid-cols-1 md:grid-cols-7 gap-4 items-end">
@@ -264,7 +277,7 @@
             <div id="dashboardConfigSection" style="display:@(isDashboard ? "block" : "none");">
                 <div class="bg-white rounded-2xl border border-gray-200 p-6">
                     <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center">
-                        <i class="fas fa-th-large mr-3 text-purple-600"></i> Dashboard Olusturucu
+                        <i class="fas fa-th-large mr-3 text-purple-600"></i> Dashboard Oluşturucu
                     </h3>
                     <textarea name="DashboardConfigJson" id="DashboardConfigJson" class="hidden">@Model.Report.DashboardConfigJson</textarea>
                     <div id="dashboardBuilder"></div>
@@ -283,7 +296,7 @@
                 </a>
 
                 <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white flex items-center px-8 py-3 text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105">
-                    <i class="fas fa-save mr-3"></i>Degisiklikleri Kaydet
+                    <i class="fas fa-save mr-3"></i>Değişiklikleri Kaydet
                 </button>
             </div>
         }
