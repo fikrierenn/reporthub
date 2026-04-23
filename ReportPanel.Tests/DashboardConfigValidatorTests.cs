@@ -70,8 +70,17 @@ public class DashboardConfigValidatorTests
     [Fact]
     public void Validate_rejects_unsupported_schema_version()
     {
-        var r = DashboardConfigValidator.Validate("""{ "schemaVersion": 2, "tabs": [ { "components": [] } ] }""");
+        // ADR-008 F-3: MaxSchemaVersion=2. schemaVersion 3+ reddedilir.
+        var r = DashboardConfigValidator.Validate("""{ "schemaVersion": 3, "tabs": [ { "components": [] } ] }""");
         Assert.Contains(r.Errors, e => e.Contains("schemaVersion"));
+    }
+
+    [Fact]
+    public void Validate_accepts_schema_version_2()
+    {
+        // ADR-008 F-3: v2 konfigurasyon kabul edilir.
+        var r = DashboardConfigValidator.Validate("""{ "schemaVersion": 2, "tabs": [ { "title": "Genel", "components": [] } ] }""");
+        Assert.DoesNotContain(r.Errors, e => e.Contains("schemaVersion"));
     }
 
     [Theory]
@@ -212,5 +221,206 @@ public class DashboardConfigValidatorTests
         var r = DashboardConfigValidator.Validate(json);
         Assert.False(r.HasErrors);
         Assert.Contains(r.Warnings, w => w.Contains("sonuç bağlantısı yok"));
+    }
+
+    // ============================================================
+    // ADR-008 F-3 · Schema v2 yeni alanlar
+    // ============================================================
+
+    [Theory]
+    [InlineData("basic")]
+    [InlineData("delta")]
+    [InlineData("sparkline")]
+    [InlineData("progress")]
+    public void Validate_accepts_known_kpi_variants(string variant)
+    {
+        // Her variant için alt-config sağla (delta/sparkline/progress için zorunlu)
+        var extras = variant switch
+        {
+            "delta" => @", ""delta"": {""compareColumn"": ""prev""}",
+            "sparkline" => @", ""trend"": {""labelColumn"": ""t"", ""valueColumn"": ""v""}",
+            "progress" => @", ""progress"": {""targetValue"": 100}",
+            _ => ""
+        };
+        var json = $$"""
+        {
+          "schemaVersion": 2,
+          "tabs": [ { "components": [ { "type": "kpi", "variant": "{{variant}}", "resultSet": 0 {{extras}} } ] } ]
+        }
+        """;
+        var r = DashboardConfigValidator.Validate(json);
+        Assert.DoesNotContain(r.Errors, e => e.Contains("KPI varyantı"));
+    }
+
+    [Fact]
+    public void Validate_rejects_unknown_kpi_variant()
+    {
+        var json = """
+        {
+          "schemaVersion": 2,
+          "tabs": [ { "components": [ { "type": "kpi", "variant": "supersonic", "resultSet": 0 } ] } ]
+        }
+        """;
+        var r = DashboardConfigValidator.Validate(json);
+        Assert.Contains(r.Errors, e => e.Contains("KPI varyantı") && e.Contains("supersonic"));
+    }
+
+    [Theory]
+    [InlineData("line")]
+    [InlineData("area")]
+    [InlineData("bar")]
+    [InlineData("hbar")]
+    [InlineData("stacked")]
+    [InlineData("pie")]
+    [InlineData("doughnut")]
+    [InlineData("radar")]
+    [InlineData("polarArea")]
+    [InlineData("scatter")]
+    public void Validate_accepts_known_chart_variants(string variant)
+    {
+        var json = $$"""
+        {
+          "schemaVersion": 2,
+          "tabs": [ { "components": [ { "type": "chart", "variant": "{{variant}}", "resultSet": 0 } ] } ]
+        }
+        """;
+        var r = DashboardConfigValidator.Validate(json);
+        Assert.DoesNotContain(r.Errors, e => e.Contains("grafik tipi"));
+    }
+
+    [Fact]
+    public void Validate_rejects_unknown_chart_variant()
+    {
+        var json = """
+        {
+          "schemaVersion": 2,
+          "tabs": [ { "components": [ { "type": "chart", "variant": "sankey", "resultSet": 0 } ] } ]
+        }
+        """;
+        var r = DashboardConfigValidator.Validate(json);
+        Assert.Contains(r.Errors, e => e.Contains("grafik tipi") && e.Contains("sankey"));
+    }
+
+    [Fact]
+    public void Validate_rejects_unknown_number_format()
+    {
+        var json = """
+        {
+          "schemaVersion": 2,
+          "tabs": [ { "components": [ { "type": "kpi", "numberFormat": "hex", "resultSet": 0 } ] } ]
+        }
+        """;
+        var r = DashboardConfigValidator.Validate(json);
+        Assert.Contains(r.Errors, e => e.Contains("sayı formatı"));
+    }
+
+    [Fact]
+    public void Validate_rejects_kpi_delta_without_compareColumn()
+    {
+        var json = """
+        {
+          "schemaVersion": 2,
+          "tabs": [ { "components": [ { "type": "kpi", "variant": "delta", "resultSet": 0 } ] } ]
+        }
+        """;
+        var r = DashboardConfigValidator.Validate(json);
+        Assert.Contains(r.Errors, e => e.Contains("delta") && e.Contains("compareColumn"));
+    }
+
+    [Fact]
+    public void Validate_rejects_kpi_sparkline_without_trend_columns()
+    {
+        var json = """
+        {
+          "schemaVersion": 2,
+          "tabs": [ { "components": [ { "type": "kpi", "variant": "sparkline", "trend": { "labelColumn": "t" }, "resultSet": 0 } ] } ]
+        }
+        """;
+        var r = DashboardConfigValidator.Validate(json);
+        Assert.Contains(r.Errors, e => e.Contains("sparkline") && e.Contains("trend"));
+    }
+
+    [Fact]
+    public void Validate_rejects_kpi_progress_without_target()
+    {
+        var json = """
+        {
+          "schemaVersion": 2,
+          "tabs": [ { "components": [ { "type": "kpi", "variant": "progress", "resultSet": 0 } ] } ]
+        }
+        """;
+        var r = DashboardConfigValidator.Validate(json);
+        Assert.Contains(r.Errors, e => e.Contains("progress"));
+    }
+
+    [Fact]
+    public void Validate_rejects_invalid_table_pageSize()
+    {
+        var json = """
+        {
+          "schemaVersion": 2,
+          "tabs": [ { "components": [ { "type": "table", "resultSet": 0, "tableOptions": { "pageSize": 7 } } ] } ]
+        }
+        """;
+        var r = DashboardConfigValidator.Validate(json);
+        Assert.Contains(r.Errors, e => e.Contains("sayfa boyutu"));
+    }
+
+    [Fact]
+    public void Validate_rejects_invalid_conditional_format_mode()
+    {
+        var json = """
+        {
+          "schemaVersion": 2,
+          "tabs": [ { "components": [ { "type": "table", "resultSet": 0, "columns": [ { "key": "a", "label": "A", "conditionalFormat": { "mode": "rainbow" } } ] } ] } ]
+        }
+        """;
+        var r = DashboardConfigValidator.Validate(json);
+        Assert.Contains(r.Errors, e => e.Contains("koşullu format"));
+    }
+
+    [Fact]
+    public void Validate_rejects_invalid_calculated_field_name()
+    {
+        var json = """
+        {
+          "schemaVersion": 2,
+          "calculatedFields": [ { "name": "Has-Dash", "formula": "a+b" } ],
+          "tabs": [ { "components": [] } ]
+        }
+        """;
+        var r = DashboardConfigValidator.Validate(json);
+        Assert.Contains(r.Errors, e => e.Contains("camelCase"));
+    }
+
+    [Fact]
+    public void Validate_rejects_duplicate_calculated_field_name()
+    {
+        var json = """
+        {
+          "schemaVersion": 2,
+          "calculatedFields": [
+            { "name": "deltaCiro", "formula": "a-b" },
+            { "name": "deltaCiro", "formula": "c-d" }
+          ],
+          "tabs": [ { "components": [] } ]
+        }
+        """;
+        var r = DashboardConfigValidator.Validate(json);
+        Assert.Contains(r.Errors, e => e.Contains("aynı adda"));
+    }
+
+    [Fact]
+    public void Validate_rejects_calculated_field_empty_formula()
+    {
+        var json = """
+        {
+          "schemaVersion": 2,
+          "calculatedFields": [ { "name": "x", "formula": "" } ],
+          "tabs": [ { "components": [] } ]
+        }
+        """;
+        var r = DashboardConfigValidator.Validate(json);
+        Assert.Contains(r.Errors, e => e.Contains("formül"));
     }
 }

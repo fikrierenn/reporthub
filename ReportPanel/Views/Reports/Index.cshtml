@@ -61,12 +61,7 @@
                     <a href="/Reports/Run?reportId=@report.ReportId" class="min-w-0 flex-1">
                         <div class="text-base font-semibold text-gray-900 truncate">
                             @report.Title
-                            @if (report.ReportType == "dashboard")
-                            {
-                                <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-700">
-                                    <i class="fas fa-chart-pie mr-1 text-xs"></i>Dashboard
-                                </span>
-                            }
+                            @* ADR-009: ReportType ayrımı kaldı — tüm raporlar dashboard, ayırt edici badge gereksiz. *@
                         </div>
                         <div class="text-sm text-gray-600 truncate">
                             @(string.IsNullOrWhiteSpace(report.Description) ? "Aciklama bulunmuyor" : report.Description)
