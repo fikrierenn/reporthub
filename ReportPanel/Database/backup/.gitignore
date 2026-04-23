@@ -1,0 +1,8 @@
+# Migration öncesi yerel DB backup'ları — git'e GITMEZ.
+# Format: YYYYMMDD_<amac>.sql (örn. 20260424_pre_m11.sql)
+# Dev/staging/prod her ortam kendi backup'ını üretir; paylaşılmaz.
+*.sql
+*.csv
+*.bak
+!README.md
+!.gitignore
