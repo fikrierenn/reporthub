@@ -257,6 +257,14 @@ document.querySelectorAll('[data-tbl]').forEach(function(el) {
   var data = (window.__RS && window.__RS[cfg.rs]) ? window.__RS[cfg.rs] : [];
   el.textContent = '';
 
+  // ADR-009 · Migration 18 Adim B: cols bos kaldiysa SP'nin ilk satir key'lerinden auto-detect.
+  // Tablo raporlari default skeleton'da columns:[] ile gelir — admin builder'da duzenleyene kadar.
+  if ((!cfg.cols || cfg.cols.length === 0) && data.length > 0) {
+    cfg.cols = Object.keys(data[0]).map(function(k) {
+      return { key: k, label: k, align: (typeof data[0][k] === 'number' ? 'right' : 'left'), color: '' };
+    });
+  }
+
   // Header
   var thead = document.createElement('thead');
   var headRow = document.createElement('tr');

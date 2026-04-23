@@ -5,57 +5,15 @@
     ViewData["BodyClass"] = Model.BodyClass;
 }
 
+@* ADR-009: Tüm raporlar dashboard — IsDashboard if/else kaldırıldı, tek başlık + tek Tam Ekran butonu. *@
 <div class="mb-6 flex items-center gap-3">
     <a href="/Reports" class="text-gray-500 hover:text-brand transition-brand">
         <i class="fas fa-arrow-left text-xl"></i>
     </a>
     <h1 class="text-3xl font-bold text-gray-900">
-        @if (Model.IsDashboard)
-        {
-            <i class="fas fa-chart-pie text-purple-600 mr-2"></i>@:Dashboard
-        }
-        else
-        {
-            @:Rapor Çalıştır
-        }
+        <i class="fas fa-chart-pie text-brand mr-2"></i>Dashboard
     </h1>
-    @if (!Model.IsDashboard)
-    {
-        <div class="ml-auto flex flex-wrap gap-2">
-            <form method="post" action="/Reports/Run" class="flex flex-wrap gap-2">
-                @Html.AntiForgeryToken()
-                @if (Model.SelectedReport != null)
-                {
-                    <input type="hidden" name="reportId" value="@Model.SelectedReport.ReportId" />
-                }
-                @foreach (var kvp in Model.ParamValues)
-                {
-                    <input type="hidden" name="@kvp.Key" value="@kvp.Value" />
-                }
-                <button type="submit" name="viewMode" value="wide"
-                        class="btn-brand-outline inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg">
-                    <i class="fas fa-expand-arrows-alt mr-2"></i>
-                    Geniş Görünüm
-                </button>
-                <button type="submit" name="viewMode" value="table"
-                        class="btn-brand-outline inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg">
-                    <i class="fas fa-table mr-2"></i>
-                    Tablo Odak
-                </button>
-                <button type="submit" name="viewMode" value="full"
-                        class="btn-brand-outline inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg">
-                    <i class="fas fa-expand mr-2"></i>
-                    Tam Ekran
-                </button>
-                <button type="submit" name="viewMode" value=""
-                        class="btn-brand-outline inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg">
-                    <i class="fas fa-compress mr-2"></i>
-                    Normal
-                </button>
-            </form>
-        </div>
-    }
-    else if (Model.RunSuccess)
+    @if (Model.RunSuccess)
     {
         <div class="ml-auto">
             <button type="button" onclick="toggleDashboardFullscreen()"
@@ -237,25 +195,13 @@ else
                         </p>
                     </div>
                 </div>
-                @if (!Model.IsDashboard)
-                {
-                    <form method="post" action="/Reports/Export" class="ml-auto">
-                        @Html.AntiForgeryToken()
-                        <input type="hidden" name="reportId" value="@Model.SelectedReport.ReportId" />
-                        @foreach (var kvp in Model.ParamValues)
-                        {
-                            <input type="hidden" name="@kvp.Key" value="@kvp.Value" />
-                        }
-                        <button type="submit" class="btn-brand-outline px-4 py-2 text-sm font-medium rounded-lg">
-                            <i class="fas fa-file-excel mr-2"></i>Excel Dışa Aktar
-                        </button>
-                    </form>
-                }
+                @* ADR-009: Excel dışa aktar butonu tablo raporlarına özeldi — dashboard-only path'te kaldırıldı.
+                   Re-introduce edilirse dashboard widget-bazlı export olarak yeniden tasarlanır (M-12). *@
             </div>
         </div>
     }
 
-    @if (Model.RunSuccess && Model.IsDashboard && !string.IsNullOrWhiteSpace(Model.DashboardRenderedHtml))
+    @if (Model.RunSuccess && !string.IsNullOrWhiteSpace(Model.DashboardRenderedHtml))
     {
         <div class="rounded-2xl shadow-sm border border-gray-200 overflow-hidden" id="dashboardContainer">
             <iframe id="dashboardFrame"
@@ -300,81 +246,6 @@ else
         </script>
     }
 
-    @if (Model.RunSuccess && !Model.IsDashboard && Model.RunData.Any())
-    {
-        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden" id="resultsCard">
-            <div class="px-6 py-3 border-b border-gray-200 bg-gray-50">
-                <div class="flex flex-wrap items-center justify-between gap-3">
-                    <h3 class="text-lg font-semibold text-gray-900">Sonuçlar</h3>
-                </div>
-            </div>
-            <div class="overflow-x-auto" id="resultsTableWrap">
-                <div class="flex flex-wrap items-end gap-2 mb-3">
-                    <form method="post" action="/Reports/Run" class="flex flex-wrap items-end gap-2">
-                    @Html.AntiForgeryToken()
-                    <input type="hidden" name="reportId" value="@Model.SelectedReport.ReportId" />
-                    <input type="hidden" name="viewMode" value="@Model.ViewMode" />
-                    @foreach (var kvp in Model.ParamValues)
-                    {
-                        <input type="hidden" name="@kvp.Key" value="@kvp.Value" />
-                    }
-                    <div>
-                        <label for="ResultSearch" class="block text-xs text-gray-500 mb-1">Ara</label>
-                        <input type="text"
-                               id="ResultSearch"
-                               name="ResultSearch"
-                               value="@Model.ResultSearch"
-                               class="form-input-brand px-3 py-2 rounded-lg text-sm"
-                               placeholder="Tabloda ara...">
-                    </div>
-                    <button type="submit" class="btn-brand px-3 py-2 text-sm rounded-lg">Filtrele</button>
-                    </form>
-                    <form method="post" action="/Reports/Run">
-                        @Html.AntiForgeryToken()
-                        <input type="hidden" name="reportId" value="@Model.SelectedReport.ReportId" />
-                        <input type="hidden" name="viewMode" value="@Model.ViewMode" />
-                        <input type="hidden" name="ResultSearch" value="" />
-                        @foreach (var kvp in Model.ParamValues)
-                        {
-                            <input type="hidden" name="@kvp.Key" value="@kvp.Value" />
-                        }
-                        <button type="submit" class="btn-brand-outline px-3 py-2 text-sm rounded-lg">Temizle</button>
-                    </form>
-                </div>
-                <table class="result-table divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            @{
-                                var headers = Model.RunData.First().Keys;
-                                foreach (var header in headers)
-                                {
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
-                                        @header
-                                    </th>
-                                }
-                            }
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
-                        @{
-                            var rowIndex = 0;
-                            foreach (var row in Model.RunData)
-                            {
-                                var rowClass = rowIndex % 2 == 0 ? "bg-white" : "bg-gray-50";
-                                <tr class="@rowClass result-row">
-                                    @foreach (var value in row.Values)
-                                    {
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 result-cell">
-                                            @value
-                                        </td>
-                                    }
-                                </tr>
-                                rowIndex++;
-                            }
-                        }
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    }
+    @* ADR-009: Eski tablo render bloğu (Model.RunData + server-side arama/filtrele/Excel) DROP edildi.
+       Tüm rapor çıktısı DashboardRenderer.Render → iframe srcdoc tek path'i üzerinden. *@
 }

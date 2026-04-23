@@ -7,7 +7,7 @@
     var selectedRoleIds = Model.SelectedRoleIds ?? new HashSet<int>();
     var availableCategories = Model.AvailableCategories ?? new List<ReportPanel.Models.ReportCategory>();
     var selectedCategoryIds = Model.SelectedCategoryIds ?? new HashSet<int>();
-    var isDashboard = Model.Report.ReportType == "dashboard";
+    // ADR-009: ReportType ayrımı kaldırıldı, tüm raporlar dashboard.
 }
 
 <div class="mb-6 flex items-center justify-between">
@@ -123,33 +123,7 @@
                 <p class="text-xs text-gray-500 mt-2">Birden fazla kategori secilebilir.</p>
             </div>
 
-            <div class="bg-indigo-50 rounded-2xl border border-indigo-200 p-6">
-                <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center">
-                    <i class="fas fa-layer-group mr-3 text-indigo-600"></i> Rapor Tipi
-                </h3>
-                <div class="flex items-center gap-6">
-                    <label class="flex items-center gap-3 cursor-pointer px-4 py-3 rounded-xl border-2 transition-all"
-                           id="radioLabelTable"
-                           style="border-color: @(isDashboard ? "#e5e7eb" : "#3b82f6"); background: @(isDashboard ? "transparent" : "#eff6ff");">
-                        <input type="radio" name="ReportType" value="table" @(!isDashboard ? "checked" : "")
-                               class="h-5 w-5 text-blue-600" onchange="toggleReportType('table')">
-                        <div>
-                            <div class="font-semibold text-gray-900"><i class="fas fa-table mr-1 text-blue-600"></i> Tablo</div>
-                            <div class="text-xs text-gray-500">SP sonucu HTML tablo olarak gosterilir</div>
-                        </div>
-                    </label>
-                    <label class="flex items-center gap-3 cursor-pointer px-4 py-3 rounded-xl border-2 transition-all"
-                           id="radioLabelDashboard"
-                           style="border-color: @(isDashboard ? "#a855f7" : "#e5e7eb"); background: @(isDashboard ? "#faf5ff" : "transparent");">
-                        <input type="radio" name="ReportType" value="dashboard" @(isDashboard ? "checked" : "")
-                               class="h-5 w-5 text-purple-600" onchange="toggleReportType('dashboard')">
-                        <div>
-                            <div class="font-semibold text-gray-900"><i class="fas fa-chart-pie mr-1 text-purple-600"></i> Dashboard</div>
-                            <div class="text-xs text-gray-500">Ozel HTML sablon ile zengin gorunum</div>
-                        </div>
-                    </label>
-                </div>
-            </div>
+            @* ADR-009: "Rapor Tipi" radio kartı kaldırıldı. Tüm raporlar dashboard builder ile yönetilir. *@
 
             <div class="bg-gray-50 rounded-2xl border border-gray-200 p-6">
                 <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center">
@@ -274,7 +248,7 @@
                 </div>
             </div>
 
-            <div id="dashboardConfigSection" style="display:@(isDashboard ? "block" : "none");">
+            <div id="dashboardConfigSection">
                 <div class="bg-white rounded-2xl border border-gray-200 p-6">
                     <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center">
                         <i class="fas fa-th-large mr-3 text-purple-600"></i> Dashboard Oluşturucu
@@ -304,23 +278,4 @@
 </div>
 <script src="~/assets/js/admin-report-form.js"></script>
 <script src="~/assets/js/dashboard-builder.js"></script>
-<script>
-function toggleReportType(type) {
-    var dashSection = document.getElementById('dashboardConfigSection');
-    var labelTable = document.getElementById('radioLabelTable');
-    var labelDash = document.getElementById('radioLabelDashboard');
-    if (type === 'dashboard') {
-        dashSection.style.display = 'block';
-        labelDash.style.borderColor = '#a855f7';
-        labelDash.style.background = '#faf5ff';
-        labelTable.style.borderColor = '#e5e7eb';
-        labelTable.style.background = '';
-    } else {
-        dashSection.style.display = 'none';
-        labelTable.style.borderColor = '#3b82f6';
-        labelTable.style.background = '#eff6ff';
-        labelDash.style.borderColor = '#e5e7eb';
-        labelDash.style.background = '';
-    }
-}
-</script>
+@* ADR-009: toggleReportType() JS fonksiyonu kaldırıldı. Dashboard section hep görünür. *@
