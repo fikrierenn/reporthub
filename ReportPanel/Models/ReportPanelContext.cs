@@ -42,7 +42,9 @@ namespace ReportPanel.Models
                 entity.Property(e => e.DataSourceKey).HasMaxLength(50);
                 entity.Property(e => e.ProcName).HasMaxLength(200).IsRequired();
                 entity.Property(e => e.AllowedRoles).HasMaxLength(200).IsRequired();
-                entity.Property(e => e.ReportType).HasMaxLength(20).IsRequired().HasDefaultValue("table");
+#pragma warning disable CS0618 // ADR-009: ReportType [Obsolete] — Migration 19 drop edince bu satir da silinir.
+                entity.Property(e => e.ReportType).HasMaxLength(20).IsRequired().HasDefaultValue("dashboard");
+#pragma warning restore CS0618
                 entity.Property(e => e.DashboardConfigJson);
                 entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETDATE()");
                 

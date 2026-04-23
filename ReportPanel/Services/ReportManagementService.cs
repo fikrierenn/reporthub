@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using ReportPanel.Models;
 
@@ -38,13 +39,15 @@ namespace ReportPanel.Services
             var err = Validate(input);
             if (err != null) return AdminOperationResult.Fail(err);
 
-            var reportType = NormalizeReportType(input.ReportType);
-            if (reportType == "dashboard")
-            {
-                var dashErr = await ValidateDashboardConfigAsync(input.DashboardConfigJson, reportId: null, input);
-                if (dashErr != null) return AdminOperationResult.Fail(dashErr);
-            }
+            // ADR-009 · M-11 F-1.5: ReportType dallanmasi kaldirildi — her rapor dashboard.
+            var configJson = string.IsNullOrWhiteSpace(input.DashboardConfigJson)
+                ? BuildDefaultDashboardConfig(input.Title)
+                : input.DashboardConfigJson;
 
+            var dashErr = await ValidateDashboardConfigAsync(configJson, reportId: null, input);
+            if (dashErr != null) return AdminOperationResult.Fail(dashErr);
+
+#pragma warning disable CS0618 // ReportType [Obsolete], Migration 19 drop edecek.
             var entity = new ReportCatalog
             {
                 Title = (input.Title ?? "").Trim(),
@@ -53,13 +56,11 @@ namespace ReportPanel.Services
                 ProcName = (input.ProcName ?? "").Trim(),
                 AllowedRoles = await BuildAllowedRolesCsv(input.SelectedRoleIds),
                 IsActive = input.IsActive,
-                ReportType = reportType,
-                ParamSchemaJson = NormalizeParamSchema(input.ParamSchemaJson, null)
+                ReportType = "dashboard",
+                ParamSchemaJson = NormalizeParamSchema(input.ParamSchemaJson, null),
+                DashboardConfigJson = configJson
             };
-            if (entity.ReportType == "dashboard")
-            {
-                entity.DashboardConfigJson = input.DashboardConfigJson;
-            }
+#pragma warning restore CS0618
 
             _context.ReportCatalog.Add(entity);
             await _context.SaveChangesAsync();
@@ -88,13 +89,17 @@ namespace ReportPanel.Services
             var err = Validate(input);
             if (err != null) return AdminOperationResult.Fail(err);
 
-            var reportType = NormalizeReportType(input.ReportType);
-            if (reportType == "dashboard")
-            {
-                var dashErr = await ValidateDashboardConfigAsync(input.DashboardConfigJson, reportId, input);
-                if (dashErr != null) return AdminOperationResult.Fail(dashErr);
-            }
+            // ADR-009 · M-11 F-1.5: ReportType dallanmasi kaldirildi — her rapor dashboard.
+            var configJson = string.IsNullOrWhiteSpace(input.DashboardConfigJson)
+                ? (string.IsNullOrWhiteSpace(report.DashboardConfigJson)
+                    ? BuildDefaultDashboardConfig(input.Title)
+                    : report.DashboardConfigJson)
+                : input.DashboardConfigJson;
 
+            var dashErr = await ValidateDashboardConfigAsync(configJson, reportId, input);
+            if (dashErr != null) return AdminOperationResult.Fail(dashErr);
+
+#pragma warning disable CS0618 // ReportType [Obsolete], Migration 19 drop edecek.
             var oldSnap = new { report.ReportId, report.Title, report.DataSourceKey, report.ProcName, report.AllowedRoles, report.IsActive };
 
             report.Title = (input.Title ?? "").Trim();
@@ -104,11 +109,9 @@ namespace ReportPanel.Services
             report.AllowedRoles = await BuildAllowedRolesCsv(input.SelectedRoleIds);
             report.IsActive = input.IsActive;
             report.ParamSchemaJson = NormalizeParamSchema(input.ParamSchemaJson, report.ParamSchemaJson);
-            report.ReportType = reportType;
-            // M-05: DashboardHtml'e yeni yazim yok. ReportType dashboard degilse ConfigJson
-            // null'a cekilir; legacy DashboardHtml DB'de oldugu gibi kalir (migration 16
-            // orphan check ile tespit edilir, Faz C'de drop).
-            report.DashboardConfigJson = report.ReportType == "dashboard" ? input.DashboardConfigJson : null;
+            report.ReportType = "dashboard";
+            report.DashboardConfigJson = configJson;
+#pragma warning restore CS0618
 
             await _context.SaveChangesAsync();
             await SyncRolesAndCategoriesAsync(report.ReportId, input.SelectedRoleIds, input.SelectedCategoryIds);
@@ -227,14 +230,36 @@ namespace ReportPanel.Services
             await _context.SaveChangesAsync();
         }
 
-        private static string NormalizeReportType(string? raw) =>
-            raw == "dashboard" ? "dashboard" : "table";
-
         private static string NormalizeParamSchema(string? raw, string? fallback)
         {
             if (string.IsNullOrWhiteSpace(raw))
                 return string.IsNullOrWhiteSpace(fallback) ? "{}" : fallback;
             return raw.Trim();
+        }
+
+        // ADR-009 · M-11 F-1.5: Yeni raporlar default tek-table-widget dashboard ile baslar.
+        // Migration 18 Adim B ile DB'deki eski ReportType='table' raporlarina da ayni pattern uygulandi.
+        // Admin sonradan builder'da kolonlari/tip ayarlarini duzenleyebilir.
+        private static string BuildDefaultDashboardConfig(string? title)
+        {
+            var escapedTitle = JsonSerializer.Serialize(string.IsNullOrWhiteSpace(title) ? "Rapor" : title.Trim());
+            var widgetId = "w_table_" + Guid.NewGuid().ToString("N").Substring(0, 8);
+            return "{" +
+                "\"schemaVersion\":2," +
+                "\"tabs\":[{" +
+                    "\"title\":\"Genel\"," +
+                    "\"components\":[{" +
+                        "\"id\":\"" + widgetId + "\"," +
+                        "\"type\":\"table\"," +
+                        "\"title\":" + escapedTitle + "," +
+                        "\"span\":4," +
+                        "\"resultSet\":0," +
+                        "\"columns\":[]," +
+                        "\"tableOptions\":{\"totalRow\":false,\"stripe\":true,\"stickyHeader\":true,\"clientSearch\":false,\"pageSize\":0}" +
+                    "}]" +
+                "}]," +
+                "\"calculatedFields\":[]" +
+                "}";
         }
     }
 }

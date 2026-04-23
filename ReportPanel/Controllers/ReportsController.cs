@@ -143,18 +143,18 @@ namespace ReportPanel.Controllers
             }
 
             var viewMode = ResolveViewMode(Request.Query["viewMode"].ToString());
-            var isDashboard = context.SelectedReport.ReportType == "dashboard";
+            // ADR-009: Tüm raporlar dashboard. IsDashboard ViewModel'da kaldı (alt-commit 2 Razor rewrite sonrası sil).
             var model = new ReportRunViewModel
             {
                 SelectedReport = context.SelectedReport,
                 ParamFields = context.ParamFields,
                 ViewMode = viewMode.ViewMode,
                 BodyClass = viewMode.BodyClass,
-                IsDashboard = isDashboard
+                IsDashboard = true
             };
 
-            // Dashboard + parametresiz → otomatik çalıştır
-            if (isDashboard && !context.ParamFields.Any(f => f.Required))
+            // Parametresiz → otomatik çalıştır (hepsi dashboard)
+            if (!context.ParamFields.Any(f => f.Required))
             {
                 var fakeForm = new Microsoft.AspNetCore.Http.FormCollection(
                     context.ParamFields.ToDictionary(
@@ -213,109 +213,75 @@ namespace ReportPanel.Controllers
             var searchTerm = form["ResultSearch"].ToString();
             model.ResultSearch = searchTerm;
             var stopwatch = System.Diagnostics.Stopwatch.StartNew();
-            var isDashboard = context.SelectedReport.ReportType == "dashboard";
+            model.IsDashboard = true; // ADR-009: tüm raporlar dashboard.
 
             try
             {
-                var hasConfig = isDashboard && !string.IsNullOrWhiteSpace(context.SelectedReport.DashboardConfigJson);
+                // ADR-009: Tek path. Eski else-branch (tablo render) DROP edildi.
+                // Migration 18 sonrası her raporda DashboardConfigJson dolu. Boş kalan edge case'e
+                // karşı dashboard_config_missing audit + boş şablon fallback korunuyor.
+                var hasConfig = !string.IsNullOrWhiteSpace(context.SelectedReport.DashboardConfigJson);
 
-                if (isDashboard)
+                var resultSets = await ExecuteStoredProcedureMultiResultSets(
+                    context.SelectedReport.DataSource.ConnString,
+                    context.SelectedReport.ProcName,
+                    validation.Parameters);
+
+                stopwatch.Stop();
+
+                var totalRows = resultSets.Sum(rs => rs.Count);
+                model.RunSuccess = true;
+                model.RunMessage = $"Dashboard basariyla yuklendi. {resultSets.Count} result set, toplam {totalRows} kayit.";
+                model.RunRowCount = totalRows;
+                model.RunDurationMs = stopwatch.ElapsedMilliseconds;
+
+                DashboardConfig? dashConfig = null;
+                if (hasConfig)
                 {
-                    var resultSets = await ExecuteStoredProcedureMultiResultSets(
-                        context.SelectedReport.DataSource.ConnString,
-                        context.SelectedReport.ProcName,
-                        validation.Parameters);
-
-                    stopwatch.Stop();
-
-                    var totalRows = resultSets.Sum(rs => rs.Count);
-                    model.RunSuccess = true;
-                    model.IsDashboard = true;
-                    model.RunMessage = $"Dashboard basariyla yuklendi. {resultSets.Count} result set, toplam {totalRows} kayit.";
-                    model.RunRowCount = totalRows;
-                    model.RunDurationMs = stopwatch.ElapsedMilliseconds;
-
-                    DashboardConfig? dashConfig = null;
-                    if (hasConfig)
+                    try
                     {
-                        try
-                        {
-                            dashConfig = JsonSerializer.Deserialize<DashboardConfig>(
-                                context.SelectedReport.DashboardConfigJson!);
-                        }
-                        catch (JsonException jx)
-                        {
-                            // Bozuk config 500 patlatmasin. Bos config ile fallback render + uyari.
-                            await _auditLog.LogAsync(new AuditLogEntry
-                            {
-                                EventType = "dashboard_config_invalid",
-                                TargetType = "report",
-                                TargetKey = context.SelectedReport.ReportId.ToString(),
-                                ReportId = context.SelectedReport.ReportId,
-                                Description = $"DashboardConfigJson deserialize failed: {jx.Message}",
-                                IsSuccess = false
-                            });
-                            model.RunMessage = (model.RunMessage ?? "") +
-                                " (UYARI: Dashboard yapilandirmasi bozuk, bos sablonla gosteriliyor. Admin'e bildirin.)";
-                        }
+                        dashConfig = JsonSerializer.Deserialize<DashboardConfig>(
+                            context.SelectedReport.DashboardConfigJson!);
                     }
-                    else
+                    catch (JsonException jx)
                     {
                         await _auditLog.LogAsync(new AuditLogEntry
                         {
-                            EventType = "dashboard_config_missing",
+                            EventType = "dashboard_config_invalid",
                             TargetType = "report",
                             TargetKey = context.SelectedReport.ReportId.ToString(),
                             ReportId = context.SelectedReport.ReportId,
-                            Description = "Dashboard report has no DashboardConfigJson. Bos sablon render edildi.",
+                            Description = $"DashboardConfigJson deserialize failed: {jx.Message}",
                             IsSuccess = false
                         });
                         model.RunMessage = (model.RunMessage ?? "") +
-                            " (UYARI: Dashboard yapilandirmasi yok, bos sablonla gosteriliyor. Admin'e bildirin.)";
+                            " (UYARI: Dashboard yapilandirmasi bozuk, bos sablonla gosteriliyor. Admin'e bildirin.)";
                     }
-                    model.DashboardRenderedHtml = DashboardRenderer.Render(
-                        dashConfig ?? new DashboardConfig(), resultSets);
-
-                    await LogRun(
-                        context.SelectedReport,
-                        validation.ParamsJson,
-                        true,
-                        totalRows,
-                        (int)stopwatch.ElapsedMilliseconds,
-                        null);
                 }
                 else
                 {
-                    var result = await ExecuteStoredProcedure(
-                        context.SelectedReport.DataSource.ConnString,
-                        context.SelectedReport.ProcName,
-                        validation.Parameters);
-
-                    stopwatch.Stop();
-
-                    model.RunSuccess = true;
-                    model.RunMessage = $"Rapor basariyla calistirildi. {result.Rows.Count} kayit donduruldu.";
-                    model.RunRowCount = result.Rows.Count;
-                    model.RunDurationMs = stopwatch.ElapsedMilliseconds;
-                    if (!string.IsNullOrWhiteSpace(searchTerm))
+                    await _auditLog.LogAsync(new AuditLogEntry
                     {
-                        var term = searchTerm.Trim().ToLowerInvariant();
-                        result.Rows = result.Rows
-                            .Where(row => row.Values.Any(value =>
-                                (value?.ToString() ?? string.Empty).ToLowerInvariant().Contains(term)))
-                            .ToList();
-                    }
-
-                    model.RunData = result.Rows;
-
-                    await LogRun(
-                        context.SelectedReport,
-                        validation.ParamsJson,
-                        true,
-                        result.Rows.Count,
-                        (int)stopwatch.ElapsedMilliseconds,
-                        null);
+                        EventType = "dashboard_config_missing",
+                        TargetType = "report",
+                        TargetKey = context.SelectedReport.ReportId.ToString(),
+                        ReportId = context.SelectedReport.ReportId,
+                        Description = "Dashboard report has no DashboardConfigJson. Bos sablon render edildi.",
+                        IsSuccess = false
+                    });
+                    model.RunMessage = (model.RunMessage ?? "") +
+                        " (UYARI: Dashboard yapilandirmasi yok, bos sablonla gosteriliyor. Admin'e bildirin.)";
                 }
+                model.DashboardRenderedHtml = DashboardRenderer.Render(
+                    dashConfig ?? new DashboardConfig(), resultSets);
+
+                await LogRun(
+                    context.SelectedReport,
+                    validation.ParamsJson,
+                    true,
+                    totalRows,
+                    (int)stopwatch.ElapsedMilliseconds,
+                    null);
             }
             catch (Exception ex)
             {

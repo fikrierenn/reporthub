@@ -1210,7 +1210,7 @@ ORDER BY p.parameter_id;";
             SelectedRoleIds: ParseIds(Request.Form["SelectedRoles"]),
             SelectedCategoryIds: ParseIds(Request.Form["SelectedCategories"]),
             IsActive: ReadFormBool("IsActive"),
-            ReportType: Request.Form["ReportType"],
+            ReportType: "dashboard", // ADR-009 · M-11 F-1.5: form alanı kaldırıldı, hep dashboard.
             ParamSchemaJson: Request.Form["ParamSchemaJson"],
             DashboardConfigJson: Request.Form["DashboardConfigJson"]);
 
