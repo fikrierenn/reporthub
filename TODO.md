@@ -126,7 +126,15 @@ Bu liste asagidakilerin sentezidir:
     - **Faz 5** (~2h) · Migration 18 — PDKS (7 RS) + Satis (7 RS) ConfigJson rewrite. **Idempotent**: `resultContract` yoksa uret, varsa atla. `Explore` agent ile her resultSet icin camelCase isim onerisi.
     - **Faz 6** (~1h) · Legacy `resultSet: N` binding deprecate + renderer fallback kaldir (ayri PR, tum configler migrate edildikten sonra).
 
-29.5. **M-11 · Dashboard Builder UX Redesign + Chart Expansion** (13 faz, ~60h toplam / 1.5-2 hafta solo) — Apache Superset'ten esinlenen modern admin builder. Plan dosyasi: `C:/Users/fikri.eren/.claude/plans/imdi-planlama-yap-bu-optimized-hippo.md`. Mockup: `ReportPanel/wwwroot/mockups/dashboard-builder-v3.html` (BKM kirmizi-siyah-beyaz brand, _AppLayout uyumlu). Branch: `feature/m-11-dashboard-builder-redesign`.
+29.5. **M-11 · Dashboard Builder UX Redesign + Chart Expansion** (13 faz, ~60h toplam / 1.5-2 hafta solo) — Apache Superset'ten esinlenen modern admin builder. Plan dosyasi: `C:/Users/fikri.eren/.claude/plans/imdi-planlama-yap-bu-optimized-hippo.md`. Mockup: `ReportPanel/wwwroot/mockups/dashboard-builder-v3.html` (Gridstack + Chart.js canli, BKM renkleri tasarim referansi — implementasyon `_AppLayout` + `style.css` custom class'lari ile ayri port edilir). ADR-008 + ADR-009 kabul edildi (24 Nisan). Branch: `feature/m-11-dashboard-builder-redesign`.
+
+    **Guncellemeler (24 Nisan, ADR-008/009 sonrasi):**
+    - **Gridstack.js kabul** — builder-only CDN, runtime (Reports/Run) CSS-grid inline-style. Onceki "Gridstack reddet" karari tersine cevrildi.
+    - **preview = Reports/Run tek renderer** — builder onizleme iframe `/Reports/Run/{id}?preview=1&configOverride=<draft>` ile. Admin-only override. ADR-008 karar A patikasi.
+    - **ReportType kolonu SIL** — tum raporlar dashboard. F-1.5 alt-commit 3 ile migration 19. Run.cshtml tamamen yeniden yazilir (tablo render path'i drop). ADR-009.
+    - **Font Inter + JetBrains Mono** builder-only, `_AppLayout`'a eklenmez.
+    - **Calculated fields** (turetilmis alanlar) — AST-based sandbox parser, `eval()` yasak (F-8).
+    - **Tasarim uyum kurali** — mockup birebir kopyalanmayacak; proje `.btn-brand` / `.card-brand` / `.form-input-brand` + max-w-7xl + `_AppLayout` header/footer icinde.
 
     **Superset'ten alinan 10 pattern:** Veri|Gorunum drawer tab'i · kategorili chart gallery (arama + chip filter) · Native Filter Bar (param chip'leri) · 3-tab inspect preview (Cikti|Sorgu|JSON) · widget hover menu · loading/empty/error state · kisayol modali (?) · sablon market · dark mode (M-12'ye) · duplicate action.
 
@@ -156,7 +164,7 @@ Bu liste asagidakilerin sentezidir:
 
     **Commit sayisi:** ~19. Her commit <15 dosya (commit-discipline.md).
 
-    **M-12'ye ertelenenler:** dark mode · Cmd+K fuzzy palette · structure widgets (markdown/iframe/divider) · Gridstack drag-resize · heatmap/gauge/treemap/sankey/funnel/bubble ileri chart tipleri · tam undo/redo stack · cross-chart filter.
+    **M-12'ye ertelenenler:** dark mode · Cmd+K fuzzy palette · structure widgets (markdown/iframe/divider) · heatmap/gauge/treemap/sankey/funnel/bubble/combo ileri chart tipleri · tam undo/redo stack · cross-chart filter · Chart.js plugin'leri (datalabels/zoom/annotation/matrix). ~~Gridstack~~ 24 Nisan'da geri alindi, F-5 aktif.
 
 #### FAZ 3 — BU CEYREK (3 ay, dusuk oncelik / temizlik)
 29. **M-06 · EF Core Migrations gecisi** (1 gun) — mevcut semayi baseline yap, yeni degisiklikler migration. Database/legacy/ olustur.
