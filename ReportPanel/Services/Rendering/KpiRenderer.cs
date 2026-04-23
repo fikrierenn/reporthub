@@ -16,7 +16,8 @@ namespace ReportPanel.Services.Rendering
                 rs,
                 agg = comp.Agg,
                 col = comp.Column ?? "",
-                cond = comp.Condition ?? ""
+                cond = comp.Condition ?? "",
+                numberFormat = comp.NumberFormat ?? "auto"
             });
             kpiData = kpiData.Replace("\"", "&quot;");
 
