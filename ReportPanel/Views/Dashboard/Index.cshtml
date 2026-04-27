@@ -96,7 +96,6 @@
     </div>
 </div>
 
-@* ============ KPI GRID 4 KART ============ *@
 <div class="kpi-grid">
     <div class="kpi-card k-red">
         <div class="head">
@@ -152,7 +151,6 @@
     </div>
 </div>
 
-@* ============ BUGÜNÜN ÖZETİ — saatlik trend + en çok çalıştırılan ============ *@
 <div class="section-title">
     <h2>Bugünün Özeti</h2>
     <a href="/Logs" class="more">Detaylı analiz <i class="fas fa-chevron-right text-[10px]"></i></a>
@@ -236,7 +234,6 @@
 
 </div>
 
-@* ============ FAVORİLERİM (qcard grid) ============ *@
 <div class="section-title">
     <h2>Hızlı Erişim</h2>
     <a href="/Reports" class="more">Tüm raporları gör <i class="fas fa-chevron-right text-[10px]"></i></a>
@@ -270,7 +267,6 @@ else
     </div>
 }
 
-@* ============ SON AKTİVİTE (.activity .dt) ============ *@
 <div class="section-title">
     <h2>Son Aktivite</h2>
     <a href="/Logs" class="more">Tüm log <i class="fas fa-chevron-right text-[10px]"></i></a>
@@ -330,10 +326,4 @@ else
     </div>
 }
 
-<div class="footer-hint">
-    <span class="kbd">⌘B</span> sidebar daralt
-    <span style="margin:0 8px;">·</span>
-    <span class="kbd">⌘K</span> hızlı arama
-    <span style="margin:0 8px;">·</span>
-    ReportHub · BKM Kitap
-</div>
+@await Html.PartialAsync("_FooterHint")

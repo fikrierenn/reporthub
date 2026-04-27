@@ -17,9 +17,6 @@
     var avatar = AvatarInitials(string.IsNullOrWhiteSpace(Model.FullName) ? Model.Username : Model.FullName);
 }
 
-@* Breadcrumb default: _AppLayout ViewData["PageTitle"]'dan otomatik *@
-
-@* ============ HERO ============ *@
 <div class="hero">
     <h1>Profil</h1>
     <div class="sub">
@@ -43,7 +40,6 @@
     </div>
 }
 
-@* ============ FORM CARD ============ *@
 <div style="background:var(--paper); border:1px solid var(--line); border-radius:10px; overflow:hidden; max-width:720px;">
 
     @* Card header — avatar + isim *@

@@ -10,8 +10,6 @@
     var favCount = Model.FavoriteReportIds.Count;
 }
 
-@* Breadcrumb default: _AppLayout ViewData["PageTitle"] = "Raporlar"'dan otomatik üretir *@
-
 @section TopActions {
     @if (isAdmin)
     {
@@ -25,7 +23,6 @@
     </a>
 }
 
-@* ============ HERO ============ *@
 <div class="hero">
     <h1>Raporlar</h1>
     <div class="sub">
@@ -41,7 +38,6 @@
     </div>
 </div>
 
-@* ============ FİLTRE BAR ============ *@
 <form method="get" class="report-filter-bar" style="background:var(--paper); border:1px solid var(--line); border-radius:10px; padding:14px 16px; margin-bottom:18px; display:flex; gap:12px; flex-wrap:wrap; align-items:end;">
     <div style="flex:1; min-width:240px;">
         <label class="lab" for="reportSearch">Arama</label>
@@ -83,7 +79,6 @@
     </div>
 </form>
 
-@* ============ RAPORLAR — qcard grid ============ *@
 @if (!Model.Reports.Any())
 {
     <div style="background:var(--paper); border:1px dashed var(--line); border-radius:10px; padding:48px 24px; text-align:center; color:var(--ink-3);">
@@ -151,18 +146,9 @@ else
     </div>
 }
 
-<div class="footer-hint">
-    <span class="kbd">⌘K</span> hızlı arama
-    <span style="margin:0 8px;">·</span>
-    <span class="mono">@totalCount rapor</span>
-    @if (!string.IsNullOrWhiteSpace(Model.SearchTerm))
-    {
-        <span style="margin:0 8px;">·</span>
-        <span>arama: <span class="mono">"@Model.SearchTerm"</span></span>
-    }
-    @if (!string.IsNullOrWhiteSpace(Model.SelectedCategory))
-    {
-        <span style="margin:0 8px;">·</span>
-        <span>kategori: <span class="mono">@Model.SelectedCategory</span></span>
-    }
-</div>
+@{
+    var reportsFooter = $"{totalCount} rapor";
+    if (!string.IsNullOrWhiteSpace(Model.SearchTerm)) reportsFooter += $" · arama \"{Model.SearchTerm}\"";
+    if (!string.IsNullOrWhiteSpace(Model.SelectedCategory)) reportsFooter += $" · kategori {Model.SelectedCategory}";
+}
+@await Html.PartialAsync("_FooterHint", (string?)reportsFooter)
