@@ -1,106 +1,174 @@
 @model ReportPanel.ViewModels.ReportsIndexViewModel
+@using System.Security.Claims
 @{
     Layout = "_AppLayout";
     ViewData["Title"] = "Raporlar - BKM Rapor Paneli";
+    ViewData["PageTitle"] = "Raporlar";
     var returnUrl = $"{Context.Request.Path}{Context.Request.QueryString}";
+    var isAdmin = User.IsInRole("admin");
+    var totalCount = Model.Reports.Count;
+    var favCount = Model.FavoriteReportIds.Count;
 }
 
-<div class="mb-8">
-    <h1 class="text-3xl font-bold text-gray-900 mb-2">Raporlar</h1>
-    <p class="text-gray-600">Rolleriniz: @string.Join(", ", Model.UserRoles)</p>
+@section Breadcrumb {
+    <div class="crumbs">
+        <a href="/Dashboard">BKM Kitap</a>
+        <span class="sep">/</span>
+        <span class="current">Raporlar</span>
+    </div>
+}
+
+@section TopActions {
+    @if (isAdmin)
+    {
+        <a href="/Admin/CreateReport" class="btn primary">
+            <i class="fas fa-plus text-[10px]"></i>
+            Yeni Rapor
+        </a>
+    }
+    <a href="#" class="icon-btn" title="Yardım">
+        <i class="fas fa-circle-question"></i>
+    </a>
+}
+
+@* ============ HERO ============ *@
+<div class="hero">
+    <h1>Raporlar</h1>
+    <div class="sub">
+        <span class="mono">@totalCount erişilebilir rapor</span>
+        @if (favCount > 0)
+        {
+            <span class="pill"><i class="fas fa-star" style="color:var(--accent); font-size:10px;"></i> @favCount favori</span>
+        }
+        @if (Model.UserRoles.Any())
+        {
+            <span class="pill mono">@string.Join(" · ", Model.UserRoles)</span>
+        }
+    </div>
 </div>
 
-<div class="bg-white rounded-2xl shadow-sm border border-gray-100 mb-6 overflow-hidden">
-    <form method="get" class="px-6 py-4 flex flex-col gap-4 md:flex-row md:items-end">
-        <div class="flex-1">
-            <label class="block text-sm font-semibold text-gray-700 mb-2">Arama</label>
-            <input type="text" name="q" value="@Model.SearchTerm"
-                   class="w-full px-4 py-3 border border-gray-300 rounded-lg"
-                   placeholder="Rapor adi, aciklama, kategori...">
+@* ============ FİLTRE BAR ============ *@
+<form method="get" class="report-filter-bar" style="background:var(--paper); border:1px solid var(--line); border-radius:10px; padding:14px 16px; margin-bottom:18px; display:flex; gap:12px; flex-wrap:wrap; align-items:end;">
+    <div style="flex:1; min-width:240px;">
+        <label class="lab" for="reportSearch">Arama</label>
+        <div style="position:relative;">
+            <span style="position:absolute; left:10px; top:50%; transform:translateY(-50%); color:var(--ink-4); pointer-events:none;">
+                <i class="fas fa-magnifying-glass" style="font-size:12px;"></i>
+            </span>
+            <input type="text" id="reportSearch" name="q" value="@Model.SearchTerm"
+                   class="inp" style="padding-left:32px;"
+                   placeholder="Rapor adı, açıklama veya kategori..." />
         </div>
-        <div class="w-full md:w-64">
-            <label class="block text-sm font-semibold text-gray-700 mb-2">Kategori</label>
-            <select name="category" class="w-full px-4 py-3 border border-gray-300 rounded-lg">
-                <option value="">Tum kategoriler</option>
-                @foreach (var category in Model.Categories)
-                {
-                    <option value="@category" selected="@(string.Equals(category, Model.SelectedCategory, StringComparison.OrdinalIgnoreCase))">
-                        @category
-                    </option>
-                }
-            </select>
-        </div>
-        <div class="flex items-center gap-3">
-            <button type="submit" class="btn-brand inline-flex items-center px-5 py-3 text-sm font-semibold rounded-lg">
-                Filtrele
-            </button>
-            <a href="/Reports" class="btn-brand-outline inline-flex items-center px-5 py-3 text-sm font-semibold rounded-lg">
+    </div>
+
+    <div style="min-width:180px;">
+        <label class="lab" for="reportCategory">Kategori</label>
+        <select id="reportCategory" name="category" class="inp">
+            <option value="">Tüm kategoriler</option>
+            @foreach (var category in Model.Categories)
+            {
+                <option value="@category" selected="@(string.Equals(category, Model.SelectedCategory, StringComparison.OrdinalIgnoreCase))">
+                    @category
+                </option>
+            }
+        </select>
+    </div>
+
+    <div style="display:flex; gap:6px;">
+        <button type="submit" class="btn primary">
+            <i class="fas fa-filter text-[10px]"></i>
+            Filtrele
+        </button>
+        @if (!string.IsNullOrWhiteSpace(Model.SearchTerm) || !string.IsNullOrWhiteSpace(Model.SelectedCategory))
+        {
+            <a href="/Reports" class="btn ghost">
+                <i class="fas fa-xmark text-[10px]"></i>
                 Temizle
             </a>
-        </div>
-    </form>
-</div>
-
-<div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-    <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-        <h2 class="text-lg font-semibold text-gray-900">Raporlar (@Model.Reports.Count)</h2>
+        }
     </div>
-    <div class="divide-y divide-gray-100">
-        @if (!Model.Reports.Any())
+</form>
+
+@* ============ RAPORLAR — qcard grid ============ *@
+@if (!Model.Reports.Any())
+{
+    <div style="background:var(--paper); border:1px dashed var(--line); border-radius:10px; padding:48px 24px; text-align:center; color:var(--ink-3);">
+        <i class="fas fa-folder-open" style="font-size:48px; opacity:.4; margin-bottom:12px;"></i>
+        <h3 style="font-size:14px; font-weight:600; color:var(--ink-1); margin:0 0 4px;">Erişilebilir rapor bulunamadı</h3>
+        @if (!string.IsNullOrWhiteSpace(Model.SearchTerm) || !string.IsNullOrWhiteSpace(Model.SelectedCategory))
         {
-            <div class="p-8 text-center text-gray-500">
-                Erisiminiz olan rapor bulunmamaktadir.
-            </div>
+            <p style="margin:0; font-size:12.5px;">Filtre kriterlerini değiştirin veya <a href="/Reports" style="color:var(--accent); font-weight:500;">filtreyi temizle</a>.</p>
         }
         else
         {
-            @foreach (var report in Model.Reports)
-            {
-                var isFavorite = Model.FavoriteReportIds.Contains(report.ReportId);
-                <div class="flex items-center justify-between px-6 py-5 hover:bg-gray-50 transition-brand">
-                    <a href="/Reports/Run?reportId=@report.ReportId" class="min-w-0 flex-1">
-                        <div class="text-base font-semibold text-gray-900 truncate">
-                            @report.Title
-                            @* ADR-009: ReportType ayrımı kaldı — tüm raporlar dashboard, ayırt edici badge gereksiz. *@
-                        </div>
-                        <div class="text-sm text-gray-600 truncate">
-                            @(string.IsNullOrWhiteSpace(report.Description) ? "Aciklama bulunmuyor" : report.Description)
-                        </div>
-                        <div class="mt-2 text-xs text-gray-500">
-                            <i class="fas fa-database mr-1"></i>
-                            @(report.DataSource?.Title ?? report.DataSourceKey)
-                        </div>
-                        @{
-                            var categoryNames = report.ReportCategories
-                                .Select(rc => rc.Category?.Name ?? "")
-                                .Where(name => !string.IsNullOrWhiteSpace(name))
-                                .ToList();
-                            if (categoryNames.Count > 0)
-                            {
-                                <div class="mt-2 text-xs text-gray-500">
-                                    <i class="fas fa-folder-open mr-1"></i>
-                                    @string.Join(", ", categoryNames)
-                                </div>
-                            }
-                        }
-                    </a>
-                    <div class="flex items-center gap-3">
-                        <form method="post" action="@(isFavorite ? "/Reports/Unfavorite" : "/Reports/Favorite")">
-                            @Html.AntiForgeryToken()
-                            <input type="hidden" name="reportId" value="@report.ReportId" />
-                            <input type="hidden" name="returnUrl" value="@returnUrl" />
-                            <button type="submit"
-                                    class="text-sm @(isFavorite ? "text-yellow-500" : "text-gray-400 hover:text-gray-600")"
-                                    title="@(isFavorite ? "Favoriden kaldir" : "Favorilere ekle")">
-                                <i class="@(isFavorite ? "fas fa-star" : "far fa-star")"></i>
-                            </button>
-                        </form>
-                        <div class="text-sm text-gray-400">
-                            <i class="fas fa-chevron-right"></i>
-                        </div>
-                    </div>
-                </div>
-            }
+            <p style="margin:0; font-size:12.5px;">Yöneticinizden rol veya rapor erişimi isteyin.</p>
         }
     </div>
+}
+else
+{
+    <div class="quick-grid">
+        @foreach (var report in Model.Reports)
+        {
+            var isFavorite = Model.FavoriteReportIds.Contains(report.ReportId);
+            var categoryNames = report.ReportCategories
+                .Select(rc => rc.Category?.Name ?? "")
+                .Where(name => !string.IsNullOrWhiteSpace(name))
+                .ToList();
+            var displaySub = string.IsNullOrWhiteSpace(report.Description)
+                ? (categoryNames.Count > 0 ? string.Join(", ", categoryNames) : (report.DataSource?.Title ?? report.DataSourceKey))
+                : report.Description;
+            <div class="qcard" style="position:relative;">
+                <div class="row1">
+                    <span class="type-chip type-dash">Dashboard</span>
+                    <span class="mono" style="font-size:10.5px; color:var(--ink-4); margin-left:auto;">#@report.ReportId</span>
+                    <form method="post" action="@(isFavorite ? "/Reports/Unfavorite" : "/Reports/Favorite")" style="display:inline; margin:0;">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="reportId" value="@report.ReportId" />
+                        <input type="hidden" name="returnUrl" value="@returnUrl" />
+                        <button type="submit"
+                                class="fav @(isFavorite ? "on" : "")"
+                                title="@(isFavorite ? "Favoriden kaldır" : "Favorilere ekle")"
+                                style="position:relative; z-index:2;">
+                            @if (isFavorite)
+                            {
+                                <i class="fas fa-star" style="font-size:12px;"></i>
+                            }
+                            else
+                            {
+                                <i class="far fa-star" style="font-size:12px;"></i>
+                            }
+                        </button>
+                    </form>
+                </div>
+                <a href="/Reports/Run?reportId=@report.ReportId" style="text-decoration:none; color:inherit;">
+                    <h3>@report.Title</h3>
+                    <div class="sub">@displaySub</div>
+                    <div class="meta">
+                        <span class="ago" style="font-family:'JetBrains Mono',monospace;">
+                            <i class="fas fa-database" style="font-size:9px; color:var(--ink-4); margin-right:3px;"></i>
+                            @(report.DataSource?.Title ?? report.DataSourceKey)
+                        </span>
+                        <span class="run">Çalıştır <i class="fas fa-arrow-right text-[10px]"></i></span>
+                    </div>
+                </a>
+            </div>
+        }
+    </div>
+}
+
+<div class="footer-hint">
+    <span class="kbd">⌘K</span> hızlı arama
+    <span style="margin:0 8px;">·</span>
+    <span class="mono">@totalCount rapor</span>
+    @if (!string.IsNullOrWhiteSpace(Model.SearchTerm))
+    {
+        <span style="margin:0 8px;">·</span>
+        <span>arama: <span class="mono">"@Model.SearchTerm"</span></span>
+    }
+    @if (!string.IsNullOrWhiteSpace(Model.SelectedCategory))
+    {
+        <span style="margin:0 8px;">·</span>
+        <span>kategori: <span class="mono">@Model.SelectedCategory</span></span>
+    }
 </div>
