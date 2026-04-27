@@ -3,9 +3,14 @@
 Bu dosya her Claude oturumunun başında okunur. **Değişmez kurallar + kimlik.** Tarihli notlar, geçmiş kararlar ve detay kurallar ayrı dosyalarda:
 
 - `.claude/rules/*.md` — davranış kuralları (konuya göre)
+- `.claude/agents/*.md` — proje agent'ları (8 kod review + commit-splitter)
+- `.claude/commands/*.md` — slash komutlar (`/feature-dev`, `/review-pr`)
+- `.claude/skills/*/SKILL.md` — proje + frontend tasarım skill'leri
 - `docs/ADR/*.md` — mimari karar kayıtları
 - `docs/journal/YYYY-MM-DD.md` — oturum günlükleri
+- `docs/PATTERNS.md` — gerçek-dünya pattern'leri (P-1..P-10)
 - `TODO.md` — aktif sprint + backlog
+- `plans/NN-<slug>.md` — Tier 3 iş planları (zorunlu, ADR-010)
 - `docs/CONTEXT_MANAGEMENT.md` — bağlam yönetimi anayasası (ilkeler)
 - `docs/CLAUDE_TOOLING_PROPOSAL.md` — Claude araç setinin tam önerisi
 
@@ -62,8 +67,22 @@ Ayrıntılı kurallar `.claude/rules/` altında — burada sadece değişmez pre
 1. **Sistematik çalış.** Her karar + kural + talimat dosyaya yazılır (CLAUDE.md, TODO.md, `.claude/rules/`, `docs/ADR/`, `docs/journal/`). Konuşma hafızasında kalmaz. Detay: [`docs/CONTEXT_MANAGEMENT.md`](docs/CONTEXT_MANAGEMENT.md).
 
 2. **Skill + agent + MCP aktif kullan.**
-   - Multi-agent: `Explore` (keşif, audit), `Plan` (tasarım), `general-purpose` (araştırma). Paralel 2-3'e kadar.
-   - Proje skill'leri: `session-handoff` (oturum sonu journal + auto-commit), `plan-tracker` (TodoWrite ↔ TODO.md senkron).
+   - Built-in agent: `Explore` (keşif, audit), `Plan` (tasarım), `general-purpose` (araştırma). Paralel 2-3'e kadar.
+   - **Proje agent'ları (`.claude/agents/`):**
+     - `code-architect` — feature mimari blueprint (file:line referanslı, build sequence)
+     - `code-explorer` — feature trace (entry → data, layer mapping)
+     - `code-reviewer` — confidence-scored review (CLAUDE.md compliance + bug detect)
+     - `code-simplifier` — recently-modified code clarity refactor
+     - `comment-analyzer` — comment accuracy + rot detection
+     - `pr-test-analyzer` — behavioral test coverage analysis
+     - `silent-failure-hunter` — error handling + catch block audit
+     - `type-design-analyzer` — invariant strength + encapsulation rating
+     - `commit-splitter` — uncommitted'i bucket'lara böl
+   - **Slash commands (`.claude/commands/`):**
+     - `/feature-dev` — 7 fazlı guided feature development (discovery → exploration → clarify → architect → implement → review → summary)
+     - `/review-pr` — multi-agent comprehensive PR review
+   - **Proje skill'leri:** `session-handoff` (oturum sonu journal + auto-commit), `plan-tracker` (TodoWrite ↔ TODO.md senkron).
+   - **Frontend tasarım skill'leri** (M-11 F-7+ dashboard builder UI fazlarında tetiklenir): `frontend-design`, `visual-design-foundations`, `design-system-patterns`, `interaction-design`, `responsive-design`, `web-component-design`, `accessibility-compliance`.
    - Hazır skill'ler: `security-review`, `review`, `simplify`, `init`, `consolidate-memory`, `schedule`, `loop`, `claude-api`.
    - Gereken skill yoksa: `WebFetch`/`WebSearch` araştır, veya `.claude/skills/` altına yarat.
    - MCP'ler: `mcp__sqlserver__*` (DB), `mcp__Claude_in_Chrome__tabs_context_mcp` (browser test), `mcp__Claude_Preview__*` (live preview).
@@ -74,7 +93,11 @@ Ayrıntılı kurallar `.claude/rules/` altında — burada sadece değişmez pre
 
 5. **Commit disiplini.** Kullanıcı açıkça istemeden commit etme. Uncommitted dosya sayısı 15'i aşarsa yeni iş başlamadan önce commit-split zorunlu. Detay: [`.claude/rules/commit-discipline.md`](.claude/rules/commit-discipline.md).
 
-6. **200 satır eşiği.** CLAUDE.md ve her `.claude/rules/*.md` dosyası 200 satır altında. Aşarsa konu bölünür.
+6. **Plan-First (Tier sistemi).** 3+ klasöre dokunan / schema-security-UX / kullanıcı-görünür / harici dep işler **Tier 3** → `plans/NN-<slug>.md` tam plan zorunlu, kullanıcı onaylamadan implement etme. Tier 1 (typo) plansız, Tier 2 (küçük feature) TODO satırı yeterli. Detay: [`.claude/rules/plan-first.md`](.claude/rules/plan-first.md), [`docs/ADR/010-plan-first-tier-system.md`](docs/ADR/010-plan-first-tier-system.md).
+
+7. **Bağlam yönetimi disiplini.** Aynı bilgi iki yerde yaşamaz (CLAUDE.md kimlik, `.claude/rules/` kural, `TODO.md` plan, `docs/ADR/` karar, `docs/journal/` günlük). Detay: [`.claude/rules/session-memory.md`](.claude/rules/session-memory.md).
+
+8. **200 satır eşiği.** CLAUDE.md ve her `.claude/rules/*.md` dosyası 200 satır altında. Aşarsa konu bölünür.
 
 ---
 
