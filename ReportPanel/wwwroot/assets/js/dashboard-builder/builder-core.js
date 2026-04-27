@@ -141,12 +141,14 @@
         html += DB.list.renderComponentList();
         html += '</aside>';
 
-        // ===== ORTA: CANVAS (alt-3'te Gridstack ile dolacak) =====
-        html += '<main class="builder-canvas bg-gray-50 border border-dashed border-gray-300 rounded-lg p-6 flex items-center justify-center min-h-[400px]">';
-        html += '<div class="text-center text-gray-400 max-w-sm">';
-        html += '<i class="fas fa-th-large text-5xl mb-3 opacity-40"></i>';
-        html += '<p class="text-sm font-semibold mb-1">Canvas Onizleme Alani</p>';
-        html += '<p class="text-xs">Gridstack drag-resize canvas\'i F-7 alt-3\'te aktiflesecek. Mevcut akista bilesen yonetimi sol palette\'ten yapilir.</p>';
+        // ===== ORTA: CANVAS (alt-3a placeholder, alt-3b'de Gridstack ile dolacak) =====
+        html += '<main class="builder-canvas">';
+        html += '<div class="empty-hint">';
+        html += '<div class="box">';
+        html += '<div class="icon"><i class="fas fa-th-large"></i></div>';
+        html += '<h3>Boş tuval</h3>';
+        html += '<p>Bileşen yönetimi sol palette\'ten yapılır. Drag-resize canvas (Gridstack) F-7 alt-3b\'de aktifleşecek.</p>';
+        html += '</div>';
         html += '</div>';
         html += '</main>';
 

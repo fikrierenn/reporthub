@@ -1,0 +1,631 @@
+/* dashboard-builder.css — M-11 F-7 alt-3a (BKM brand uygulama)
+ *
+ * Kaynak: ReportPanel/wwwroot/mockups/dashboard-builder-v3.html
+ * Tokens: style.css içinde tanımlı (--ink-*, --accent, --paper, --canvas, --line, --chip)
+ *
+ * Bu dosya sadece dashboard builder sayfasında yüklenir (EditReport + CreateReport).
+ * Inter + JetBrains Mono fontları HEAD'de CDN ile yüklenir.
+ *
+ * alt-3a kapsamı: shell + topbar + palette + drawer + canvas placeholder + widget cards stub.
+ * alt-3b kapsamı (sonra): widget render Gridstack canvas'a taşınınca w-head/w-body/kpi-* aktif.
+ */
+
+/* ============================================================================
+   FONT (sadece builder-mount içinde — _AppLayout default font'unu kirletmez)
+   ============================================================================ */
+.builder-shell,
+.builder-shell input,
+.builder-shell select,
+.builder-shell textarea,
+.builder-shell button,
+.builder-topbar {
+    font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+    font-feature-settings: 'ss01', 'cv11';
+}
+
+.builder-shell .mono,
+.builder-shell .result-pill,
+.builder-topbar .mono,
+.builder-topbar code {
+    font-family: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+}
+
+/* ============================================================================
+   TOPBAR
+   ============================================================================ */
+.builder-topbar {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 8px 14px;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.builder-topbar .breadcrumb {
+    font-size: 12px;
+    color: var(--ink-3);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.builder-topbar .breadcrumb a {
+    color: var(--ink-3);
+    transition: color .15s;
+}
+
+.builder-topbar .breadcrumb a:hover {
+    color: var(--accent);
+}
+
+.builder-topbar .breadcrumb .current {
+    color: var(--ink-1);
+    font-weight: 600;
+}
+
+.builder-topbar .topbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Dirty chip — F-9'da görünür */
+.dirty-chip {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10.5px;
+    color: #92400e;
+    background: rgba(245, 158, 11, 0.10);
+    border: 1px solid rgba(245, 158, 11, 0.25);
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-weight: 500;
+}
+
+/* Topbar buton stili */
+.builder-topbar button {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 30px;
+    padding: 0 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    border: 1px solid var(--line);
+    background: var(--paper);
+    color: var(--ink-1);
+    transition: all .12s;
+}
+
+.builder-topbar button:hover:not(:disabled) {
+    border-color: var(--ink-4);
+    background: var(--line-2);
+}
+
+.builder-topbar button:disabled {
+    color: var(--ink-4);
+    cursor: not-allowed;
+    opacity: .7;
+}
+
+.builder-topbar button.primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+}
+
+.builder-topbar button.primary:hover:not(:disabled) {
+    background: var(--accent-ink);
+    border-color: var(--accent-ink);
+}
+
+/* ============================================================================
+   SHELL — 3-sütun split-pane (palette / canvas / drawer)
+   ============================================================================ */
+.builder-shell {
+    background: transparent;
+    color: var(--ink-1);
+}
+
+.builder-palette,
+.builder-drawer {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    overflow-y: auto;
+    max-height: calc(100vh - 240px);
+    box-shadow: 0 1px 0 rgba(17, 24, 39, 0.02);
+}
+
+.builder-canvas {
+    background-color: var(--canvas);
+    /* Dotted grid background — Gridstack hint */
+    background-image:
+        radial-gradient(circle, rgba(17, 24, 39, 0.06) 1px, transparent 1px);
+    background-size: 24px 24px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    position: relative;
+    min-height: 560px;
+}
+
+/* ============================================================================
+   PALETTE
+   ============================================================================ */
+.builder-palette h4 {
+    color: var(--ink-3);
+}
+
+.builder-palette .section-hd {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--ink-3);
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    margin-bottom: 8px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid var(--line-2);
+}
+
+/* Palette comp-row (mevcut bileşen liste kartları) */
+.builder-palette .comp-row {
+    border-color: var(--line);
+    background: var(--paper);
+    transition: all .12s;
+}
+
+.builder-palette .comp-row:hover {
+    border-color: var(--ink-4);
+    background: #fafafa;
+    transform: translateY(-1px);
+}
+
+/* Edit modu — accent vurgu */
+.builder-palette .comp-row.editing,
+.builder-palette .comp-row[class*="border-blue-400"] {
+    border-color: var(--accent) !important;
+    background: var(--accent-soft) !important;
+    box-shadow: 0 0 0 1px var(--accent);
+}
+
+/* Type chip (KPI/Grafik/Tablo) — palette ve widget header'da ortak */
+.builder-palette .comp-row [class*="bg-blue-100"][class*="text-blue-700"] {
+    background: rgba(220, 38, 38, 0.10) !important;
+    color: var(--accent-ink) !important;
+}
+
+.builder-palette .comp-row [class*="bg-purple-100"][class*="text-purple-700"] {
+    background: var(--line-2) !important;
+    color: var(--ink-1) !important;
+}
+
+.builder-palette .comp-row [class*="bg-emerald-100"][class*="text-emerald-700"] {
+    background: rgba(16, 185, 129, 0.12) !important;
+    color: #065f46 !important;
+}
+
+/* Drag handle */
+.builder-palette .drag-handle {
+    color: var(--ink-4);
+}
+
+.builder-palette .drag-handle:hover {
+    color: var(--ink-2);
+}
+
+/* Edit/Sil butonları — accent override */
+.builder-palette .comp-row [class*="text-blue-600"] {
+    color: var(--accent) !important;
+}
+
+.builder-palette .comp-row [class*="text-blue-600"]:hover {
+    background: var(--accent-soft) !important;
+    color: var(--accent-ink) !important;
+}
+
+/* ============================================================================
+   CANVAS PLACEHOLDER (alt-3a — alt-3b'de Gridstack ile dolacak)
+   ============================================================================ */
+.builder-canvas .empty-hint {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    color: var(--ink-3);
+}
+
+.builder-canvas .empty-hint .box {
+    border: 1.5px dashed var(--ink-4);
+    border-radius: 14px;
+    padding: 28px 40px;
+    text-align: center;
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(2px);
+    max-width: 360px;
+}
+
+.builder-canvas .empty-hint .box h3 {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--ink-1);
+    margin-bottom: 6px;
+}
+
+.builder-canvas .empty-hint .box p {
+    font-size: 12px;
+    color: var(--ink-3);
+    line-height: 1.5;
+}
+
+.builder-canvas .empty-hint .box .icon {
+    font-size: 48px;
+    color: var(--ink-4);
+    margin-bottom: 12px;
+    opacity: .55;
+}
+
+/* ============================================================================
+   DRAWER
+   ============================================================================ */
+.builder-drawer .tab-strip-drawer {
+    display: flex;
+    border-bottom: 1px solid var(--line);
+    margin: -12px -12px 12px;
+    padding: 0 12px;
+}
+
+.builder-drawer .tab-strip-drawer button {
+    padding: 10px 14px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: var(--ink-3);
+    border-bottom: 2px solid transparent;
+    background: transparent;
+    transition: all .12s;
+}
+
+.builder-drawer .tab-strip-drawer button.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+}
+
+.builder-drawer .tab-strip-drawer button:disabled {
+    color: var(--ink-4);
+    cursor: not-allowed;
+}
+
+/* Edit banner — accent yerine accent-soft */
+.builder-drawer #editingBanner[class*="bg-blue-50"] {
+    background: var(--accent-soft) !important;
+    border-color: var(--accent) !important;
+}
+
+.builder-drawer #editingBanner [class*="text-blue-800"] {
+    color: var(--accent-ink) !important;
+}
+
+.builder-drawer #editingBanner [class*="text-blue-600"] {
+    color: var(--accent) !important;
+}
+
+/* Form input — focus accent */
+.builder-drawer input:focus,
+.builder-drawer select:focus,
+.builder-drawer textarea:focus {
+    outline: none;
+    border-color: var(--accent) !important;
+    box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+/* Form save butonu — accent */
+.builder-drawer button[class*="bg-blue-600"] {
+    background: var(--accent) !important;
+    border-color: var(--accent) !important;
+}
+
+.builder-drawer button[class*="bg-blue-600"]:hover {
+    background: var(--accent-ink) !important;
+    border-color: var(--accent-ink) !important;
+}
+
+/* "+ Dataset Ekle" / "+ Kolon Ekle" — accent text */
+.builder-drawer button[class*="text-blue-600"]:not([class*="bg-"]) {
+    color: var(--accent) !important;
+}
+
+.builder-drawer button[class*="text-blue-600"]:not([class*="bg-"]):hover {
+    color: var(--accent-ink) !important;
+}
+
+/* ============================================================================
+   TABS (palette içinde — Bileşenler tab strip)
+   ============================================================================ */
+.builder-palette [class*="border-b-2"][class*="border-blue-600"] {
+    border-bottom-color: var(--accent) !important;
+}
+
+.builder-palette [class*="text-blue-600"]:not(.comp-row [class*="text-blue-600"]) {
+    color: var(--accent) !important;
+}
+
+/* ============================================================================
+   CONTRACT EDITOR (palette içinde, üstte)
+   ============================================================================ */
+.builder-palette .fa-link {
+    color: var(--accent);
+}
+
+/* ============================================================================
+   JSON VIEW (footer)
+   ============================================================================ */
+#dbJsonView textarea {
+    font-family: 'JetBrains Mono', monospace;
+    background: var(--canvas);
+    border-color: var(--line);
+}
+
+/* ============================================================================
+   SCROLLBAR (subtle, mockup style)
+   ============================================================================ */
+.builder-palette::-webkit-scrollbar,
+.builder-drawer::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.builder-palette::-webkit-scrollbar-thumb,
+.builder-drawer::-webkit-scrollbar-thumb {
+    background: var(--ink-4);
+    border-radius: 8px;
+    border: 2px solid var(--paper);
+}
+
+.builder-palette::-webkit-scrollbar-track,
+.builder-drawer::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+/* ============================================================================
+   FORM PATTERN — .field / .lab / .inp / .seg (mockup v3 birebir port)
+   Bu class'lar drawer formunda (F-8) ve topbar'da kullanılır.
+   ============================================================================ */
+.builder-shell .field {
+    margin-bottom: 14px;
+}
+
+.builder-shell .lab {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--ink-3);
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    margin-bottom: 6px;
+    display: block;
+}
+
+.builder-shell .inp {
+    width: 100%;
+    height: 30px;
+    padding: 0 9px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: var(--paper);
+    font-size: 12.5px;
+    color: var(--ink-1);
+    transition: border-color .12s, box-shadow .12s;
+}
+
+.builder-shell .inp:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.builder-shell select.inp {
+    appearance: none;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'><path d='M2 4l3 3 3-3' stroke='%236b7280' stroke-width='1.3' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    padding-right: 28px;
+}
+
+/* Segmented selector — mode (Düzenle/Önizle), variant picker, density */
+.builder-shell .seg,
+.builder-topbar .seg {
+    display: inline-flex;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 2px;
+    background: var(--paper);
+    gap: 2px;
+}
+
+.builder-shell .seg button,
+.builder-topbar .seg button {
+    height: 24px;
+    padding: 0 10px;
+    border-radius: 4px;
+    font-size: 11.5px;
+    font-weight: 500;
+    color: var(--ink-2);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    transition: background .12s;
+}
+
+.builder-shell .seg button.on,
+.builder-topbar .seg button.on {
+    background: var(--accent);
+    color: #fff;
+}
+
+.builder-shell .seg button:disabled,
+.builder-topbar .seg button:disabled {
+    color: var(--ink-4);
+    cursor: not-allowed;
+}
+
+.builder-shell .seg.full,
+.builder-topbar .seg.full {
+    display: flex;
+}
+
+.builder-shell .seg.full button,
+.builder-topbar .seg.full button {
+    flex: 1;
+}
+
+/* ============================================================================
+   PALETTE CARD (alt-3b'de KPI/Grafik/Tablo ekleme kartları için)
+   ============================================================================ */
+.palette-card {
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 10px 11px;
+    background: var(--paper);
+    cursor: grab;
+    transition: all .12s;
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+}
+
+.palette-card:hover {
+    border-color: var(--ink-4);
+    background: #fafafa;
+    transform: translateY(-1px);
+}
+
+.palette-card:active {
+    cursor: grabbing;
+}
+
+.palette-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.palette-icon.kpi {
+    background: rgba(220, 38, 38, 0.10);
+    color: var(--accent-ink);
+}
+
+.palette-icon.chart {
+    background: var(--line-2);
+    color: var(--ink-1);
+}
+
+.palette-icon.table {
+    background: rgba(16, 185, 129, 0.12);
+    color: #065f46;
+}
+
+/* ============================================================================
+   BRAND MARK — topbar logo (mini "R" kare)
+   ============================================================================ */
+.brand-mark {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    display: grid;
+    place-items: center;
+    background: var(--accent);
+    color: #fff;
+    font-weight: 800;
+    font-size: 13px;
+    letter-spacing: -.04em;
+    box-shadow: inset 0 -1px 0 rgba(0, 0, 0, .15);
+    flex-shrink: 0;
+}
+
+/* ============================================================================
+   KBD HINT (kısayol göstergeleri)
+   ============================================================================ */
+.builder-shell .kbd,
+.builder-topbar .kbd {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10.5px;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-bottom-width: 2px;
+    border-radius: 4px;
+    padding: 1px 5px;
+    color: var(--ink-3);
+}
+
+/* ============================================================================
+   ICON BUTTON (canvas widget actions, drawer'da küçük butonlar)
+   ============================================================================ */
+.icon-btn {
+    width: 24px;
+    height: 24px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 5px;
+    color: var(--ink-3);
+    cursor: pointer;
+    background: none;
+    border: none;
+    transition: all .12s;
+}
+
+.icon-btn:hover {
+    background: var(--line-2);
+    color: var(--ink-1);
+}
+
+.icon-btn.danger:hover {
+    background: rgba(220, 38, 38, 0.10);
+    color: var(--danger);
+}
+
+/* ============================================================================
+   GRIDSTACK OVERRIDES (alt-3b'de aktifleşecek)
+   ============================================================================ */
+.grid-stack {
+    background:
+        radial-gradient(circle, rgba(17, 24, 39, 0.06) 1px, transparent 1px) 0 0 / 24px 24px,
+        var(--canvas);
+    min-height: 540px;
+    padding: 12px;
+    border-radius: 8px;
+}
+
+.grid-stack-item > .grid-stack-item-content {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 1px 0 rgba(17, 24, 39, 0.02);
+    inset: 4px !important;
+}
+
+.grid-stack-item.selected > .grid-stack-item-content {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 1px var(--accent), 0 4px 14px -8px rgba(220, 38, 38, .25);
+}
+
+.grid-stack > .grid-stack-placeholder > .placeholder-content {
+    background: var(--accent-soft);
+    border: 1.5px dashed var(--accent);
+    border-radius: 10px;
+    inset: 4px !important;
+}

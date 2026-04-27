@@ -3,6 +3,18 @@
     Layout = "_AppLayout";
     ViewData["Title"] = $"Düzenle: {Model.Report.Title} - BKM Rapor Paneli";
     var dataSources = Model.DataSources ?? new List<ReportPanel.Models.DataSource>();
+}
+
+@* M-11 F-7 alt-3a: Builder-only assets — Inter+JetBrains Mono font + Gridstack CDN + brand CSS *@
+@section Head {
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@@400;500;600;700&family=JetBrains+Mono:wght@@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gridstack@@10.3.1/dist/gridstack.min.css" crossorigin="anonymous"/>
+    <script defer src="https://cdn.jsdelivr.net/npm/gridstack@@10.3.1/dist/gridstack-all.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="~/assets/css/dashboard-builder.css" />
+}
+@{
     var availableRoles = Model.AvailableRoles ?? new List<ReportPanel.Models.Role>();
     var selectedRoleIds = Model.SelectedRoleIds ?? new HashSet<int>();
     var availableCategories = Model.AvailableCategories ?? new List<ReportPanel.Models.ReportCategory>();
@@ -255,20 +267,22 @@
                     </h3>
                     <textarea name="DashboardConfigJson" id="DashboardConfigJson" class="hidden">@Model.Report.DashboardConfigJson</textarea>
 
-                    @* M-11 F-7 alt-2: Builder topbar — Önizle/Geri Al butonları F-9'da, dirty chip F-9'da aktif olacak *@
-                    <div class="builder-topbar flex items-center justify-between mb-3 px-3 py-2 bg-white border border-gray-200 rounded-lg">
-                        <div class="text-xs text-gray-500">
-                            <a href="@Url.Action("Index", "Admin")" class="hover:text-blue-600">Yönetim</a>
-                            <span class="mx-1">/</span>
-                            <span class="text-gray-400">Raporlar</span>
-                            <span class="mx-1">/</span>
-                            <span class="font-semibold text-gray-800">@Model.Report.Title</span>
-                            <span class="ml-2 text-[10px] text-gray-400 uppercase tracking-wide">M-11 F-7 alt-2</span>
+                    @* M-11 F-7 alt-3a: Builder topbar — brand-mark + breadcrumb + dirty chip + Önizle/Geri Al (F-9'da aktif) *@
+                    <div class="builder-topbar">
+                        <div class="flex items-center gap-3">
+                            <div class="brand-mark">R</div>
+                            <div class="breadcrumb">
+                                <a href="@Url.Action("Index", "Admin")">Yönetim</a>
+                                <span>/</span>
+                                <span>Raporlar</span>
+                                <span>/</span>
+                                <span class="current">@Model.Report.Title</span>
+                            </div>
                         </div>
-                        <div class="flex items-center gap-2">
-                            <span id="dbDirtyChip" class="hidden text-[11px] text-amber-700 px-2 py-0.5 bg-amber-50 border border-amber-200 rounded">Kaydedilmemiş</span>
-                            <button type="button" id="dbBtnPreview" class="text-xs text-gray-400 px-3 py-1 border border-gray-200 rounded cursor-not-allowed" disabled title="F-9'da aktif olacak">Önizle</button>
-                            <button type="button" id="dbBtnUndo" class="text-xs text-gray-400 px-3 py-1 border border-gray-200 rounded cursor-not-allowed" disabled title="F-9'da aktif olacak">Geri Al</button>
+                        <div class="topbar-actions">
+                            <span id="dbDirtyChip" class="dirty-chip hidden">kaydedilmemiş</span>
+                            <button type="button" id="dbBtnPreview" disabled title="F-9'da aktif olacak">Önizle</button>
+                            <button type="button" id="dbBtnUndo" disabled title="F-9'da aktif olacak">Geri Al</button>
                         </div>
                     </div>
 

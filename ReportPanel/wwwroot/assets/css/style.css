@@ -50,6 +50,37 @@
     --transition: all 0.2s ease-in-out;
     --transition-fast: all 0.15s ease-in-out;
     --transition-slow: all 0.3s ease-in-out;
+
+    /* ========================================================================
+       MOCKUP V3 SEMANTIC TOKENS (M-11 F-7 alt-3, kullanıcı kararı: mockup
+       renkleri tüm projeye yayılacak — önceki primitive'lere alias katmanı)
+       ======================================================================== */
+
+    /* Ink scale (text/iconography) — mockup-v3 isim sistemi */
+    --ink-0: var(--brand-gray-900);  /* en koyu — KPI value, başlık */
+    --ink-1: var(--brand-gray-800);  /* primary text */
+    --ink-2: var(--brand-gray-700);  /* secondary text */
+    --ink-3: var(--brand-gray-500);  /* muted/label */
+    --ink-4: var(--brand-gray-400);  /* placeholder/disabled */
+
+    /* Surfaces */
+    --paper: var(--brand-white);     /* card/panel background */
+    --canvas: var(--brand-gray-50);  /* page/canvas background */
+    --chip: var(--brand-gray-100);   /* tag/chip background */
+
+    /* Lines */
+    --line: var(--brand-gray-200);   /* default border */
+    --line-2: var(--brand-gray-100); /* subtle border */
+
+    /* Accent (BKM kırmızı + state) */
+    --accent: var(--brand-red);                     /* #dc2626 */
+    --accent-soft: rgba(220, 38, 38, 0.12);         /* selection/drop zone */
+    --accent-ink: var(--brand-red-darker);          /* #991b1b hover */
+
+    /* Status (mockup adlandırması) */
+    --ok: var(--success);             /* #10b981 */
+    --warn: var(--warning);           /* #f59e0b */
+    --danger: var(--brand-red-dark);  /* #b91c1c */
 }
 
 /* ============================================================================
