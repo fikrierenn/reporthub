@@ -1,0 +1,208 @@
+@model ReportPanel.ViewModels.LogsViewModel
+@{
+    Layout = "_AppLayout";
+    ViewData["Title"] = "Loglar - BKM Rapor Paneli";
+    ViewData["PageTitle"] = "Loglar";
+
+    string AvatarInitials(string? name)
+    {
+        if (string.IsNullOrWhiteSpace(name)) return "?";
+        var parts = name.Trim().Split(new[] { ' ', '.', '_' }, StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length >= 2) return $"{parts[0][0]}{parts[1][0]}".ToUpperInvariant();
+        return name.Substring(0, Math.Min(2, name.Length)).ToUpperInvariant();
+    }
+
+    string TimeAgo(DateTime dt)
+    {
+        var diff = DateTime.UtcNow - (dt.Kind == DateTimeKind.Utc ? dt : dt.ToUniversalTime());
+        if (diff.TotalSeconds < 60) return "şimdi";
+        if (diff.TotalMinutes < 60) return $"{(int)diff.TotalMinutes} dk";
+        if (diff.TotalHours < 24) return $"{(int)diff.TotalHours} sa";
+        if (diff.TotalDays < 7) return $"{(int)diff.TotalDays} gün";
+        return dt.ToString("dd.MM.yyyy");
+    }
+
+    bool hasFilter = !string.IsNullOrWhiteSpace(Model.LogSearch)
+                  || !string.IsNullOrWhiteSpace(Model.SelectedEventType)
+                  || !string.IsNullOrWhiteSpace(Model.SelectedUser)
+                  || !string.IsNullOrWhiteSpace(Model.SelectedTargetType)
+                  || !string.IsNullOrWhiteSpace(Model.SelectedSuccess)
+                  || !string.IsNullOrWhiteSpace(Model.LogStart)
+                  || !string.IsNullOrWhiteSpace(Model.LogEnd);
+}
+
+@* Breadcrumb default: _AppLayout ViewData["PageTitle"]'dan otomatik *@
+
+@* ============ HERO ============ *@
+<div class="hero">
+    <h1>Geçmiş / Loglar</h1>
+    <div class="sub">
+        <span class="mono">@Model.TotalCount kayıt</span>
+        @if (Model.TotalPages > 1)
+        {
+            <span class="pill mono">Sayfa @Model.Page / @Model.TotalPages</span>
+        }
+        <span class="pill"><i class="fas fa-shield-halved" style="font-size:10px; color:var(--ink-3);"></i> @(Model.IsAdmin ? "Tüm kullanıcılar" : "Sadece sen")</span>
+    </div>
+</div>
+
+@* ============ FİLTRE BAR ============ *@
+<form method="get" action="/Logs" style="background:var(--paper); border:1px solid var(--line); border-radius:10px; padding:14px 16px; margin-bottom:18px; display:grid; grid-template-columns: repeat(7, 1fr); gap:10px; align-items:end;">
+    <div style="grid-column: span 2;">
+        <label class="lab" for="logSearch">Ara</label>
+        <input id="logSearch" name="logSearch" type="text" value="@Model.LogSearch" class="inp"
+               placeholder="Kullanıcı, rapor, durum..." />
+    </div>
+    <div>
+        <label class="lab" for="eventType">Olay</label>
+        <select id="eventType" name="eventType" class="inp">
+            <option value="">Hepsi</option>
+            @foreach (var type in Model.EventTypes)
+            {
+                <option value="@type" selected="@(type == Model.SelectedEventType)">@type</option>
+            }
+        </select>
+    </div>
+    <div>
+        <label class="lab" for="logUser">Kullanıcı</label>
+        <select id="logUser" name="logUser" class="inp">
+            <option value="">Hepsi</option>
+            @foreach (var user in Model.Usernames)
+            {
+                <option value="@user" selected="@(user == Model.SelectedUser)">@user</option>
+            }
+        </select>
+    </div>
+    <div>
+        <label class="lab" for="targetType">Hedef</label>
+        <select id="targetType" name="targetType" class="inp">
+            <option value="">Hepsi</option>
+            @foreach (var type in Model.TargetTypes)
+            {
+                <option value="@type" selected="@(type == Model.SelectedTargetType)">@type</option>
+            }
+        </select>
+    </div>
+    <div>
+        <label class="lab" for="success">Durum</label>
+        <select id="success" name="success" class="inp">
+            <option value="">Hepsi</option>
+            <option value="true" selected="@(Model.SelectedSuccess == "true")">Başarılı</option>
+            <option value="false" selected="@(Model.SelectedSuccess == "false")">Hatalı</option>
+        </select>
+    </div>
+    <div>
+        <label class="lab" for="logDateStart">Başlangıç</label>
+        <input id="logDateStart" name="logStart" type="date" value="@Model.LogStart" class="inp" />
+    </div>
+    <div style="grid-column: span 7; display:flex; gap:6px; align-items:end;">
+        <div style="flex:1; max-width:200px;">
+            <label class="lab" for="logDateEnd">Bitiş</label>
+            <input id="logDateEnd" name="logEnd" type="date" value="@Model.LogEnd" class="inp" />
+        </div>
+        <button type="submit" class="btn primary">
+            <i class="fas fa-filter text-[10px]"></i>
+            Filtrele
+        </button>
+        @if (hasFilter)
+        {
+            <a href="/Logs" class="btn ghost">
+                <i class="fas fa-xmark text-[10px]"></i>
+                Temizle
+            </a>
+        }
+    </div>
+</form>
+
+@* ============ AKTİVİTE TABLOSU (.activity .dt) ============ *@
+@if (!Model.Logs.Any())
+{
+    <div style="background:var(--paper); border:1px dashed var(--line); border-radius:10px; padding:48px 24px; text-align:center; color:var(--ink-3);">
+        <i class="fas fa-history" style="font-size:48px; opacity:.4; margin-bottom:12px;"></i>
+        <h3 style="font-size:14px; font-weight:600; color:var(--ink-1); margin:0 0 4px;">Log bulunamadı</h3>
+        <p style="margin:0; font-size:12.5px;">@(hasFilter ? "Filtre kriterlerini değiştirin." : "Sistemde henüz aktivite kaydı yok.")</p>
+    </div>
+}
+else
+{
+    <div class="activity">
+        <table class="dt">
+            <thead>
+                <tr>
+                    <th style="width:18%;">Kullanıcı</th>
+                    <th>Olay</th>
+                    <th>Hedef</th>
+                    <th class="num">Detay</th>
+                    <th>Durum</th>
+                    <th class="num">Tarih</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var log in Model.Logs)
+                {
+                    var statusClass = log.IsSuccess ? "ok" : "err";
+                    var statusText = log.IsSuccess ? "başarılı" : "hatalı";
+                    var detail = !string.IsNullOrWhiteSpace(log.Description)
+                        ? log.Description
+                        : (log.ResultRowCount.HasValue ? $"{log.ResultRowCount.Value:N0} kayıt" : "—");
+                    var targetDisplay = string.IsNullOrWhiteSpace(log.TargetType)
+                        ? "—"
+                        : (string.IsNullOrWhiteSpace(log.TargetKey) ? log.TargetType : $"{log.TargetType} / {log.TargetKey}");
+                    <tr>
+                        <td>
+                            <div class="who">
+                                <div class="av">@AvatarInitials(log.Username)</div>
+                                <span>@(log.Username ?? "?")</span>
+                            </div>
+                        </td>
+                        <td><span class="mono" style="font-size:11.5px;">@log.EventType</span></td>
+                        <td>@targetDisplay</td>
+                        <td class="num">@detail</td>
+                        <td><span class="status @statusClass">@statusText</span></td>
+                        <td class="num">
+                            <span class="ago" title="@log.CreatedAt.ToString("dd.MM.yyyy HH:mm:ss")">@TimeAgo(log.CreatedAt)</span>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@if (Model.TotalPages > 1)
+{
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-top:18px;">
+        <div class="mono" style="font-size:11.5px; color:var(--ink-3);">
+            Sayfa @Model.Page / @Model.TotalPages · toplam @Model.TotalCount kayıt
+        </div>
+        <div style="display:flex; gap:6px;">
+            @if (Model.Page > 1)
+            {
+                <a class="btn"
+                   href="@Url.Action("Index", new { logSearch = Model.LogSearch, logStart = Model.LogStart, logEnd = Model.LogEnd, eventType = Model.SelectedEventType, logUser = Model.SelectedUser, targetType = Model.SelectedTargetType, success = Model.SelectedSuccess, page = Model.Page - 1 })">
+                    <i class="fas fa-chevron-left text-[10px]"></i>
+                    Önceki
+                </a>
+            }
+            @if (Model.Page < Model.TotalPages)
+            {
+                <a class="btn"
+                   href="@Url.Action("Index", new { logSearch = Model.LogSearch, logStart = Model.LogStart, logEnd = Model.LogEnd, eventType = Model.SelectedEventType, logUser = Model.SelectedUser, targetType = Model.SelectedTargetType, success = Model.SelectedSuccess, page = Model.Page + 1 })">
+                    Sonraki
+                    <i class="fas fa-chevron-right text-[10px]"></i>
+                </a>
+            }
+        </div>
+    </div>
+}
+
+<div class="footer-hint">
+    <span class="kbd">⌘K</span> hızlı arama
+    <span style="margin:0 8px;">·</span>
+    <span class="mono">@Model.TotalCount kayıt</span>
+    @if (hasFilter)
+    {
+        <span style="margin:0 8px;">·</span>
+        <span class="mono">filtrelendi</span>
+    }
+</div>

@@ -10,13 +10,7 @@
     var favCount = Model.FavoriteReportIds.Count;
 }
 
-@section Breadcrumb {
-    <div class="crumbs">
-        <a href="/Dashboard">BKM Kitap</a>
-        <span class="sep">/</span>
-        <span class="current">Raporlar</span>
-    </div>
-}
+@* Breadcrumb default: _AppLayout ViewData["PageTitle"] = "Raporlar"'dan otomatik üretir *@
 
 @section TopActions {
     @if (isAdmin)
