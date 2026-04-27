@@ -1,0 +1,573 @@
+/* app-shell.css — M-13 Plan 03 Faz A (sidebar shell layout)
+ *
+ * Kaynak: ReportPanel/wwwroot/mockups/app-shell-v1.html
+ * Tokens: style.css içinde tanımlı (--ink-*, --accent, --paper, --canvas, --line, --chip)
+ *
+ * Bu dosya _AppLayout.cshtml'de yüklenir, TÜM sayfalarda aktif.
+ * Builder-only stiller dashboard-builder.css'te kalır (Plan 03 Faz D'de pattern'ler bu dosyaya devir).
+ */
+
+/* ============================================================================
+   APP SHELL — Sidebar (240px collapse 60px) + Main (topbar 56px + content scroll)
+   ============================================================================ */
+:root {
+    --sidebar-w: 240px;
+    --sidebar-w-collapsed: 60px;
+    --topbar-h: 56px;
+}
+
+html, body {
+    margin: 0;
+    height: 100%;
+    -webkit-font-smoothing: antialiased;
+}
+
+body {
+    background: var(--canvas);
+    color: var(--ink-1);
+    font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+    font-feature-settings: 'ss01', 'cv11';
+}
+
+.mono {
+    font-family: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+}
+
+.app-shell {
+    display: grid;
+    grid-template-columns: var(--sidebar-w) 1fr;
+    height: 100vh;
+    overflow: hidden;
+    transition: grid-template-columns .18s ease;
+}
+
+.app-shell.collapsed {
+    grid-template-columns: var(--sidebar-w-collapsed) 1fr;
+}
+
+/* Mobile: sidebar overlay drawer */
+@media (max-width: 1023px) {
+    .app-shell {
+        grid-template-columns: 1fr;
+    }
+    .sidebar {
+        position: fixed;
+        top: 0; left: 0; bottom: 0;
+        width: var(--sidebar-w);
+        z-index: 50;
+        transform: translateX(-100%);
+        transition: transform .2s ease;
+        box-shadow: 0 0 40px -10px rgba(0, 0, 0, 0.2);
+    }
+    .app-shell.mobile-open .sidebar {
+        transform: translateX(0);
+    }
+    .app-shell.mobile-open::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        background: rgba(17, 24, 39, 0.4);
+        z-index: 45;
+        backdrop-filter: blur(2px);
+    }
+    .topbar .mobile-menu {
+        display: inline-flex !important;
+    }
+}
+
+/* ============================================================================
+   SIDEBAR
+   ============================================================================ */
+.sidebar {
+    background: var(--paper);
+    border-right: 1px solid var(--line);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+}
+
+.side-head {
+    height: var(--topbar-h);
+    border-bottom: 1px solid var(--line);
+    display: flex;
+    align-items: center;
+    padding: 0 14px;
+    gap: 10px;
+    flex-shrink: 0;
+}
+
+.brand-mark {
+    width: 30px;
+    height: 30px;
+    border-radius: 7px;
+    display: grid;
+    place-items: center;
+    background: var(--accent);
+    color: #fff;
+    font-weight: 800;
+    font-size: 14px;
+    letter-spacing: -.04em;
+    box-shadow: inset 0 -1px 0 rgba(0, 0, 0, .18);
+    flex-shrink: 0;
+    text-decoration: none;
+}
+
+.brand-name {
+    line-height: 1.05;
+}
+
+.brand-name .t {
+    font-size: 13.5px;
+    font-weight: 700;
+    letter-spacing: -.01em;
+    color: var(--ink-1);
+}
+
+.brand-name .s {
+    font-size: 10.5px;
+    color: var(--ink-4);
+    font-family: 'JetBrains Mono', monospace;
+    margin-top: 2px;
+    display: block;
+}
+
+.collapsed .brand-name {
+    display: none;
+}
+
+.side-collapse {
+    margin-left: auto;
+    width: 24px;
+    height: 24px;
+    border-radius: 5px;
+    display: grid;
+    place-items: center;
+    color: var(--ink-3);
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    transition: background .12s, color .12s;
+}
+
+.side-collapse:hover {
+    background: var(--line-2);
+    color: var(--ink-1);
+}
+
+.collapsed .side-collapse svg {
+    transform: rotate(180deg);
+}
+
+.side-collapse svg {
+    transition: transform .18s ease;
+}
+
+/* Section label */
+.side-section {
+    padding: 14px 18px 6px;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: .10em;
+    text-transform: uppercase;
+    color: var(--ink-4);
+}
+
+.collapsed .side-section {
+    font-size: 0;
+    padding: 14px 0 4px;
+    height: 14px;
+}
+
+.collapsed .side-section::after {
+    content: "";
+    display: block;
+    height: 1px;
+    width: 24px;
+    margin: 0 auto;
+    background: var(--line);
+}
+
+/* Nav item */
+.nav-list {
+    list-style: none;
+    padding: 0 8px;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+
+.nav-list a {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    border-radius: 7px;
+    color: var(--ink-2);
+    font-size: 13px;
+    font-weight: 500;
+    text-decoration: none;
+    transition: background .12s, color .12s;
+    position: relative;
+}
+
+.nav-list a:hover {
+    background: var(--line-2);
+    color: var(--ink-1);
+}
+
+.nav-list a.active {
+    background: var(--accent-soft);
+    color: var(--accent-ink);
+    font-weight: 600;
+}
+
+.nav-list a.active::before {
+    content: "";
+    position: absolute;
+    left: -8px;
+    top: 6px;
+    bottom: 6px;
+    width: 3px;
+    background: var(--accent);
+    border-radius: 0 3px 3px 0;
+}
+
+.nav-list a .icon {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.nav-list a .label {
+    flex: 1;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.nav-list a .badge {
+    margin-left: auto;
+    font-size: 10.5px;
+    font-weight: 600;
+    padding: 1px 6px;
+    border-radius: 999px;
+    background: var(--chip);
+    color: var(--ink-3);
+}
+
+.nav-list a.active .badge {
+    background: var(--accent);
+    color: #fff;
+}
+
+.collapsed .nav-list a {
+    justify-content: center;
+    padding: 8px 0;
+}
+
+.collapsed .nav-list a .label,
+.collapsed .nav-list a .badge {
+    display: none;
+}
+
+.collapsed .nav-list a.active::before {
+    left: 0;
+}
+
+/* Body scroll area */
+.side-body {
+    flex: 1;
+    overflow-y: auto;
+    padding-bottom: 8px;
+}
+
+.side-body::-webkit-scrollbar {
+    width: 6px;
+}
+
+.side-body::-webkit-scrollbar-thumb {
+    background: var(--line);
+    border-radius: 3px;
+}
+
+.side-body::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+/* Sidebar footer (user) */
+.side-foot {
+    border-top: 1px solid var(--line);
+    padding: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+}
+
+.avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent) 0%, var(--accent-ink) 100%);
+    color: #fff;
+    display: grid;
+    place-items: center;
+    font-size: 12px;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.user-info {
+    flex: 1;
+    min-width: 0;
+    line-height: 1.2;
+}
+
+.user-info .n {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--ink-1);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.user-info .r {
+    font-size: 10.5px;
+    color: var(--ink-4);
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.user-actions {
+    display: flex;
+    gap: 2px;
+}
+
+.user-actions a,
+.user-actions button {
+    width: 26px;
+    height: 26px;
+    border-radius: 5px;
+    border: none;
+    background: transparent;
+    color: var(--ink-3);
+    cursor: pointer;
+    display: grid;
+    place-items: center;
+    text-decoration: none;
+    transition: background .12s, color .12s;
+}
+
+.user-actions a:hover,
+.user-actions button:hover {
+    background: var(--line-2);
+    color: var(--ink-1);
+}
+
+.user-actions .danger:hover {
+    background: rgba(220, 38, 38, 0.10);
+    color: var(--danger);
+}
+
+.collapsed .user-info,
+.collapsed .user-actions {
+    display: none;
+}
+
+.collapsed .side-foot {
+    justify-content: center;
+    padding: 10px 0;
+}
+
+/* ============================================================================
+   MAIN: Topbar + Content
+   ============================================================================ */
+.main {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.topbar {
+    height: var(--topbar-h);
+    border-bottom: 1px solid var(--line);
+    background: var(--paper);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 0 24px;
+    flex-shrink: 0;
+}
+
+.topbar .mobile-menu {
+    display: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    border: none;
+    background: transparent;
+    color: var(--ink-2);
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.topbar .mobile-menu:hover {
+    background: var(--line-2);
+}
+
+/* Breadcrumb */
+.crumbs {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: var(--ink-3);
+    white-space: nowrap;
+    min-width: 0;
+}
+
+.crumbs a {
+    color: var(--ink-3);
+    text-decoration: none;
+    transition: color .12s;
+}
+
+.crumbs a:hover {
+    color: var(--accent);
+}
+
+.crumbs .sep {
+    color: var(--ink-4);
+}
+
+.crumbs .current {
+    color: var(--ink-1);
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Search */
+.topbar .search {
+    margin-left: 24px;
+    flex: 1;
+    max-width: 380px;
+    position: relative;
+}
+
+.topbar .search input {
+    width: 100%;
+    height: 34px;
+    padding: 0 12px 0 34px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--canvas);
+    font-size: 13px;
+    color: var(--ink-1);
+    transition: border-color .12s, box-shadow .12s, background .12s;
+    font-family: inherit;
+}
+
+.topbar .search input:focus {
+    outline: none;
+    background: var(--paper);
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.topbar .search input::placeholder {
+    color: var(--ink-4);
+}
+
+.topbar .search .ico {
+    position: absolute;
+    left: 11px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--ink-4);
+    pointer-events: none;
+}
+
+.topbar .search .kbd {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10.5px;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-bottom-width: 2px;
+    border-radius: 4px;
+    padding: 1px 5px;
+    color: var(--ink-3);
+    pointer-events: none;
+}
+
+/* Top actions (sağ) */
+.top-actions {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.icon-btn {
+    width: 34px;
+    height: 34px;
+    border-radius: 7px;
+    border: none;
+    background: transparent;
+    color: var(--ink-3);
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    transition: background .12s, color .12s;
+    position: relative;
+    text-decoration: none;
+}
+
+.icon-btn:hover {
+    background: var(--line-2);
+    color: var(--ink-1);
+}
+
+.icon-btn .dot {
+    position: absolute;
+    top: 7px;
+    right: 7px;
+    width: 7px;
+    height: 7px;
+    background: var(--accent);
+    border-radius: 50%;
+    border: 2px solid var(--paper);
+}
+
+/* Content area */
+.content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 28px 32px 40px;
+}
+
+.content::-webkit-scrollbar {
+    width: 10px;
+}
+
+.content::-webkit-scrollbar-thumb {
+    background: #d1d5db;
+    border-radius: 10px;
+    border: 2px solid var(--canvas);
+}
+
+.content::-webkit-scrollbar-track {
+    background: transparent;
+}

@@ -1,137 +1,291 @@
 @model ReportPanel.ViewModels.DashboardViewModel
+@using System.Globalization
 @{
     Layout = "_AppLayout";
-    ViewData["Title"] = "Dashboard - BKM Rapor Paneli";
+    ViewData["Title"] = "Genel Bakış - BKM Rapor Paneli";
+    ViewData["PageTitle"] = "Genel Bakış";
+
+    var trCulture = new CultureInfo("tr-TR");
+    var now = DateTime.Now;
+    var todayStr = now.ToString("d MMMM yyyy, dddd", trCulture);
+    var firstName = !string.IsNullOrWhiteSpace(Model.FullName)
+        ? Model.FullName.Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? Model.User
+        : Model.User;
+
+    string GreetingByHour()
+    {
+        var h = DateTime.Now.Hour;
+        if (h < 6) return "İyi geceler";
+        if (h < 12) return "Günaydın";
+        if (h < 18) return "İyi günler";
+        return "İyi akşamlar";
+    }
+
+    string TimeAgo(DateTime dt)
+    {
+        var diff = DateTime.UtcNow - (dt.Kind == DateTimeKind.Utc ? dt : dt.ToUniversalTime());
+        if (diff.TotalSeconds < 60) return "şimdi";
+        if (diff.TotalMinutes < 60) return $"{(int)diff.TotalMinutes} dk önce";
+        if (diff.TotalHours < 24) return $"{(int)diff.TotalHours} sa önce";
+        if (diff.TotalDays < 7) return $"{(int)diff.TotalDays} gün önce";
+        return dt.ToString("dd.MM.yyyy", trCulture);
+    }
+
+    string AvatarInitials(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name)) return "?";
+        var parts = name.Trim().Split(new[] { ' ', '.', '_' }, StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length >= 2) return $"{parts[0][0]}{parts[1][0]}".ToUpperInvariant();
+        return name.Substring(0, Math.Min(2, name.Length)).ToUpperInvariant();
+    }
+
+    string ReportTypeChip(ReportPanel.Models.ReportCatalog r)
+    {
+        // Heuristik: dashboard widget sayısına göre tür ataması (M-13 P1'de gerçek metadata)
+        return "type-dash";
+    }
+
+    int maxRun = Model.TopRunReports.Count > 0 ? Model.TopRunReports.Max(t => t.Count) : 1;
 }
 
-<div class="mb-8">
-    <h1 class="text-3xl font-bold text-gray-900 mb-2">
-        Hoş geldin, @Model.User!
-    </h1>
-    <p class="text-gray-600">
-        Rolleriniz: @string.Join(", ", Model.UserRoles)
-    </p>
-</div>
-
-<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-    <div class="card-brand">
-        <div class="card-body-brand">
-            <div class="flex items-center">
-                <div class="w-12 h-12 bg-brand rounded-lg flex items-center justify-center">
-                    <i class="fas fa-file-alt text-white text-xl"></i>
-                </div>
-                <div class="ml-4">
-                    <p class="text-sm text-gray-600">Erişilebilir Rapor</p>
-                    <p class="text-2xl font-bold text-gray-900">@Model.ReportCount</p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="card-brand">
-        <div class="card-body-brand">
-            <div class="flex items-center">
-                <div class="w-12 h-12 bg-green-500 rounded-lg flex items-center justify-center">
-                    <i class="fas fa-play text-white text-xl"></i>
-                </div>
-                <div class="ml-4">
-                    <p class="text-sm text-gray-600">Bu Ay Çalıştırılan</p>
-                    <p class="text-2xl font-bold text-gray-900">@Model.MonthlyRunCount</p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="card-brand">
-        <div class="card-body-brand">
-            <div class="flex items-center">
-                <div class="w-12 h-12 bg-blue-500 rounded-lg flex items-center justify-center">
-                    <i class="fas fa-clock text-white text-xl"></i>
-                </div>
-                <div class="ml-4">
-                    <p class="text-sm text-gray-600">Son Çalıştırma</p>
-                    <p class="text-2xl font-bold text-gray-900">
-                        @(Model.LastRunAt.HasValue ? Model.LastRunAt.Value.ToString("dd.MM.yyyy HH:mm") : "Yok")
-                    </p>
-                </div>
-            </div>
-        </div>
+<div class="hero">
+    <h1>@GreetingByHour(), @firstName 👋</h1>
+    <div class="sub">
+        <span class="mono">@todayStr</span>
+        <span class="pill"><span class="dot"></span>@Model.SystemStatus</span>
+        <span class="pill mono">@Model.DataSourceStatus</span>
     </div>
 </div>
 
-<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-    <div class="card-brand">
-        <div class="card-header-brand">
-            <h2 class="text-lg font-semibold text-gray-900">Son Raporlar</h2>
+@* ============ KPI GRID 4 KART ============ *@
+<div class="kpi-grid">
+    <div class="kpi-card k-red">
+        <div class="head">
+            <span class="label">Erişilebilir Rapor</span>
+            <div class="ico"><i class="fas fa-chart-column"></i></div>
         </div>
-        <div class="card-body-brand">
-            @if (!Model.RecentReports.Any())
-            {
-                <div class="text-center py-8 text-gray-500">
-                    <i class="fas fa-folder-open text-3xl mb-3"></i>
-                    <p>Erişilebilir rapor yok</p>
-                </div>
-            }
-            else
-            {
-                <div class="space-y-3">
-                    @foreach (var report in Model.RecentReports)
-                    {
-                        <a href="/Reports/Run?reportId=@report.ReportId"
-                           class="flex items-center p-3 rounded-lg hover:bg-gray-50 transition-brand">
-                            <i class="fas fa-file-alt text-brand mr-3"></i>
-                            <div class="flex-1">
-                                <p class="font-medium text-gray-900">@report.Title</p>
-                                <p class="text-sm text-gray-500">@(report.DataSource?.Title ?? report.DataSourceKey)</p>
-                            </div>
-                            <i class="fas fa-chevron-right text-gray-400"></i>
-                        </a>
-                    }
-                </div>
-
-                <div class="mt-4 pt-4 border-t border-gray-200">
-                    <a href="/Reports" class="btn-brand-outline w-full text-center py-2 rounded-lg">
-                        <i class="fas fa-list mr-2"></i>
-                        Tüm Raporları Gör
-                    </a>
-                </div>
-            }
+        <div class="value">@Model.ReportCount.ToString("N0", trCulture)</div>
+        <div class="delta up">
+            <i class="fas fa-arrow-up text-[10px]"></i>
+            <span>aktif</span>
+            <span class="desc">rol filtresine göre</span>
         </div>
     </div>
 
-    <div class="card-brand">
-        <div class="card-header-brand">
-            <h2 class="text-lg font-semibold text-gray-900">Son Aktiviteler</h2>
+    <div class="kpi-card k-ink">
+        <div class="head">
+            <span class="label">Bugün Çalıştırılan</span>
+            <div class="ico"><i class="fas fa-play"></i></div>
         </div>
-        <div class="card-body-brand">
-            @if (!Model.RecentLogs.Any())
+        <div class="value">@Model.TodayRunCount.ToString("N0", trCulture)</div>
+        <div class="delta">
+            <span class="desc">tüm kullanıcılar</span>
+        </div>
+    </div>
+
+    <div class="kpi-card k-green">
+        <div class="head">
+            <span class="label">Aktif Kullanıcı</span>
+            <div class="ico"><i class="fas fa-users"></i></div>
+        </div>
+        <div class="value">@Model.ActiveUserCount.ToString("N0", trCulture)</div>
+        <div class="delta">
+            <span class="desc">son 1 saat</span>
+        </div>
+    </div>
+
+    <div class="kpi-card k-warn">
+        <div class="head">
+            <span class="label">Bu Ay (Sen)</span>
+            <div class="ico"><i class="fas fa-clock"></i></div>
+        </div>
+        <div class="value">@Model.MonthlyRunCount.ToString("N0", trCulture)</div>
+        <div class="delta">
+            @if (Model.LastRunAt.HasValue)
             {
-                <div class="text-center py-8 text-gray-500">
-                    <i class="fas fa-history text-3xl mb-3"></i>
-                    <p>Henüz aktivite yok</p>
-                </div>
+                <span class="desc">son: @TimeAgo(Model.LastRunAt.Value)</span>
             }
             else
             {
-                <div class="space-y-4">
-                    @foreach (var log in Model.RecentLogs)
-                    {
-                        <div class="flex items-start">
-                            <div class="w-8 h-8 @(log.IsSuccess ? "bg-green-100" : "bg-red-100") rounded-full flex items-center justify-center mr-3">
-                                <i class="fas @(log.IsSuccess ? "fa-check text-green-600" : "fa-times text-red-600") text-sm"></i>
-                            </div>
-                            <div class="flex-1">
-                                <p class="text-sm font-medium text-gray-900">
-                                    @(string.IsNullOrWhiteSpace(log.Description) ? "Rapor Calistirma" : log.Description)
-                                </p>
-                                <p class="text-xs text-gray-500">
-                                    @log.CreatedAt.ToString("dd.MM.yyyy HH:mm") - Kayit: @(log.ResultRowCount?.ToString("N0") ?? "0")
-                                </p>
-                            </div>
+                <span class="desc">henüz çalıştırılmadı</span>
+            }
+        </div>
+    </div>
+</div>
+
+@* ============ BUGÜNÜN ÖZETİ — saatlik trend + en çok çalıştırılan ============ *@
+<div class="section-title">
+    <h2>Bugünün Özeti</h2>
+    <a href="/Logs" class="more">Detaylı analiz <i class="fas fa-chevron-right text-[10px]"></i></a>
+</div>
+
+<div class="grid-2">
+
+    <div class="mini-chart">
+        <div class="head">
+            <div>
+                <h3>Saatlik Çalıştırma Trendi</h3>
+                <div style="font-size:12px; color:var(--ink-3); margin-top:2px;">Son 24 saat · tüm raporlar</div>
+            </div>
+            <div style="text-align:right;">
+                <div style="font-size:22px; font-weight:700; color:var(--ink-0); line-height:1; letter-spacing:-.02em; font-variant-numeric:tabular-nums;">@Model.TodayRunCount</div>
+                <div style="font-size:11.5px; color:var(--ok); font-weight:600;">bugün toplam</div>
+            </div>
+        </div>
+        @* Placeholder SVG (M-13 P1+ gerçek hourly aggregation eklenecek) *@
+        <svg width="100%" height="140" viewBox="0 0 480 140" preserveAspectRatio="none">
+            <defs>
+                <linearGradient id="dashAreaGrad" x1="0" x2="0" y1="0" y2="1">
+                    <stop offset="0%" stop-color="#dc2626" stop-opacity=".22"/>
+                    <stop offset="100%" stop-color="#dc2626" stop-opacity="0"/>
+                </linearGradient>
+            </defs>
+            <line x1="0" y1="35" x2="480" y2="35" stroke="#f3f4f6"/>
+            <line x1="0" y1="70" x2="480" y2="70" stroke="#f3f4f6"/>
+            <line x1="0" y1="105" x2="480" y2="105" stroke="#f3f4f6"/>
+            <path d="M0,110 L40,90 L80,75 L120,82 L160,55 L200,45 L240,52 L280,30 L320,38 L360,25 L400,32 L440,18 L480,28 L480,140 L0,140 Z" fill="url(#dashAreaGrad)"/>
+            <path d="M0,110 L40,90 L80,75 L120,82 L160,55 L200,45 L240,52 L280,30 L320,38 L360,25 L400,32 L440,18 L480,28" fill="none" stroke="#dc2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="280" cy="30" r="3.5" fill="#dc2626"/>
+            <circle cx="440" cy="18" r="3.5" fill="#dc2626"/>
+            <text x="0" y="135" font-family="JetBrains Mono" font-size="9.5" fill="#9ca3af">00:00</text>
+            <text x="120" y="135" font-family="JetBrains Mono" font-size="9.5" fill="#9ca3af">06:00</text>
+            <text x="240" y="135" font-family="JetBrains Mono" font-size="9.5" fill="#9ca3af">12:00</text>
+            <text x="360" y="135" font-family="JetBrains Mono" font-size="9.5" fill="#9ca3af">18:00</text>
+            <text x="448" y="135" font-family="JetBrains Mono" font-size="9.5" fill="#9ca3af">şimdi</text>
+        </svg>
+    </div>
+
+    <div class="mini-chart">
+        <div class="head">
+            <h3>En Çok Çalıştırılan</h3>
+        </div>
+        @if (!Model.TopRunReports.Any())
+        {
+            <div style="font-size:12px; color:var(--ink-4); padding: 16px 0; text-align: center;">
+                <i class="fas fa-chart-line opacity-40 text-2xl mb-2 block"></i>
+                Son 30 günde çalıştırma yok
+            </div>
+        }
+        else
+        {
+            <ul style="list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:10px;">
+                @for (int i = 0; i < Model.TopRunReports.Count; i++)
+                {
+                    var item = Model.TopRunReports[i];
+                    var pct = (int)Math.Round((double)item.Count / maxRun * 100);
+                    <li style="display:flex; align-items:center; gap:10px;">
+                        <span class="mono" style="font-size:10.5px; color:var(--ink-4); width:22px;">#@(i + 1)</span>
+                        <span style="flex:1; min-width:0; font-size:12.5px; color:var(--ink-1); font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">@item.Title</span>
+                        <span class="mono" style="font-size:11px; color:var(--ink-3);">@item.Count</span>
+                        <div style="width:60px; height:6px; background:var(--line-2); border-radius:3px; overflow:hidden;">
+                            <div style="width:@pct%; height:100%; background:var(--accent);"></div>
                         </div>
-                    }
-                </div>
-            }
-        </div>
+                    </li>
+                }
+            </ul>
+        }
     </div>
+
+</div>
+
+@* ============ FAVORİLERİM (qcard grid) ============ *@
+<div class="section-title">
+    <h2>Hızlı Erişim</h2>
+    <a href="/Reports" class="more">Tüm raporları gör <i class="fas fa-chevron-right text-[10px]"></i></a>
+</div>
+
+@if (!Model.FavoriteReports.Any())
+{
+    <div style="background:var(--paper); border:1px dashed var(--line); border-radius:10px; padding: 32px; text-align: center; color: var(--ink-3);">
+        <i class="fas fa-folder-open text-4xl mb-3 opacity-40"></i>
+        <p style="margin:0; font-size:13px;">Henüz erişilebilir rapor yok. Yöneticinizden rol veya rapor erişimi isteyin.</p>
+    </div>
+}
+else
+{
+    <div class="quick-grid">
+        @foreach (var report in Model.FavoriteReports)
+        {
+            <a href="/Reports/Run?reportId=@report.ReportId" class="qcard">
+                <div class="row1">
+                    <span class="type-chip @ReportTypeChip(report)">Dashboard</span>
+                    <span class="mono" style="font-size:10.5px; color:var(--ink-4); margin-left:auto;">#@report.ReportId</span>
+                </div>
+                <h3>@report.Title</h3>
+                <div class="sub">@(string.IsNullOrWhiteSpace(report.Description) ? (report.DataSource?.Title ?? report.DataSourceKey) : report.Description)</div>
+                <div class="meta">
+                    <span class="ago">@(report.DataSource?.Title ?? report.DataSourceKey)</span>
+                    <span class="run">Aç <i class="fas fa-arrow-right text-[10px]"></i></span>
+                </div>
+            </a>
+        }
+    </div>
+}
+
+@* ============ SON AKTİVİTE (.activity .dt) ============ *@
+<div class="section-title">
+    <h2>Son Aktivite</h2>
+    <a href="/Logs" class="more">Tüm log <i class="fas fa-chevron-right text-[10px]"></i></a>
+</div>
+
+@if (!Model.RecentLogs.Any())
+{
+    <div style="background:var(--paper); border:1px solid var(--line); border-radius:10px; padding: 32px; text-align: center; color: var(--ink-3);">
+        <i class="fas fa-history text-4xl mb-3 opacity-40"></i>
+        <p style="margin:0; font-size:13px;">Henüz aktivite kaydı yok.</p>
+    </div>
+}
+else
+{
+    <div class="activity">
+        <table class="dt">
+            <thead>
+                <tr>
+                    <th style="width:28%;">Kullanıcı</th>
+                    <th>Eylem</th>
+                    <th>Hedef</th>
+                    <th class="num">Sonuç</th>
+                    <th>Durum</th>
+                    <th class="num">Zaman</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var log in Model.RecentLogs)
+                {
+                    var ev = log.EventType switch
+                    {
+                        "report_run" => "Çalıştırdı",
+                        "report_create" => "Yeni rapor",
+                        "report_update" => "Düzenledi",
+                        "export" => "Excel export",
+                        _ => log.EventType
+                    };
+                    var statusClass = log.IsSuccess ? "ok" : "err";
+                    var statusText = log.IsSuccess ? "başarılı" : "hata";
+                    var rowCount = log.ResultRowCount?.ToString("N0", trCulture) ?? "—";
+                    <tr>
+                        <td>
+                            <div class="who">
+                                <div class="av">@AvatarInitials(log.Username ?? "")</div>
+                                <span>@(log.Username ?? "?")</span>
+                            </div>
+                        </td>
+                        <td>@ev</td>
+                        <td>@(string.IsNullOrWhiteSpace(log.Description) ? (log.TargetType ?? "-") : log.Description)</td>
+                        <td class="num mono">@rowCount</td>
+                        <td><span class="status @statusClass">@statusText</span></td>
+                        <td class="num"><span class="ago">@TimeAgo(log.CreatedAt)</span></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+<div class="footer-hint">
+    <span class="kbd">⌘B</span> sidebar daralt
+    <span style="margin:0 8px;">·</span>
+    <span class="kbd">⌘K</span> hızlı arama
+    <span style="margin:0 8px;">·</span>
+    ReportHub · BKM Kitap
 </div>

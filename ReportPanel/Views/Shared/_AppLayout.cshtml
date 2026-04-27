@@ -1,7 +1,7 @@
 @using System.Security.Claims
 @{
     var isAuthenticated = User?.Identity?.IsAuthenticated ?? false;
-    var user = isAuthenticated ? User?.Identity?.Name ?? "" : "";
+    var userName = isAuthenticated ? User?.Identity?.Name ?? "" : "";
     var fullName = isAuthenticated
         ? User?.Claims?.FirstOrDefault(claim => claim.Type == "full_name")?.Value ?? ""
         : "";
@@ -14,10 +14,16 @@
         : Array.Empty<string>();
     var isAdminUser = userRoles.Any(role => role.Equals("admin", StringComparison.OrdinalIgnoreCase));
     var controller = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
-    var isDashboard = controller.Equals("Dashboard", StringComparison.OrdinalIgnoreCase);
-    var isReports = controller.Equals("Reports", StringComparison.OrdinalIgnoreCase);
-    var isAdmin = controller.Equals("Admin", StringComparison.OrdinalIgnoreCase);
-    var isLogs = controller.Equals("Logs", StringComparison.OrdinalIgnoreCase);
+    var action = ViewContext.RouteData.Values["action"]?.ToString() ?? "";
+    bool IsActive(params string[] controllers) => controllers.Any(c => controller.Equals(c, StringComparison.OrdinalIgnoreCase));
+    string AvatarInitials(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name)) return "?";
+        var parts = name.Trim().Split(new[] { ' ', '.', '_' }, StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length >= 2) return $"{parts[0][0]}{parts[1][0]}".ToUpperInvariant();
+        return name.Substring(0, Math.Min(2, name.Length)).ToUpperInvariant();
+    }
+    var avatar = AvatarInitials(string.IsNullOrWhiteSpace(fullName) ? userName : fullName);
 }
 <!DOCTYPE html>
 <html lang="tr">
@@ -26,73 +32,186 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="color-scheme" content="light">
     <title>@ViewData["Title"]</title>
+
+    @* M-13 Plan 03 Faz A: Inter+JetBrains Mono proje-wide font + Tailwind CDN + Font Awesome + style.css + app-shell.css *@
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@@400;500;600;700&family=JetBrains+Mono:wght@@400;500&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <link href="~/assets/css/style.css" rel="stylesheet">
+    <link href="~/assets/css/style.css" rel="stylesheet" asp-append-version="true">
+    <link href="~/assets/css/app-shell.css" rel="stylesheet" asp-append-version="true">
     @RenderSection("Head", required: false)
 </head>
-<body class="bg-gray-50 @(ViewData["BodyClass"] as string ?? "")">
-    <header class="bg-white border-b border-gray-200 shadow-sm fixed top-0 inset-x-0 z-40">
-        <div class="max-w-7xl mx-auto px-6 py-4">
-            <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                <div class="flex flex-wrap items-center gap-6">
-                    <a href="/Dashboard" class="flex items-center gap-3">
-                        <img src="~/assets/img/logo.png" alt="BKM Kitap" class="h-8 w-auto">
-                    </a>
-                    <nav class="flex flex-wrap items-center gap-4 text-sm font-semibold text-gray-600">
-                        <a href="/Dashboard" class="px-3 py-2 rounded-lg hover:bg-gray-100 @(isDashboard ? "text-brand" : "")">Dashboard</a>
-                        <a href="/Reports" class="px-3 py-2 rounded-lg hover:bg-gray-100 @(isReports ? "text-brand" : "")">Raporlar</a>
-                        @if (isAdminUser)
-                        {
-                            <a href="/Logs" class="px-3 py-2 rounded-lg hover:bg-gray-100 @(isLogs ? "text-brand" : "")">Loglar</a>
-                            <a href="/Admin" class="px-3 py-2 rounded-lg hover:bg-gray-100 @(isAdmin ? "text-brand" : "")">Yonetim</a>
-                        }
-                    </nav>
-                </div>
-                <div class="flex flex-wrap items-center gap-4">
-                    @if (isAuthenticated)
-                    {
-                        <div class="text-right">
-                            <a href="/Profile/Index" class="text-sm font-semibold text-gray-900 hover:text-brand" title="Profil">
-                                @user
+<body class="@(ViewData["BodyClass"] as string ?? "")">
+
+<div class="app-shell" id="appShell">
+
+    @* ============ SIDEBAR ============ *@
+    <aside class="sidebar">
+
+        <div class="side-head">
+            <a href="/Dashboard" class="brand-mark" title="ReportHub">R</a>
+            <div class="brand-name">
+                <div class="t">ReportHub</div>
+                <span class="s">bkm-kitap</span>
+            </div>
+            <button class="side-collapse" id="btnSidebarCollapse" type="button" title="Daralt/Aç (Ctrl+B)">
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                    <path d="M10 4l-4 4 4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
+        </div>
+
+        <div class="side-body">
+
+            @if (isAuthenticated)
+            {
+                <div class="side-section">Ana</div>
+                <ul class="nav-list">
+                    <li>
+                        <a href="/Dashboard" class="@(IsActive("Dashboard") ? "active" : "")">
+                            <span class="icon"><i class="fas fa-house"></i></span>
+                            <span class="label">Genel Bakış</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/Reports" class="@(IsActive("Reports") ? "active" : "")">
+                            <span class="icon"><i class="fas fa-chart-column"></i></span>
+                            <span class="label">Raporlar</span>
+                        </a>
+                    </li>
+                </ul>
+
+                @if (isAdminUser)
+                {
+                    <div class="side-section">Sistem</div>
+                    <ul class="nav-list">
+                        <li>
+                            <a href="/Logs" class="@(IsActive("Logs") ? "active" : "")">
+                                <span class="icon"><i class="fas fa-clock-rotate-left"></i></span>
+                                <span class="label">Geçmiş / Loglar</span>
                             </a>
-                            <div class="text-xs text-gray-600">@fullName</div>
-                            <div class="text-xs text-gray-500 max-w-[220px] truncate" title="@string.Join(", ", userRoles)">
-                                @string.Join(", ", userRoles)
-                            </div>
-                        </div>
-                        <a href="/Login?logout=1"
-                           class="btn-brand-outline inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg"
-                           title="Güvenli Çıkış">
-                            <i class="fas fa-sign-out-alt mr-2"></i>
-                            Çıkış
-                        </a>
-                    }
-                    else
-                    {
-                        <a href="/Login"
-                           class="btn-brand inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg"
-                           title="Giriş yap">
-                            <i class="fas fa-sign-in-alt mr-2"></i>
-                            Giriş
-                        </a>
-                    }
+                        </li>
+                    </ul>
+
+                    <div class="side-section">Yönetim</div>
+                    <ul class="nav-list">
+                        <li>
+                            <a href="/Admin" class="@(IsActive("Admin") && action.Equals("Index", StringComparison.OrdinalIgnoreCase) ? "active" : "")">
+                                <span class="icon"><i class="fas fa-gauge-high"></i></span>
+                                <span class="label">Yönetim Paneli</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="/Admin/Reports" class="@(IsActive("Admin") && action.IndexOf("Report", StringComparison.OrdinalIgnoreCase) >= 0 ? "active" : "")">
+                                <span class="icon"><i class="fas fa-file-lines"></i></span>
+                                <span class="label">Rapor Yönetimi</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="/Admin/Users" class="@(IsActive("Admin") && action.IndexOf("User", StringComparison.OrdinalIgnoreCase) >= 0 ? "active" : "")">
+                                <span class="icon"><i class="fas fa-user"></i></span>
+                                <span class="label">Kullanıcılar</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="/Admin/Roles" class="@(IsActive("Admin") && action.IndexOf("Role", StringComparison.OrdinalIgnoreCase) >= 0 ? "active" : "")">
+                                <span class="icon"><i class="fas fa-shield-halved"></i></span>
+                                <span class="label">Roller</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="/Admin/Categories" class="@(IsActive("Admin") && action.IndexOf("Categor", StringComparison.OrdinalIgnoreCase) >= 0 ? "active" : "")">
+                                <span class="icon"><i class="fas fa-folder-tree"></i></span>
+                                <span class="label">Kategoriler</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="/Admin/DataSources" class="@(IsActive("Admin") && action.IndexOf("DataSource", StringComparison.OrdinalIgnoreCase) >= 0 ? "active" : "")">
+                                <span class="icon"><i class="fas fa-database"></i></span>
+                                <span class="label">Veri Kaynakları</span>
+                            </a>
+                        </li>
+                    </ul>
+                }
+            }
+        </div>
+
+        @if (isAuthenticated)
+        {
+            <div class="side-foot">
+                <div class="avatar">@avatar</div>
+                <div class="user-info">
+                    <div class="n">@(string.IsNullOrWhiteSpace(fullName) ? userName : fullName)</div>
+                    <div class="r">@(userRoles.Length > 0 ? string.Join(", ", userRoles) : "user")</div>
+                </div>
+                <div class="user-actions">
+                    <a href="/Profile" title="Profil"><i class="fas fa-user-gear"></i></a>
+                    <a href="/Login?logout=1" class="danger" title="Çıkış"><i class="fas fa-right-from-bracket"></i></a>
                 </div>
             </div>
-        </div>
-    </header>
+        }
+    </aside>
 
-    <main class="max-w-7xl mx-auto px-6 py-8 pt-24 pb-20">
-        @RenderBody()
+    @* ============ MAIN ============ *@
+    <main class="main">
+
+        <div class="topbar">
+            <button class="mobile-menu" id="btnMobileMenu" type="button" title="Menü">
+                <i class="fas fa-bars"></i>
+            </button>
+
+            @* Breadcrumb slot — view'lar override edebilir *@
+            @if (IsSectionDefined("Breadcrumb"))
+            {
+                @RenderSection("Breadcrumb", required: false)
+            }
+            else
+            {
+                <div class="crumbs">
+                    <a href="/Dashboard">BKM Kitap</a>
+                    <span class="sep">/</span>
+                    <span class="current">@(ViewData["PageTitle"] as string ?? ViewData["Title"]?.ToString()?.Split(" - ")[0] ?? "")</span>
+                </div>
+            }
+
+            @* Search slot — view'lar disable edebilir *@
+            @if (!(ViewData["HideSearch"] is bool hideSearch && hideSearch))
+            {
+                <div class="search">
+                    <span class="ico"><i class="fas fa-magnifying-glass"></i></span>
+                    <input type="text" placeholder="Rapor, dashboard, kullanıcı ara..." />
+                    <span class="kbd">⌘K</span>
+                </div>
+            }
+
+            <div class="top-actions">
+                @* TopActions slot — builder gibi sayfalar mode/dirty/Kaydet butonlarını buraya enjekte eder *@
+                @if (IsSectionDefined("TopActions"))
+                {
+                    @RenderSection("TopActions", required: false)
+                }
+                else if (isAuthenticated)
+                {
+                    <a href="#" class="icon-btn" title="Bildirimler">
+                        <i class="fas fa-bell"></i>
+                    </a>
+                    <a href="#" class="icon-btn" title="Yardım">
+                        <i class="fas fa-circle-question"></i>
+                    </a>
+                }
+            </div>
+        </div>
+
+        <div class="content">
+            @RenderBody()
+        </div>
     </main>
 
-    <footer class="bg-white border-t border-gray-200 fixed bottom-0 inset-x-0 z-40">
-        <div class="max-w-7xl mx-auto px-6 py-4">
-            <div class="flex items-center justify-between text-sm text-gray-500">
-                <p>&copy; @DateTime.Now.Year BKM Kitap - Rapor Paneli.</p>
-                <p>Versiyon 1.0.0</p>
-            </div>
-        </div>
-    </footer>
+</div>
+
+<script src="~/assets/js/app-shell.js" asp-append-version="true"></script>
+@RenderSection("Scripts", required: false)
 </body>
 </html>
