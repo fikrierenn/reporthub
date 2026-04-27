@@ -2,7 +2,7 @@
 
 **Tarih:** 2026-04-27
 **Yazan:** Claude (Cowork oturumu, Fikri yönetiminde)
-**Durum:** `Onay bekliyor`
+**Durum:** `Onaylandı (2026-04-27, A patikası — Plan 02 önce → Plan 03 sonra)`
 **Branch:** `feature/m-11-dashboard-builder-redesign`
 **ADR'ler:** [008-dashboard-builder-v2](../docs/ADR/008-dashboard-builder-v2.md), [009-report-type-consolidation](../docs/ADR/009-report-type-consolidation.md)
 **Mockup referans:** [dashboard-builder-v3.html](../ReportPanel/wwwroot/mockups/dashboard-builder-v3.html)
