@@ -121,6 +121,7 @@ namespace ReportPanel.Controllers
                     .ToListAsync()
                 : new List<int>();
 
+            model.HasUserFavorites = favoriteIds.Count > 0;
             if (favoriteIds.Count > 0)
             {
                 var favReports = await _context.ReportCatalog
@@ -161,6 +162,105 @@ namespace ReportPanel.Controllers
                 .OrderByDescending(l => l.CreatedAt)
                 .Select(l => (DateTime?)l.CreatedAt)
                 .FirstOrDefaultAsync();
+
+            // ---- Saatlik trend (son 24 saat, 24 entry — boş saatler 0) ----
+            var startOfTrend = nowUtc.AddHours(-23);
+            // Saat başına yuvarla (mevcut saatin başlangıcı)
+            startOfTrend = new DateTime(startOfTrend.Year, startOfTrend.Month, startOfTrend.Day, startOfTrend.Hour, 0, 0, DateTimeKind.Utc);
+
+            var hourlyRaw = await _context.AuditLogs
+                .AsNoTracking()
+                .Where(l => l.EventType == "report_run" && l.CreatedAt >= startOfTrend)
+                .GroupBy(l => new { l.CreatedAt.Year, l.CreatedAt.Month, l.CreatedAt.Day, l.CreatedAt.Hour })
+                .Select(g => new
+                {
+                    g.Key.Year,
+                    g.Key.Month,
+                    g.Key.Day,
+                    g.Key.Hour,
+                    Count = g.Count()
+                })
+                .ToListAsync();
+
+            var hourlyMap = hourlyRaw.ToDictionary(
+                h => new DateTime(h.Year, h.Month, h.Day, h.Hour, 0, 0, DateTimeKind.Utc),
+                h => h.Count);
+
+            // 24 saatlik dolu liste (boş saatler 0)
+            for (int i = 0; i < 24; i++)
+            {
+                var slot = startOfTrend.AddHours(i);
+                model.HourlyTrend.Add(new HourlyTrendItem
+                {
+                    Hour = slot,
+                    Count = hourlyMap.TryGetValue(slot, out var c) ? c : 0
+                });
+            }
+
+            // ---- DataSource durumu (aktif/toplam + son SP exec response) ----
+            var dsList = await _context.DataSources
+                .AsNoTracking()
+                .Select(d => new { d.Title, d.DataSourceKey, d.IsActive })
+                .ToListAsync();
+            var activeDsCount = dsList.Count(d => d.IsActive);
+            var totalDsCount = dsList.Count;
+            var primaryDs = dsList.FirstOrDefault(d => d.IsActive);
+
+            // ---- Sistem durumu ----
+            // Kontrol: son 1 saatte audit log error oranı, aktif DataSource oranı
+            var oneHourLogs = await _context.AuditLogs
+                .AsNoTracking()
+                .Where(l => l.CreatedAt >= oneHourAgo && l.EventType == "report_run")
+                .Select(l => new { l.IsSuccess })
+                .ToListAsync();
+            var totalRecent = oneHourLogs.Count;
+            var failRecent = oneHourLogs.Count(l => !l.IsSuccess);
+            var failRatio = totalRecent > 0 ? (double)failRecent / totalRecent : 0.0;
+
+            if (activeDsCount == 0)
+            {
+                model.SystemStatus = "veri kaynağı yok";
+                model.SystemStatusKind = "err";
+            }
+            else if (failRatio > 0.20 && totalRecent >= 5)
+            {
+                model.SystemStatus = $"son saatte %{(int)(failRatio * 100)} hata";
+                model.SystemStatusKind = "warn";
+            }
+            else if (activeDsCount < totalDsCount)
+            {
+                model.SystemStatus = $"{activeDsCount}/{totalDsCount} kaynak aktif";
+                model.SystemStatusKind = "warn";
+            }
+            else
+            {
+                model.SystemStatus = "tüm sistemler çalışıyor";
+                model.SystemStatusKind = "ok";
+            }
+
+            // DataSource pill — primary kaynak adı + son SP duration tahmini (audit log'da DurationMs varsa)
+            if (primaryDs != null)
+            {
+                var avgDurationMs = await _context.AuditLogs
+                    .AsNoTracking()
+                    .Where(l => l.EventType == "report_run" && l.CreatedAt >= oneHourAgo && l.DurationMs.HasValue)
+                    .Select(l => l.DurationMs!.Value)
+                    .ToListAsync();
+                if (avgDurationMs.Count > 0)
+                {
+                    var avg = (int)avgDurationMs.Average();
+                    var latency = avg > 1000 ? $"{avg / 1000.0:F1}s" : $"{avg}ms";
+                    model.DataSourceStatus = $"{primaryDs.Title} · {latency}";
+                }
+                else
+                {
+                    model.DataSourceStatus = $"{primaryDs.Title} · {activeDsCount} kaynak";
+                }
+            }
+            else
+            {
+                model.DataSourceStatus = "kaynak yok";
+            }
 
             return View(model);
         }
