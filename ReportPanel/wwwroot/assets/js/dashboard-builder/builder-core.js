@@ -113,64 +113,78 @@
     function render() {
         var html = '';
 
-        // Layout selector (core)
-        html += '<div class="flex items-center gap-4 mb-4">';
-        html += '<span class="text-xs font-semibold text-gray-500 uppercase">Layout:</span>';
+        // ---- F-7 alt-2 split-pane shell: palette (sol 320px) + canvas (orta) + drawer (sag 380px) ----
+        // Layout selector (compact, palette ust kosesinde)
+        var layoutBar = '<div class="flex items-center gap-2 mb-3 text-xs">';
+        layoutBar += '<span class="font-semibold text-gray-500 uppercase">Layout:</span>';
         ['standard', 'compact', 'wide'].forEach(function (l) {
-            var labels = { standard: '4 Sutun', compact: '2 Sutun', wide: 'Tam Genislik' };
-            var active = state.config.layout === l ? ' bg-blue-100 text-blue-700 border-blue-300' : ' bg-gray-50 text-gray-600 border-gray-200';
-            html += '<button type="button" class="px-3 py-1.5 text-xs font-semibold rounded-lg border' + active + '" onclick="window._dbSetLayout(\'' + l + '\')">' + labels[l] + '</button>';
+            var labels = { standard: '4', compact: '2', wide: 'Tam' };
+            var active = state.config.layout === l ? ' bg-blue-100 text-blue-700 border-blue-300' : ' bg-white text-gray-600 border-gray-200 hover:bg-gray-50';
+            layoutBar += '<button type="button" class="px-2 py-1 font-semibold rounded border' + active + '" onclick="window._dbSetLayout(\'' + l + '\')" title="' + l + '">' + labels[l] + '</button>';
         });
+        layoutBar += '</div>';
+
+        // ---- BUILDER SHELL (3-column: palette | canvas | drawer) ----
+        html += '<div class="builder-shell grid grid-cols-1 lg:grid-cols-[320px_1fr_380px] gap-3 min-h-[640px]">';
+
+        // ===== SOL: PALETTE =====
+        html += '<aside class="builder-palette bg-white border border-gray-200 rounded-lg p-3 overflow-auto">';
+        html += layoutBar;
+        html += DB.contract.renderContract();
+        html += '<div class="mb-2 mt-3 flex items-center justify-between">';
+        html += '<h4 class="text-xs font-semibold text-gray-600 uppercase tracking-wide"><i class="fas fa-list mr-1"></i> Bilesenler (' + state.config.tabs[state.activeTab].components.length + ')</h4>';
+        if (state.config.tabs[state.activeTab].components.length > 1) {
+            html += '<span class="text-[10px] text-gray-400"><i class="fas fa-grip-vertical mr-1"></i>suruklenebilir</span>';
+        }
+        html += '</div>';
+        html += DB.list.renderTabs();
+        html += DB.list.renderComponentList();
+        html += '</aside>';
+
+        // ===== ORTA: CANVAS (alt-3'te Gridstack ile dolacak) =====
+        html += '<main class="builder-canvas bg-gray-50 border border-dashed border-gray-300 rounded-lg p-6 flex items-center justify-center min-h-[400px]">';
+        html += '<div class="text-center text-gray-400 max-w-sm">';
+        html += '<i class="fas fa-th-large text-5xl mb-3 opacity-40"></i>';
+        html += '<p class="text-sm font-semibold mb-1">Canvas Onizleme Alani</p>';
+        html += '<p class="text-xs">Gridstack drag-resize canvas\'i F-7 alt-3\'te aktiflesecek. Mevcut akista bilesen yonetimi sol palette\'ten yapilir.</p>';
+        html += '</div>';
+        html += '</main>';
+
+        // ===== SAG: DRAWER (Veri | Gorunum tab strip + form) =====
+        html += '<aside class="builder-drawer bg-white border border-gray-200 rounded-lg p-3 overflow-auto">';
+        // Tab strip — F-8'de Gorunum tab\'i aktiflesecek
+        html += '<div class="flex border-b border-gray-200 mb-3 -mx-3 px-3">';
+        html += '<button type="button" class="px-3 py-2 text-xs font-bold uppercase text-blue-600 border-b-2 border-blue-600">Veri</button>';
+        html += '<button type="button" class="px-3 py-2 text-xs font-bold uppercase text-gray-300 border-b-2 border-transparent cursor-not-allowed" title="F-8\'de aktif: variant picker + chart gallery + swatch/icon grid + span toggle">Gorunum</button>';
         html += '</div>';
 
-        // Contract editor (contract module)
-        html += DB.contract.renderContract();
+        // Form banner (edit mode highlight)
+        var formBg = state.editIndex >= 0 ? 'bg-blue-50 border-blue-200' : 'bg-gray-50 border-gray-200';
+        html += '<div id="editingBanner" class="rounded-lg border p-3 transition-all ' + formBg + '">';
+        if (state.editIndex >= 0) {
+            var editingComp = state.config.tabs[state.activeTab].components[state.editIndex];
+            var editingTitle = editingComp && editingComp.title ? editingComp.title : ('#' + (state.editIndex + 1));
+            html += '<div class="flex items-center justify-between mb-2">';
+            html += '<h4 class="text-sm font-bold text-blue-800"><i class="fas fa-pen mr-1"></i> Duzenleniyor: ' + esc(editingTitle) + '</h4>';
+            html += '<button type="button" class="text-xs text-gray-500 hover:text-gray-700 underline" onclick="window._dbCancelEdit()">Iptal</button>';
+            html += '</div>';
+        } else {
+            html += '<h4 class="text-sm font-bold text-gray-700 mb-2"><i class="fas fa-plus-circle mr-1 text-blue-600"></i> Yeni Bilesen</h4>';
+        }
+        html += DB.drawer.renderForm();
+        html += '</div>';
+        html += '</aside>';
 
-        // JSON view toggle (core)
-        html += '<div class="mb-3 flex justify-end">';
+        html += '</div>'; // end builder-shell
+
+        // ---- Footer: JSON view toggle (debug + copy/paste) ----
+        html += '<div class="mt-3 flex justify-end">';
         html += '<button type="button" id="dbJsonToggleBtn" class="text-xs text-gray-600 hover:text-gray-800 font-semibold" onclick="window._dbToggleJsonView()">' + (state.jsonViewOpen ? '<i class="fas fa-eye-slash mr-1"></i>JSON Gizle' : '<i class="fas fa-code mr-1"></i>JSON Goster') + '</button>';
         html += '</div>';
         html += '<div id="dbJsonView" class="mb-4' + (state.jsonViewOpen ? '' : ' hidden') + '">';
         html += '<textarea readonly class="w-full h-64 px-3 py-2 border border-gray-300 rounded-lg text-xs font-mono bg-gray-50" placeholder="Config JSON"></textarea>';
         html += '<p class="text-[10px] text-gray-500 mt-1">Salt-okunur snapshot. Degisiklikler UI\'dan yapilir.</p>';
         html += '</div>';
-
-        // Tabs (list module)
-        html += DB.list.renderTabs();
-
-        // 2 sutunlu grid: sol=liste, sag=form
-        html += '<div class="grid grid-cols-1 lg:grid-cols-12 gap-4">';
-
-        // Sol: bilesen listesi
-        html += '<div class="lg:col-span-5">';
-        html += '<div class="mb-2 flex items-center justify-between">';
-        html += '<h4 class="text-xs font-semibold text-gray-600 uppercase tracking-wide"><i class="fas fa-list mr-1"></i> Bilesenler (' + state.config.tabs[state.activeTab].components.length + ')</h4>';
-        if (state.config.tabs[state.activeTab].components.length > 1) {
-            html += '<span class="text-xs text-gray-400"><i class="fas fa-grip-vertical mr-1"></i>surukleyerek siralayin</span>';
-        }
-        html += '</div>';
-        html += DB.list.renderComponentList();
-        html += '</div>';
-
-        // Sag: form (drawer module)
-        html += '<div class="lg:col-span-7">';
-        var formBg = state.editIndex >= 0 ? 'bg-blue-50 border-blue-300' : 'bg-gray-50 border-gray-200';
-        html += '<div id="editingBanner" class="rounded-xl border p-4 transition-all lg:sticky lg:top-4 ' + formBg + '">';
-        if (state.editIndex >= 0) {
-            var editingComp = state.config.tabs[state.activeTab].components[state.editIndex];
-            var editingTitle = editingComp && editingComp.title ? editingComp.title : ('#' + (state.editIndex + 1));
-            html += '<div class="flex items-center justify-between mb-3">';
-            html += '<h4 class="text-sm font-bold text-blue-800"><i class="fas fa-pen mr-1"></i> Duzenleniyor: ' + esc(editingTitle) + '</h4>';
-            html += '<button type="button" class="text-xs text-gray-500 hover:text-gray-700 underline" onclick="window._dbCancelEdit()">Duzenlemeyi iptal et</button>';
-            html += '</div>';
-        } else {
-            html += '<h4 class="text-sm font-bold text-gray-700 mb-3"><i class="fas fa-plus-circle mr-1 text-blue-600"></i> Yeni Bilesen Ekle</h4>';
-        }
-        html += DB.drawer.renderForm();
-        html += '</div>';
-        html += '</div>';
-
-        html += '</div>'; // end grid
 
         builderEl.innerHTML = html;
 
