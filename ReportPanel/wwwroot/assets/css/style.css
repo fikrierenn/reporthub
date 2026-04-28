@@ -643,6 +643,36 @@ select.inp {
     background-repeat: no-repeat; background-position: right 10px center; padding-right: 28px;
 }
 
+/* ---- Sub-nav (alt tab bar — Admin/Index gibi hub sayfaları için) ---- */
+.subnav {
+    display: flex; flex-wrap: wrap; gap: 2px;
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 18px;
+}
+.subnav a {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 10px 14px;
+    color: var(--ink-3);
+    font-size: 13px; font-weight: 500;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    text-decoration: none;
+    transition: color .12s, border-color .12s, background .12s;
+}
+.subnav a:hover { color: var(--ink-1); background: var(--line-2); }
+.subnav a.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+}
+.subnav a .count {
+    background: var(--canvas);
+    color: var(--ink-2);
+    padding: 1px 7px; border-radius: 10px;
+    font-size: 11px; font-weight: 600;
+    font-family: 'JetBrains Mono', monospace;
+}
+.subnav a.active .count { background: var(--accent-soft); color: var(--accent-ink); }
+
 /* ---- Auth/option card (radio-driven seçim kartı, datasource form için) ---- */
 .opt-card {
     display: flex; align-items: center; gap: 10px;
