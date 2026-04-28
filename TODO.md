@@ -202,6 +202,14 @@ Bu liste asagidakilerin sentezidir:
 
 ---
 
+### YENI PROJE ADI ARANIYOR (28 Nisan 2026)
+Kullanici 28 Nisan 2026 oturum 4: "projeye reporthub demeyelim bir ara degistirelim isim bulalim". 
+Mevcut iceride brand: "ReportHub" (geçici), kod adi "ReportPanel" (klasor + namespace). 
+Sidebar + AuthLayout'ta "ReportHub" gectigi yerler "BKM Kitap" + "Rapor Paneli" olarak guncelendi 
+(R3.2, 28 Nisan), ama bu da yer tutucu. Yeni isim adaylari + brand-mark logosu (mevcut bkm-logo.svg 
+disinda alternatif logo asetleri) icin ayri brainstorm gerekli. Plan 06 vNext sirket ici portal 
+hazirligi sirasinda (yeni feature seti netlesince) isim de finalize olabilir.
+
 ### MAJOR VISION — Sonraki Versiyon: Rapor Portali → Sirket Ici Portal (28 Nisan 2026)
 Kullanici 28 Nisan 2026 oturum 4: "sonraki versiyonda rapor portalindan sirket ici portala dogru evireceğiz yapiyi". 
 Mevcut: rapor + dashboard portal. Hedef versiyon vNext: tam sirket ici portal.
