@@ -1,126 +1,34 @@
-/* dashboard-builder.css — M-11 F-7 alt-3a (BKM brand uygulama)
+/* dashboard-builder.css — M-11 F-7 alt-3a + M-13 Plan 03 Faz D
  *
  * Kaynak: ReportPanel/wwwroot/mockups/dashboard-builder-v3.html
  * Tokens: style.css içinde tanımlı (--ink-*, --accent, --paper, --canvas, --line, --chip)
  *
  * Bu dosya sadece dashboard builder sayfasında yüklenir (EditReport + CreateReport).
- * Inter + JetBrains Mono fontları HEAD'de CDN ile yüklenir.
  *
- * alt-3a kapsamı: shell + topbar + palette + drawer + canvas placeholder + widget cards stub.
- * alt-3b kapsamı (sonra): widget render Gridstack canvas'a taşınınca w-head/w-body/kpi-* aktif.
+ * Faz D (28 Nisan 2026): Builder-topbar bölümü TEMİZLENDİ. Mode segmented + dirty
+ * chip + Önizle/Geri Al/JSON/Kaydet butonları artık _AppLayout'un topbar slot'unda
+ * (.crumbs + @section TopActions) — `.btn` global pattern'ı kullanılıyor.
+ * `.dirty-chip` style.css'e taşındı (proje genelinde re-use için).
+ *
+ * Bu dosyada kalan: builder-shell (3-pane: palette / canvas / drawer), widget
+ * cards (w-head/w-body/kpi-*), drawer form pattern. Fontlar _AppLayout'tan global.
  */
 
 /* ============================================================================
-   FONT (sadece builder-mount içinde — _AppLayout default font'unu kirletmez)
+   FONT — builder-shell scope (mockup-source'tan korunmuş)
    ============================================================================ */
 .builder-shell,
 .builder-shell input,
 .builder-shell select,
 .builder-shell textarea,
-.builder-shell button,
-.builder-topbar {
+.builder-shell button {
     font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
     font-feature-settings: 'ss01', 'cv11';
 }
 
 .builder-shell .mono,
-.builder-shell .result-pill,
-.builder-topbar .mono,
-.builder-topbar code {
+.builder-shell .result-pill {
     font-family: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
-}
-
-/* ============================================================================
-   TOPBAR
-   ============================================================================ */
-.builder-topbar {
-    background: var(--paper);
-    border: 1px solid var(--line);
-    border-radius: 10px;
-    padding: 8px 14px;
-    margin-bottom: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-}
-
-.builder-topbar .breadcrumb {
-    font-size: 12px;
-    color: var(--ink-3);
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.builder-topbar .breadcrumb a {
-    color: var(--ink-3);
-    transition: color .15s;
-}
-
-.builder-topbar .breadcrumb a:hover {
-    color: var(--accent);
-}
-
-.builder-topbar .breadcrumb .current {
-    color: var(--ink-1);
-    font-weight: 600;
-}
-
-.builder-topbar .topbar-actions {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-/* Dirty chip — F-9'da görünür */
-.dirty-chip {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 10.5px;
-    color: #92400e;
-    background: rgba(245, 158, 11, 0.10);
-    border: 1px solid rgba(245, 158, 11, 0.25);
-    padding: 2px 8px;
-    border-radius: 999px;
-    font-weight: 500;
-}
-
-/* Topbar buton stili */
-.builder-topbar button {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    height: 30px;
-    padding: 0 12px;
-    border-radius: 6px;
-    font-size: 12px;
-    font-weight: 500;
-    border: 1px solid var(--line);
-    background: var(--paper);
-    color: var(--ink-1);
-    transition: all .12s;
-}
-
-.builder-topbar button:hover:not(:disabled) {
-    border-color: var(--ink-4);
-    background: var(--line-2);
-}
-
-.builder-topbar button:disabled {
-    color: var(--ink-4);
-    cursor: not-allowed;
-    opacity: .7;
-}
-
-.builder-topbar button.primary {
-    background: var(--accent);
-    border-color: var(--accent);
-    color: #fff;
-}
-
-.builder-topbar button.primary:hover:not(:disabled) {
-    background: var(--accent-ink);
-    border-color: var(--accent-ink);
 }
 
 /* ============================================================================

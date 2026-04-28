@@ -643,6 +643,20 @@ select.inp {
     background-repeat: no-repeat; background-position: right 10px center; padding-right: 28px;
 }
 
+/* ---- Dirty chip (kaydedilmemiş değişiklik göstergesi — builder topbar) ---- */
+.dirty-chip {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10.5px;
+    color: #92400e;
+    background: rgba(245, 158, 11, 0.10);
+    border: 1px solid rgba(245, 158, 11, 0.25);
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-weight: 500;
+}
+.dirty-chip[hidden] { display: none; }
+
 /* ---- Sub-nav (alt tab bar — Admin/Index gibi hub sayfaları için) ---- */
 .subnav {
     display: flex; flex-wrap: wrap; gap: 2px;

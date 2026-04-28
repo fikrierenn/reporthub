@@ -178,15 +178,83 @@ Bu liste asagidakilerin sentezidir:
 37. **G-08 · DashboardRenderer JSON escape regresyon testi** (1h) — `</script>`, `<!--`, case-insensitive bypass test.
 38. **ADR yazimi** (1h) — ADR-001 data-access, ADR-002 dashboard-architecture. (ADR-003 role-model ✅ yazildi 22 Nisan, ADR-004 skill-design ✅ yazildi 22 Nisan.)
 39. **YETKILENDIRME REVIZYONU — rapor + alan gorme** (TARTISMA gerekli, Plan 03 sonrasi) — Kullanici 28 Nisan 2026: "kullanici yetki tanimlama mantigi pratik olmamis ve tam istedigim gibi de degil. Rapor yetki + alan gorme konusunu konusalim bir ara, en sonda olabilir is bitince."
-   - **Mevcut model:** UserRole (junction) + ReportAllowedRole (rapor-rol) + UserDataFilter (kullanici-bazli WHERE injection).
+   - **Mevcut model:** UserRole (junction) + ReportAllowedRole (rapor-rol) + UserDataFilter (kullanici-bazli WHERE injection). Tek role "admin" + ek custom roller var ama AdminController class-level `[Authorize(Roles="admin")]` — granular yetki YOK.
    - **Sikayet noktalari (bekleniyor):** rapor yetkisi UX, alan/satir/sutun gorme granulariteci, admin-friendly tanimlama akisi.
-   - **Aksiyon:** Plan 03 (M-13) tamamen kapaninca ayri oturum ac. Once mevcut akisi haritalayan sayfa-sayfa screenshot + sikayet detayini topla, sonra mimari karar (Tier 3 plan + ADR).
+   - **Sidebar UX bagi (28 Nisan, Faz D):** Plan 03 Faz D'de YONETIM section 6 → 1 linke indi (Admin/Index subnav 5 tab handle ediyor). Granular yetki gelirse: sidebar'a alt-link'ler conditional render edilir (`@if (User.IsInRole("report_designer"))`). Yetki revizyonu sirasinda sidebar konusunu tekrar gozden gecir.
+   - **Aksiyon:** Plan 03 (M-13) tamamen kapaninca ayri oturum ac. Once mevcut akisi haritalayan sayfa-sayfa screenshot + sikayet detayini topla, sonra mimari karar (Tier 3 plan + ADR). Granular role tanimlari + AdminController action-level [Authorize] + sidebar conditional render birlikte degerlendirilmeli.
 
 #### Toplam efor tahmini
 - Faz 0 (bugun): 3 saat — blocker'lari kaldir
 - Faz 1 (hafta): ~5 gun dagitilmis
 - Faz 2 (ay): ~10 gun dagitilmis
 - Faz 3 (ceyrek): ~15 gun dagitilmis
+
+---
+
+### PLAN 03 — M-13 PROJECT-WIDE DESIGN HARMONIZATION (28 Nisan 2026)
+Plan dosyasi: [plans/03-project-wide-design-system-harmonization.md](plans/03-project-wide-design-system-harmonization.md). Backup branch: `backup/pre-shell-2026-04-27`.
+
+#### Faz A — Shell skeleton ✅ KAPANDI (27-28 Nisan)
+- ✅ `9c9706c` _AppLayout rewrite (sidebar + topbar slot) + app-shell.css/js + Inter font + ADR-011
+
+#### Faz B P0 — Kritik 3 sayfa ✅ KAPANDI (28 Nisan)
+- ✅ `9c9706c`+`d7a3c0e` Dashboard/Index hero + 4 KPI + saatlik trend SVG + qcard favori + .dt aktivite
+- ✅ `8f8b6e7` Reports/Index qcard grid + filter bar
+- ⚠️ EditReport builder topbar duplicate (consolidation Faz D'ye ertelendi)
+
+#### Faz B P1 — 3 sayfa ✅ KAPANDI (28 Nisan)
+- ✅ `978b2a3` Logs/Index .dt + 7-col filter
+- ✅ `978b2a3` Profile/Index paper card + .field/.lab/.inp + .btn
+- ✅ `d3297f9` _FooterHint partial + section comment cleanup
+- ✅ `7bc8cb0` _FooterHint partial Dashboard model mismatch fix
+
+#### Faz C+D+E — Component pattern + Builder topbar + Auth (28 Nisan, AKTIF)
+Audit (28 Nisan smoke): 4 sayfa migrated, 13 sayfa hala eski Tailwind utility. Faz C atlandigi farkedildi, C+D+E birlesik tek pass yapilacak.
+
+**C1 — Kucuk view'lar (~30dk)**
+- [ ] AccessDenied: btn-brand-outline → .btn pattern
+- [ ] Reports/Run: param form .field/.lab/.inp + result .dt + .btn
+- [ ] Test/Index: dev only, minimum dokunus
+
+**C2 — Admin form'lari (~1.5h)**
+- [ ] EditUser: 10 utility → .field/.lab/.inp + .btn pattern
+- [ ] CreateUser: aynisi (P0 #2 EditUser ile birlestir veriDataFilter ekle yoksa)
+- [ ] EditRole: 5 utility → form pattern
+- [ ] EditCategory: 5 utility → form pattern
+- [ ] EditDataSource: 15 utility → form pattern
+- [ ] CreateDataSource: 15 utility → form pattern
+
+**C3 — Admin/Index hub (~1h)**
+- [ ] sub-nav (Raporlar/Kullanicilar/Roller/Kategoriler/DataSources)
+- [ ] qcard grid veya .dt liste her sekme icerigi icin
+- [ ] paper container
+
+**D — EditReport + CreateReport + builder-topbar consolidation (~2h)**
+- [ ] EditReport: <div class="builder-topbar"> blok SIL
+- [ ] @section Breadcrumb override (Yonetim/Raporlar/Title) + @section TopActions (mode segmented + dirty chip + Onizle/Geri Al/JSON/Kaydet)
+- [ ] dashboard-builder.css'te .builder-topbar/.brand-mark/.breadcrumb/.dirty-chip/.topbar-actions stilleri SIL (devir _AppLayout topbar)
+- [ ] mode segmented: role="tablist" + aria-selected + ←/→ keyboard nav (ui-ux-pro-max audit gereği)
+- [ ] dirty chip: text + icon (color-only info reddedildi)
+- [ ] CreateReport ayni pattern
+- [ ] form alti "Degisiklikleri Kaydet" buton kalir mi karar (topbar'da Kaydet var, alt buton legacy)
+- [ ] Plan 02 alt-3b Gridstack canvas mount: AYRI commit/oturum (Faz D scope dışı bırakildi)
+
+**E — Auth ayrimi (~30dk)**
+- [ ] _AuthLayout.cshtml yeni — sidebar'siz, brand-mark + paper card
+- [ ] Login.cshtml Layout = "_AuthLayout" + brand pattern
+- [ ] _Layout.cshtml legacy Bootstrap — Home/* kullanım kontrol, gereksizse SIL
+
+**F — Final pass (~1h)**
+- [ ] ui-ux-pro-max full audit: WCAG contrast, touch target 44px mobile media query, focus ring, prefers-reduced-motion, dirty chip color+icon
+- [ ] Smoke: tüm 17+ sayfa preview ile dolaş, 0 console error
+- [ ] 4 screenshot: docs/screenshots/m13-shell-{home,reports,builder,login}.png
+- [ ] Journal handoff entry
+- [ ] Plan 03 dosyasini plans/archive/'a tasi
+- [ ] TODO.md'de Plan 03 KAPANDI işareti
+
+#### Faz D karar noktalari
+- **Plan 02 alt-3b (Gridstack canvas)**: Faz D'den çıkarıldı, ayrı oturum/commit. Builder topbar consolidation odakli kalsin.
+- **_Layout.cshtml legacy**: Home/* kullanim kontrol Faz E'de, gereksizse Faz F'te sil.
 
 ---
 
