@@ -1,0 +1,31 @@
+@*
+    AD toggle password sync — Windows AD kullanıcısı checkbox işaretlenince password input
+    devre dışı kalır (AD kullanıcısı şifresini AD üzerinden alır). EditUser + CreateUser ortak.
+
+    Vanilla kaldı (~12 satır) — sadece password input.disabled toggle, Alpine'a almaya değmeyecek
+    kadar küçük; ayrıca Password input partial dışında (EditUser/CreateUser kendi form bloğunda).
+*@
+<script>
+    (function () {
+        var ad = document.getElementById('IsAdUser');
+        var pw = document.getElementById('Password');
+        if (!ad || !pw) return;
+        if (pw.hasAttribute('required')) pw.dataset.requiredOnInit = 'true';
+
+        function sync() {
+            if (ad.checked) {
+                pw.value = '';
+                pw.disabled = true;
+                pw.removeAttribute('required');
+            } else {
+                pw.disabled = false;
+                if (pw.dataset.requiredOnInit === 'true') {
+                    pw.setAttribute('required', 'required');
+                }
+            }
+        }
+
+        ad.addEventListener('change', sync);
+        sync();
+    })();
+</script>

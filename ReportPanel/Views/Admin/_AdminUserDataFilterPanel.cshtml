@@ -1,0 +1,92 @@
+@model ReportPanel.ViewModels.AdminUserFormViewModel
+@*
+    Veri filtreleri paneli — EditUser + CreateUser ortak.
+
+    M-13 R3.2 (28 Nisan 2026): Vanilla JS DOM API (createFilterRow + createElement spam +
+    button.onclick + 137 satir partial) Alpine.js x-data/x-for/@click directives ile
+    ~70 satira indirildi. Reactive filter array, async loadOptions per-row,
+    splice ile row remove. Build step yok, tum mantik HTML attribute'larinda.
+*@
+@{
+    var dataSources = Model.DataSources ?? new List<ReportPanel.Models.DataSource>();
+    var initialFilters = Model.DataFilters
+        .Select(f => new {
+            key = f.FilterKey,
+            value = f.FilterValue,
+            ds = f.DataSourceKey ?? "",
+            options = new object[0]
+        })
+        .ToList();
+    var initJson = System.Text.Json.JsonSerializer.Serialize(initialFilters);
+}
+
+<div style="background:var(--paper); border:1px solid var(--line); border-radius:10px; overflow:hidden; max-width:880px; margin-bottom:18px;">
+    <div style="padding:14px 18px; border-bottom:1px solid var(--line);">
+        <h2 style="font-size:13px; font-weight:600; color:var(--ink-1); margin:0;">
+            <i class="fas fa-filter" style="margin-right:6px; color:var(--ink-3);"></i>
+            Veri Filtreleri
+        </h2>
+        <div style="font-size:12px; color:var(--ink-3); margin-top:2px;">
+            Kullanıcının görebileceği veriler. Boş = tüm veriler. Aynı tip = VEYA, farklı tip = VE.
+        </div>
+    </div>
+
+    <div style="padding:18px 20px;"
+         x-data="{
+            filters: @Html.Raw(initJson),
+            async loadOptions(i) {
+                var f = this.filters[i];
+                var url = '/Admin/FilterOptions?filterKey=' + encodeURIComponent(f.key);
+                if (f.ds) url += '&dataSourceKey=' + encodeURIComponent(f.ds);
+                try {
+                    var r = await fetch(url);
+                    var d = await r.json();
+                    f.options = (d.options && d.options.length) ? d.options : [];
+                } catch { f.options = []; }
+            },
+            addFilter() {
+                this.filters.push({key:'sube', value:'', ds:'', options:[]});
+                this.loadOptions(this.filters.length - 1);
+            },
+            init() { this.filters.forEach((_, i) => this.loadOptions(i)); }
+         }"
+         x-init="init()">
+
+        <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:12px;">
+            <template x-for="(f, i) in filters" :key="i">
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <select x-model="f.key" @@change="loadOptions(i)" name="FilterKeys" class="inp" style="width:140px; flex-shrink:0;">
+                        <option value="sube">Şube</option>
+                        <option value="bolum">Bölüm</option>
+                        <option value="bolge">Bölge</option>
+                        <option value="kategori">Kategori</option>
+                        <option value="maliyet_merkezi">Maliyet Merkezi</option>
+                    </select>
+                    <select x-model="f.value" name="FilterValues" class="inp" style="flex:1;">
+                        <option value="" x-show="!f.options || f.options.length === 0">Yükleniyor / Liste boş</option>
+                        <template x-for="opt in (f.options || [])" :key="opt.value">
+                            <option :value="opt.value" :selected="opt.value === f.value" x-text="opt.label"></option>
+                        </template>
+                    </select>
+                    <select x-model="f.ds" @@change="loadOptions(i)" name="FilterDataSources" class="inp" style="width:160px; flex-shrink:0;">
+                        <option value="">Tüm kaynaklar</option>
+                        @foreach (var ds in dataSources)
+                        {
+                            <option value="@ds.DataSourceKey">@ds.Title</option>
+                        }
+                    </select>
+                    <button type="button" @@click="filters.splice(i, 1)"
+                            class="btn ghost" style="color:var(--accent-ink); flex-shrink:0;"
+                            title="Filtreyi sil">
+                        <i class="fas fa-trash text-[10px]"></i>
+                    </button>
+                </div>
+            </template>
+        </div>
+
+        <button type="button" @@click="addFilter()" class="btn ghost" style="font-size:12px;">
+            <i class="fas fa-circle-plus text-[10px]"></i>
+            Filtre Ekle
+        </button>
+    </div>
+</div>
