@@ -4,7 +4,7 @@
 
 **Tarih:** 2026-04-27
 **Yazan:** Claude (Cowork oturumu, Fikri yönetiminde)
-**Durum:** `Uygulamada → Tamamlandı` (commit'lere bölündüğünde kapanır)
+**Durum:** `Tamamlandı` (8 commit atıldı: a3b3f96, 07c43ef, e22bea5, 5135acc, b99ec33 reporthub + b1c4828, bc3c907, 2f166de template)
 
 ---
 
@@ -88,11 +88,11 @@ Kullanıcı verbatim:
 - [x] Reporthub `plans/` klasör + 3 dosya (README, template, retro 01)
 - [x] Reporthub `docs/PATTERNS.md` mevcut
 - [x] Reporthub `docs/ADR/010-plan-first-tier-system.md` mevcut
-- [ ] Reporthub `commit-discipline.md` Plan-First Referansı bölümü ekli
-- [ ] Reporthub `CLAUDE.md` agent + command + skill listesi güncel
-- [ ] claude-context-template'e tüm yeni öğeler yansıtıldı
-- [ ] 4-5 ayrı commit at (rules+plans / agents+commands / skills / context-template)
-- [ ] Journal entry yazıldı (`docs/journal/2026-04-27.md`)
+- [x] Reporthub `commit-discipline.md` Plan-First Referansı bölümü ekli (a3b3f96)
+- [x] Reporthub `CLAUDE.md` agent + command + skill listesi güncel (5135acc, 166 satır)
+- [x] claude-context-template'e tüm yeni öğeler yansıtıldı (b1c4828, bc3c907, 2f166de)
+- [x] 4 reporthub commit + 3 template commit + 1 journal commit = 8 commit
+- [x] Journal entry yazıldı (`docs/journal/2026-04-27.md`, b99ec33)
 
 ## 6. Rollback Planı
 
@@ -110,11 +110,11 @@ Bu commit'lerden herhangi birinde sorun çıkarsa:
 5. [x] Reporthub'a session-memory.md + plan-first.md + PATTERNS.md + ADR-010 kopyala
 6. [x] plans/ klasör (README + template + archive/) reporthub-uyumlu yaz
 7. [x] Retro plan yaz (BU dosya)
-8. [ ] commit-discipline.md Plan-First Referansı ekle
-9. [ ] CLAUDE.md güncelle
-10. [ ] claude-context-template'e tüm yeni öğeleri port et
-11. [ ] Bucket'lı commit (4-5 commit)
-12. [ ] Journal entry yaz
+8. [x] commit-discipline.md Plan-First Referansı ekle (a3b3f96)
+9. [x] CLAUDE.md güncelle (5135acc, 166 satır)
+10. [x] claude-context-template'e tüm yeni öğeleri port et (b1c4828, bc3c907, 2f166de)
+11. [x] Bucket'lı commit (8 commit)
+12. [x] Journal entry yaz (b99ec33)
 
 ## 8. İlişkili
 

@@ -191,8 +191,21 @@ Bu liste asagidakilerin sentezidir:
 
 ---
 
-### PLAN 03 — M-13 PROJECT-WIDE DESIGN HARMONIZATION (28 Nisan 2026)
-Plan dosyasi: [plans/03-project-wide-design-system-harmonization.md](plans/03-project-wide-design-system-harmonization.md). Backup branch: `backup/pre-shell-2026-04-27`.
+### PLAN 03 — M-13 PROJECT-WIDE DESIGN HARMONIZATION ✅ KAPANDI (28 Nisan 2026)
+Plan dosyasi: [plans/archive/03-project-wide-design-system-harmonization.md](plans/archive/03-project-wide-design-system-harmonization.md). Backup branch: `backup/pre-shell-2026-04-27`.
+
+**Sonuc (oturum 4, 28 Nisan):** Faz A+B (Plan 03 ilk yarisi, oturum 3) + Faz C+D+E+F1 (Plan 03 ikinci yarisi, oturum 4) tamamlandi. 17 view dosyasi proje genelinde tek pattern'a alindi: hero + paper card + .field/.lab/.inp + .btn + .dt + subnav + opt-card. Builder topbar Razor blok silinip _AppLayout topbar slot'a tasindi (mode segmented + dirty chip + 4 buton). Auth shell ayrildi (_AuthLayout yeni). _Layout.cshtml legacy Bootstrap silindi.
+
+**Net commit'ler oturum 4:**
+- `7bc8cb0` _FooterHint partial Dashboard model mismatch fix (smoke test sırasinda yakalandi)
+- `831319b` C1: AccessDenied + Reports/Run + Test/Index pattern adaptation
+- `9ba3c61` C2: 6 admin form'u + .opt-card pattern (style.css) + admin-datasource-form.js JS toggle kaldirildi (CSS :has())
+- `fc55063` C3: Admin/Index sub-nav + .dt hub (.subnav pattern style.css'e eklendi, 652 → 430 satir, %34 azalma)
+- `4ada9e6` D: EditReport + CreateReport pattern + builder-topbar consolidation, sidebar Yonetim section 6→1 link sadelestirme
+- `4d2f5d2` E: _AuthLayout YENI + Login + Error pattern + _Layout.cshtml legacy SİLİNDİ
+- `c8ce59f` F1: ui-ux-pro-max audit fix (44px touch target mobile + prefers-reduced-motion) + sidebar collapse buton fix (60px wide içinde sığmıyordu)
+
+**Net etki:** ~1850 satir azalma, 7 yeni commit, 17 view + 4 CSS/JS dosyasi etkilendi.
 
 #### Faz A — Shell skeleton ✅ KAPANDI (27-28 Nisan)
 - ✅ `9c9706c` _AppLayout rewrite (sidebar + topbar slot) + app-shell.css/js + Inter font + ADR-011
