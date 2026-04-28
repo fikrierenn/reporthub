@@ -136,6 +136,18 @@ body {
     display: none;
 }
 
+/* Collapsed state'te side-head dikey: brand-mark üstte, side-collapse butonu
+   altta görünür kalsın (60px wide içinde yatay sığmıyordu). */
+.collapsed .side-head {
+    flex-direction: column;
+    height: auto;
+    padding: 12px 0 10px;
+    gap: 8px;
+}
+.collapsed .side-collapse {
+    margin-left: 0;
+}
+
 .side-collapse {
     margin-left: auto;
     width: 24px;

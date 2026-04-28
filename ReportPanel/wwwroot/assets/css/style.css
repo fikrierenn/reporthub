@@ -643,6 +643,32 @@ select.inp {
     background-repeat: no-repeat; background-position: right 10px center; padding-right: 28px;
 }
 
+/* ---- ui-ux-pro-max audit fix'leri (M-13 Plan 03 Faz F) ---- */
+
+/* Touch target — mobile 44x44 minimum (Apple HIG / Material 48dp).
+   Desktop'ta 34px mouse precision için kabul. */
+@media (max-width: 768px) {
+    .btn,
+    .inp,
+    .opt-card {
+        min-height: 44px;
+    }
+    .btn { padding: 0 14px; }
+}
+
+/* Reduced motion — kullanıcı OS-level "azalt animasyon" tercih ettiyse
+   tüm transition + animation'ları sıfırla. */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}
+
 /* ---- Dirty chip (kaydedilmemiş değişiklik göstergesi — builder topbar) ---- */
 .dirty-chip {
     display: inline-flex; align-items: center; gap: 5px;
