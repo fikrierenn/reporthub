@@ -20,17 +20,20 @@ namespace ReportPanel.Controllers
         private readonly AuditLogService _auditLog;
         private readonly ExcelExportService _excelExport;
         private readonly UserDataFilterInjector _filterInjector;
+        private readonly StoredProcedureExecutor _spExecutor;
 
         public ReportsController(
             ReportPanelContext context,
             AuditLogService auditLog,
             ExcelExportService excelExport,
-            UserDataFilterInjector filterInjector)
+            UserDataFilterInjector filterInjector,
+            StoredProcedureExecutor spExecutor)
         {
             _context = context;
             _auditLog = auditLog;
             _excelExport = excelExport;
             _filterInjector = filterInjector;
+            _spExecutor = spExecutor;
         }
 
         private string CurrentUserName => User.Identity?.Name ?? "user";
@@ -230,7 +233,7 @@ namespace ReportPanel.Controllers
                 // karşı dashboard_config_missing audit + boş şablon fallback korunuyor.
                 var hasConfig = !string.IsNullOrWhiteSpace(context.SelectedReport.DashboardConfigJson);
 
-                var resultSets = await ExecuteStoredProcedureMultiResultSets(
+                var resultSets = await _spExecutor.ExecuteMultipleAsync(
                     context.SelectedReport.DataSource.ConnString,
                     context.SelectedReport.ProcName,
                     validation.Parameters);
@@ -344,7 +347,7 @@ namespace ReportPanel.Controllers
                 return BadRequest("Data source not found or inactive.");
             }
 
-            var result = await ExecuteStoredProcedure(
+            var result = await _spExecutor.ExecuteAsync(
                 context.SelectedReport.DataSource.ConnString,
                 context.SelectedReport.ProcName,
                 validation.Parameters);
@@ -685,10 +688,7 @@ namespace ReportPanel.Controllers
             return result;
         }
 
-        private sealed class ReportRunResult
-        {
-            public List<Dictionary<string, object>> Rows { get; set; } = new();
-        }
+        // M-13 R6.3 (28 Nisan 2026): ReportRunResult → SpExecutionResult (StoredProcedureExecutor servisi).
 
         private static string ResolveDefaultValue(ReportParamField field)
         {
@@ -706,84 +706,7 @@ namespace ReportPanel.Controllers
             return field.DefaultValue.Trim();
         }
 
-        private static async Task<ReportRunResult> ExecuteStoredProcedure(
-            string connectionString,
-            string procName,
-            List<SqlParameter> parameters)
-        {
-            using var connection = new SqlConnection(connectionString);
-            await connection.OpenAsync();
-
-            using var command = new SqlCommand(procName, connection)
-            {
-                CommandType = CommandType.StoredProcedure,
-                CommandTimeout = 120
-            };
-
-            if (parameters.Count > 0)
-            {
-                command.Parameters.AddRange(parameters.ToArray());
-            }
-
-            using var reader = await command.ExecuteReaderAsync();
-            var result = new ReportRunResult();
-
-            while (await reader.ReadAsync())
-            {
-                var row = new Dictionary<string, object>();
-                for (var i = 0; i < reader.FieldCount; i++)
-                {
-                    var value = await reader.IsDBNullAsync(i) ? null : reader.GetValue(i);
-                    row[reader.GetName(i)] = value ?? "";
-                }
-
-                result.Rows.Add(row);
-            }
-
-            return result;
-        }
-
-        private static async Task<List<List<Dictionary<string, object>>>> ExecuteStoredProcedureMultiResultSets(
-            string connectionString,
-            string procName,
-            List<SqlParameter> parameters)
-        {
-            using var connection = new SqlConnection(connectionString);
-            await connection.OpenAsync();
-
-            using var command = new SqlCommand(procName, connection)
-            {
-                CommandType = CommandType.StoredProcedure,
-                CommandTimeout = 120
-            };
-
-            if (parameters.Count > 0)
-            {
-                command.Parameters.AddRange(parameters.ToArray());
-            }
-
-            using var reader = await command.ExecuteReaderAsync();
-            var allResultSets = new List<List<Dictionary<string, object>>>();
-
-            do
-            {
-                var rows = new List<Dictionary<string, object>>();
-                while (await reader.ReadAsync())
-                {
-                    var row = new Dictionary<string, object>();
-                    for (var i = 0; i < reader.FieldCount; i++)
-                    {
-                        var value = await reader.IsDBNullAsync(i) ? null : reader.GetValue(i);
-                        row[reader.GetName(i)] = value ?? "";
-                    }
-                    rows.Add(row);
-                }
-                allResultSets.Add(rows);
-            } while (await reader.NextResultAsync());
-
-            return allResultSets;
-        }
-
+        // M-13 R6.3 (28 Nisan 2026): ExecuteStoredProcedure + ExecuteStoredProcedureMultiResultSets → StoredProcedureExecutor.
         // M-13 R6.2 (28 Nisan 2026): InjectUserDataFilters → UserDataFilterInjector servisine.
         // M-13 R6.1 (28 Nisan 2026): BuildExcelFile static helper'i ExcelExportService'e tasindi.
 

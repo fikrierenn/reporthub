@@ -24,6 +24,7 @@ builder.Services.AddScoped<ReportPanel.Services.SpExplorerService>();
 builder.Services.AddScoped<ReportPanel.Services.FilterOptionsService>();
 builder.Services.AddScoped<ReportPanel.Services.ExcelExportService>();
 builder.Services.AddScoped<ReportPanel.Services.UserDataFilterInjector>();
+builder.Services.AddScoped<ReportPanel.Services.StoredProcedureExecutor>();
 
 // Add Entity Framework
 builder.Services.AddDbContext<ReportPanelContext>(options =>
