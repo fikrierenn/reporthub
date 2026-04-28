@@ -158,7 +158,171 @@ ORDER BY p.parameter_id;";
             _ => "text"
         };
     }
+
+    /// <summary>
+    /// SP'yi tip-bazlı default'larla çalıştır + sonuç set'lerini döndür.
+    /// Admin override (paramsJson dict) belirli parametrelerin default değerini geçersiz kılar.
+    /// maxRows clamp 1..100; truncated true ise SP daha fazla satır döndü ama kesildi.
+    /// </summary>
+    public async Task<SpPreviewResult> PreviewAsync(
+        string dataSourceKey,
+        string procName,
+        int maxRows,
+        Dictionary<string, string>? overrides)
+    {
+        if (string.IsNullOrWhiteSpace(dataSourceKey) || string.IsNullOrWhiteSpace(procName))
+        {
+            return new SpPreviewResult(false, "DataSource ve ProcName gerekli.", Array.Empty<SpPreviewResultSet>());
+        }
+
+        var ds = await _context.DataSources.AsNoTracking()
+            .FirstOrDefaultAsync(d => d.DataSourceKey == dataSourceKey && d.IsActive);
+        if (ds == null)
+        {
+            return new SpPreviewResult(false, "DataSource bulunamadi.", Array.Empty<SpPreviewResultSet>());
+        }
+
+        // maxRows guvenlik clamp: 1..100
+        if (maxRows < 1) maxRows = 10;
+        if (maxRows > 100) maxRows = 100;
+
+        var resolvedOverrides = overrides ?? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        var resultSets = new List<SpPreviewResultSet>();
+
+        try
+        {
+            await using var conn = new SqlConnection(ds.ConnString);
+            await conn.OpenAsync();
+
+            // SP parametrelerini meta'dan oku, tip-bazli sensible default + admin override.
+            var paramList = await BuildSpParametersAsync(conn, procName, resolvedOverrides);
+
+            await using var cmd = new SqlCommand(procName, conn)
+            {
+                CommandType = CommandType.StoredProcedure,
+                CommandTimeout = 30
+            };
+            if (paramList.Count > 0) cmd.Parameters.AddRange(paramList.ToArray());
+
+            await using var reader = await cmd.ExecuteReaderAsync();
+            var rsIndex = 0;
+            do
+            {
+                var columns = new List<SpPreviewColumn>();
+                for (var i = 0; i < reader.FieldCount; i++)
+                {
+                    columns.Add(new SpPreviewColumn(reader.GetName(i), reader.GetFieldType(i)?.Name ?? "object"));
+                }
+
+                var rows = new List<Dictionary<string, object?>>();
+                var rowCount = 0;
+                while (await reader.ReadAsync() && rowCount < maxRows)
+                {
+                    var row = new Dictionary<string, object?>();
+                    for (var i = 0; i < reader.FieldCount; i++)
+                    {
+                        row[reader.GetName(i)] = await reader.IsDBNullAsync(i) ? null : reader.GetValue(i);
+                    }
+                    rows.Add(row);
+                    rowCount++;
+                }
+                // Sayim icin kalan satirlari oku (truncated flag).
+                var totalRows = rowCount;
+                while (await reader.ReadAsync()) totalRows++;
+
+                resultSets.Add(new SpPreviewResultSet(rsIndex, columns, rows, totalRows, totalRows > maxRows));
+                rsIndex++;
+            } while (await reader.NextResultAsync());
+        }
+        catch (SqlException sx)
+        {
+            // Admin-only endpoint: SQL hatasi admin'e gosterilmek SP debug icin faydali.
+            return new SpPreviewResult(false, $"SQL hatası ({sx.Number}): {sx.Message}", resultSets);
+        }
+        catch (Exception ex)
+        {
+            // M-02: generic connection exception user'a sizintisiz.
+            _logger.LogWarning(ex, "SpPreview failed for {DataSourceKey}.{ProcName}", dataSourceKey, procName);
+            return new SpPreviewResult(false, "Veri kaynağına bağlanılamadı.", resultSets);
+        }
+
+        return new SpPreviewResult(true, null, resultSets);
+    }
+
+    private static async Task<List<SqlParameter>> BuildSpParametersAsync(
+        SqlConnection conn,
+        string procName,
+        Dictionary<string, string> overrides)
+    {
+        var paramList = new List<SqlParameter>();
+        try
+        {
+            await using var metaCmd = new SqlCommand(
+                @"SELECT PARAMETER_NAME, DATA_TYPE
+                  FROM INFORMATION_SCHEMA.PARAMETERS
+                  WHERE SPECIFIC_NAME = @sp
+                  ORDER BY ORDINAL_POSITION", conn)
+            { CommandTimeout = 10 };
+            // SCHEMA.NAME formatinda gelirse kisa adi al.
+            var shortName = procName.Contains('.') ? procName[(procName.LastIndexOf('.') + 1)..] : procName;
+            metaCmd.Parameters.AddWithValue("@sp", shortName);
+            await using var metaReader = await metaCmd.ExecuteReaderAsync();
+            while (await metaReader.ReadAsync())
+            {
+                var pname = metaReader["PARAMETER_NAME"]?.ToString() ?? "";
+                if (string.IsNullOrWhiteSpace(pname)) continue;
+                var ptype = metaReader["DATA_TYPE"]?.ToString()?.ToLowerInvariant() ?? "";
+
+                // F-02: SP NULL kabul etmezse patlamasin diye tip-bazli sensible default.
+                object defaultValue = ptype switch
+                {
+                    "date" or "datetime" or "datetime2" or "smalldatetime" or "datetimeoffset" => DateTime.UtcNow.Date,
+                    "time" => TimeSpan.Zero,
+                    "int" or "bigint" or "smallint" or "tinyint" => 0,
+                    "bit" => false,
+                    "decimal" or "numeric" or "money" or "smallmoney" or "float" or "real" => 0m,
+                    "char" or "varchar" or "nchar" or "nvarchar" or "text" or "ntext" => string.Empty,
+                    "uniqueidentifier" => Guid.Empty,
+                    _ => DBNull.Value
+                };
+
+                // F-02 override: admin'in verdigi deger varsa tip'e cast ederek default yerine kullan.
+                var pnameClean = pname.TrimStart('@');
+                object finalValue = defaultValue;
+                if (overrides.TryGetValue(pnameClean, out var overrideRaw) && !string.IsNullOrWhiteSpace(overrideRaw))
+                {
+                    finalValue = ptype switch
+                    {
+                        "date" or "datetime" or "datetime2" or "smalldatetime" or "datetimeoffset"
+                            => DateTime.TryParse(overrideRaw, out var d) ? (object)d : defaultValue,
+                        "time"
+                            => TimeSpan.TryParse(overrideRaw, out var t) ? (object)t : defaultValue,
+                        "int" or "bigint" or "smallint" or "tinyint"
+                            => long.TryParse(overrideRaw, out var n) ? (object)n : defaultValue,
+                        "bit"
+                            => overrideRaw == "1" || overrideRaw.Equals("true", StringComparison.OrdinalIgnoreCase),
+                        "decimal" or "numeric" or "money" or "smallmoney" or "float" or "real"
+                            => decimal.TryParse(overrideRaw, System.Globalization.NumberStyles.Number, System.Globalization.CultureInfo.InvariantCulture, out var m) ? (object)m : defaultValue,
+                        "uniqueidentifier"
+                            => Guid.TryParse(overrideRaw, out var g) ? (object)g : defaultValue,
+                        _ => overrideRaw
+                    };
+                }
+
+                paramList.Add(new SqlParameter(pname, finalValue));
+            }
+        }
+        catch
+        {
+            // Parametre çıkarma başarısız olursa yine de SP parametresiz denenecek.
+        }
+        return paramList;
+    }
 }
+
+public record SpPreviewResult(bool Success, string? Error, IReadOnlyList<SpPreviewResultSet> ResultSets);
+public record SpPreviewResultSet(int Index, IReadOnlyList<SpPreviewColumn> Columns, IReadOnlyList<Dictionary<string, object?>> Rows, int RowCount, bool Truncated);
+public record SpPreviewColumn(string Name, string Type);
 
 public record SpListResult(bool Success, string? Error, IReadOnlyList<SpInfo> Procedures);
 public record SpInfo(string Name, string Schema, string ShortName);

@@ -233,22 +233,12 @@ namespace ReportPanel.Controllers
         // belirli parametrelerin degerini gecersiz kilar.
         [HttpGet]
         [Route("Admin/SpPreview")]
+        // M-13 R4.2: Logic SpExplorerService.PreviewAsync'e tasindi (28 Nisan 2026).
         public async Task<IActionResult> SpPreview(string dataSourceKey, string procName, int maxRows = 10, string? paramsJson = null)
         {
-            if (string.IsNullOrWhiteSpace(dataSourceKey) || string.IsNullOrWhiteSpace(procName))
-                return Json(new { success = false, error = "DataSource ve ProcName gerekli." });
-
-            var ds = await _context.DataSources.AsNoTracking()
-                .FirstOrDefaultAsync(d => d.DataSourceKey == dataSourceKey && d.IsActive);
-            if (ds == null)
-                return Json(new { success = false, error = "DataSource bulunamadi." });
-
-            // maxRows guvenlik: 1..100 arasinda olsun
-            if (maxRows < 1) maxRows = 10;
-            if (maxRows > 100) maxRows = 100;
-
             // Admin override: parametre adi -> string deger haritasi (case-insensitive).
-            Dictionary<string, string> overrides = new(StringComparer.OrdinalIgnoreCase);
+            // paramsJson parse hatasi sessizce gecilir (default'larla devam).
+            Dictionary<string, string>? overrides = null;
             if (!string.IsNullOrWhiteSpace(paramsJson))
             {
                 try
@@ -256,144 +246,18 @@ namespace ReportPanel.Controllers
                     var parsed = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(paramsJson);
                     if (parsed != null)
                     {
+                        overrides = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
                         foreach (var kv in parsed)
                         {
                             if (!string.IsNullOrWhiteSpace(kv.Key)) overrides[kv.Key.TrimStart('@')] = kv.Value ?? "";
                         }
                     }
                 }
-                catch { /* gecersiz JSON -> override yok, default'larla devam */ }
+                catch { /* gecersiz JSON -> default'larla devam */ }
             }
 
-            var resultSets = new List<object>();
-            try
-            {
-                await using var conn = new SqlConnection(ds.ConnString);
-                await conn.OpenAsync();
-
-                // SP parametrelerini bul, zorunlu olanlari NULL ile doldur (SP NULL kabul etmezse hata verecek, mesaj iletilir)
-                var paramList = new List<SqlParameter>();
-                try
-                {
-                    await using var metaCmd = new SqlCommand(
-                        @"SELECT PARAMETER_NAME, DATA_TYPE
-                          FROM INFORMATION_SCHEMA.PARAMETERS
-                          WHERE SPECIFIC_NAME = @sp
-                          ORDER BY ORDINAL_POSITION", conn) { CommandTimeout = 10 };
-                    // SCHEMA.NAME formatinda gelirse kisa adi al
-                    var shortName = procName.Contains('.') ? procName[(procName.LastIndexOf('.') + 1)..] : procName;
-                    metaCmd.Parameters.AddWithValue("@sp", shortName);
-                    await using var metaReader = await metaCmd.ExecuteReaderAsync();
-                    while (await metaReader.ReadAsync())
-                    {
-                        var pname = metaReader["PARAMETER_NAME"]?.ToString() ?? "";
-                        if (string.IsNullOrWhiteSpace(pname)) continue;
-                        var ptype = metaReader["DATA_TYPE"]?.ToString()?.ToLowerInvariant() ?? "";
-
-                        // F-02: SP NULL kabul etmezse patlamasin diye tip-bazli sensible default.
-                        object defaultValue = ptype switch
-                        {
-                            "date" or "datetime" or "datetime2" or "smalldatetime" or "datetimeoffset" => DateTime.UtcNow.Date,
-                            "time" => TimeSpan.Zero,
-                            "int" or "bigint" or "smallint" or "tinyint" => 0,
-                            "bit" => false,
-                            "decimal" or "numeric" or "money" or "smallmoney" or "float" or "real" => 0m,
-                            "char" or "varchar" or "nchar" or "nvarchar" or "text" or "ntext" => string.Empty,
-                            "uniqueidentifier" => Guid.Empty,
-                            _ => DBNull.Value
-                        };
-
-                        // F-02 override: admin'in verdigi deger varsa tip'e cast ederek default yerine kullan.
-                        var pnameClean = pname.TrimStart('@');
-                        object finalValue = defaultValue;
-                        if (overrides.TryGetValue(pnameClean, out var overrideRaw) && !string.IsNullOrWhiteSpace(overrideRaw))
-                        {
-                            finalValue = ptype switch
-                            {
-                                "date" or "datetime" or "datetime2" or "smalldatetime" or "datetimeoffset"
-                                    => DateTime.TryParse(overrideRaw, out var d) ? (object)d : defaultValue,
-                                "time"
-                                    => TimeSpan.TryParse(overrideRaw, out var t) ? (object)t : defaultValue,
-                                "int" or "bigint" or "smallint" or "tinyint"
-                                    => long.TryParse(overrideRaw, out var n) ? (object)n : defaultValue,
-                                "bit"
-                                    => overrideRaw == "1" || overrideRaw.Equals("true", StringComparison.OrdinalIgnoreCase),
-                                "decimal" or "numeric" or "money" or "smallmoney" or "float" or "real"
-                                    => decimal.TryParse(overrideRaw, System.Globalization.NumberStyles.Number, System.Globalization.CultureInfo.InvariantCulture, out var m) ? (object)m : defaultValue,
-                                "uniqueidentifier"
-                                    => Guid.TryParse(overrideRaw, out var g) ? (object)g : defaultValue,
-                                _
-                                    => overrideRaw
-                            };
-                        }
-
-                        paramList.Add(new SqlParameter(pname, finalValue));
-                    }
-                }
-                catch { /* parametre cikartma basarisiz olursa yine de SP'yi parametresiz deneriz */ }
-
-                await using var cmd = new SqlCommand(procName, conn)
-                {
-                    CommandType = CommandType.StoredProcedure,
-                    CommandTimeout = 30
-                };
-                if (paramList.Count > 0) cmd.Parameters.AddRange(paramList.ToArray());
-
-                await using var reader = await cmd.ExecuteReaderAsync();
-                var rsIndex = 0;
-                do
-                {
-                    var columns = new List<object>();
-                    for (var i = 0; i < reader.FieldCount; i++)
-                    {
-                        columns.Add(new
-                        {
-                            name = reader.GetName(i),
-                            type = reader.GetFieldType(i)?.Name ?? "object"
-                        });
-                    }
-
-                    var rows = new List<Dictionary<string, object?>>();
-                    var rowCount = 0;
-                    while (await reader.ReadAsync() && rowCount < maxRows)
-                    {
-                        var row = new Dictionary<string, object?>();
-                        for (var i = 0; i < reader.FieldCount; i++)
-                        {
-                            row[reader.GetName(i)] = await reader.IsDBNullAsync(i) ? null : reader.GetValue(i);
-                        }
-                        rows.Add(row);
-                        rowCount++;
-                    }
-                    // geri kalan satirlari at (sayim icin)
-                    var totalRows = rowCount;
-                    while (await reader.ReadAsync()) totalRows++;
-
-                    resultSets.Add(new
-                    {
-                        index = rsIndex,
-                        columns,
-                        rows,
-                        rowCount = totalRows,
-                        truncated = totalRows > maxRows
-                    });
-                    rsIndex++;
-                } while (await reader.NextResultAsync());
-            }
-            catch (SqlException sx)
-            {
-                // Admin-only endpoint: SQL hatasini admin'e gostermek SP debug icin faydali.
-                // Number ile birlikte gonderiyoruz; Message zaten SqlException'in kisa ozeti.
-                return Json(new { success = false, error = $"SQL hatası ({sx.Number}): {sx.Message}", resultSets });
-            }
-            catch (Exception ex)
-            {
-                // M-02: generic connection exception user'a sizintisiz.
-                _ = ex;
-                return Json(new { success = false, error = "Veri kaynağına bağlanılamadı.", resultSets });
-            }
-
-            return Json(new { success = true, resultSets });
+            var result = await _spExplorer.PreviewAsync(dataSourceKey, procName, maxRows, overrides);
+            return Json(new { success = result.Success, error = result.Error, resultSets = result.ResultSets });
         }
 
         // Ayrı sayfa action'ları
