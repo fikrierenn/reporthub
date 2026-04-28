@@ -207,8 +207,9 @@ Kullanici 28 Nisan 2026 oturum 4: "sonraki versiyonda rapor portalindan sirket i
 Mevcut: rapor + dashboard portal. Hedef versiyon vNext: tam sirket ici portal.
 
 **Eklenebilecekler (taslak):**
-- Duyurular / haberler (announcement feed)
-- Departman / takim dizini (org chart)  
+- **Günlük tamim / sirküler / genelge** (28 Nisan 2026 kullanici eklemesi) — günlük resmi duyuru, departman/herkese, okundu-onayli, arsiv, search
+- Duyurular / haberler (announcement feed — günlük tamim ile birlikte ama serbest formatli)
+- Departman / takim dizini (org chart)
 - Doküman / dosya paylasimi (intranet drive)
 - Mesajlasma / yorum (comment thread)
 - Form / anket (form builder + survey)

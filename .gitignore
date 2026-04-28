@@ -23,6 +23,9 @@
 # Cowork sandbox worktrees (isolated copies, not tracked)
 .claude/worktrees/
 
+# Klonlanan skill'ler (git clone ile kurulan, gitignored — README'de install komutu)
+.claude/skills/htmx-expert/
+
 # Per-user Claude Code permissions (not shared)
 .claude/settings.local.json
 
