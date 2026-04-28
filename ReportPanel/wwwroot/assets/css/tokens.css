@@ -1,0 +1,79 @@
+/**
+ * BKM Kitap — ReportHub design tokens
+ * CSS değişkenleri (renk paleti, gölge, geçiş).
+ *
+ * M-13 Plan 03 sonrası: mockup-v3 semantic tokens (--ink-*, --paper, --canvas, --line, --accent)
+ * proje genelinde birincil. Eski --brand-* primitive'ler legacy.css'te birkaç sınıf üzerinden kalır.
+ */
+
+:root {
+    color-scheme: light;
+
+    /* === Marka renkleri (logo'dan) === */
+    --brand-red: #dc2626;           /* Ana kırmızı */
+    --brand-red-light: #ef4444;
+    --brand-red-dark: #b91c1c;
+    --brand-red-darker: #991b1b;
+
+    /* === Siyah/gri tonları (Tailwind gray scale) === */
+    --brand-black: #000000;
+    --brand-gray-900: #111827;
+    --brand-gray-800: #1f2937;
+    --brand-gray-700: #374151;
+    --brand-gray-600: #4b5563;
+    --brand-gray-500: #6b7280;
+    --brand-gray-400: #9ca3af;
+    --brand-gray-300: #d1d5db;
+    --brand-gray-200: #e5e7eb;
+    --brand-gray-100: #f3f4f6;
+    --brand-gray-50: #f9fafb;
+
+    /* === Beyaz === */
+    --brand-white: #ffffff;
+    --brand-white-soft: #fefefe;
+
+    /* === Durum renkleri === */
+    --success: #10b981;             /* yeşil */
+    --warning: #f59e0b;             /* turuncu */
+    --error: var(--brand-red);
+    --info: #3b82f6;                /* mavi */
+
+    /* === Gölge === */
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow:    0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+
+    /* === Geçişler === */
+    --transition: all 0.2s ease-in-out;
+    --transition-fast: all 0.15s ease-in-out;
+    --transition-slow: all 0.3s ease-in-out;
+
+    /* === Mockup-v3 semantic tokens (M-13 Plan 03 birincil) === */
+
+    /* Ink scale (text/icon) */
+    --ink-0: var(--brand-gray-900);  /* en koyu — KPI value, başlık */
+    --ink-1: var(--brand-gray-800);  /* primary text */
+    --ink-2: var(--brand-gray-700);  /* secondary text */
+    --ink-3: var(--brand-gray-500);  /* muted/label */
+    --ink-4: var(--brand-gray-400);  /* placeholder/disabled */
+
+    /* Surfaces */
+    --paper: var(--brand-white);     /* card/panel arkaplanı */
+    --canvas: var(--brand-gray-50);  /* sayfa arkaplanı */
+    --chip: var(--brand-gray-100);   /* tag/chip arkaplanı */
+
+    /* Lines */
+    --line: var(--brand-gray-200);
+    --line-2: var(--brand-gray-100);
+
+    /* Accent (BKM kırmızı + state) */
+    --accent: var(--brand-red);                     /* #dc2626 */
+    --accent-soft: rgba(220, 38, 38, 0.12);         /* selection/drop */
+    --accent-ink: var(--brand-red-darker);          /* #991b1b hover */
+
+    /* Status (mockup adlandırması) */
+    --ok: var(--success);             /* #10b981 */
+    --warn: var(--warning);           /* #f59e0b */
+    --danger: var(--brand-red-dark);  /* #b91c1c */
+}

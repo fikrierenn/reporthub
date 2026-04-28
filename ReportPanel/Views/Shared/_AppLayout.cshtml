@@ -39,7 +39,13 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@@400;500;600;700&family=JetBrains+Mono:wght@@400;500&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <link href="~/assets/css/style.css" rel="stylesheet" asp-append-version="true">
+    @* M-13 R2 (28 Nisan): style.css 744 sat, 4 modüler dosyaya bölündü.
+       Yükleme sırası ZORUNLU: tokens (variables) → components (cascade ihtiyacı yok ama tutarlılık) →
+       legacy (sadece kullanılan 4 sınıf) → utilities (media query override'ları). *@
+    <link href="~/assets/css/tokens.css" rel="stylesheet" asp-append-version="true">
+    <link href="~/assets/css/components.css" rel="stylesheet" asp-append-version="true">
+    <link href="~/assets/css/legacy.css" rel="stylesheet" asp-append-version="true">
+    <link href="~/assets/css/utilities.css" rel="stylesheet" asp-append-version="true">
     <link href="~/assets/css/app-shell.css" rel="stylesheet" asp-append-version="true">
 
     @* M-13 Plan 04 (28 Nisan 2026): Alpine.js + htmx CDN-only entegrasyon. Build step yok.
