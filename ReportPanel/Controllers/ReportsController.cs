@@ -1,9 +1,6 @@
-using System.Data;
 using System.Security.Claims;
-using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using ReportPanel.Models;
 using ReportPanel.Services;
@@ -200,7 +197,7 @@ namespace ReportPanel.Controllers
                 return View("Run", model);
             }
 
-            var validation = ValidateAndBuildParameters(context.ParamFields, form);
+            var validation = ReportParamValidator.ValidateAndBuild(context.ParamFields, form);
             model.ParamValues = validation.ParamValues;
             if (!validation.Success)
             {
@@ -335,8 +332,8 @@ namespace ReportPanel.Controllers
                 return BadRequest("Report not found or access denied.");
             }
 
-            var paramFields = ParseParamSchema(context.SelectedReport.ParamSchemaJson);
-            var validation = ValidateAndBuildParameters(paramFields, Request.Form);
+            var paramFields = ReportParamValidator.ParseSchema(context.SelectedReport.ParamSchemaJson);
+            var validation = ReportParamValidator.ValidateAndBuild(paramFields, Request.Form);
             if (!validation.Success)
             {
                 return BadRequest(string.Join(" ", validation.Errors));
@@ -480,7 +477,7 @@ namespace ReportPanel.Controllers
                 SelectedCategory = normalizedCategory,
                 SelectedReport = selectedReport,
                 ParamFields = selectedReport != null
-                    ? ParseParamSchema(selectedReport.ParamSchemaJson)
+                    ? ReportParamValidator.ParseSchema(selectedReport.ParamSchemaJson)
                     : new List<ReportParamField>()
             };
         }
@@ -496,214 +493,6 @@ namespace ReportPanel.Controllers
             public string SelectedCategory { get; set; } = "";
             public ReportCatalog? SelectedReport { get; set; }
             public List<ReportParamField> ParamFields { get; set; } = new();
-        }
-
-        private static List<ReportParamField> ParseParamSchema(string? json)
-        {
-            if (string.IsNullOrWhiteSpace(json))
-            {
-                return new List<ReportParamField>();
-            }
-
-            try
-            {
-                using var doc = JsonDocument.Parse(json);
-                if (doc.RootElement.ValueKind == JsonValueKind.Object &&
-                    doc.RootElement.TryGetProperty("fields", out var fieldsElement) &&
-                    fieldsElement.ValueKind == JsonValueKind.Array)
-                {
-                    return fieldsElement
-                        .EnumerateArray()
-                        .Where(e => e.ValueKind == JsonValueKind.Object)
-                        .Select(e => new ReportParamField
-                        {
-                            Name = e.TryGetProperty("name", out var n) ? n.GetString() ?? "" : "",
-                            Label = e.TryGetProperty("label", out var l) ? l.GetString() ?? "" : "",
-                            Type = e.TryGetProperty("type", out var t) ? t.GetString() ?? "text" : "text",
-                            Required = e.TryGetProperty("required", out var r) && r.GetBoolean(),
-                            Placeholder = e.TryGetProperty("placeholder", out var p) ? p.GetString() ?? "" : "",
-                            HelpText = e.TryGetProperty("help", out var h) ? h.GetString() ?? "" : "",
-                            DefaultValue = e.TryGetProperty("default", out var d)
-                                ? d.GetString() ?? ""
-                                : (e.TryGetProperty("defaultValue", out var dv) ? dv.GetString() ?? "" : "")
-                        })
-                        .Where(f => !string.IsNullOrWhiteSpace(f.Name))
-                        .ToList();
-                }
-
-                if (doc.RootElement.ValueKind == JsonValueKind.Object)
-                {
-                    var list = new List<ReportParamField>();
-                    foreach (var prop in doc.RootElement.EnumerateObject())
-                    {
-                        var type = prop.Value.ValueKind == JsonValueKind.String
-                            ? prop.Value.GetString() ?? "text"
-                            : "text";
-                        list.Add(new ReportParamField
-                        {
-                            Name = prop.Name,
-                            Label = prop.Name,
-                            Type = NormalizeType(type),
-                            Required = false,
-                            Placeholder = "",
-                            HelpText = "",
-                            DefaultValue = ""
-                        });
-                    }
-
-                    return list;
-                }
-            }
-            catch
-            {
-                return new List<ReportParamField>();
-            }
-
-            return new List<ReportParamField>();
-        }
-
-        private static string NormalizeType(string? type)
-        {
-            if (string.IsNullOrWhiteSpace(type))
-            {
-                return "text";
-            }
-
-            var lower = type.Trim().ToLowerInvariant();
-            return lower switch
-            {
-                "int" => "number",
-                "integer" => "number",
-                "decimal" => "decimal",
-                "float" => "decimal",
-                "double" => "decimal",
-                "bit" => "checkbox",
-                "bool" => "checkbox",
-                "boolean" => "checkbox",
-                "date" => "date",
-                "datetime" => "date",
-                _ => lower
-            };
-        }
-
-        private sealed class ParamValidationResult
-        {
-            public bool Success { get; set; }
-            public List<string> Errors { get; set; } = new();
-            public List<SqlParameter> Parameters { get; set; } = new();
-            public string ParamsJson { get; set; } = "{}";
-            public Dictionary<string, string> ParamValues { get; set; } = new();
-        }
-
-        private static ParamValidationResult ValidateAndBuildParameters(
-            List<ReportParamField> fields,
-            IFormCollection form)
-        {
-            var result = new ParamValidationResult { Success = true };
-            var paramValues = new Dictionary<string, object?>();
-            var rawValues = new Dictionary<string, string>();
-
-            foreach (var field in fields)
-            {
-                var raw = form[field.Name].ToString();
-                if (string.IsNullOrWhiteSpace(raw))
-                {
-                    raw = ResolveDefaultValue(field);
-                }
-                var isEmpty = string.IsNullOrWhiteSpace(raw);
-                rawValues[field.Name] = raw;
-
-                if (field.Required && isEmpty)
-                {
-                    result.Success = false;
-                    result.Errors.Add($"{field.Label} is required.");
-                    continue;
-                }
-
-                object? value = null;
-                var type = NormalizeType(field.Type);
-
-                if (!isEmpty)
-                {
-                    switch (type)
-                    {
-                        case "number":
-                            if (int.TryParse(raw, out var intValue))
-                            {
-                                value = intValue;
-                            }
-                            else
-                            {
-                                result.Success = false;
-                                result.Errors.Add($"{field.Label} must be a number.");
-                            }
-                            break;
-                        case "decimal":
-                            if (decimal.TryParse(raw, out var decimalValue))
-                            {
-                                value = decimalValue;
-                            }
-                            else
-                            {
-                                result.Success = false;
-                                result.Errors.Add($"{field.Label} must be a number.");
-                            }
-                            break;
-                        case "checkbox":
-                            value = true;
-                            break;
-                        case "date":
-                            if (DateTime.TryParse(raw, out var dateValue))
-                            {
-                                value = dateValue;
-                            }
-                            else
-                            {
-                                result.Success = false;
-                                result.Errors.Add($"{field.Label} must be a valid date.");
-                            }
-                            break;
-                        default:
-                            value = raw.Trim();
-                            break;
-                    }
-                }
-
-                paramValues[field.Name] = value;
-            }
-
-            if (!result.Success)
-            {
-                return result;
-            }
-
-            foreach (var kvp in paramValues)
-            {
-                var param = new SqlParameter("@" + kvp.Key, kvp.Value ?? DBNull.Value);
-                result.Parameters.Add(param);
-            }
-
-            result.ParamsJson = JsonSerializer.Serialize(paramValues);
-            result.ParamValues = rawValues;
-            return result;
-        }
-
-        // M-13 R6.3 (28 Nisan 2026): ReportRunResult → SpExecutionResult (StoredProcedureExecutor servisi).
-
-        private static string ResolveDefaultValue(ReportParamField field)
-        {
-            if (string.IsNullOrWhiteSpace(field.DefaultValue))
-            {
-                return string.Empty;
-            }
-
-            if (string.Equals(NormalizeType(field.Type), "date", StringComparison.OrdinalIgnoreCase) &&
-                string.Equals(field.DefaultValue.Trim(), "today", StringComparison.OrdinalIgnoreCase))
-            {
-                return DateTime.Today.ToString("yyyy-MM-dd");
-            }
-
-            return field.DefaultValue.Trim();
         }
 
         // M-13 R6.3 (28 Nisan 2026): ExecuteStoredProcedure + ExecuteStoredProcedureMultiResultSets → StoredProcedureExecutor.
