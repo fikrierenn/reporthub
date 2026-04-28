@@ -1,0 +1,70 @@
+@model ReportPanel.ViewModels.DashboardViewModel
+@using System.Globalization
+@{
+    var trCulture = new CultureInfo("tr-TR");
+
+    string TimeAgo(DateTime dt)
+    {
+        var diff = DateTime.UtcNow - (dt.Kind == DateTimeKind.Utc ? dt : dt.ToUniversalTime());
+        if (diff.TotalSeconds < 60) return "şimdi";
+        if (diff.TotalMinutes < 60) return $"{(int)diff.TotalMinutes} dk önce";
+        if (diff.TotalHours < 24) return $"{(int)diff.TotalHours} sa önce";
+        if (diff.TotalDays < 7) return $"{(int)diff.TotalDays} gün önce";
+        return dt.ToString("dd.MM.yyyy", trCulture);
+    }
+}
+
+<div class="kpi-grid">
+    <div class="kpi-card k-red">
+        <div class="head">
+            <span class="label">Erişilebilir Rapor</span>
+            <div class="ico"><i class="fas fa-chart-column"></i></div>
+        </div>
+        <div class="value">@Model.ReportCount.ToString("N0", trCulture)</div>
+        <div class="delta up">
+            <i class="fas fa-arrow-up text-[10px]"></i>
+            <span>aktif</span>
+            <span class="desc">rol filtresine göre</span>
+        </div>
+    </div>
+
+    <div class="kpi-card k-ink">
+        <div class="head">
+            <span class="label">Bugün Çalıştırılan</span>
+            <div class="ico"><i class="fas fa-play"></i></div>
+        </div>
+        <div class="value">@Model.TodayRunCount.ToString("N0", trCulture)</div>
+        <div class="delta">
+            <span class="desc">tüm kullanıcılar</span>
+        </div>
+    </div>
+
+    <div class="kpi-card k-green">
+        <div class="head">
+            <span class="label">Aktif Kullanıcı</span>
+            <div class="ico"><i class="fas fa-users"></i></div>
+        </div>
+        <div class="value">@Model.ActiveUserCount.ToString("N0", trCulture)</div>
+        <div class="delta">
+            <span class="desc">son 1 saat</span>
+        </div>
+    </div>
+
+    <div class="kpi-card k-warn">
+        <div class="head">
+            <span class="label">Bu Ay (Sen)</span>
+            <div class="ico"><i class="fas fa-clock"></i></div>
+        </div>
+        <div class="value">@Model.MonthlyRunCount.ToString("N0", trCulture)</div>
+        <div class="delta">
+            @if (Model.LastRunAt.HasValue)
+            {
+                <span class="desc">son: @TimeAgo(Model.LastRunAt.Value)</span>
+            }
+            else
+            {
+                <span class="desc">henüz çalıştırılmadı</span>
+            }
+        </div>
+    </div>
+</div>
