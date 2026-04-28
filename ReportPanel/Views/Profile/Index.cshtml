@@ -80,15 +80,22 @@
             <h2 style="font-size:11px;">Şifre Değiştir <span style="color:var(--ink-4); font-weight:400; text-transform:none; letter-spacing:0;">— boş bırakırsanız değişmez</span></h2>
         </div>
 
+        @* Plan 04 F2.3 (28 Nisan): _PasswordInput partial — DRY + Alpine show/hide toggle. *@
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:14px; margin-bottom:18px;">
-            <div class="field" style="margin-bottom:0;">
-                <label class="lab">Yeni Şifre</label>
-                <input type="password" name="NewPassword" class="inp" placeholder="Yeni şifre" autocomplete="new-password" />
-            </div>
-            <div class="field" style="margin-bottom:0;">
-                <label class="lab">Yeni Şifre (Tekrar)</label>
-                <input type="password" name="ConfirmPassword" class="inp" placeholder="Yeni şifreyi tekrar girin" autocomplete="new-password" />
-            </div>
+            @await Html.PartialAsync("_PasswordInput", new ReportPanel.ViewModels.PasswordInputViewModel {
+                Id = "NewPassword",
+                Name = "NewPassword",
+                Label = "Yeni Şifre",
+                Placeholder = "Yeni şifre",
+                Autocomplete = "new-password"
+            })
+            @await Html.PartialAsync("_PasswordInput", new ReportPanel.ViewModels.PasswordInputViewModel {
+                Id = "ConfirmPassword",
+                Name = "ConfirmPassword",
+                Label = "Yeni Şifre (Tekrar)",
+                Placeholder = "Yeni şifreyi tekrar girin",
+                Autocomplete = "new-password"
+            })
         </div>
 
         <div style="display:flex; align-items:center; justify-content:space-between; padding-top:18px; border-top:1px solid var(--line-2);">
