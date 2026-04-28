@@ -58,6 +58,10 @@
     </div>
 }
 
+@* Plan 04 F2.1: Alpine $store.builder.dirty form-level @input listener.
+   Parent div'de @input → herhangi bir input değişikliğinde dirty chip topbar'da görünür +
+   beforeunload uyarısı aktif. Razor `:` attribute'lara izin vermediği için form yerine wrapper div. *@
+<div x-data @@input="$store.builder.dirty = true">
 @using (Html.BeginForm("EditReport", "Admin", new { id = Model.Report.ReportId }, FormMethod.Post, true, new { id = "reportEditForm" }))
 {
     @Html.AntiForgeryToken()
@@ -280,6 +284,7 @@
         <span style="font-size:11px; color:var(--ink-3);">Kaydet işlemi üst topbar'dan da yapılabilir</span>
     </div>
 }
+</div>
 
 @* M-13 R3 (28 Nisan): admin-report-form.js 531 sat → 2 modül (param-builder + sp-helper) *@
 <script src="~/assets/js/admin-report-form/param-builder.js"></script>

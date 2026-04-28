@@ -1,28 +1,44 @@
 @*
-    EditReport + CreateReport ortak topbar slot icerigi.
+    EditReport + CreateReport ortak topbar slot içeriği.
     Form id parametre olarak gecirilir (string model): "reportEditForm" veya "reportCreateForm".
 
-    F-9'da builder-core.js bu butonlari bind edecek (dbDirtyChip/dbBtnPreview/dbBtnUndo/dbBtnJson).
+    M-13 Plan 04 F2.1 (28 Nisan 2026): Alpine.js store ile reactive dirty chip + beforeunload guard.
+    Form'da @@input listener, topbar'da $store.builder.dirty üzerinden x-show. Save submit page reload
+    ile state otomatik reset olur.
+
+    F-9 (sonra): builder-core.js dbBtnPreview/dbBtnUndo/dbBtnJson aktif edecek (mevcut placeholder).
 *@
 @model string
 
-<span id="dbDirtyChip" class="dirty-chip" hidden>
-    <i class="fas fa-circle-exclamation text-[9px]"></i>
-    kaydedilmemiş
-</span>
-<button type="button" id="dbBtnPreview" class="btn" disabled title="F-9'da aktif olacak">
-    <i class="fas fa-eye text-[10px]"></i>
-    Önizle
-</button>
-<button type="button" id="dbBtnUndo" class="btn" disabled title="F-9'da aktif olacak">
-    <i class="fas fa-rotate-left text-[10px]"></i>
-    Geri Al
-</button>
-<button type="button" id="dbBtnJson" class="btn" title="DashboardConfigJson'a in/çık">
-    <i class="fas fa-code text-[10px]"></i>
-    JSON
-</button>
-<button type="submit" form="@Model" class="btn primary">
-    <i class="fas fa-check text-[10px]"></i>
-    Kaydet
-</button>
+<div x-data x-init="
+    if (!Alpine.store('builder')) {
+        Alpine.store('builder', { dirty: false });
+        window.addEventListener('beforeunload', e => {
+            if (Alpine.store('builder').dirty) {
+                e.preventDefault();
+                e.returnValue = '';
+            }
+        });
+    }
+" style="display:contents;">
+    <span class="dirty-chip" x-show="$store.builder.dirty" x-cloak>
+        <i class="fas fa-circle-exclamation text-[9px]"></i>
+        kaydedilmemiş
+    </span>
+    <button type="button" id="dbBtnPreview" class="btn" disabled title="F-9'da aktif olacak">
+        <i class="fas fa-eye text-[10px]"></i>
+        Önizle
+    </button>
+    <button type="button" id="dbBtnUndo" class="btn" disabled title="F-9'da aktif olacak">
+        <i class="fas fa-rotate-left text-[10px]"></i>
+        Geri Al
+    </button>
+    <button type="button" id="dbBtnJson" class="btn" title="DashboardConfigJson'a in/çık">
+        <i class="fas fa-code text-[10px]"></i>
+        JSON
+    </button>
+    <button type="submit" form="@Model" class="btn primary" @@click="$store.builder.dirty = false">
+        <i class="fas fa-check text-[10px]"></i>
+        Kaydet
+    </button>
+</div>

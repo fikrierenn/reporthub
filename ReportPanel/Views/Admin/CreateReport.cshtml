@@ -55,6 +55,8 @@
     </div>
 }
 
+@* Plan 04 F2.1: Alpine $store.builder.dirty form-level @input listener (wrapper div). *@
+<div x-data @@input="$store.builder.dirty = true">
 <form method="post" id="reportCreateForm">
     @Html.AntiForgeryToken()
 
@@ -271,6 +273,7 @@
         <span style="font-size:11px; color:var(--ink-3);">Kaydet işlemi üst topbar'dan da yapılabilir</span>
     </div>
 </form>
+</div>
 
 <script src="~/assets/js/admin-report-form/param-builder.js"></script>
 <script src="~/assets/js/admin-report-form/sp-helper.js"></script>
