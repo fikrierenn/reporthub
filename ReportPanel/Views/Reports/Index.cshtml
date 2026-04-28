@@ -38,6 +38,11 @@
     </div>
 </div>
 
+@* Plan 04 F2.2: Alpine.js instant client-side filter. Server-side form submit (URL state) korundu —
+   kullanıcı Enter veya Filtrele ile URL'ye yansır; ama Alpine ile her tuş vuruşunda anlık filter görsel.
+   x-data scope: filter bar + qcard grid'i kapsar. *@
+<div x-data="{ q: '@Html.Raw(Model.SearchTerm?.Replace("'", "\\'") ?? "")', cat: '@Html.Raw(Model.SelectedCategory?.Replace("'", "\\'") ?? "")' }">
+
 <form method="get" class="report-filter-bar" style="background:var(--paper); border:1px solid var(--line); border-radius:10px; padding:14px 16px; margin-bottom:18px; display:flex; gap:12px; flex-wrap:wrap; align-items:end;">
     <div style="flex:1; min-width:240px;">
         <label class="lab" for="reportSearch">Arama</label>
@@ -45,7 +50,7 @@
             <span style="position:absolute; left:10px; top:50%; transform:translateY(-50%); color:var(--ink-4); pointer-events:none;">
                 <i class="fas fa-magnifying-glass" style="font-size:12px;"></i>
             </span>
-            <input type="text" id="reportSearch" name="q" value="@Model.SearchTerm"
+            <input type="text" id="reportSearch" name="q" x-model="q"
                    class="inp" style="padding-left:32px;"
                    placeholder="Rapor adı, açıklama veya kategori..." />
         </div>
@@ -53,29 +58,24 @@
 
     <div style="min-width:180px;">
         <label class="lab" for="reportCategory">Kategori</label>
-        <select id="reportCategory" name="category" class="inp">
+        <select id="reportCategory" name="category" x-model="cat" class="inp">
             <option value="">Tüm kategoriler</option>
             @foreach (var category in Model.Categories)
             {
-                <option value="@category" selected="@(string.Equals(category, Model.SelectedCategory, StringComparison.OrdinalIgnoreCase))">
-                    @category
-                </option>
+                <option value="@category">@category</option>
             }
         </select>
     </div>
 
     <div style="display:flex; gap:6px;">
-        <button type="submit" class="btn primary">
+        <button type="submit" class="btn primary" title="URL'ye yansıt (paylaşılabilir link)">
             <i class="fas fa-filter text-[10px]"></i>
             Filtrele
         </button>
-        @if (!string.IsNullOrWhiteSpace(Model.SearchTerm) || !string.IsNullOrWhiteSpace(Model.SelectedCategory))
-        {
-            <a href="/Reports" class="btn ghost">
-                <i class="fas fa-xmark text-[10px]"></i>
-                Temizle
-            </a>
-        }
+        <button type="button" class="btn ghost" @@click="q = ''; cat = ''" x-show="q || cat" x-cloak>
+            <i class="fas fa-xmark text-[10px]"></i>
+            Temizle
+        </button>
     </div>
 </form>
 
@@ -107,7 +107,13 @@ else
             var displaySub = string.IsNullOrWhiteSpace(report.Description)
                 ? (categoryNames.Count > 0 ? string.Join(", ", categoryNames) : (report.DataSource?.Title ?? report.DataSourceKey))
                 : report.Description;
-            <div class="qcard" style="position:relative;">
+            var searchHay = $"{report.Title} {report.Description} {string.Join(' ', categoryNames)} {report.DataSource?.Title} {report.DataSourceKey}".ToLowerInvariant();
+            var catHay = string.Join(",", categoryNames).ToLowerInvariant();
+            <div class="qcard" style="position:relative;"
+                 data-search="@searchHay"
+                 data-cat="@catHay"
+                 x-show="(!q || $el.dataset.search.includes(q.toLowerCase())) && (!cat || $el.dataset.cat.includes(cat.toLowerCase()))"
+                 x-cloak>
                 <div class="row1">
                     <span class="type-chip type-dash">Dashboard</span>
                     <span class="mono" style="font-size:10.5px; color:var(--ink-4); margin-left:auto;">#@report.ReportId</span>
@@ -151,4 +157,7 @@ else
     if (!string.IsNullOrWhiteSpace(Model.SearchTerm)) reportsFooter += $" · arama \"{Model.SearchTerm}\"";
     if (!string.IsNullOrWhiteSpace(Model.SelectedCategory)) reportsFooter += $" · kategori {Model.SelectedCategory}";
 }
+
+</div>
+
 @await Html.PartialAsync("_FooterHint", (string?)reportsFooter)

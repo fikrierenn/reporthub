@@ -14,6 +14,10 @@
     .btn { padding: 0 14px; }
 }
 
+/* Alpine.js x-cloak — directive'ler bind olmadan önce flicker önler.
+   x-cloak attribute'lu element'ler Alpine init tamamlanana kadar gizli kalır. */
+[x-cloak] { display: none !important; }
+
 /* Reduced motion — kullanıcı OS-level "azalt animasyon" tercih ettiyse
    tüm transition + animation'ları sıfırla. */
 @media (prefers-reduced-motion: reduce) {
