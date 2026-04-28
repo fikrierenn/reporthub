@@ -1,7 +1,8 @@
 @*
     Sayfa altı kısa kbd shortcut + opsiyonel sayfa-spesifik metin (örn. kayıt sayısı).
-    Kullanım: @await Html.PartialAsync("_FooterHint", "12 rapor")
-              @await Html.PartialAsync("_FooterHint")          (sadece kbd hintler)
+    Kullanım: @await Html.PartialAsync("_FooterHint", (string?)"12 rapor")
+              @await Html.PartialAsync("_FooterHint", (string?)null)   (sadece kbd hintler)
+    NOT: Cast zorunlu — yoksa Razor partial'a parent view model'ini gecirir, type mismatch atar.
 *@
 @model string?
 

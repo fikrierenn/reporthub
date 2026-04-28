@@ -177,6 +177,10 @@ Bu liste asagidakilerin sentezidir:
 36. **G-07 · Dashboard iframe policy sikisitirma** (30dk) — Referrer-policy + sandbox kombinasyonu gozden gecir.
 37. **G-08 · DashboardRenderer JSON escape regresyon testi** (1h) — `</script>`, `<!--`, case-insensitive bypass test.
 38. **ADR yazimi** (1h) — ADR-001 data-access, ADR-002 dashboard-architecture. (ADR-003 role-model ✅ yazildi 22 Nisan, ADR-004 skill-design ✅ yazildi 22 Nisan.)
+39. **YETKILENDIRME REVIZYONU — rapor + alan gorme** (TARTISMA gerekli, Plan 03 sonrasi) — Kullanici 28 Nisan 2026: "kullanici yetki tanimlama mantigi pratik olmamis ve tam istedigim gibi de degil. Rapor yetki + alan gorme konusunu konusalim bir ara, en sonda olabilir is bitince."
+   - **Mevcut model:** UserRole (junction) + ReportAllowedRole (rapor-rol) + UserDataFilter (kullanici-bazli WHERE injection).
+   - **Sikayet noktalari (bekleniyor):** rapor yetkisi UX, alan/satir/sutun gorme granulariteci, admin-friendly tanimlama akisi.
+   - **Aksiyon:** Plan 03 (M-13) tamamen kapaninca ayri oturum ac. Once mevcut akisi haritalayan sayfa-sayfa screenshot + sikayet detayini topla, sonra mimari karar (Tier 3 plan + ADR).
 
 #### Toplam efor tahmini
 - Faz 0 (bugun): 3 saat — blocker'lari kaldir
