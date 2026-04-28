@@ -177,6 +177,17 @@ Bu liste asagidakilerin sentezidir:
 36. **G-07 · Dashboard iframe policy sikisitirma** (30dk) — Referrer-policy + sandbox kombinasyonu gozden gecir.
 37. **G-08 · DashboardRenderer JSON escape regresyon testi** (1h) — `</script>`, `<!--`, case-insensitive bypass test.
 38. **ADR yazimi** (1h) — ADR-001 data-access, ADR-002 dashboard-architecture. (ADR-003 role-model ✅ yazildi 22 Nisan, ADR-004 skill-design ✅ yazildi 22 Nisan.)
+41. **PLAN 05 (potansiyel) — Scheduled Reports + Email Delivery** (kullanici 28 Nisan 2026 oturum 4: "sisteme cron job ekleyip raporlari mail olarak belirlenen zamanda gonderme sansimiz olabilir mi") — Tier 3, R refactor + Plan 04 sonrasi.
+   - **Yol**: Hangfire (cron + dashboard + persistence) + MailKit (SMTP). Vanilla BackgroundService + Cronos alternatif (minimal).
+   - **Schema**: `ScheduledReport` (Id, ReportId, CronExpression, Recipients, Format html/xlsx, IsActive, NextRunAt, LastRunAt). Migration `18_CreateScheduledReports.sql`.
+   - **UI**: `Admin/ScheduledReports/{Index,Create,Edit}` — Admin/Index'e yeni subnav tab veya ayri route.
+   - **Service**: `IScheduledReportRunner` Hangfire job — cron tetik → rapor calistir (UserDataFilter dahil) → mail gonder (HTML inline veya Excel attachment) → AuditLog.
+   - **Config**: `appsettings.json:Smtp` (Host/Port/User/Pass/From) — env var prod icin.
+   - **Tahmini**: ~2-3 gun, 8-12 commit, 1 migration, 2 yeni dep (Hangfire + MailKit), 4-5 yeni view, 2 service, 1 ADR.
+   - **Risk**: Mail spam, cron drift (server timezone), HTML email client uyumu (Outlook/Gmail farkli render).
+
+40. **PLAN 04 (potansiyel) — Alpine.js + htmx adoption** (TARTISMA gerekli, R1-R5 refactor sonrasi) — Kullanici 28 Nisan 2026 oturum 4: "kod kisaltmasi da yapmak daha efektif kodlamalar yazmak lazim js yerine daha iyi bir js framework kullanmak isi hizlandirabilir mi". Vanilla JS DOM API kodu kalabaligi (~531 sat admin-report-form, ~333 sat builder-drawer). Aday kombinasyon: **Alpine.js** (form state, mode segmented, dirty chip, opt-card secim) + **htmx** (filter row add/remove, SP Onizle swap, datasource list reload). Build step yok (CDN), Razor MVC + Tailwind ile uyumlu. Kademeli adoption (sayfa basi). PLAN-FIRST: ayri oturum, Tier 3 plan, before/after metrik (satir basina kazanc), regresyon test.
+
 39. **YETKILENDIRME REVIZYONU — rapor + alan gorme** (TARTISMA gerekli, Plan 03 sonrasi) — Kullanici 28 Nisan 2026: "kullanici yetki tanimlama mantigi pratik olmamis ve tam istedigim gibi de degil. Rapor yetki + alan gorme konusunu konusalim bir ara, en sonda olabilir is bitince."
    - **Mevcut model:** UserRole (junction) + ReportAllowedRole (rapor-rol) + UserDataFilter (kullanici-bazli WHERE injection). Tek role "admin" + ek custom roller var ama AdminController class-level `[Authorize(Roles="admin")]` — granular yetki YOK.
    - **Sikayet noktalari (bekleniyor):** rapor yetkisi UX, alan/satir/sutun gorme granulariteci, admin-friendly tanimlama akisi.
@@ -188,6 +199,35 @@ Bu liste asagidakilerin sentezidir:
 - Faz 1 (hafta): ~5 gun dagitilmis
 - Faz 2 (ay): ~10 gun dagitilmis
 - Faz 3 (ceyrek): ~15 gun dagitilmis
+
+---
+
+### MAJOR VISION — Sonraki Versiyon: Rapor Portali → Sirket Ici Portal (28 Nisan 2026)
+Kullanici 28 Nisan 2026 oturum 4: "sonraki versiyonda rapor portalindan sirket ici portala dogru evireceğiz yapiyi". 
+Mevcut: rapor + dashboard portal. Hedef versiyon vNext: tam sirket ici portal.
+
+**Eklenebilecekler (taslak):**
+- Duyurular / haberler (announcement feed)
+- Departman / takim dizini (org chart)  
+- Doküman / dosya paylasimi (intranet drive)
+- Mesajlasma / yorum (comment thread)
+- Form / anket (form builder + survey)
+- Prosedür / SOP yonetimi (knowledge base)
+- Takvim / etkinlik (event calendar)
+- KPI / hedef takibi (OKR pano)
+- Onay akislari (workflow / approval chains)
+
+**Mimari etkiler (degerlendirilmesi gereken):**
+- Multi-tenant / departman izolasyonu — yetki revizyonu (TODO #39) BURADA kritik
+- Rol modeli granular hale gelmeli (sadece admin yerine: report_designer, hr_admin, doc_manager, vb.)
+- Sidebar conditional render — kullanicinin yetki olduğu modul/menüleri sadece görür
+- Background services çoğalir (Plan 05 cron+email burada genisler — duyuru bildirimi, takvim hatirlatici, vb.)
+- Search global — Elasticsearch / SQL FTS / Meilisearch?
+- Notification subsystem (red bell icon mevcut placeholder, gerçek olur)
+- File storage strategy (MinIO/S3 veya disk)
+- Real-time updates (SignalR — comment thread, notification push)
+
+**Aksiyon:** Plan 03 (M-13 design system) + Plan 04 (Alpine/htmx) + R refactor + Plan 05 (cron/email) tamamlandiktan sonra **Plan 06 — vNext architecture** ayri Tier 3 oturum: skopla alimlanacak (öncelikli modüller, faz planlamasi, breaking change yönetimi). Mevcut url + session + role infrastructure korunmali, modül-by-modül opt-in.
 
 ---
 
