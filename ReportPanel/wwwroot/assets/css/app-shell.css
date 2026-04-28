@@ -97,46 +97,31 @@ body {
     flex-shrink: 0;
 }
 
-.brand-mark {
-    width: 30px;
-    height: 30px;
-    border-radius: 7px;
-    display: grid;
-    place-items: center;
-    background: var(--accent);
-    color: #fff;
-    font-weight: 800;
-    font-size: 14px;
-    letter-spacing: -.04em;
-    box-shadow: inset 0 -1px 0 rgba(0, 0, 0, .18);
-    flex-shrink: 0;
+/* M-13 UI fix (28 Nisan 2026): Sidebar logo. Expanded'de PNG tam logo,
+   collapsed'de mini kitap SVG. brand-mark + brand-name eski class'ları
+   kaldırıldı (logo zaten "bkmkitap" yazıyor, dublikasyondu). */
+.brand-link {
+    display: inline-flex;
+    align-items: center;
     text-decoration: none;
+    flex-shrink: 0;
 }
-
-.brand-name {
-    line-height: 1.05;
+.brand-logo-full {
+    height: 28px;
+    width: auto;
+    display: block;
 }
-
-.brand-name .t {
-    font-size: 13.5px;
-    font-weight: 700;
-    letter-spacing: -.01em;
-    color: var(--ink-1);
+.brand-logo-mini {
+    display: none;
 }
-
-.brand-name .s {
-    font-size: 10.5px;
-    color: var(--ink-4);
-    font-family: 'JetBrains Mono', monospace;
-    margin-top: 2px;
+.collapsed .brand-logo-full {
+    display: none;
+}
+.collapsed .brand-logo-mini {
     display: block;
 }
 
-.collapsed .brand-name {
-    display: none;
-}
-
-/* Collapsed state'te side-head dikey: brand-mark üstte, side-collapse butonu
+/* Collapsed state'te side-head dikey: logo üstte, side-collapse butonu
    altta görünür kalsın (60px wide içinde yatay sığmıyordu). */
 .collapsed .side-head {
     flex-direction: column;
