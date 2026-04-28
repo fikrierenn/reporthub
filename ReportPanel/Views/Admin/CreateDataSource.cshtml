@@ -1,164 +1,149 @@
 @model ReportPanel.ViewModels.AdminDataSourceFormViewModel
 @{
     Layout = "_AppLayout";
-    ViewData["Title"] = "Yeni Veri Kaynagi - BKM Rapor Paneli";
-    var templateConnString = Model.TemplateConnString ?? "";
+    ViewData["Title"] = "Yeni Veri Kaynağı - BKM Rapor Paneli";
+    ViewData["PageTitle"] = "Yeni Veri Kaynağı";
+    var ds = Model.DataSource;
 }
 
-<div class="mb-6 flex items-center justify-between">
-    <div>
-        <h1 class="text-3xl font-bold text-gray-900">Yeni Veri Kaynagi</h1>
-        <p class="text-sm text-gray-500">Yeni veritabani baglantisi olusturun</p>
+@section Breadcrumb {
+    <div class="crumbs">
+        <a href="/Dashboard">BKM Kitap</a>
+        <span class="sep">/</span>
+        <a href="/Admin">Yönetim</a>
+        <span class="sep">/</span>
+        <a href="/Admin?tab=datasources">Veri Kaynakları</a>
+        <span class="sep">/</span>
+        <span class="current">Yeni</span>
     </div>
-    <a href="/Admin" class="btn-brand-outline flex items-center px-4 py-2 text-sm font-medium rounded-lg">
-        <i class="fas fa-times mr-2"></i>İptal
+}
+
+@section TopActions {
+    <a href="/Admin?tab=datasources" class="btn">
+        <i class="fas fa-xmark text-[10px]"></i>
+        İptal
     </a>
+}
+
+<div class="hero">
+    <h1>Yeni Veri Kaynağı</h1>
+    <div class="sub">
+        <span>Yeni veritabanı bağlantısı oluşturun</span>
+    </div>
 </div>
 
-<div class="bg-white rounded-2xl shadow-brand border border-gray-100 overflow-hidden">
-    <div class="bg-gradient-to-r from-red-50 to-orange-50 px-8 py-6 border-b border-gray-100">
-        <div class="flex items-center space-x-4">
-            <div class="w-16 h-16 bg-brand rounded-2xl flex items-center justify-center shadow-brand">
-                <i class="fas fa-plus text-white text-2xl"></i>
-            </div>
-            <div>
-                <h2 class="text-2xl font-bold text-gray-900">Veri Kaynagi Bilgileri</h2>
-                <p class="text-gray-600">Veritabani baglanti detaylarini girin</p>
+<form method="post" onsubmit="return validateForm()">
+    @Html.AntiForgeryToken()
+
+    <div style="background:var(--paper); border:1px solid var(--line); border-radius:10px; overflow:hidden; max-width:880px; margin-bottom:18px;">
+        <div style="padding:14px 18px; border-bottom:1px solid var(--line);">
+            <h2 style="font-size:13px; font-weight:600; color:var(--ink-1); margin:0;">
+                <i class="fas fa-tag" style="margin-right:6px; color:var(--ink-3);"></i>
+                Genel Bilgiler
+            </h2>
+        </div>
+        <div style="padding:20px;">
+            <div style="display:grid; grid-template-columns:1fr 2fr; gap:14px;">
+                <div class="field" style="margin-bottom:0;">
+                    <label class="lab">Anahtar <span style="color:var(--accent);">*</span></label>
+                    <input type="text" name="DataSourceKey" value="@ds.DataSourceKey" required class="inp"
+                           placeholder="örn: MAIN, IK, MALI" style="font-family:'JetBrains Mono', monospace;" />
+                    <p style="margin:6px 0 0; font-size:11px; color:var(--ink-3);">Benzersiz anahtar — büyük harf önerilir</p>
+                </div>
+                <div class="field" style="margin-bottom:0;">
+                    <label class="lab">Başlık <span style="color:var(--accent);">*</span></label>
+                    <input type="text" name="Title" value="@ds.Title" required class="inp" placeholder="örn: Ana Veritabanı" />
+                </div>
             </div>
         </div>
     </div>
 
-    <div class="p-8">
-        <form method="post" class="space-y-8" onsubmit="return validateForm()">
-            @Html.AntiForgeryToken()
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-3">
-                        <i class="fas fa-key mr-2 text-brand"></i>Anahtar *
-                    </label>
-                    <input type="text" name="DataSourceKey" value="@Model.DataSource.DataSourceKey" required
-                           class="w-full px-4 py-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand focus:border-brand text-lg font-medium"
-                           placeholder="Orn: MAIN, IK, MALI">
-                    <p class="text-xs text-gray-500 mt-2">Benzersiz anahtar (buyuk harf onerilir)</p>
+    <div style="background:var(--paper); border:1px solid var(--line); border-radius:10px; overflow:hidden; max-width:880px; margin-bottom:18px;">
+        <div style="padding:14px 18px; border-bottom:1px solid var(--line);">
+            <h2 style="font-size:13px; font-weight:600; color:var(--ink-1); margin:0;">
+                <i class="fas fa-server" style="margin-right:6px; color:var(--ink-3);"></i>
+                Veritabanı Bağlantı Ayarları
+            </h2>
+        </div>
+        <div style="padding:20px;">
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:14px;">
+                <div class="field" style="margin-bottom:0;">
+                    <label class="lab">Sunucu Adı <span style="color:var(--accent);">*</span></label>
+                    <input type="text" id="serverName" value="BT-FIKRI\SQLEXPRESS" class="inp" placeholder="örn: BT-FIKRI\SQLEXPRESS" />
                 </div>
-
-                <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-3">
-                        <i class="fas fa-tag mr-2 text-brand"></i>Baslik *
-                    </label>
-                    <input type="text" name="Title" value="@Model.DataSource.Title" required
-                           class="w-full px-4 py-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand focus:border-brand text-lg"
-                           placeholder="Orn: Ana Veritabani">
+                <div class="field" style="margin-bottom:0;">
+                    <label class="lab">Veritabanı Adı <span style="color:var(--accent);">*</span></label>
+                    <input type="text" id="databaseName" value="PortalHUB" class="inp" placeholder="örn: PortalHUB" />
+                    <div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;">
+                        <button type="button" onclick="setDatabase('PortalHUB')" class="btn ghost" style="font-size:11px; padding:0 10px; height:26px;">PortalHUB</button>
+                        <button type="button" onclick="setDatabase('BKM_GENEL')" class="btn ghost" style="font-size:11px; padding:0 10px; height:26px;">BKM_GENEL</button>
+                        <button type="button" onclick="setDatabase('MainDB')" class="btn ghost" style="font-size:11px; padding:0 10px; height:26px;">MainDB</button>
+                        <button type="button" onclick="setDatabase('MaliDB')" class="btn ghost" style="font-size:11px; padding:0 10px; height:26px;">MaliDB</button>
+                    </div>
                 </div>
             </div>
 
-            <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-200 p-6">
-                <h3 class="text-lg font-bold text-blue-900 mb-4 flex items-center">
-                    <i class="fas fa-server mr-3"></i> Veritabani Baglanti Ayarlari
-                </h3>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-3">
-                            <i class="fas fa-server mr-2 text-blue-600"></i>Sunucu Adi *
-                        </label>
-                        <input type="text" id="serverName" placeholder="Orn: BT-FIKRI\\SQLEXPRESS"
-                               class="w-full px-4 py-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-600 focus:border-blue-600 text-lg"
-                               value="BT-FIKRI\\SQLEXPRESS">
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-3">
-                            <i class="fas fa-database mr-2 text-blue-600"></i>Veritabani Adi *
-                        </label>
-                        <input type="text" id="databaseName" placeholder="Orn: PortalHUB"
-                               class="w-full px-4 py-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-600 focus:border-blue-600 text-lg"
-                               value="PortalHUB">
-                        <div class="mt-2 flex flex-wrap gap-2">
-                            <button type="button" onclick="setDatabase('PortalHUB')" class="px-3 py-1 bg-blue-100 text-blue-700 rounded-lg text-sm hover:bg-blue-200 transition-colors">PortalHUB</button>
-                            <button type="button" onclick="setDatabase('BKM_GENEL')" class="px-3 py-1 bg-blue-100 text-blue-700 rounded-lg text-sm hover:bg-blue-200 transition-colors">BKM_GENEL</button>
-                            <button type="button" onclick="setDatabase('MainDB')" class="px-3 py-1 bg-blue-100 text-blue-700 rounded-lg text-sm hover:bg-blue-200 transition-colors">MainDB</button>
-                            <button type="button" onclick="setDatabase('MaliDB')" class="px-3 py-1 bg-blue-100 text-blue-700 rounded-lg text-sm hover:bg-blue-200 transition-colors">MaliDB</button>
+            <div class="field" style="margin-bottom:14px;">
+                <label class="lab">Kimlik Doğrulama</label>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                    <label class="opt-card" onclick="selectAuth('windows')">
+                        <input type="radio" name="authType" value="windows" id="authWindows" />
+                        <div>
+                            <div class="t">Windows Authentication</div>
+                            <div class="s">Güvenli, şifre gerektirmez</div>
                         </div>
-                    </div>
-                </div>
-
-                <div class="mt-6">
-                    <label class="block text-sm font-semibold text-gray-700 mb-3">
-                        <i class="fas fa-shield-alt mr-2 text-blue-600"></i>Kimlik Dogrulama Turu
                     </label>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div class="bg-white rounded-xl border-2 border-gray-200 p-4 cursor-pointer transition-all duration-200 hover:border-blue-600 hover:shadow-md" onclick="selectAuth('windows')">
-                            <div class="flex items-center space-x-3">
-                                <input type="radio" name="authType" value="windows" id="authWindows" class="w-5 h-5 text-blue-600">
-                                <div>
-                                    <h4 class="font-semibold text-gray-900">Windows Authentication</h4>
-                                    <p class="text-sm text-gray-500">Güvenli, şifre gerektirmez</p>
-                                </div>
-                            </div>
+                    <label class="opt-card" onclick="selectAuth('sql')">
+                        <input type="radio" name="authType" value="sql" id="authSql" checked />
+                        <div>
+                            <div class="t">SQL Server Authentication</div>
+                            <div class="s">Kullanıcı adı + şifre ile</div>
                         </div>
-                        <div class="bg-white rounded-xl border-2 border-blue-500 p-4 cursor-pointer transition-all duration-200 hover:border-blue-600 hover:shadow-md" onclick="selectAuth('sql')">
-                            <div class="flex items-center space-x-3">
-                                <input type="radio" name="authType" value="sql" id="authSql" class="w-5 h-5 text-blue-600" checked>
-                                <div>
-                                    <h4 class="font-semibold text-gray-900">SQL Server Authentication</h4>
-                                    <p class="text-sm text-gray-500">Kullanıcı adı ve şifre ile</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div id="sqlAuthFields" class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-3">
-                            <i class="fas fa-user mr-2 text-blue-600"></i>Kullanıcı Adı
-                        </label>
-                        <input type="text" id="username" value="sa"
-                               class="w-full px-4 py-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-600 focus:border-blue-600 text-lg">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-3">
-                            <i class="fas fa-lock mr-2 text-blue-600"></i>Şifre
-                        </label>
-                        <input type="password" id="password" value=""
-                               class="w-full px-4 py-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-600 focus:border-blue-600 text-lg">
-                    </div>
-                </div>
-
-                <div class="mt-6">
-                    <label class="block text-sm font-semibold text-gray-700 mb-3">
-                        <i class="fas fa-link mr-2 text-blue-600"></i>Olusturulan Baglanti String
                     </label>
-                    <textarea name="ConnString" id="connString" required rows="4" readonly
-                              class="w-full px-4 py-4 border border-gray-300 rounded-xl bg-gray-50 font-mono text-sm text-gray-700"></textarea>
-                    <p class="text-xs text-gray-500 mt-2">Bu alan otomatik olarak olusturulur</p>
                 </div>
             </div>
 
-            <div class="flex items-center space-x-3">
-                <input type="hidden" name="IsActive" value="false">
-                <input type="checkbox" name="IsActive" value="true" @(Model.DataSource.IsActive ? "checked" : "")
-                       class="w-5 h-5 text-brand focus:ring-brand border-gray-300 rounded">
-                <label class="text-lg font-medium text-gray-700">Veri kaynagini aktif olarak isaretle</label>
-            </div>
-
-            <div class="flex items-center justify-between pt-6 border-t border-gray-200">
-                <a href="/Admin" class="btn-brand-outline flex items-center px-6 py-3 text-lg font-medium rounded-xl">
-                    <i class="fas fa-arrow-left mr-2"></i>Geri Don
-                </a>
-
-                <div class="flex space-x-4">
-                    <button type="button" class="bg-gray-100 text-gray-700 hover:bg-gray-200 px-6 py-3 rounded-xl font-medium transition-brand">
-                        <i class="fas fa-plug mr-2"></i>Baglantiyi Test Et
-                    </button>
-                    <button type="submit" class="btn-brand flex items-center px-8 py-3 text-lg font-semibold rounded-xl shadow-brand-lg">
-                        <i class="fas fa-save mr-3"></i>Veri Kaynagini Kaydet
-                    </button>
+            <div id="sqlAuthFields" style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:14px;">
+                <div class="field" style="margin-bottom:0;">
+                    <label class="lab">Kullanıcı Adı</label>
+                    <input type="text" id="username" value="sa" class="inp" />
+                </div>
+                <div class="field" style="margin-bottom:0;">
+                    <label class="lab">Şifre</label>
+                    <input type="password" id="password" value="" class="inp" autocomplete="off" />
                 </div>
             </div>
-        </form>
+
+            <div class="field" style="margin-bottom:0;">
+                <label class="lab">Oluşturulan Bağlantı String <i class="fas fa-circle-info" style="font-size:10px; color:var(--ink-4); margin-left:4px;" title="Bu alan otomatik oluşturulur"></i></label>
+                <textarea name="ConnString" id="connString" required rows="3" readonly class="inp" style="height:auto; padding:10px 12px; font-family:'JetBrains Mono', monospace; font-size:12px; background:var(--canvas); color:var(--ink-2); resize:vertical;"></textarea>
+            </div>
+        </div>
     </div>
-</div>
+
+    <div style="background:var(--paper); border:1px solid var(--line); border-radius:10px; padding:14px 20px; max-width:880px; margin-bottom:18px; display:flex; align-items:center; gap:10px;">
+        <input type="hidden" name="IsActive" value="false" />
+        <input type="checkbox" name="IsActive" value="true" id="dsActive" @(ds.IsActive ? "checked" : "")
+               style="width:16px; height:16px; accent-color:var(--accent);" />
+        <label for="dsActive" class="lab" style="margin:0;">Veri kaynağını aktif yap</label>
+    </div>
+
+    <div style="display:flex; align-items:center; justify-content:space-between; max-width:880px; padding:14px 20px; background:var(--paper); border:1px solid var(--line); border-radius:10px;">
+        <a href="/Admin?tab=datasources" class="btn ghost">
+            <i class="fas fa-arrow-left text-[10px]"></i>
+            Geri Dön
+        </a>
+        <div style="display:flex; gap:10px;">
+            <button type="button" class="btn">
+                <i class="fas fa-plug text-[10px]"></i>
+                Bağlantıyı Test Et
+            </button>
+            <button type="submit" class="btn primary">
+                <i class="fas fa-check text-[10px]"></i>
+                Veri Kaynağını Kaydet
+            </button>
+        </div>
+    </div>
+</form>
+
 <script src="~/assets/js/admin-datasource-form.js"></script>

@@ -643,6 +643,24 @@ select.inp {
     background-repeat: no-repeat; background-position: right 10px center; padding-right: 28px;
 }
 
+/* ---- Auth/option card (radio-driven seçim kartı, datasource form için) ---- */
+.opt-card {
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px 14px;
+    background: var(--paper);
+    border: 1px solid var(--line); border-radius: 8px;
+    cursor: pointer;
+    transition: border-color .12s, background .12s;
+}
+.opt-card:hover { border-color: var(--ink-4); }
+.opt-card:has(input[type="radio"]:checked) {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+}
+.opt-card input[type="radio"] { width: 16px; height: 16px; accent-color: var(--accent); flex-shrink: 0; }
+.opt-card .t { font-size: 13px; font-weight: 600; color: var(--ink-1); margin: 0 0 2px; }
+.opt-card .s { font-size: 11px; color: var(--ink-3); }
+
 /* ---- Footer hint (kbd shortcut bar) ---- */
 .footer-hint {
     margin-top: 32px; padding: 14px 0; border-top: 1px solid var(--line);
