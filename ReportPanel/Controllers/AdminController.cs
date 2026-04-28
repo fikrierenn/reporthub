@@ -22,6 +22,8 @@ namespace ReportPanel.Controllers
         private readonly DataSourceManagementService _dataSourceService;
         private readonly ReportManagementService _reportService;
         private readonly UserManagementService _userService;
+        private readonly SpExplorerService _spExplorer;
+        private readonly FilterOptionsService _filterOptions;
 
         public AdminController(
             ReportPanelContext context,
@@ -32,7 +34,9 @@ namespace ReportPanel.Controllers
             RoleManagementService roleService,
             DataSourceManagementService dataSourceService,
             ReportManagementService reportService,
-            UserManagementService userService)
+            UserManagementService userService,
+            SpExplorerService spExplorer,
+            FilterOptionsService filterOptions)
         {
             _context = context;
             _auditLog = auditLog;
@@ -43,6 +47,8 @@ namespace ReportPanel.Controllers
             _dataSourceService = dataSourceService;
             _reportService = reportService;
             _userService = userService;
+            _spExplorer = spExplorer;
+            _filterOptions = filterOptions;
         }
 
         [HttpGet]
@@ -187,208 +193,39 @@ namespace ReportPanel.Controllers
         [HttpGet]
         [Authorize(Roles = "admin")]
         [Route("Admin/ProcParams")]
+        // M-13 R4.1: Logic SpExplorerService.GetParametersAsync'e tasindi (28 Nisan 2026).
         public async Task<IActionResult> ProcParams(string dataSourceKey, string procName)
         {
-            if (string.IsNullOrWhiteSpace(dataSourceKey) || string.IsNullOrWhiteSpace(procName))
+            var result = await _spExplorer.GetParametersAsync(dataSourceKey, procName);
+            if (!result.Success)
             {
-                return BadRequest("Missing parameters.");
+                return BadRequest(result.Error ?? "ProcParams failed.");
             }
-
-            // F-02 takip: SP adi schema.proc formatinda veya sadece proc adi olarak gelebilir.
-            // Sadece proc verilmisse varsayilan schema = dbo.
-            var trimmed = procName.Trim();
-            var match = Regex.Match(trimmed, @"^(?<schema>[A-Za-z_][A-Za-z0-9_]*)\.(?<proc>[A-Za-z_][A-Za-z0-9_]*)$");
-            string schemaName, procShortName;
-            if (match.Success)
-            {
-                schemaName = match.Groups["schema"].Value;
-                procShortName = match.Groups["proc"].Value;
-            }
-            else if (Regex.IsMatch(trimmed, @"^[A-Za-z_][A-Za-z0-9_]*$"))
-            {
-                schemaName = "dbo";
-                procShortName = trimmed;
-            }
-            else
-            {
-                return BadRequest("Invalid procedure name.");
-            }
-
-            var dataSource = await _context.DataSources
-                .AsNoTracking()
-                .FirstOrDefaultAsync(d => d.DataSourceKey == dataSourceKey && d.IsActive);
-
-            if (dataSource == null)
-            {
-                return BadRequest("Data source not found.");
-            }
-
-            var parameters = new List<object>();
-            const string sql = @"
-SELECT p.name, t.name AS type_name, p.has_default_value, p.is_output
-FROM sys.parameters p
-JOIN sys.objects o ON p.object_id = o.object_id
-JOIN sys.types t ON p.user_type_id = t.user_type_id
-WHERE o.type IN ('P','PC')
-  AND o.name = @ProcName
-  AND SCHEMA_NAME(o.schema_id) = @SchemaName
-ORDER BY p.parameter_id;";
-
-            await using var connection = new SqlConnection(dataSource.ConnString);
-            await connection.OpenAsync();
-
-            await using var command = new SqlCommand(sql, connection);
-            command.Parameters.AddWithValue("@ProcName", procShortName);
-            command.Parameters.AddWithValue("@SchemaName", schemaName);
-
-            await using var reader = await command.ExecuteReaderAsync();
-            while (await reader.ReadAsync())
-            {
-                var name = reader.GetString(0);
-                if (name.StartsWith("@", StringComparison.Ordinal))
-                {
-                    name = name.Substring(1);
-                }
-                var typeName = reader.GetString(1);
-                var hasDefault = reader.GetBoolean(2);
-                var isOutput = reader.GetBoolean(3);
-                var required = !hasDefault && !isOutput;
-
-                parameters.Add(new
-                {
-                    name,
-                    label = name,
-                    type = MapSqlType(typeName),
-                    required
-                });
-            }
-
-            return Json(new { fields = parameters });
-        }
-
-        private static string MapSqlType(string sqlType)
-        {
-            var lower = sqlType.ToLowerInvariant();
-            return lower switch
-            {
-                "int" => "number",
-                "bigint" => "number",
-                "smallint" => "number",
-                "tinyint" => "number",
-                "decimal" => "decimal",
-                "numeric" => "decimal",
-                "money" => "decimal",
-                "smallmoney" => "decimal",
-                "float" => "decimal",
-                "real" => "decimal",
-                "bit" => "checkbox",
-                "date" => "date",
-                "datetime" => "date",
-                "datetime2" => "date",
-                "smalldatetime" => "date",
-                "datetimeoffset" => "date",
-                _ => "text"
-            };
+            return Json(new { fields = result.Fields });
         }
 
         [HttpGet]
         [Authorize(Roles = "admin")]
         [Route("Admin/FilterOptions")]
+        // M-13 R4.1: Logic FilterOptionsService.GetAsync'e tasindi (28 Nisan 2026).
         public async Task<IActionResult> FilterOptions(string filterKey, string? dataSourceKey = null)
         {
-            if (string.IsNullOrWhiteSpace(filterKey))
-                return BadRequest("FilterKey gerekli.");
-
-            // Data source bul — belirtilmişse onu, yoksa PDKS'i dene
-            var dsKey = dataSourceKey;
-            if (string.IsNullOrWhiteSpace(dsKey))
+            var result = await _filterOptions.GetAsync(filterKey, dataSourceKey);
+            if (!result.Success && result.Error == "FilterKey gerekli.")
             {
-                // İlk aktif data source'u bul
-                var first = await _context.DataSources.AsNoTracking()
-                    .FirstOrDefaultAsync(d => d.IsActive);
-                dsKey = first?.DataSourceKey;
+                return BadRequest(result.Error);
             }
-
-            var ds = await _context.DataSources.AsNoTracking()
-                .FirstOrDefaultAsync(d => d.DataSourceKey == dsKey && d.IsActive);
-            if (ds == null)
-                return Json(new { options = Array.Empty<object>() });
-
-            string sql = filterKey.ToLowerInvariant() switch
-            {
-                "sube" => "SELECT CAST(SubeNo AS varchar(10)) AS Value, SubeAd AS Label FROM vrd.SubeListe ORDER BY SubeAd",
-                "bolum" => "SELECT DISTINCT Bolum AS Value, Bolum AS Label FROM vrd.VardiyaDetay WHERE Bolum IS NOT NULL AND Bolum <> '' ORDER BY Bolum",
-                _ => ""
-            };
-
-            if (string.IsNullOrEmpty(sql))
-                return Json(new { options = Array.Empty<object>() });
-
-            var options = new List<object>();
-            try
-            {
-                await using var conn = new SqlConnection(ds.ConnString);
-                await conn.OpenAsync();
-                await using var cmd = new SqlCommand(sql, conn);
-                await using var reader = await cmd.ExecuteReaderAsync();
-                while (await reader.ReadAsync())
-                {
-                    options.Add(new
-                    {
-                        value = reader["Value"]?.ToString() ?? "",
-                        label = reader["Label"]?.ToString() ?? ""
-                    });
-                }
-            }
-            catch
-            {
-                // Bağlantı hatası — boş liste dön
-            }
-
-            return Json(new { options });
+            return Json(new { options = result.Options });
         }
 
         // DataSource'taki stored procedure listesi (builder dropdown'i icin)
         [HttpGet]
         [Route("Admin/SpList")]
+        // M-13 R4.1: Logic SpExplorerService.ListAsync'e tasindi (28 Nisan 2026).
         public async Task<IActionResult> SpList(string dataSourceKey)
         {
-            if (string.IsNullOrWhiteSpace(dataSourceKey))
-                return Json(new { success = false, error = "DataSource secilmedi.", procedures = Array.Empty<object>() });
-
-            var ds = await _context.DataSources.AsNoTracking()
-                .FirstOrDefaultAsync(d => d.DataSourceKey == dataSourceKey && d.IsActive);
-            if (ds == null)
-                return Json(new { success = false, error = "DataSource bulunamadi veya pasif.", procedures = Array.Empty<object>() });
-
-            var procs = new List<object>();
-            try
-            {
-                await using var conn = new SqlConnection(ds.ConnString);
-                await conn.OpenAsync();
-                const string sql = @"
-                    SELECT SCHEMA_NAME(schema_id) AS SchemaName, name AS ProcName
-                    FROM sys.procedures
-                    WHERE is_ms_shipped = 0
-                    ORDER BY SCHEMA_NAME(schema_id), name";
-                await using var cmd = new SqlCommand(sql, conn) { CommandTimeout = 15 };
-                await using var reader = await cmd.ExecuteReaderAsync();
-                while (await reader.ReadAsync())
-                {
-                    var schema = reader["SchemaName"]?.ToString() ?? "dbo";
-                    var name = reader["ProcName"]?.ToString() ?? "";
-                    var full = schema == "dbo" ? name : $"{schema}.{name}";
-                    procs.Add(new { name = full, schema, shortName = name });
-                }
-            }
-            catch (Exception ex)
-            {
-                // M-02: connection exception message user'a gosterilmez (credentials sizinti riski).
-                _ = ex;
-                return Json(new { success = false, error = "Veri kaynağına bağlanılamadı. Bağlantı ayarlarını kontrol edin.", procedures = Array.Empty<object>() });
-            }
-
-            return Json(new { success = true, procedures = procs });
+            var result = await _spExplorer.ListAsync(dataSourceKey);
+            return Json(new { success = result.Success, error = result.Error, procedures = result.Procedures });
         }
 
         // Stored procedure onizleme: SP'yi tip-bazli default'larla calistir; admin override
