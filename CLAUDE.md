@@ -82,7 +82,8 @@ Ayrıntılı kurallar `.claude/rules/` altında — burada sadece değişmez pre
      - `/feature-dev` — 7 fazlı guided feature development (discovery → exploration → clarify → architect → implement → review → summary)
      - `/review-pr` — multi-agent comprehensive PR review
    - **Proje skill'leri:** `session-handoff` (oturum sonu journal + auto-commit), `plan-tracker` (TodoWrite ↔ TODO.md senkron).
-   - **Frontend tasarım skill'leri** (M-11 F-7+ dashboard builder UI fazlarında tetiklenir): `frontend-design`, `visual-design-foundations`, `design-system-patterns`, `interaction-design`, `responsive-design`, `web-component-design`, `accessibility-compliance`.
+   - **Frontend tasarım skill'leri** (M-11 F-7+ dashboard builder UI + M-13 Plan 03 sayfa migration fazlarında tetiklenir): `frontend-design`, `visual-design-foundations`, `design-system-patterns`, `interaction-design`, `responsive-design`, `web-component-design` (Razor projesi için SKIP), `accessibility-compliance`.
+   - **`ui-ux-pro-max`** (M-13 sırasında en güçlü audit aracı) — 161 color palette, 99 UX guideline, 25 chart type, 10 priority-ranked rule kategorisi (accessibility CRITICAL → charts LOW). UI değişikliği yaparken otomatik tetiklenir, WCAG contrast/touch target/anti-pattern checklist uygular.
    - Hazır skill'ler: `security-review`, `review`, `simplify`, `init`, `consolidate-memory`, `schedule`, `loop`, `claude-api`.
    - Gereken skill yoksa: `WebFetch`/`WebSearch` araştır, veya `.claude/skills/` altına yarat.
    - MCP'ler: `mcp__sqlserver__*` (DB), `mcp__Claude_in_Chrome__tabs_context_mcp` (browser test), `mcp__Claude_Preview__*` (live preview).
