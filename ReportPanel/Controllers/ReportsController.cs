@@ -19,15 +19,18 @@ namespace ReportPanel.Controllers
         private readonly ReportPanelContext _context;
         private readonly AuditLogService _auditLog;
         private readonly ExcelExportService _excelExport;
+        private readonly UserDataFilterInjector _filterInjector;
 
         public ReportsController(
             ReportPanelContext context,
             AuditLogService auditLog,
-            ExcelExportService excelExport)
+            ExcelExportService excelExport,
+            UserDataFilterInjector filterInjector)
         {
             _context = context;
             _auditLog = auditLog;
             _excelExport = excelExport;
+            _filterInjector = filterInjector;
         }
 
         private string CurrentUserName => User.Identity?.Name ?? "user";
@@ -208,9 +211,10 @@ namespace ReportPanel.Controllers
                 return View("Run", model);
             }
 
-            // Kullanıcı veri filtrelerini SP parametrelerine ekle
-            await InjectUserDataFilters(
+            // Kullanıcı veri filtrelerini SP parametrelerine ekle (M-13 R6.2: UserDataFilterInjector).
+            await _filterInjector.InjectAsync(
                 validation.Parameters,
+                CurrentUserId,
                 context.SelectedReport.ReportId,
                 context.SelectedReport.DataSourceKey);
 
@@ -780,71 +784,7 @@ namespace ReportPanel.Controllers
             return allResultSets;
         }
 
-        /// <summary>
-        /// Kullanıcının UserDataFilter kayıtlarını okur ve SP parametrelerine ekler.
-        /// FilterKey → @FilterKey_Filtre parametresi olarak enjekte edilir.
-        /// Örnek: sube → @sube_Filtre = 'FSM,HEYKEL' veya NULL (filtre yoksa)
-        /// SP tarafında: WHERE (@sube_Filtre IS NULL OR Sube IN (SELECT value FROM STRING_SPLIT(@sube_Filtre, ',')))
-        /// </summary>
-        private async Task InjectUserDataFilters(
-            List<SqlParameter> parameters,
-            int reportId,
-            string dataSourceKey)
-        {
-            var userId = CurrentUserId;
-            if (userId == null) return;
-
-            // Kullanıcının tüm filtrelerini çek (bu rapor + genel)
-            var filters = await _context.UserDataFilters
-                .Where(f => f.UserId == userId.Value
-                    && (f.ReportId == null || f.ReportId == reportId)
-                    && (f.DataSourceKey == null || f.DataSourceKey == dataSourceKey))
-                .ToListAsync();
-
-            if (!filters.Any()) return; // filtre yok = tümünü gör
-
-            // G-03: UserDataFilterValidator (whitelist + regex).
-            var validFilters = filters
-                .Where(f => UserDataFilterValidator.IsValid(f.FilterKey, f.FilterValue))
-                .ToList();
-
-            // Reject edilenleri audit log'a yaz (multi-tenant ihlal sinyali olabilir)
-            var rejected = filters.Except(validFilters).ToList();
-            foreach (var r in rejected)
-            {
-                await _auditLog.LogAsync(new AuditLogEntry
-                {
-                    EventType = "user_filter_rejected",
-                    TargetType = "user_data_filter",
-                    TargetKey = r.FilterId.ToString(),
-                    Description = $"G-03 whitelist rejected filter (key='{r.FilterKey}', valueLen={r.FilterValue?.Length ?? 0})"
-                });
-            }
-
-            if (!validFilters.Any()) return;
-
-            // FilterKey bazında grupla ve virgülle birleştir
-            var grouped = validFilters
-                .GroupBy(f => f.FilterKey.ToLowerInvariant())
-                .ToDictionary(
-                    g => g.Key,
-                    g => string.Join(",", g.Select(f => f.FilterValue)));
-
-            // Her filtre grubu için @key_Filtre parametresi ekle
-            // Zaten aynı isimde parametre varsa (kullanıcı formdan girmiş) ekleme
-            foreach (var kvp in grouped)
-            {
-                var paramName = $"@{kvp.Key}_Filtre";
-                if (parameters.Any(p => p.ParameterName.Equals(paramName, StringComparison.OrdinalIgnoreCase)))
-                    continue;
-
-                parameters.Add(new SqlParameter(paramName, SqlDbType.NVarChar, 500)
-                {
-                    Value = kvp.Value
-                });
-            }
-        }
-
+        // M-13 R6.2 (28 Nisan 2026): InjectUserDataFilters → UserDataFilterInjector servisine.
         // M-13 R6.1 (28 Nisan 2026): BuildExcelFile static helper'i ExcelExportService'e tasindi.
 
         private IActionResult RedirectToLocal(string? returnUrl)
