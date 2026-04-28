@@ -6,6 +6,12 @@
  * proje genelinde birincil. Eski --brand-* primitive'ler legacy.css'te birkaç sınıf üzerinden kalır.
  */
 
+/* CSS reset — box-sizing border-box global. .inp width:100% + padding:0 12px gibi
+   pattern'lar parent container'ı aşmasın diye. (28 Nisan 2026 UI fix.) */
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+
 :root {
     color-scheme: light;
 
