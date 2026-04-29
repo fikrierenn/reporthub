@@ -483,11 +483,11 @@ window.__availableDataSources = @Html.Raw(System.Text.Json.JsonSerializer.Serial
                 <div x-show="previewModal.error" x-cloak
                      style="padding:20px; color:var(--accent-ink); white-space:pre-line;"
                      x-text="previewModal.error"></div>
-                <iframe x-show="!previewModal.loading && !previewModal.error && previewModal.html"
-                        x-cloak
-                        :srcdoc="previewModal.html"
-                        sandbox="allow-scripts"
-                        style="width:100%; height:100%; border:0;"></iframe>
+                <template x-if="!previewModal.loading && !previewModal.error && previewModal.html">
+                    <iframe :srcdoc="previewModal.html"
+                            sandbox="allow-scripts allow-same-origin"
+                            style="width:100%; height:100%; border:0;"></iframe>
+                </template>
             </div>
         </div>
     </div>
