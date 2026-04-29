@@ -43,7 +43,7 @@ window.__reportMeta = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(new {
 </script>
 
 <form method="post" action="/Admin/EditReport/@Model.Report.ReportId" id="reportEditFormV2"
-      x-data @@input="$store.builder.dirty = true">
+      x-data="{}" x-on:input="$store.builder.dirty = true">
     @Html.AntiForgeryToken()
     <input type="hidden" name="ReportId" value="@Model.Report.ReportId" />
     <input type="hidden" name="Title" value="@Model.Report.Title" />
@@ -538,7 +538,7 @@ window.__reportMeta = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(new {
     <span><span class="kbd">⌘P</span> önizle</span>
     <span><span class="kbd">Çift-tık</span> widget verisi</span>
     <span><span class="kbd">Del</span> seçili sil</span>
-    <span style="margin-left:auto;" x-data x-text="'12 sütun grid'"></span>
+    <span style="margin-left:auto;" x-data="{}" x-text="'12 sütun grid'"></span>
 </div>
 
 <script src="~/assets/js/builder-v2/builder-render.js" asp-append-version="true"></script>

@@ -46,7 +46,7 @@ window.__reportMeta = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(new {
 </script>
 
 <form method="post" action="/Admin/CreateReport" id="reportCreateFormV2"
-      x-data @@input="$store.builder.dirty = true">
+      x-data="{}" x-on:input="$store.builder.dirty = true">
     @Html.AntiForgeryToken()
 
     <input type="hidden" name="Title" value="@(Model.Report.Title ?? "Yeni Rapor")" />

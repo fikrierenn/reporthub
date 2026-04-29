@@ -8,7 +8,7 @@
 *@
 @model string
 
-<div x-data x-init="
+<div x-data="{}" x-init="
     if (!Alpine.store('builder')) {
         Alpine.store('builder', { dirty: false });
         window.addEventListener('beforeunload', e => {
