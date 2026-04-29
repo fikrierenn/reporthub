@@ -234,6 +234,9 @@
                     }
                     self.selectedId = el.getAttribute('data-widget-id');
                     self.refreshSelection();
+                    // Widget seçilince drawer Veri tab'ında bağlı RS/kolona scroll + pulse
+                    var comp = self.components.find(function (c) { return c.id === self.selectedId; });
+                    if (comp && self.focusBoundDataInDrawer) self.focusBoundDataInDrawer(comp);
                 });
                 // Çift-tıkla → arkadaki ham veriyi modal'da göster
                 el.addEventListener('dblclick', function (e) {

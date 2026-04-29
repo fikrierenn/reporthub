@@ -274,7 +274,8 @@ window.__availableDataSources = @Html.Raw(System.Text.Json.JsonSerializer.Serial
 
                 @* Veri seti grupları — heuristic başlık + admin override + kolon kartları *@
                 <template x-for="(rs, i) in resultSets()" :key="i">
-                    <div class="rs-group" x-show="(rs.columns || []).some(c => !colSearchTerm || String(c).toLowerCase().includes(colSearchTerm.toLowerCase()))">
+                    <div class="rs-group" :data-rs-idx="i"
+                         x-show="(rs.columns || []).some(c => !colSearchTerm || String(c).toLowerCase().includes(colSearchTerm.toLowerCase()))">
                         <div class="rs-head">
                             <input type="text" class="rs-name"
                                    :value="resultSetTitle(rs, i)"
@@ -285,7 +286,7 @@ window.__availableDataSources = @Html.Raw(System.Text.Json.JsonSerializer.Serial
                         </div>
                         <div class="col-list">
                             <template x-for="col in (rs.columns || [])" :key="col">
-                                <div class="col-card"
+                                <div class="col-card" :data-col-name="col"
                                      x-show="!colSearchTerm || String(col).toLowerCase().includes(colSearchTerm.toLowerCase())"
                                      :class="selected && selected.column === col && (selected.result === 'rs' + i || (!selected.result && i === 0)) && 'bound'"
                                      @@click="bindColumn(i, col)"

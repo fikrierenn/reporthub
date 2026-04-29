@@ -1033,6 +1033,16 @@ body.builder-v2-page .builder-v2.preview-mode .param-bar { background: var(--pap
     border-color: var(--accent); color: var(--accent-ink); border-style: solid;
 }
 
+/* Widget seçilince drawer Veri tab'ında bağlı kolon kartı pulse highlight */
+.builder-v2 .col-card.focus-pulse {
+    animation: bv2-col-pulse 1.4s ease-out;
+}
+@keyframes bv2-col-pulse {
+    0% { box-shadow: 0 0 0 0 rgba(220,38,38,0.55), inset 0 0 0 2px rgba(220,38,38,0.6); }
+    70% { box-shadow: 0 0 0 10px rgba(220,38,38,0), inset 0 0 0 2px rgba(220,38,38,0); }
+    100% { box-shadow: 0 0 0 0 rgba(220,38,38,0), inset 0 0 0 2px rgba(220,38,38,0); }
+}
+
 /* F-9 Full Preview iframe modal */
 .builder-v2 .builder-v2-preview-backdrop {
     position: fixed; inset: 0; z-index: 1000;

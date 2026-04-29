@@ -164,6 +164,27 @@
                 return rs ? this.resultSetTitle(rs, this.dataModal.rsIdx) : '';
             },
 
+            // Widget seçilince → drawer Veri tab'ında bağlı RS/kolona scroll + pulse highlight
+            focusBoundDataInDrawer(comp) {
+                if (!comp || !comp.column) return;
+                var rsIdx = 0;
+                if (comp.result && /^rs\d+$/.test(comp.result)) {
+                    rsIdx = parseInt(comp.result.slice(2), 10) || 0;
+                }
+                this.drawerTab = 'veri';
+                this.colSearchTerm = ''; // arama filtresini temizle, kart görünsün
+                var self = this;
+                this.$nextTick(function () {
+                    var card = self.$el.querySelector(
+                        '[data-rs-idx="' + rsIdx + '"] [data-col-name="' + (comp.column || '').replace(/"/g, '\\"') + '"]'
+                    );
+                    if (!card) return;
+                    card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    card.classList.add('focus-pulse');
+                    setTimeout(function () { card.classList.remove('focus-pulse'); }, 1500);
+                });
+            },
+
             // Widget çift-tıkla → bağlı RS için modal aç
             openWidgetData(comp) {
                 if (!comp) return;
