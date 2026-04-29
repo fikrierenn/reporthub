@@ -40,17 +40,16 @@ window.__reportMeta = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(new {
     paramSchemaJson = Model.Report.ParamSchemaJson ?? string.Empty,
     editClassicUrl = $"/Admin/EditReport/{Model.Report.ReportId}"
 }));
+window.__availableDataSources = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
+    (Model.DataSources ?? new()).Where(d => d.IsActive).Select(d => new { key = d.DataSourceKey, title = d.Title })));
 </script>
 
 <form method="post" action="/Admin/EditReport/@Model.Report.ReportId" id="reportEditFormV2"
       x-data="{}" x-on:input="$store.builder.dirty = true">
     @Html.AntiForgeryToken()
+    @* Title/DataSourceKey/ProcName/ParamSchemaJson hidden input'ları builder-v2 div'inde reactive sync *@
     <input type="hidden" name="ReportId" value="@Model.Report.ReportId" />
-    <input type="hidden" name="Title" value="@Model.Report.Title" />
-    <input type="hidden" name="DataSourceKey" value="@Model.Report.DataSourceKey" />
-    <input type="hidden" name="ProcName" value="@Model.Report.ProcName" />
     <input type="hidden" name="Description" value="@(Model.Report.Description ?? string.Empty)" />
-    <input type="hidden" name="ParamSchemaJson" value="@(Model.Report.ParamSchemaJson ?? string.Empty)" />
     @if (Model.Report.IsActive) { <input type="hidden" name="IsActive" value="true" /> }
     @foreach (var rid in (Model.SelectedRoleIds ?? new HashSet<int>())) { <input type="hidden" name="SelectedRoles" value="@rid" /> }
     @foreach (var cid in (Model.SelectedCategoryIds ?? new HashSet<int>())) { <input type="hidden" name="SelectedCategories" value="@cid" /> }
@@ -59,6 +58,11 @@ window.__reportMeta = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(new {
 
 @* ============ BUILDER 3-PANE — Alpine x-data ============ *@
 <div class="builder-v2" x-data="builderV2" x-cloak>
+    @* Alpine reactive hidden input'lar — form="reportEditFormV2" ile dış form'a bağlı *@
+    <input type="hidden" name="Title" form="reportEditFormV2" :value="title" />
+    <input type="hidden" name="DataSourceKey" form="reportEditFormV2" :value="dataSourceKey" />
+    <input type="hidden" name="ProcName" form="reportEditFormV2" :value="procName" />
+    <input type="hidden" name="ParamSchemaJson" form="reportEditFormV2" :value="paramSchemaJson" />
 
     @* SOL: PALETTE *@
     <aside class="palette">
@@ -442,26 +446,53 @@ window.__reportMeta = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(new {
                     <span class="ico"><i class="fas fa-gear"></i></span>
                     <span class="name">Rapor Ayarları</span>
                 </div>
-                <p style="font-size:11px; color:var(--ink-3); margin-bottom:14px;">Form alanları ana &lt;form&gt;'da; bu sekme yalnızca okuma görünümüdür.</p>
+                <p style="font-size:11px; color:var(--ink-3); margin-bottom:14px;">Tüm alanlar form POST'a dahil olur. Reaktif değişiklik dirty chip'i tetikler.</p>
+
                 <div class="field">
                     <label class="lab">Rapor Adı</label>
-                    <div class="inp" style="display:flex; align-items:center;" x-text="reportMeta.title || '—'"></div>
+                    <input type="text" class="inp" x-model="title" placeholder="Örn: Şube Performans Panosu" />
                 </div>
+
                 <div class="field">
                     <label class="lab">Veri Kaynağı</label>
-                    <div class="inp" style="display:flex; align-items:center;" x-text="reportMeta.dataSourceKey || '—'"></div>
+                    <select class="inp" x-model="dataSourceKey" @@change="onDataSourceChange()">
+                        <option value="">— seç —</option>
+                        <template x-for="ds in availableDataSources" :key="ds.key">
+                            <option :value="ds.key" :selected="ds.key === dataSourceKey" x-text="ds.title + ' (' + ds.key + ')'"></option>
+                        </template>
+                    </select>
                 </div>
+
                 <div class="field">
-                    <label class="lab">SP</label>
-                    <div class="inp" style="display:flex; align-items:center; font-family:JetBrains Mono,monospace; font-size:11px;" x-text="reportMeta.procName || '—'"></div>
+                    <label class="lab">Stored Procedure</label>
+                    <input type="text" class="inp" x-model="procName" list="spListV2"
+                           @@change="onProcNameChange()" @@blur="onProcNameChange()"
+                           :disabled="!dataSourceKey"
+                           placeholder="Örn: sp_PdksPano" />
+                    <datalist id="spListV2">
+                        <template x-for="sp in spList" :key="sp.name">
+                            <option :value="sp.name"></option>
+                        </template>
+                    </datalist>
                 </div>
+
+                <div class="field" x-show="procParams.length > 0" x-cloak>
+                    <label class="lab">SP Parametreleri (otomatik)</label>
+                    <div class="inp" style="background:var(--canvas); font-family:'JetBrains Mono',monospace; font-size:11px; line-height:1.5;">
+                        <template x-for="p in procParams" :key="p.name">
+                            <div>· <span x-text="p.name"></span> <span style="color:var(--ink-3);" x-text="'(' + p.type + ')'"></span></div>
+                        </template>
+                    </div>
+                </div>
+
                 <div class="field">
                     <label class="lab">Aktif</label>
                     <div class="inp" style="display:flex; align-items:center;" x-text="reportMeta.isActive ? 'Evet' : 'Hayır'"></div>
                 </div>
+
                 <a :href="reportMeta.editClassicUrl" class="btn"
                    style="display:inline-flex; gap:6px; align-items:center; padding:8px 12px; background:var(--paper); border:1px solid var(--line); border-radius:6px; color:var(--ink-1); text-decoration:none; font-size:12px;">
-                    <i class="fas fa-arrow-up-right-from-square text-[10px]"></i> Klasik formda düzenle
+                    <i class="fas fa-arrow-up-right-from-square text-[10px]"></i> Klasik formda düzenle (rol/kategori/açıklama)
                 </a>
             </div>
 
@@ -544,4 +575,5 @@ window.__reportMeta = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(new {
 <script src="~/assets/js/builder-v2/builder-render.js" asp-append-version="true"></script>
 <script src="~/assets/js/builder-v2/builder-sp.js" asp-append-version="true"></script>
 <script src="~/assets/js/builder-v2/builder-drawer.js" asp-append-version="true"></script>
+<script src="~/assets/js/builder-v2/builder-settings.js" asp-append-version="true"></script>
 <script src="~/assets/js/builder-v2/builder.js" asp-append-version="true"></script>

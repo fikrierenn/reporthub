@@ -46,6 +46,9 @@
                         if (!c.id) c.id = self.genId(c.type || 'x');
                     });
 
+                    // Settings (DataSource/ProcName/ParamSchema) reactive state init
+                    if (self.initSettings) self.initSettings();
+
                     // Gridstack init — DOM hazır olduktan sonra
                     self.$nextTick(function () {
                         self.initGridstack();
@@ -217,7 +220,8 @@
                 base,
                 window.__builderV2.renderMixin(),
                 window.__builderV2.spMixin(),
-                window.__builderV2.drawerMixin()
+                window.__builderV2.drawerMixin(),
+                window.__builderV2.settingsMixin()
             );
         };
     }

@@ -43,17 +43,17 @@ window.__reportMeta = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(new {
     paramSchemaJson = Model.Report.ParamSchemaJson ?? string.Empty,
     editClassicUrl = "/Admin/CreateReport"
 }));
+window.__availableDataSources = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
+    (Model.DataSources ?? new()).Where(d => d.IsActive).Select(d => new { key = d.DataSourceKey, title = d.Title })));
 </script>
 
 <form method="post" action="/Admin/CreateReport" id="reportCreateFormV2"
       x-data="{}" x-on:input="$store.builder.dirty = true">
     @Html.AntiForgeryToken()
 
-    <input type="hidden" name="Title" value="@(Model.Report.Title ?? "Yeni Rapor")" />
-    <input type="hidden" name="DataSourceKey" value="@(Model.Report.DataSourceKey ?? string.Empty)" />
-    <input type="hidden" name="ProcName" value="@(Model.Report.ProcName ?? string.Empty)" />
+    @* Title/DataSourceKey/ProcName/ParamSchemaJson hidden input'ları builder-v2 div'inin içinde,
+       Alpine reactive state ile bağlı (form="reportCreateFormV2" attribute ile bu form'a iliştirilmiş). *@
     <input type="hidden" name="Description" value="@(Model.Report.Description ?? string.Empty)" />
-    <input type="hidden" name="ParamSchemaJson" value="@(Model.Report.ParamSchemaJson ?? string.Empty)" />
     <input type="hidden" name="IsActive" value="true" />
     @foreach (var rid in selectedRoleIds)
     {
@@ -67,6 +67,11 @@ window.__reportMeta = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(new {
 </form>
 
 <div class="builder-v2" x-data="builderV2" x-cloak>
+    @* Alpine reactive hidden input'lar — form="reportCreateFormV2" ile dış form'a bağlı *@
+    <input type="hidden" name="Title" form="reportCreateFormV2" :value="title || 'Yeni Rapor'" />
+    <input type="hidden" name="DataSourceKey" form="reportCreateFormV2" :value="dataSourceKey" />
+    <input type="hidden" name="ProcName" form="reportCreateFormV2" :value="procName" />
+    <input type="hidden" name="ParamSchemaJson" form="reportCreateFormV2" :value="paramSchemaJson" />
     <aside class="palette">
         <div class="pal-section">
             <div class="pal-title">Bileşen Ekle</div>
@@ -379,12 +384,52 @@ window.__reportMeta = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(new {
                     <span class="ico"><i class="fas fa-gear"></i></span>
                     <span class="name">Rapor Ayarları</span>
                 </div>
-                <p style="font-size:11px; color:var(--ink-3); margin-bottom:14px;">Yeni rapor için temel bilgiler. Klasik formdan da düzenlenebilir.</p>
+                <p style="font-size:11px; color:var(--ink-3); margin-bottom:14px;">Sıfırdan rapor oluşturmak için temel bilgiler. Tüm alanlar form POST'a dahil olur.</p>
+
                 <div class="field">
                     <label class="lab">Rapor Adı</label>
-                    <div class="inp" style="display:flex; align-items:center;" x-text="reportMeta.title || '(yeni)'"></div>
+                    <input type="text" class="inp" x-model="title" placeholder="Örn: Şube Performans Panosu" />
                 </div>
-                <a :href="reportMeta.editClassicUrl" class="btn" style="display:inline-flex; gap:6px; align-items:center; padding:8px 12px; background:var(--paper); border:1px solid var(--line); border-radius:6px; color:var(--ink-1); text-decoration:none; font-size:12px;">
+
+                <div class="field">
+                    <label class="lab">Veri Kaynağı</label>
+                    <select class="inp" x-model="dataSourceKey" @@change="onDataSourceChange()">
+                        <option value="">— seç —</option>
+                        <template x-for="ds in availableDataSources" :key="ds.key">
+                            <option :value="ds.key" :selected="ds.key === dataSourceKey" x-text="ds.title + ' (' + ds.key + ')'"></option>
+                        </template>
+                    </select>
+                </div>
+
+                <div class="field">
+                    <label class="lab">Stored Procedure</label>
+                    <input type="text" class="inp" x-model="procName" list="spListV2"
+                           @@change="onProcNameChange()" @@blur="onProcNameChange()"
+                           :disabled="!dataSourceKey"
+                           placeholder="Örn: sp_PdksPano" />
+                    <datalist id="spListV2">
+                        <template x-for="sp in spList" :key="sp.name">
+                            <option :value="sp.name"></option>
+                        </template>
+                    </datalist>
+                    <small style="font-size:10.5px; color:var(--ink-4); margin-top:4px; display:block;">
+                        Veri kaynağını seçince listelenen SP'lerden birini yaz veya tam adıyla gir.
+                    </small>
+                </div>
+
+                <div class="field" x-show="procParams.length > 0" x-cloak>
+                    <label class="lab">SP Parametreleri (otomatik)</label>
+                    <div class="inp" style="background:var(--canvas); font-family:'JetBrains Mono',monospace; font-size:11px; line-height:1.5;">
+                        <template x-for="p in procParams" :key="p.name">
+                            <div>· <span x-text="p.name"></span> <span style="color:var(--ink-3);" x-text="'(' + p.type + ')'"></span></div>
+                        </template>
+                    </div>
+                    <small style="font-size:10.5px; color:var(--ink-4); margin-top:4px; display:block;">
+                        ParamSchemaJson otomatik üretildi; Param-bar'da düzenlenebilir.
+                    </small>
+                </div>
+
+                <a :href="reportMeta.editClassicUrl" class="btn" style="display:inline-flex; gap:6px; align-items:center; padding:8px 12px; background:var(--paper); border:1px solid var(--line); border-radius:6px; color:var(--ink-1); text-decoration:none; font-size:12px; margin-top:8px;">
                     <i class="fas fa-arrow-up-right-from-square text-[10px]"></i> Klasik formda düzenle
                 </a>
             </div>
@@ -458,4 +503,5 @@ window.__reportMeta = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(new {
 <script src="~/assets/js/builder-v2/builder-render.js" asp-append-version="true"></script>
 <script src="~/assets/js/builder-v2/builder-sp.js" asp-append-version="true"></script>
 <script src="~/assets/js/builder-v2/builder-drawer.js" asp-append-version="true"></script>
+<script src="~/assets/js/builder-v2/builder-settings.js" asp-append-version="true"></script>
 <script src="~/assets/js/builder-v2/builder.js" asp-append-version="true"></script>

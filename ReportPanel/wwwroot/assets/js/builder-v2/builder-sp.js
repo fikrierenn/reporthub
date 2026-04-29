@@ -10,12 +10,13 @@
 
     window.__builderV2.spMixin = function () {
         return {
-            // ParamSchema fields'ını parse et — UI render için (param-bar chip'leri)
+            // ParamSchema fields'ını parse et — UI render için (param-bar chip'leri).
+            // Reactive state (settings mixin) öncelikli; yoksa server'dan gelen reportMeta fallback.
             paramFields() {
-                var meta = this.reportMeta;
-                if (!meta || !meta.paramSchemaJson) return [];
+                var raw = this.paramSchemaJson || (this.reportMeta && this.reportMeta.paramSchemaJson) || '';
+                if (!raw) return [];
                 try {
-                    var schema = JSON.parse(meta.paramSchemaJson);
+                    var schema = JSON.parse(raw);
                     return (schema && schema.fields) || [];
                 } catch (e) { return []; }
             },
@@ -92,12 +93,14 @@
             },
 
             fetchSpPreview() {
-                var meta = this.reportMeta;
-                if (!meta) return;
+                var meta = this.reportMeta || {};
+                // EditReportV2: reportId varsa V1 Run path'i (RunJsonV2).
+                // CreateReportV2: reportId yok → reactive state (DataSource/ProcName/ParamSchema)
+                // RunJsonV2Preview'e geçer; settings mixin paramSchemaJson'ı dinamik üretir.
+                var dsKey = this.dataSourceKey || meta.dataSourceKey || '';
+                var proc = this.procName || meta.procName || '';
+                var schemaJson = this.paramSchemaJson || meta.paramSchemaJson || '';
                 var defaults = this.buildParamDefaults();
-                // EditReportV2: reportId var → V1 Run path'iyle aynı SP çağrısı (RunJsonV2).
-                // CreateReportV2: reportId yok → RunJsonV2Preview (admin-only, ParamSchema-based,
-                // SpPreview default-doldurma bug'ı bypass — SP kendi default'unu kullanır).
                 var url;
                 if (meta.reportId) {
                     url = '/Reports/RunJsonV2/' + meta.reportId;
@@ -105,11 +108,11 @@
                         url += '?paramsJson=' + encodeURIComponent(JSON.stringify(defaults));
                     }
                 } else {
-                    if (!meta.dataSourceKey || !meta.procName) return;
-                    url = '/Reports/RunJsonV2Preview?dataSourceKey=' + encodeURIComponent(meta.dataSourceKey)
-                        + '&procName=' + encodeURIComponent(meta.procName);
-                    if (meta.paramSchemaJson) {
-                        url += '&paramSchemaJson=' + encodeURIComponent(meta.paramSchemaJson);
+                    if (!dsKey || !proc) return;
+                    url = '/Reports/RunJsonV2Preview?dataSourceKey=' + encodeURIComponent(dsKey)
+                        + '&procName=' + encodeURIComponent(proc);
+                    if (schemaJson) {
+                        url += '&paramSchemaJson=' + encodeURIComponent(schemaJson);
                     }
                     if (Object.keys(defaults).length > 0) {
                         url += '&paramsJson=' + encodeURIComponent(JSON.stringify(defaults));
