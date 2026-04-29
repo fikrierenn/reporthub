@@ -369,6 +369,144 @@ namespace ReportPanel.Controllers
             }
         }
 
+        // V2 builder F-9: Tam dashboard preview iframe için DashboardRenderer çıktısı.
+        // Draft configJson kaydedilmeden çalıştırılabilir; V1 Run path'inin paritesi (filter inject + SP execute)
+        // ama config DB yerine body'den gelir. Admin-only + AntiForgery zorunlu.
+        // Response: tam HTML doc (DashboardRenderer.Render full <html><head><body> emit eder).
+        [Authorize(Roles = "admin")]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Route("Admin/Reports/PreviewDashboardV2")]
+        public async Task<IActionResult> PreviewDashboardV2(
+            [FromForm] string dataSourceKey,
+            [FromForm] string procName,
+            [FromForm] string configJson,
+            [FromForm] string? paramsJson = null,
+            [FromForm] string? paramSchemaJson = null,
+            [FromForm] int? reportId = null)
+        {
+            if (string.IsNullOrWhiteSpace(dataSourceKey) || string.IsNullOrWhiteSpace(procName))
+                return BadRequest("Veri kaynağı ve SP adı gerekli.");
+            if (!System.Text.RegularExpressions.Regex.IsMatch(procName, @"^[a-zA-Z_][a-zA-Z0-9_\.]*$"))
+                return BadRequest("Geçersiz SP adı.");
+            if (string.IsNullOrWhiteSpace(configJson))
+                return BadRequest("Pano yapılandırması boş.");
+
+            // 1. Config validate — invalid ise render etme, hata listesi dön
+            var configValidation = Services.DashboardConfigValidator.Validate(configJson);
+            if (configValidation.HasErrors)
+                return BadRequest("Pano yapılandırması geçersiz:\n• " + string.Join("\n• ", configValidation.Errors));
+
+            // 2. DataSource
+            var dataSource = await _context.DataSources
+                .AsNoTracking()
+                .Where(ds => ds.DataSourceKey == dataSourceKey && ds.IsActive)
+                .FirstOrDefaultAsync();
+            if (dataSource == null)
+                return BadRequest("Veri kaynağı bulunamadı veya pasif.");
+
+            // 3. ParamSchema parse
+            var paramFields = new List<ReportParamField>();
+            if (!string.IsNullOrWhiteSpace(paramSchemaJson))
+            {
+                try
+                {
+                    var parsed = JsonSerializer.Deserialize<List<ReportParamField>>(
+                        paramSchemaJson,
+                        new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    if (parsed != null) paramFields = parsed;
+                }
+                catch { /* paramFields boş → SP default kullanır */ }
+            }
+
+            // 4. paramsJson + ParamSchema default → fakeForm
+            var formDict = new Dictionary<string, Microsoft.Extensions.Primitives.StringValues>();
+            if (!string.IsNullOrWhiteSpace(paramsJson))
+            {
+                try
+                {
+                    var parsed = JsonSerializer.Deserialize<Dictionary<string, string>>(paramsJson);
+                    if (parsed != null)
+                        foreach (var kv in parsed)
+                            formDict[kv.Key] = new Microsoft.Extensions.Primitives.StringValues(kv.Value ?? "");
+                }
+                catch { /* default'lara düş */ }
+            }
+            foreach (var f in paramFields)
+            {
+                if (formDict.ContainsKey(f.Name)) continue;
+                var dv = string.Equals(f.Type, "date", StringComparison.OrdinalIgnoreCase) &&
+                         string.Equals(f.DefaultValue, "today", StringComparison.OrdinalIgnoreCase)
+                    ? DateTime.Today.ToString("yyyy-MM-dd")
+                    : f.DefaultValue ?? "";
+                formDict[f.Name] = new Microsoft.Extensions.Primitives.StringValues(dv);
+            }
+            var fakeForm = new Microsoft.AspNetCore.Http.FormCollection(formDict);
+
+            var validation = ReportParamValidator.ValidateAndBuild(paramFields, fakeForm);
+            if (!validation.Success)
+                return BadRequest(string.Join(" ", validation.Errors));
+
+            await _filterInjector.InjectAsync(validation.Parameters, CurrentUserId, reportId ?? 0, dataSourceKey);
+
+            var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+            try
+            {
+                var resultSets = await _spExecutor.ExecuteMultipleAsync(
+                    dataSource.ConnString, procName, validation.Parameters);
+                stopwatch.Stop();
+
+                DashboardConfig? dashConfig;
+                try
+                {
+                    dashConfig = JsonSerializer.Deserialize<DashboardConfig>(configJson,
+                        new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                }
+                catch (JsonException)
+                {
+                    return BadRequest("Pano yapılandırması parse edilemedi.");
+                }
+                if (dashConfig == null) return BadRequest("Pano yapılandırması boş.");
+
+                var html = ReportPanel.Services.DashboardRenderer.Render(dashConfig, resultSets);
+
+                await _auditLog.LogAsync(new AuditLogEntry
+                {
+                    EventType = "dashboard_preview",
+                    TargetType = "datasource",
+                    TargetKey = dataSourceKey,
+                    ReportId = reportId,
+                    DataSourceKey = dataSourceKey,
+                    ParamsJson = validation.ParamsJson,
+                    DurationMs = (int)stopwatch.ElapsedMilliseconds,
+                    ResultRowCount = resultSets.Sum(rs => rs.Count),
+                    IsSuccess = true,
+                    Description = $"V2 builder full preview: {procName}"
+                });
+
+                return Content(html, "text/html");
+            }
+            catch (Exception ex)
+            {
+                stopwatch.Stop();
+                await _auditLog.LogAsync(new AuditLogEntry
+                {
+                    EventType = "dashboard_preview",
+                    TargetType = "datasource",
+                    TargetKey = dataSourceKey,
+                    ReportId = reportId,
+                    DataSourceKey = dataSourceKey,
+                    ParamsJson = validation.ParamsJson,
+                    DurationMs = (int)stopwatch.ElapsedMilliseconds,
+                    IsSuccess = false,
+                    ErrorMessage = ex.Message,
+                    Description = $"V2 builder full preview failed: {procName}"
+                });
+                // M-02: generic mesaj, detay audit log'a
+                return StatusCode(500, "Önizleme oluşturulamadı. SP veya veri kaynağı kontrol edin, audit log'a bakın.");
+            }
+        }
+
         [HttpGet]
         public async Task<IActionResult> Run(int reportId)
         {

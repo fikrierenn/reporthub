@@ -41,9 +41,11 @@
         kaydedilmemiş
     </span>
 
-    <button type="button" id="dbBtnUndo" class="btn ghost" disabled title="F-9'da aktif">
-        <i class="fas fa-rotate-left text-[10px]"></i>
-        Geri Al
+    <button type="button" class="btn"
+            @@click="$dispatch('builder-preview-open')"
+            title="Gerçek dashboard çıktısını yeni bir overlay'de göster">
+        <i class="fas fa-window-maximize text-[10px]"></i>
+        Tam Önizle
     </button>
 
     <button type="button" id="dbBtnJsonV2" class="btn"

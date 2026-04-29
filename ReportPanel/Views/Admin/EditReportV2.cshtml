@@ -69,7 +69,8 @@ window.__availableDataSources = @Html.Raw(System.Text.Json.JsonSerializer.Serial
 }
 
 @* ============ BUILDER 3-PANE — Alpine x-data ============ *@
-<div class="builder-v2" x-data="builderV2" x-cloak>
+<div class="builder-v2" x-data="builderV2" x-cloak
+     x-on:builder-preview-open.window="openPreview()">
     @* Alpine reactive hidden input'lar — form="reportEditFormV2" ile dış form'a bağlı *@
     <input type="hidden" name="Title" form="reportEditFormV2" :value="title" />
     <input type="hidden" name="DataSourceKey" form="reportEditFormV2" :value="dataSourceKey" />
@@ -526,6 +527,33 @@ window.__availableDataSources = @Html.Raw(System.Text.Json.JsonSerializer.Serial
         </div>
     </aside>
 
+    @* ============ FULL PREVIEW MODAL — F-9 iframe ============ *@
+    <div x-show="previewModal && previewModal.open" x-cloak
+         class="builder-v2-preview-backdrop"
+         @@click.self="closePreview()"
+         @@keydown.escape.window="closePreview()">
+        <div class="builder-v2-preview-shell">
+            <div class="m-head">
+                <span class="m-title">Tam Dashboard Önizleme</span>
+                <span class="m-meta" x-text="reportMeta && reportMeta.title ? reportMeta.title : ''"></span>
+                <button type="button" class="m-close" @@click="closePreview()" title="Kapat (Esc)">×</button>
+            </div>
+            <div class="m-body">
+                <div x-show="previewModal.loading" style="padding:20px; text-align:center; color:var(--ink-3);">
+                    <i class="fas fa-spinner fa-spin"></i> Önizleme oluşturuluyor…
+                </div>
+                <div x-show="previewModal.error" x-cloak
+                     style="padding:20px; color:var(--accent-ink); white-space:pre-line;"
+                     x-text="previewModal.error"></div>
+                <iframe x-show="!previewModal.loading && !previewModal.error && previewModal.html"
+                        x-cloak
+                        :srcdoc="previewModal.html"
+                        sandbox="allow-scripts"
+                        style="width:100%; height:100%; border:0;"></iframe>
+            </div>
+        </div>
+    </div>
+
     @* ============ DATA MODAL — Widget çift-tıkla veya palette RS click ============ *@
     <div x-show="dataModal && dataModal.open" x-cloak
          class="builder-v2-modal-backdrop"
@@ -604,4 +632,5 @@ window.__availableDataSources = @Html.Raw(System.Text.Json.JsonSerializer.Serial
 <script src="~/assets/js/builder-v2/builder-drawer.js" asp-append-version="true"></script>
 <script src="~/assets/js/builder-v2/builder-settings.js" asp-append-version="true"></script>
 <script src="~/assets/js/builder-v2/builder-tabs.js" asp-append-version="true"></script>
+<script src="~/assets/js/builder-v2/builder-preview.js" asp-append-version="true"></script>
 <script src="~/assets/js/builder-v2/builder.js" asp-append-version="true"></script>
