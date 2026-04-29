@@ -1,0 +1,63 @@
+@*
+    V2 builder topbar — mode-seg (Düzenle/Önizle), dirty chip, JSON, Kaydet.
+    V1 partial (_ReportFormBuilderTopActions.cshtml) el değmez — V2'ye özgü.
+
+    Form id parametre: "reportEditFormV2" veya "reportCreateFormV2".
+    Mode toggle Alpine $store.builderV2Mode store'una bağlanır → builder.js dinler ve
+    canvas'ta widget'ları edit/preview render'ına çevirir.
+*@
+@model string
+
+<div x-data x-init="
+    if (!Alpine.store('builder')) {
+        Alpine.store('builder', { dirty: false });
+        window.addEventListener('beforeunload', e => {
+            if (Alpine.store('builder').dirty) { e.preventDefault(); e.returnValue = ''; }
+        });
+    }
+    if (!Alpine.store('builderV2Mode')) {
+        Alpine.store('builderV2Mode', { value: 'edit' });
+    }
+" style="display:contents;">
+
+    @* Mode-seg — mockup'taki app-shell-builder-v1 birebir *@
+    <div class="mode-seg">
+        <button type="button" data-mode="edit"
+                :class="$store.builderV2Mode.value === 'edit' && 'on'"
+                @@click="$store.builderV2Mode.value = 'edit'">
+            <i class="fas fa-pen text-[10px]"></i>
+            Düzenle
+        </button>
+        <button type="button" data-mode="preview"
+                :class="$store.builderV2Mode.value === 'preview' && 'on'"
+                @@click="$store.builderV2Mode.value = 'preview'">
+            <i class="fas fa-eye text-[10px]"></i>
+            Önizle
+        </button>
+    </div>
+
+    <span class="dirty-chip" x-show="$store.builder.dirty" x-cloak>
+        <i class="fas fa-circle-exclamation text-[9px]"></i>
+        kaydedilmemiş
+    </span>
+
+    <button type="button" id="dbBtnUndo" class="btn ghost" disabled title="F-9'da aktif">
+        <i class="fas fa-rotate-left text-[10px]"></i>
+        Geri Al
+    </button>
+
+    <button type="button" id="dbBtnJsonV2" class="btn"
+            @@click="
+                let ta = document.getElementById('DashboardConfigJson');
+                if (ta) { navigator.clipboard.writeText(ta.value); $el.querySelector('.txt').textContent = 'kopyalandı'; setTimeout(() => $el.querySelector('.txt').textContent = 'JSON', 1500); }
+            "
+            title="DashboardConfigJson'u panoya kopyala">
+        <i class="fas fa-code text-[10px]"></i>
+        <span class="txt">JSON</span>
+    </button>
+
+    <button type="submit" form="@Model" class="btn primary" @@click="$store.builder.dirty = false">
+        <i class="fas fa-check text-[10px]"></i>
+        Kaydet
+    </button>
+</div>

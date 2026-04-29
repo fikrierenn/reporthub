@@ -1,0 +1,544 @@
+@model ReportPanel.ViewModels.AdminReportFormViewModel
+@{
+    Layout = "_AppLayout";
+    ViewData["Title"] = $"V2 Düzenle: {Model.Report.Title} - BKM Rapor Paneli";
+    ViewData["PageTitle"] = "Rapor Tasarımı (V2)";
+    ViewData["BodyClass"] = "builder-v2-page";
+}
+
+@section Head {
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gridstack@@10.3.1/dist/gridstack.min.css" crossorigin="anonymous" />
+    <script defer src="https://cdn.jsdelivr.net/npm/gridstack@@10.3.1/dist/gridstack-all.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="~/assets/css/builder-v2.css" asp-append-version="true" />
+}
+
+@section Breadcrumb {
+    <div class="crumbs">
+        <a href="/Dashboard">BKM Kitap</a>
+        <span class="sep">/</span>
+        <a href="/Admin">Yönetim</a>
+        <span class="sep">/</span>
+        <a href="/Admin?tab=reports">Raporlar</a>
+        <span class="sep">/</span>
+        <span class="current">@Model.Report.Title</span>
+        <span class="sp-chip mono">@Model.Report.ProcName</span>
+    </div>
+}
+
+@section TopActions {
+    @await Html.PartialAsync("_ReportFormBuilderTopActionsV2", "reportEditFormV2")
+}
+
+<script>
+window.__reportMeta = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(new {
+    reportId = Model.Report.ReportId,
+    title = Model.Report.Title,
+    dataSourceKey = Model.Report.DataSourceKey,
+    procName = Model.Report.ProcName,
+    isActive = Model.Report.IsActive,
+    description = Model.Report.Description ?? string.Empty,
+    paramSchemaJson = Model.Report.ParamSchemaJson ?? string.Empty,
+    editClassicUrl = $"/Admin/EditReport/{Model.Report.ReportId}"
+}));
+</script>
+
+<form method="post" action="/Admin/EditReport/@Model.Report.ReportId" id="reportEditFormV2"
+      x-data @@input="$store.builder.dirty = true">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="ReportId" value="@Model.Report.ReportId" />
+    <input type="hidden" name="Title" value="@Model.Report.Title" />
+    <input type="hidden" name="DataSourceKey" value="@Model.Report.DataSourceKey" />
+    <input type="hidden" name="ProcName" value="@Model.Report.ProcName" />
+    <input type="hidden" name="Description" value="@(Model.Report.Description ?? string.Empty)" />
+    <input type="hidden" name="ParamSchemaJson" value="@(Model.Report.ParamSchemaJson ?? string.Empty)" />
+    @if (Model.Report.IsActive) { <input type="hidden" name="IsActive" value="true" /> }
+    @foreach (var rid in (Model.SelectedRoleIds ?? new HashSet<int>())) { <input type="hidden" name="SelectedRoles" value="@rid" /> }
+    @foreach (var cid in (Model.SelectedCategoryIds ?? new HashSet<int>())) { <input type="hidden" name="SelectedCategories" value="@cid" /> }
+    <textarea name="DashboardConfigJson" id="DashboardConfigJson" style="display:none;">@Model.Report.DashboardConfigJson</textarea>
+</form>
+
+@* ============ BUILDER 3-PANE — Alpine x-data ============ *@
+<div class="builder-v2" x-data="builderV2" x-cloak>
+
+    @* SOL: PALETTE *@
+    <aside class="palette">
+        <div class="pal-section">
+            <div class="pal-title">Bileşen Ekle</div>
+            <div class="pal-sub">Tuvale sürükle ya da + ile ekle</div>
+        </div>
+        <div class="pal-cards">
+            <div class="palette-card" draggable="true"
+                 @@dragstart="onPaletteDragStart($event, 'kpi')"
+                 @@click="addWidget('kpi')">
+                <div class="palette-icon kpi"><i class="fas fa-chart-line"></i></div>
+                <div class="info"><div class="t">KPI</div><div class="d">Tek sayı + delta</div></div>
+                <button type="button" class="add" @@click.stop="addWidget('kpi')"><i class="fas fa-plus"></i></button>
+            </div>
+            <div class="palette-card" draggable="true"
+                 @@dragstart="onPaletteDragStart($event, 'chart')"
+                 @@click="addWidget('chart')">
+                <div class="palette-icon chart"><i class="fas fa-chart-column"></i></div>
+                <div class="info"><div class="t">Grafik</div><div class="d">Bar, line, area, donut</div></div>
+                <button type="button" class="add" @@click.stop="addWidget('chart')"><i class="fas fa-plus"></i></button>
+            </div>
+            <div class="palette-card" draggable="true"
+                 @@dragstart="onPaletteDragStart($event, 'table')"
+                 @@click="addWidget('table')">
+                <div class="palette-icon table"><i class="fas fa-table"></i></div>
+                <div class="info"><div class="t">Tablo</div><div class="d">Result set satırları</div></div>
+                <button type="button" class="add" @@click.stop="addWidget('table')"><i class="fas fa-plus"></i></button>
+            </div>
+        </div>
+
+        <div class="pal-section" style="padding-top:18px;">
+            <div class="pal-title">Veri Setleri</div>
+            <div class="pal-sub">SP'den dönen result set'ler — etiket ekleyebilirsin</div>
+        </div>
+        <div class="contract">
+            <div class="contract-list">
+                <template x-for="(rs, i) in resultSets()" :key="i">
+                    <div class="contract-row" @@click="openDataModal(i, null)" :title="'Tıkla: ' + (rs.rows || []).length + ' satırı veri tablosunda göster'">
+                        <input type="text" class="name"
+                               style="background:transparent; border:1px dashed transparent; border-radius:3px; padding:1px 4px; flex:1; min-width:0; color:var(--ink-1); font-family:'JetBrains Mono',monospace; font-size:11.5px;"
+                               :value="resultSetTitle(rs, i)"
+                               @@click.stop
+                               @@blur="setContractName(i, $event.target.value)"
+                               @@keydown.enter="$event.target.blur()"
+                               @@focus="$event.target.style.borderColor='var(--line)'; $event.target.style.background='var(--paper)'"
+                               title="İsim düzenlemek için tıkla; veri görmek için satır boşluğuna tıkla" />
+                        <span class="rs" x-text="(rs.rows || []).length + 's'"></span>
+                        <button type="button" class="preview-btn" @@click.stop="openDataModal(i, null)" title="Veri tablosunda göster" style="background:transparent; border:none; color:var(--ink-3); cursor:pointer; padding:2px 4px; border-radius:3px;">
+                            <i class="fas fa-table"></i>
+                        </button>
+                    </div>
+                </template>
+                <div x-show="resultSets().length === 0" style="padding:8px 10px; font-size:11px; color:var(--ink-4); text-align:center;">
+                    SP henüz çalıştırılmadı
+                </div>
+            </div>
+        </div>
+
+        <div class="pal-section" style="padding-top:8px;">
+            <div class="pal-title">Bileşenler <span x-text="'(' + components.length + ')'"></span></div>
+        </div>
+        <div class="pal-list">
+            <template x-for="comp in components" :key="comp.id">
+                <div class="comp-row" :class="selectedId === comp.id && 'editing'"
+                     @@click="selectedId = comp.id; refreshSelection()">
+                    <span class="grip"><i class="fas fa-grip-vertical"></i></span>
+                    <span class="type-chip" :class="'type-' + comp.type" x-text="typeLabel(comp.type)"></span>
+                    <span class="title" x-text="comp.title || typeLabel(comp.type)"></span>
+                    <span class="meta" x-text="(comp.span || 1) + '/4'"></span>
+                </div>
+            </template>
+        </div>
+    </aside>
+
+    @* ORTA: CANVAS *@
+    <main class="canvas"
+          @@dragover="onCanvasDragOver($event)"
+          @@dragleave="onCanvasDragLeave($event)"
+          @@drop="onCanvasDrop($event)">
+        <div class="param-bar">
+            <span class="lbl">Parametreler</span>
+
+            @* Hiç param yoksa minik bir not *@
+            <template x-if="paramFields().length === 0">
+                <span style="font-size:11px; color:var(--ink-4);">Bu raporda parametre tanımı yok</span>
+            </template>
+
+            @* Her ParamSchema field için bir chip — tıklanır, inline edit *@
+            <template x-for="f in paramFields()" :key="f.name">
+                <span class="param-chip" :class="paramEditing === f.name && 'editing'">
+                    <i class="fas" :class="(f.type === 'date' ? 'fa-calendar' : f.type === 'number' || f.type === 'decimal' ? 'fa-hashtag' : f.type === 'checkbox' ? 'fa-check' : 'fa-tag')"></i>
+                    <span x-text="(f.label || f.name) + ':'"></span>
+
+                    @* Görüntüleme modu (chip'in normal hali) *@
+                    <span class="v" x-show="paramEditing !== f.name"
+                          @@click="toggleParamEdit(f.name)"
+                          x-text="paramDisplayValue(f)"
+                          style="cursor:pointer; text-decoration:underline dotted;"
+                          title="Düzenlemek için tıkla"></span>
+
+                    @* Inline edit modu — type'a göre input *@
+                    <input x-show="paramEditing === f.name" x-cloak
+                           :type="f.type === 'date' ? 'date' : f.type === 'number' || f.type === 'decimal' ? 'number' : 'text'"
+                           :value="paramValue(f)"
+                           @@input="setParamOverride(f.name, $event.target.value)"
+                           @@keydown.enter="paramEditing = null; runWithCurrentParams()"
+                           @@keydown.escape="paramEditing = null"
+                           @@blur="paramEditing = null"
+                           x-init="$nextTick(() => $el.focus())"
+                           style="width:130px; height:22px; border:1px solid var(--accent); border-radius:4px; padding:0 6px; font-size:11px; font-family:'JetBrains Mono',monospace;" />
+                </span>
+            </template>
+
+            @* Override varsa Sıfırla linki *@
+            <button type="button" x-show="paramDirty || (paramOverrides && Object.keys(paramOverrides).length > 0)"
+                    @@click="resetParams()"
+                    style="background:transparent; border:none; color:var(--ink-3); font-size:10px; cursor:pointer; text-transform:uppercase; letter-spacing:.04em;"
+                    title="Default'a dön">
+                <i class="fas fa-rotate-left text-[9px]"></i>
+                Sıfırla
+            </button>
+
+            <button type="button" class="btn run-btn"
+                    :class="paramDirty && 'primary'"
+                    @@click="runWithCurrentParams()">
+                <i class="fas fa-play text-[10px]"></i>
+                <span x-text="paramDirty ? 'Çalıştır (değişti)' : 'Çalıştır'"></span>
+            </button>
+        </div>
+        <div class="grid-stack"></div>
+    </main>
+
+    @* SAĞ: DRAWER *@
+    <aside class="drawer">
+        <div class="drawer-tabs">
+            <button type="button" :class="drawerTab === 'veri' && 'active'" @@click="drawerTab = 'veri'">
+                <i class="fas fa-database text-[10px]"></i>
+                Veri
+            </button>
+            <button type="button" :class="drawerTab === 'gorunum' && 'active'" @@click="drawerTab = 'gorunum'">
+                <i class="fas fa-palette text-[10px]"></i>
+                Görünüm
+            </button>
+            <button type="button" :class="drawerTab === 'ayarlar' && 'active'" @@click="drawerTab = 'ayarlar'">
+                <i class="fas fa-gear text-[10px]"></i>
+                Ayarlar
+            </button>
+        </div>
+
+        <div class="drawer-content">
+
+            @* ===== VERİ tab — 1-tıkla bağla akışı ===== *@
+            <div x-show="drawerTab === 'veri'">
+                @* Bağlı kolon banner (seçili widget varsa) *@
+                <template x-if="selected && selected.column">
+                    <div class="selected-bound">
+                        <span class="lbl">Bağlı</span>
+                        <span class="val" x-text="(selected.result || 'rs0') + ' · ' + selected.column"></span>
+                        <button type="button" class="clear" @@click="unbindColumn()" title="Bağı kaldır">
+                            <i class="fas fa-xmark text-[11px]"></i>
+                        </button>
+                    </div>
+                </template>
+
+                @* SP henüz çalışmadıysa *@
+                <template x-if="resultSets().length === 0">
+                    <div style="text-align:center; padding:30px 16px; color:var(--ink-4);">
+                        <i class="fas fa-database" style="font-size:24px; opacity:.4;"></i>
+                        <p style="margin-top:10px; font-size:12px;">Veri yüklenmedi. Param-bar'dan Çalıştır deyin.</p>
+                        <button type="button" class="btn" style="margin-top:8px;" @@click="fetchSpPreview()">
+                            <i class="fas fa-play text-[10px]"></i> Veriyi yükle
+                        </button>
+                    </div>
+                </template>
+
+                @* Kolon arama *@
+                <template x-if="resultSets().length > 0">
+                    <input type="search" class="col-search" placeholder="Kolon ara..." x-model="colSearchTerm" />
+                </template>
+
+                @* Veri seti grupları — heuristic başlık + admin override + kolon kartları *@
+                <template x-for="(rs, i) in resultSets()" :key="i">
+                    <div class="rs-group" x-show="(rs.columns || []).some(c => !colSearchTerm || String(c).toLowerCase().includes(colSearchTerm.toLowerCase()))">
+                        <div class="rs-head">
+                            <input type="text" class="rs-name"
+                                   :value="resultSetTitle(rs, i)"
+                                   @@blur="setContractName(i, $event.target.value)"
+                                   @@keydown.enter="$event.target.blur()"
+                                   title="Başlığı düzenlemek için tıkla" />
+                            <span class="rs-meta" x-text="(rs.rows || []).length + 's · ' + (rs.columns || []).length + 'k'"></span>
+                        </div>
+                        <div class="col-list">
+                            <template x-for="col in (rs.columns || [])" :key="col">
+                                <div class="col-card"
+                                     x-show="!colSearchTerm || String(col).toLowerCase().includes(colSearchTerm.toLowerCase())"
+                                     :class="selected && selected.column === col && (selected.result === 'rs' + i || (!selected.result && i === 0)) && 'bound'"
+                                     @@click="bindColumn(i, col)"
+                                     :title="'Tıkla: ' + (selected ? 'seçili widget\'a bağla' : 'yeni KPI ekle ve bağla')">
+                                    <span class="name" x-text="col"></span>
+                                    <span class="kind" :class="'k-' + columnKind(rs, col).slice(0, 4)" x-text="columnKind(rs, col)"></span>
+                                    <span class="sample" x-text="columnSample(rs, col)"></span>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </template>
+
+                @* İleri ayar — aggregation override / alt yazı / span / başlık *@
+                <template x-if="selected">
+                    <div>
+                        <button type="button" class="advanced-toggle" :class="showAdvanced && 'open'" @@click="showAdvanced = !showAdvanced">
+                            <i class="fas fa-chevron-right text-[9px]"></i>
+                            İleri ayar
+                        </button>
+                        <div x-show="showAdvanced" x-cloak style="border-top:1px solid var(--line-2); padding-top:10px;">
+                            <div class="field">
+                                <label class="lab">Başlık</label>
+                                <input type="text" class="inp" :value="selected.title || ''" @@input="setField('title', $event.target.value)" />
+                            </div>
+                            <div class="field">
+                                <label class="lab">Genişlik</label>
+                                <div class="span-toggle">
+                                    <button type="button" :class="selected.span === 1 && 'on'" @@click="setField('span', 1)">1/4</button>
+                                    <button type="button" :class="selected.span === 2 && 'on'" @@click="setField('span', 2)">2/4</button>
+                                    <button type="button" :class="selected.span === 3 && 'on'" @@click="setField('span', 3)">3/4</button>
+                                    <button type="button" :class="selected.span === 4 && 'on'" @@click="setField('span', 4)">4/4</button>
+                                </div>
+                            </div>
+                            <template x-if="selected.type === 'kpi'">
+                                <div>
+                                    <div class="field">
+                                        <label class="lab">Hesap (Aggregation)</label>
+                                        <select class="inp" :value="selected.agg || 'count'" @@change="setField('agg', $event.target.value)">
+                                            <option value="count">Satır Sayısı</option>
+                                            <option value="sum">Toplam</option>
+                                            <option value="avg">Ortalama</option>
+                                            <option value="min">Minimum</option>
+                                            <option value="max">Maksimum</option>
+                                            <option value="first">İlk Değer</option>
+                                        </select>
+                                    </div>
+                                    <div class="field">
+                                        <label class="lab">Alt Yazı</label>
+                                        <input type="text" class="inp" :value="selected.subtitle || ''" @@input="setField('subtitle', $event.target.value)" />
+                                    </div>
+
+                                    @* 2-kolon formül editörü — Kolon A (op) Kolon B *@
+                                    <div class="section-hd" style="margin-top:14px;">
+                                        Formül (2-kolon)
+                                        <span style="font-weight:400; text-transform:none; letter-spacing:0; font-size:10px; color:var(--ink-4); margin-left:6px;">opsiyonel — fark / yüzde / oran</span>
+                                    </div>
+                                    <div class="field">
+                                        <label class="lab">Kolon A</label>
+                                        <select class="inp" :value="selected.formulaA || ''" @@change="setField('formulaA', $event.target.value || null)">
+                                            <option value="">— yok —</option>
+                                            <template x-for="(rs, i) in resultSets()" :key="i">
+                                                <optgroup :label="resultSetTitle(rs, i)">
+                                                    <template x-for="col in (rs.columns || [])" :key="col">
+                                                        <option :value="col" x-text="col"></option>
+                                                    </template>
+                                                </optgroup>
+                                            </template>
+                                        </select>
+                                    </div>
+                                    <template x-if="selected.formulaA">
+                                        <div>
+                                            <div class="field">
+                                                <label class="lab">İşlem</label>
+                                                <div class="seg-full">
+                                                    <button type="button" :class="selected.formulaOp === '+' && 'on'" @@click="setField('formulaOp', '+')">A + B</button>
+                                                    <button type="button" :class="selected.formulaOp === '-' && 'on'" @@click="setField('formulaOp', '-')">A − B</button>
+                                                    <button type="button" :class="selected.formulaOp === '*' && 'on'" @@click="setField('formulaOp', '*')">A × B</button>
+                                                    <button type="button" :class="selected.formulaOp === '/' && 'on'" @@click="setField('formulaOp', '/')">A ÷ B</button>
+                                                    <button type="button" :class="selected.formulaOp === '%' && 'on'" @@click="setField('formulaOp', '%')" title="Yüzde: 100 × A / B">% (A/B)</button>
+                                                </div>
+                                            </div>
+                                            <div class="field">
+                                                <label class="lab">Kolon B</label>
+                                                <select class="inp" :value="selected.formulaB || ''" @@change="setField('formulaB', $event.target.value || null)">
+                                                    <option value="">— yok —</option>
+                                                    <template x-for="(rs, i) in resultSets()" :key="i">
+                                                        <optgroup :label="resultSetTitle(rs, i)">
+                                                            <template x-for="col in (rs.columns || [])" :key="col">
+                                                                <option :value="col" x-text="col"></option>
+                                                            </template>
+                                                        </optgroup>
+                                                    </template>
+                                                </select>
+                                            </div>
+                                            <button type="button" x-show="selected.formulaA || selected.formulaB || selected.formulaOp"
+                                                    @@click="setField('formulaA', null); setField('formulaB', null); setField('formulaOp', null)"
+                                                    style="background:transparent; border:none; color:var(--ink-3); font-size:10px; cursor:pointer; text-transform:uppercase; letter-spacing:.04em;">
+                                                <i class="fas fa-rotate-left text-[9px]"></i> Formülü temizle
+                                            </button>
+                                            <p style="font-size:10px; color:var(--ink-4); margin-top:6px;">
+                                                Formül seçildiğinde "Hesap" alanı yerine <code>A &lt;op&gt; B</code> sonucu gösterilir.
+                                                Tek satırlık result set'lerde <em>İlk Değer</em>, çok satırlıda <em>Toplam</em> default.
+                                            </p>
+                                        </div>
+                                    </template>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </template>
+            </div>
+
+            @* ===== GÖRÜNÜM tab — renk swatch + icon grid ===== *@
+            <div x-show="drawerTab === 'gorunum'" x-cloak>
+                <template x-if="!selected">
+                    <div style="text-align:center; padding:40px 20px; color:var(--ink-4);">
+                        <i class="fas fa-arrow-pointer" style="font-size:24px; opacity:.4;"></i>
+                        <p style="margin-top:10px; font-size:12px;">Bir widget seçin.</p>
+                    </div>
+                </template>
+                <template x-if="selected">
+                    <div>
+                        <div class="selected-banner">
+                            <span class="ico"><i class="fas fa-palette"></i></span>
+                            <span class="name" x-text="selected.title || typeLabel(selected.type)"></span>
+                        </div>
+
+                        <div class="field">
+                            <label class="lab" style="display:flex; align-items:center; justify-content:space-between;">
+                                <span>Renk Vurgusu</span>
+                                <button type="button" x-show="selected.color"
+                                        @@click="setField('color', null)"
+                                        style="background:transparent; border:none; color:var(--ink-3); font-size:10px; cursor:pointer; text-transform:none; letter-spacing:0;">
+                                    Kaldır
+                                </button>
+                            </label>
+                            <div class="swatch-grid">
+                                <template x-for="c in ['red','blue','green','amber','violet','rose','slate']" :key="c">
+                                    <div class="swatch" :class="['s-' + c, selected.color === c && 'on']"
+                                         @@click="setField('color', c)" :title="c"></div>
+                                </template>
+                            </div>
+                        </div>
+
+                        <div class="field">
+                            <label class="lab" style="display:flex; align-items:center; justify-content:space-between;">
+                                <span>İkon</span>
+                                <button type="button" x-show="selected.icon"
+                                        @@click="setField('icon', null)"
+                                        style="background:transparent; border:none; color:var(--ink-3); font-size:10px; cursor:pointer; text-transform:none; letter-spacing:0;">
+                                    Kaldır
+                                </button>
+                            </label>
+                            <input type="search" class="col-search" placeholder="İkon ara (chart, user, calendar...)" x-model="iconSearchTerm" style="margin-bottom:8px;" />
+                            <div class="icon-grid">
+                                <template x-for="ic in filteredIcons()" :key="ic">
+                                    <div class="icon-pick" :class="selected.icon === ic && 'on'"
+                                         @@click="setField('icon', ic)" :title="ic">
+                                        <i class="fas" :class="ic" style="font-size:13px;"></i>
+                                    </div>
+                                </template>
+                            </div>
+                            <div x-show="filteredIcons().length === 0" style="text-align:center; padding:12px; color:var(--ink-4); font-size:11px;">
+                                <i class="fas fa-magnifying-glass" style="opacity:.4; margin-bottom:4px;"></i>
+                                <p>"<span x-text="iconSearchTerm"></span>" için sonuç yok</p>
+                                <p style="margin-top:6px; font-size:10px;">Manuel girmek için aşağıdaki kutuyu kullanın.</p>
+                            </div>
+                            <details style="margin-top:10px; font-size:11px;">
+                                <summary style="cursor:pointer; color:var(--ink-3); padding:4px 0;">Manuel ikon adı gir</summary>
+                                <div style="display:flex; gap:6px; margin-top:6px;">
+                                    <input type="text" class="inp" placeholder="fa-rocket veya rocket" x-model="iconCustom" @@keydown.enter="applyCustomIcon()" style="flex:1;" />
+                                    <button type="button" class="btn" @@click="applyCustomIcon()" style="height:30px;">Uygula</button>
+                                </div>
+                                <p style="font-size:10px; color:var(--ink-4); margin-top:4px;">Font Awesome 6 kütüphanesindeki herhangi bir <code>fa-*</code> sınıfı.</p>
+                            </details>
+                            <p style="font-size:10px; color:var(--ink-4); margin-top:6px;">İkon KPI başlığında görünür.</p>
+                        </div>
+                    </div>
+                </template>
+            </div>
+
+            @* ===== AYARLAR tab — rapor metadata (read-only, V1'e link) ===== *@
+            <div x-show="drawerTab === 'ayarlar'" x-cloak>
+                <div class="selected-banner">
+                    <span class="ico"><i class="fas fa-gear"></i></span>
+                    <span class="name">Rapor Ayarları</span>
+                </div>
+                <p style="font-size:11px; color:var(--ink-3); margin-bottom:14px;">Form alanları ana &lt;form&gt;'da; bu sekme yalnızca okuma görünümüdür.</p>
+                <div class="field">
+                    <label class="lab">Rapor Adı</label>
+                    <div class="inp" style="display:flex; align-items:center;" x-text="reportMeta.title || '—'"></div>
+                </div>
+                <div class="field">
+                    <label class="lab">Veri Kaynağı</label>
+                    <div class="inp" style="display:flex; align-items:center;" x-text="reportMeta.dataSourceKey || '—'"></div>
+                </div>
+                <div class="field">
+                    <label class="lab">SP</label>
+                    <div class="inp" style="display:flex; align-items:center; font-family:JetBrains Mono,monospace; font-size:11px;" x-text="reportMeta.procName || '—'"></div>
+                </div>
+                <div class="field">
+                    <label class="lab">Aktif</label>
+                    <div class="inp" style="display:flex; align-items:center;" x-text="reportMeta.isActive ? 'Evet' : 'Hayır'"></div>
+                </div>
+                <a :href="reportMeta.editClassicUrl" class="btn"
+                   style="display:inline-flex; gap:6px; align-items:center; padding:8px 12px; background:var(--paper); border:1px solid var(--line); border-radius:6px; color:var(--ink-1); text-decoration:none; font-size:12px;">
+                    <i class="fas fa-arrow-up-right-from-square text-[10px]"></i> Klasik formda düzenle
+                </a>
+            </div>
+
+        </div>
+    </aside>
+
+    @* ============ DATA MODAL — Widget çift-tıkla veya palette RS click ============ *@
+    <div x-show="dataModal && dataModal.open" x-cloak
+         class="builder-v2-modal-backdrop"
+         @@click.self="closeDataModal()"
+         @@keydown.escape.window="closeDataModal()">
+        <div class="builder-v2-modal">
+            <div class="m-head">
+                <span class="m-meta" x-text="'RS:' + (dataModal.rsIdx + 1)"></span>
+                <span class="m-title" x-text="modalRsTitle()"></span>
+                <span class="m-tags">
+                    <template x-if="dataModal.comp && dataModal.comp.column">
+                        <span class="m-meta" style="background:var(--accent-soft); color:var(--accent-ink);"
+                              x-text="'Bağlı kolon: ' + dataModal.comp.column"></span>
+                    </template>
+                    <template x-if="modalRs()">
+                        <span style="font-size:11px; color:var(--ink-3);" x-text="modalRs().rowCount + ' satır · ' + (modalRs().columns || []).length + ' kolon · ilk ' + (modalRs().rows || []).length + ' gösteriliyor'"></span>
+                    </template>
+                </span>
+                <button type="button" class="m-close" @@click="closeDataModal()" title="Kapat (Esc)">
+                    <i class="fas fa-xmark"></i>
+                </button>
+            </div>
+            <div class="m-body">
+                <template x-if="modalRs() && (modalRs().rows || []).length > 0">
+                    <table>
+                        <thead>
+                            <tr>
+                                <template x-for="col in (modalRs().columns || [])" :key="col">
+                                    <th :class="dataModal.comp && dataModal.comp.column === col && 'col-highlight'" x-text="col"></th>
+                                </template>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <template x-for="(row, ri) in (modalRs().rows || [])" :key="ri">
+                                <tr>
+                                    <template x-for="col in (modalRs().columns || [])" :key="col">
+                                        <td :class="dataModal.comp && dataModal.comp.column === col && 'col-highlight'"
+                                            x-text="row[col] == null ? '' : String(row[col])"></td>
+                                    </template>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </template>
+                <template x-if="!modalRs() || (modalRs().rows || []).length === 0">
+                    <div style="text-align:center; padding:60px 20px; color:var(--ink-4);">
+                        <i class="fas fa-table" style="font-size:32px; opacity:.4;"></i>
+                        <p style="margin-top:12px;">Bu veri setinde satır yok.</p>
+                    </div>
+                </template>
+            </div>
+            <div class="m-foot">
+                <span><span class="kbd">Esc</span> kapat</span>
+                <template x-if="dataModal.comp">
+                    <span>Widget: <strong x-text="dataModal.comp.title || dataModal.comp.type"></strong></span>
+                </template>
+                <span style="margin-left:auto;">
+                    <i class="fas fa-circle-info text-[10px]" style="margin-right:4px;"></i>
+                    Bağlı kolon kırmızı vurgulu
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="builder-v2-foot">
+    <span><span class="kbd">⌘S</span> kaydet</span>
+    <span><span class="kbd">⌘P</span> önizle</span>
+    <span><span class="kbd">Çift-tık</span> widget verisi</span>
+    <span><span class="kbd">Del</span> seçili sil</span>
+    <span style="margin-left:auto;" x-data x-text="'12 sütun grid'"></span>
+</div>
+
+<script src="~/assets/js/builder-v2/builder.js" asp-append-version="true"></script>

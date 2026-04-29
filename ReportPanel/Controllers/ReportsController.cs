@@ -141,6 +141,107 @@ namespace ReportPanel.Controllers
             return RedirectToLocal(returnUrl);
         }
 
+        // V2 builder için — V1 Run POST'un birebir SP path'i, JSON döner. ParamSchema'dan
+        // default'lar üretilir (date='today' → bugün), opsiyonel paramsJson override eder.
+        // Diğer SP parametreleri (ParamSchema'da yok) NULL kalır → SP kendi default'ını kullanır.
+        [HttpGet]
+        [Route("Reports/RunJsonV2/{reportId:int}")]
+        public async Task<IActionResult> RunJsonV2(int reportId, [FromQuery] string? paramsJson = null)
+        {
+            var context = await BuildReportsContext(reportId, null, null);
+            if (context.SelectedReport == null)
+                return Json(new { success = false, error = "Rapor bulunamadı veya yetki yok." });
+            if (context.SelectedReport.DataSource == null || !context.SelectedReport.DataSource.IsActive)
+                return Json(new { success = false, error = "Veri kaynağı pasif veya bulunamadı." });
+
+            // FormCollection oluştur — paramsJson varsa kullan, kalan field'lar default
+            var formDict = new Dictionary<string, Microsoft.Extensions.Primitives.StringValues>();
+            if (!string.IsNullOrWhiteSpace(paramsJson))
+            {
+                try
+                {
+                    var parsed = JsonSerializer.Deserialize<Dictionary<string, string>>(paramsJson);
+                    if (parsed != null)
+                        foreach (var kv in parsed)
+                            formDict[kv.Key] = new Microsoft.Extensions.Primitives.StringValues(kv.Value ?? "");
+                }
+                catch { /* sessizce default'lara düş */ }
+            }
+            foreach (var f in context.ParamFields)
+            {
+                if (formDict.ContainsKey(f.Name)) continue;
+                var dv = string.Equals(f.Type, "date", StringComparison.OrdinalIgnoreCase) &&
+                         string.Equals(f.DefaultValue, "today", StringComparison.OrdinalIgnoreCase)
+                    ? DateTime.Today.ToString("yyyy-MM-dd")
+                    : f.DefaultValue ?? "";
+                formDict[f.Name] = new Microsoft.Extensions.Primitives.StringValues(dv);
+            }
+            var fakeForm = new Microsoft.AspNetCore.Http.FormCollection(formDict);
+
+            var validation = ReportParamValidator.ValidateAndBuild(context.ParamFields, fakeForm);
+            if (!validation.Success)
+                return Json(new { success = false, error = string.Join(" ", validation.Errors) });
+
+            await _filterInjector.InjectAsync(
+                validation.Parameters,
+                CurrentUserId,
+                context.SelectedReport.ReportId,
+                context.SelectedReport.DataSourceKey);
+
+            var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+            try
+            {
+                var resultSets = await _spExecutor.ExecuteMultipleAsync(
+                    context.SelectedReport.DataSource.ConnString,
+                    context.SelectedReport.ProcName,
+                    validation.Parameters);
+                stopwatch.Stop();
+
+                var totalRows = resultSets.Sum(rs => rs.Count);
+                var serialized = resultSets.Select((rs, i) =>
+                {
+                    var first = rs.FirstOrDefault();
+                    var cols = first != null ? first.Keys.ToList() : new List<string>();
+                    return new
+                    {
+                        index = i,
+                        name = GuessResultSetTitle(rs, cols, i),
+                        columns = cols,
+                        rows = rs.Take(50).ToList(),
+                        rowCount = rs.Count
+                    };
+                }).ToList();
+
+                await LogRun(
+                    context.SelectedReport,
+                    validation.ParamsJson,
+                    true,
+                    totalRows,
+                    (int)stopwatch.ElapsedMilliseconds,
+                    null);
+
+                return Json(new { success = true, error = (string?)null, resultSets = serialized });
+            }
+            catch (Exception ex)
+            {
+                stopwatch.Stop();
+                await LogRun(
+                    context.SelectedReport,
+                    validation.ParamsJson,
+                    false,
+                    0,
+                    (int)stopwatch.ElapsedMilliseconds,
+                    ex.Message);
+                // M-02: user'a generic mesaj, detay audit log'a gider.
+                return Json(new
+                {
+                    success = false,
+                    error = "Rapor çalıştırılamadı. Parametreleri kontrol edin veya sistem yöneticisine başvurun.",
+                    resultSets = Array.Empty<object>()
+                });
+            }
+        }
+
         [HttpGet]
         public async Task<IActionResult> Run(int reportId)
         {
@@ -308,6 +409,18 @@ namespace ReportPanel.Controllers
             }
 
             return View("Run", model);
+        }
+
+        // Result set'e generic bir default başlık üret. Sektör-özel tahmin yok —
+        // anlamlı isimlendirme admin tarafından Drawer Veri tab'ında yapılır ve
+        // DashboardConfigJson.resultContract'a kaydedilir. Bu helper sadece
+        // hiç override yokken görünecek "Veri Seti 1" tarzı default sağlar.
+        private static string GuessResultSetTitle(
+            List<Dictionary<string, object>> rows,
+            List<string> columns,
+            int index)
+        {
+            return $"Veri Seti {index + 1}";
         }
 
         private static (string ViewMode, string BodyClass) ResolveViewMode(string? viewMode)
