@@ -184,7 +184,10 @@ namespace ReportPanel.Services
                     NewValuesJson = AuditLogService.ToJson(new { errors = r.Errors, warnings = r.Warnings }),
                     IsSuccess = false
                 });
-                return r.Errors[0];
+                // Tüm hataları tek mesajda birleştir — view'da multi-line görünür (white-space: pre-line)
+                return r.Errors.Count == 1
+                    ? r.Errors[0]
+                    : "Pano yapılandırması geçersiz:\n• " + string.Join("\n• ", r.Errors);
             }
 
             if (r.HasWarnings)
