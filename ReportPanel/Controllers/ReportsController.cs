@@ -242,6 +242,133 @@ namespace ReportPanel.Controllers
             }
         }
 
+        // V2 builder CreateReportV2 (rapor henüz DB'de yok) için reportId-less varyant.
+        // RunJsonV2 ile aynı path: ParamSchema-only param geçişi, SP kendi default'unu kullanır,
+        // user data filter inject (reportId=0 → genel filter'lere düşer). Admin-only.
+        [Authorize(Roles = "admin")]
+        [HttpGet]
+        [Route("Reports/RunJsonV2Preview")]
+        public async Task<IActionResult> RunJsonV2Preview(
+            string dataSourceKey,
+            string procName,
+            string? paramSchemaJson = null,
+            string? paramsJson = null)
+        {
+            if (string.IsNullOrWhiteSpace(dataSourceKey) || string.IsNullOrWhiteSpace(procName))
+                return Json(new { success = false, error = "Veri kaynağı ve SP adı gerekli." });
+            if (!System.Text.RegularExpressions.Regex.IsMatch(procName, @"^[a-zA-Z_][a-zA-Z0-9_\.]*$"))
+                return Json(new { success = false, error = "Geçersiz SP adı." });
+
+            var dataSource = await _context.DataSources
+                .AsNoTracking()
+                .Where(ds => ds.DataSourceKey == dataSourceKey && ds.IsActive)
+                .FirstOrDefaultAsync();
+            if (dataSource == null)
+                return Json(new { success = false, error = "Veri kaynağı bulunamadı veya pasif." });
+
+            var paramFields = new List<ReportParamField>();
+            if (!string.IsNullOrWhiteSpace(paramSchemaJson))
+            {
+                try
+                {
+                    var parsed = JsonSerializer.Deserialize<List<ReportParamField>>(
+                        paramSchemaJson,
+                        new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    if (parsed != null) paramFields = parsed;
+                }
+                catch { /* paramFields boş → SP kendi default'ını kullanır */ }
+            }
+
+            var formDict = new Dictionary<string, Microsoft.Extensions.Primitives.StringValues>();
+            if (!string.IsNullOrWhiteSpace(paramsJson))
+            {
+                try
+                {
+                    var parsed = JsonSerializer.Deserialize<Dictionary<string, string>>(paramsJson);
+                    if (parsed != null)
+                        foreach (var kv in parsed)
+                            formDict[kv.Key] = new Microsoft.Extensions.Primitives.StringValues(kv.Value ?? "");
+                }
+                catch { /* default'lara düş */ }
+            }
+            foreach (var f in paramFields)
+            {
+                if (formDict.ContainsKey(f.Name)) continue;
+                var dv = string.Equals(f.Type, "date", StringComparison.OrdinalIgnoreCase) &&
+                         string.Equals(f.DefaultValue, "today", StringComparison.OrdinalIgnoreCase)
+                    ? DateTime.Today.ToString("yyyy-MM-dd")
+                    : f.DefaultValue ?? "";
+                formDict[f.Name] = new Microsoft.Extensions.Primitives.StringValues(dv);
+            }
+            var fakeForm = new Microsoft.AspNetCore.Http.FormCollection(formDict);
+
+            var validation = ReportParamValidator.ValidateAndBuild(paramFields, fakeForm);
+            if (!validation.Success)
+                return Json(new { success = false, error = string.Join(" ", validation.Errors) });
+
+            // reportId yok → 0; UserDataFilterInjector genel (rapor-bağımsız) filter'leri uygular.
+            await _filterInjector.InjectAsync(validation.Parameters, CurrentUserId, 0, dataSourceKey);
+
+            var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+            try
+            {
+                var resultSets = await _spExecutor.ExecuteMultipleAsync(
+                    dataSource.ConnString, procName, validation.Parameters);
+                stopwatch.Stop();
+
+                var serialized = resultSets.Select((rs, i) =>
+                {
+                    var first = rs.FirstOrDefault();
+                    var cols = first != null ? first.Keys.ToList() : new List<string>();
+                    return new
+                    {
+                        index = i,
+                        name = GuessResultSetTitle(rs, cols, i),
+                        columns = cols,
+                        rows = rs.Take(50).ToList(),
+                        rowCount = rs.Count
+                    };
+                }).ToList();
+
+                await _auditLog.LogAsync(new AuditLogEntry
+                {
+                    EventType = "report_preview",
+                    TargetType = "datasource",
+                    TargetKey = dataSourceKey,
+                    DataSourceKey = dataSourceKey,
+                    ParamsJson = validation.ParamsJson,
+                    DurationMs = (int)stopwatch.ElapsedMilliseconds,
+                    ResultRowCount = resultSets.Sum(rs => rs.Count),
+                    IsSuccess = true,
+                    Description = $"V2 builder preview: {procName}"
+                });
+
+                return Json(new { success = true, error = (string?)null, resultSets = serialized });
+            }
+            catch (Exception ex)
+            {
+                stopwatch.Stop();
+                await _auditLog.LogAsync(new AuditLogEntry
+                {
+                    EventType = "report_preview",
+                    TargetType = "datasource",
+                    TargetKey = dataSourceKey,
+                    DataSourceKey = dataSourceKey,
+                    ParamsJson = validation.ParamsJson,
+                    DurationMs = (int)stopwatch.ElapsedMilliseconds,
+                    IsSuccess = false,
+                    ErrorMessage = ex.Message,
+                    Description = $"V2 builder preview failed: {procName}"
+                });
+                return Json(new
+                {
+                    success = false,
+                    error = "Rapor çalıştırılamadı. SP, veri kaynağı veya parametreleri kontrol edin.",
+                    resultSets = Array.Empty<object>()
+                });
+            }
+        }
+
         [HttpGet]
         public async Task<IActionResult> Run(int reportId)
         {

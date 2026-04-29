@@ -652,8 +652,9 @@
                     var meta = this.reportMeta;
                     if (!meta) return;
                     var defaults = this.buildParamDefaults();
-                    // EditReportV2: reportId varsa V1 Run path'iyle aynı SP çağrısı (RunJsonV2).
-                    // CreateReportV2'de henüz reportId yok → SpPreview fallback (param-aware).
+                    // EditReportV2: reportId var → V1 Run path'iyle aynı SP çağrısı (RunJsonV2).
+                    // CreateReportV2: reportId yok → RunJsonV2Preview (admin-only, ParamSchema-based,
+                    // SpPreview default-doldurma bug'ı bypass — SP kendi default'unu kullanır).
                     var url;
                     if (meta.reportId) {
                         url = '/Reports/RunJsonV2/' + meta.reportId;
@@ -662,9 +663,11 @@
                         }
                     } else {
                         if (!meta.dataSourceKey || !meta.procName) return;
-                        url = '/Admin/SpPreview?dataSourceKey=' + encodeURIComponent(meta.dataSourceKey)
-                            + '&procName=' + encodeURIComponent(meta.procName)
-                            + '&maxRows=50';
+                        url = '/Reports/RunJsonV2Preview?dataSourceKey=' + encodeURIComponent(meta.dataSourceKey)
+                            + '&procName=' + encodeURIComponent(meta.procName);
+                        if (meta.paramSchemaJson) {
+                            url += '&paramSchemaJson=' + encodeURIComponent(meta.paramSchemaJson);
+                        }
                         if (Object.keys(defaults).length > 0) {
                             url += '&paramsJson=' + encodeURIComponent(JSON.stringify(defaults));
                         }
