@@ -155,6 +155,21 @@ window.__availableDataSources = @Html.Raw(System.Text.Json.JsonSerializer.Serial
           @@dragover="onCanvasDragOver($event)"
           @@dragleave="onCanvasDragLeave($event)"
           @@drop="onCanvasDrop($event)">
+        @* Multi-tab strip — birden fazla sayfa (DashboardConfig.tabs) *@
+        <div class="tab-strip">
+            <template x-for="(tab, i) in (config.tabs || [])" :key="i">
+                <div class="tab-chip" :class="i === activeTab && 'active'" @@click="switchTab(i)"
+                     @@dblclick="(() => { var t = prompt('Sekme adı:', tab.title || ''); if (t !== null) setTabTitle(i, t); })()"
+                     :title="'Tıkla: geç · Çift-tıkla: ad değiştir'">
+                    <span x-text="tab.title || ('Sekme ' + (i+1))"></span>
+                    <button type="button" class="tab-close" x-show="config.tabs.length > 1"
+                            @@click.stop="removeTab(i)" title="Sekmeyi sil">×</button>
+                </div>
+            </template>
+            <button type="button" class="tab-add" @@click="addTab()" title="Yeni sekme ekle">
+                <i class="fas fa-plus text-[10px]"></i> Yeni Sekme
+            </button>
+        </div>
         <div class="param-bar">
             <span class="lbl">Parametreler</span>
 
@@ -588,4 +603,5 @@ window.__availableDataSources = @Html.Raw(System.Text.Json.JsonSerializer.Serial
 <script src="~/assets/js/builder-v2/builder-sp.js" asp-append-version="true"></script>
 <script src="~/assets/js/builder-v2/builder-drawer.js" asp-append-version="true"></script>
 <script src="~/assets/js/builder-v2/builder-settings.js" asp-append-version="true"></script>
+<script src="~/assets/js/builder-v2/builder-tabs.js" asp-append-version="true"></script>
 <script src="~/assets/js/builder-v2/builder.js" asp-append-version="true"></script>

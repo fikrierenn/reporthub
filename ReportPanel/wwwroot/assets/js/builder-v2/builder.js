@@ -221,7 +221,8 @@
                 window.__builderV2.renderMixin(),
                 window.__builderV2.spMixin(),
                 window.__builderV2.drawerMixin(),
-                window.__builderV2.settingsMixin()
+                window.__builderV2.settingsMixin(),
+                window.__builderV2.tabsMixin()
             );
         };
     }
