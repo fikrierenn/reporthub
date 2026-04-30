@@ -1119,6 +1119,33 @@ body.builder-v2-page .builder-v2.preview-mode .param-bar { background: var(--pap
     font-size: 11px; color: var(--ink-4);
 }
 
+/* Plan 04: Hızlı Bağla cascading dropdown bloğu */
+.builder-v2 .quick-bind {
+    background: var(--canvas);
+    border: 1px solid var(--line-2);
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin: 8px 0 14px;
+}
+.builder-v2 .quick-bind .qb-header {
+    font-size: 10.5px; font-weight: 700;
+    color: var(--accent-ink); letter-spacing: .04em; text-transform: uppercase;
+    margin-bottom: 8px;
+    display: flex; align-items: center; gap: 6px;
+}
+.builder-v2 .col-grid-toggle {
+    margin-top: 14px; padding: 6px 0;
+    border-top: 1px solid var(--line-2);
+}
+.builder-v2 .col-grid-toggle > summary {
+    cursor: pointer; padding: 6px 0;
+    font-size: 11px; color: var(--ink-3);
+    display: flex; align-items: center; gap: 6px;
+    user-select: none;
+}
+.builder-v2 .col-grid-toggle > summary:hover { color: var(--accent-ink); }
+.builder-v2 .col-grid-toggle[open] > summary { color: var(--ink-1); font-weight: 600; }
+
 /* Widget seçilince drawer Veri tab'ında bağlı kolon kartı pulse highlight */
 .builder-v2 .col-card.focus-pulse {
     animation: bv2-col-pulse 1.4s ease-out;

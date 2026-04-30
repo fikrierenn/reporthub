@@ -89,6 +89,61 @@
                 this.syncConfig();
             },
 
+            // ---- Hızlı Bağla helper'ları (Plan 04: Setup tab'da basit cascading dropdown) ----
+            // Seçili widget'ın bağlı RS index'i ('rsN' formatından sayıya).
+            selectedRsIdx() {
+                if (!this.selected || !this.selected.result) return -1;
+                var m = String(this.selected.result).match(/^rs(\d+)$/);
+                return m ? parseInt(m[1], 10) : -1;
+            },
+
+            selectedRs() {
+                var i = this.selectedRsIdx();
+                if (i < 0) return null;
+                var sets = this.resultSets();
+                return sets[i] || null;
+            },
+
+            selectedRsColumns() {
+                var rs = this.selectedRs();
+                return rs ? (rs.columns || []) : [];
+            },
+
+            columnKindFor(col) {
+                var rs = this.selectedRs();
+                return rs ? this.columnKind(rs, col) : '';
+            },
+
+            columnSampleFor(col) {
+                var rs = this.selectedRs();
+                return rs ? this.columnSample(rs, col) : '';
+            },
+
+            // RS değiştir — column ve agg sıfırla (yanlış kolon bağı kalmasın)
+            setBoundResult(rsKey) {
+                if (!this.selected) return;
+                this.selected.result = rsKey || null;
+                this.selected.column = null;
+                this.selected.agg = null;
+                this.refreshAllWidgets();
+                this.syncConfig();
+            },
+
+            // Kolon değiştir — agg auto-detect, başlık default kolon adına çek
+            setBoundColumn(col) {
+                if (!this.selected) return;
+                this.selected.column = col || null;
+                if (col) {
+                    var rs = this.selectedRs();
+                    if (rs) this.selected.agg = this.autoAggregation(rs, col);
+                    if (!this.selected.title || /^Yeni /.test(this.selected.title)) {
+                        this.selected.title = col;
+                    }
+                }
+                this.refreshAllWidgets();
+                this.syncConfig();
+            },
+
             // Result Contract inline edit — admin başlığı override eder
             setContractName(rsIdx, name) {
                 if (!this.config.resultContract) this.config.resultContract = {};

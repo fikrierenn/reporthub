@@ -241,90 +241,75 @@ window.__availableDataSources = @Html.Raw(System.Text.Json.JsonSerializer.Serial
                     </div>
                 </template>
 
-                @* SP henüz çalışmadıysa *@
-                <template x-if="resultSets().length === 0">
-                    <div style="text-align:center; padding:30px 16px; color:var(--ink-4);">
-                        <i class="fas fa-database" style="font-size:24px; opacity:.4;"></i>
-                        <p style="margin-top:10px; font-size:12px;">Veri yüklenmedi. Param-bar'dan Çalıştır deyin.</p>
-                        <button type="button" class="btn" style="margin-top:8px;" @@click="fetchSpPreview()">
-                            <i class="fas fa-play text-[10px]"></i> Veriyi yükle
-                        </button>
+                @* Hızlı Bağla — Plan 04: cascading dropdown (Veri Seti → Kolon → Hesap) *@
+                <div class="quick-bind">
+                    <div class="qb-header">
+                        <i class="fas fa-bolt text-[10px]"></i> Hızlı Bağla
                     </div>
-                </template>
-
-                @* Kolon arama *@
-                <template x-if="resultSets().length > 0">
-                    <input type="search" class="col-search" placeholder="Kolon ara..." x-model="colSearchTerm" />
-                </template>
-
-                @* Veri seti grupları — heuristic başlık + admin override + kolon kartları *@
-                <template x-for="(rs, i) in resultSets()" :key="i">
-                    <div class="rs-group" :data-rs-idx="i"
-                         x-show="(rs.columns || []).some(c => !colSearchTerm || String(c).toLowerCase().includes(colSearchTerm.toLowerCase()))">
-                        <div class="rs-head">
-                            <input type="text" class="rs-name"
-                                   :value="resultSetTitle(rs, i)"
-                                   @@blur="setContractName(i, $event.target.value)"
-                                   @@keydown.enter="$event.target.blur()"
-                                   title="Başlığı düzenlemek için tıkla" />
-                            <span class="rs-meta" x-text="(rs.rows || []).length + 's · ' + (rs.columns || []).length + 'k'"></span>
-                        </div>
-                        <div class="col-list">
-                            <template x-for="col in (rs.columns || [])" :key="col">
-                                <div class="col-card" :data-col-name="col"
-                                     x-show="!colSearchTerm || String(col).toLowerCase().includes(colSearchTerm.toLowerCase())"
-                                     :class="selected && selected.column === col && (selected.result === 'rs' + i || (!selected.result && i === 0)) && 'bound'"
-                                     @@click="bindColumn(i, col)"
-                                     :title="'Tıkla: ' + (selected ? 'seçili widget\'a bağla' : 'yeni KPI ekle ve bağla')">
-                                    <span class="name" x-text="col"></span>
-                                    <span class="kind" :class="'k-' + columnKind(rs, col).slice(0, 4)" x-text="columnKind(rs, col)"></span>
-                                    <span class="sample" x-text="columnSample(rs, col)"></span>
-                                </div>
+                    <div class="field">
+                        <label class="lab">Başlık</label>
+                        <input type="text" class="inp"
+                               :value="selected ? (selected.title || '') : ''"
+                               @@input="setField('title', $event.target.value)"
+                               placeholder="Örn: Toplam Kadro" />
+                    </div>
+                    <div class="field">
+                        <label class="lab">Veri Seti</label>
+                        <select class="inp"
+                                :value="selected ? (selected.result || '') : ''"
+                                @@change="setBoundResult($event.target.value)">
+                            <option value="">— seç —</option>
+                            <template x-for="(rs, i) in resultSets()" :key="i">
+                                <option :value="'rs' + i"
+                                        :selected="selected && selected.result === 'rs' + i"
+                                        x-text="resultSetTitle(rs, i) + ' — ' + (rs.rows || []).length + ' satır'"></option>
                             </template>
-                        </div>
+                        </select>
                     </div>
-                </template>
+                    <div class="field" x-show="selected && selected.result">
+                        <label class="lab">Kolon</label>
+                        <select class="inp"
+                                :value="selected ? (selected.column || '') : ''"
+                                @@change="setBoundColumn($event.target.value)">
+                            <option value="">— seç —</option>
+                            <template x-for="col in selectedRsColumns()" :key="col">
+                                <option :value="col"
+                                        :selected="selected && selected.column === col"
+                                        x-text="col + ' · ' + columnKindFor(col) + (columnSampleFor(col) ? ' · ' + columnSampleFor(col) : '')"></option>
+                            </template>
+                        </select>
+                    </div>
+                    <div class="field" x-show="selected && selected.column && selected.type === 'kpi'">
+                        <label class="lab">Hesap</label>
+                        <select class="inp"
+                                :value="selected ? (selected.agg || 'first') : 'first'"
+                                @@change="setField('agg', $event.target.value)">
+                            <option value="first">İlk Değer</option>
+                            <option value="sum">Toplam (SUM)</option>
+                            <option value="avg">Ortalama (AVG)</option>
+                            <option value="count">Adet (COUNT)</option>
+                            <option value="min">Min</option>
+                            <option value="max">Max</option>
+                        </select>
+                    </div>
+                </div>
 
-                @* İleri ayar — aggregation override / alt yazı / span / başlık *@
+                @* İleri ayar — minimal: alt yazı + 2-kolon formül (KPI), genişlik (Stil tab'da) *@
                 <template x-if="selected">
                     <div>
                         <button type="button" class="advanced-toggle" :class="showAdvanced && 'open'" @@click="showAdvanced = !showAdvanced">
                             <i class="fas fa-chevron-right text-[9px]"></i>
-                            İleri ayar
+                            İleri ayar (formül, alt yazı)
                         </button>
-                        <div x-show="showAdvanced" x-cloak style="border-top:1px solid var(--line-2); padding-top:10px;">
-                            <div class="field">
-                                <label class="lab">Başlık</label>
-                                <input type="text" class="inp" :value="selected.title || ''" @@input="setField('title', $event.target.value)" />
-                            </div>
-                            <div class="field">
-                                <label class="lab">Genişlik</label>
-                                <div class="span-toggle">
-                                    <button type="button" :class="selected.span === 1 && 'on'" @@click="setField('span', 1)">1/4</button>
-                                    <button type="button" :class="selected.span === 2 && 'on'" @@click="setField('span', 2)">2/4</button>
-                                    <button type="button" :class="selected.span === 3 && 'on'" @@click="setField('span', 3)">3/4</button>
-                                    <button type="button" :class="selected.span === 4 && 'on'" @@click="setField('span', 4)">4/4</button>
-                                </div>
-                            </div>
+                        <div x-show="showAdvanced" x-cloak style="border-top:1px solid var(--line-2); padding-top:10px; margin-top:8px;">
                             <template x-if="selected.type === 'kpi'">
                                 <div>
                                     <div class="field">
-                                        <label class="lab">Hesap (Aggregation)</label>
-                                        <select class="inp" :value="selected.agg || 'count'" @@change="setField('agg', $event.target.value)">
-                                            <option value="count">Satır Sayısı</option>
-                                            <option value="sum">Toplam</option>
-                                            <option value="avg">Ortalama</option>
-                                            <option value="min">Minimum</option>
-                                            <option value="max">Maksimum</option>
-                                            <option value="first">İlk Değer</option>
-                                        </select>
-                                    </div>
-                                    <div class="field">
                                         <label class="lab">Alt Yazı</label>
-                                        <input type="text" class="inp" :value="selected.subtitle || ''" @@input="setField('subtitle', $event.target.value)" />
+                                        <input type="text" class="inp" :value="selected.subtitle || ''" @@input="setField('subtitle', $event.target.value)" placeholder="Örn: bugün toplam" />
                                     </div>
 
-                                    @* 2-kolon formül editörü — Kolon A (op) Kolon B *@
+                                    @* 2-kolon formül — A (op) B → KPI *@
                                     <div class="section-hd" style="margin-top:14px;">
                                         Formül (2-kolon)
                                         <span style="font-weight:400; text-transform:none; letter-spacing:0; font-size:10px; color:var(--ink-4); margin-left:6px;">opsiyonel — fark / yüzde / oran</span>
@@ -333,12 +318,8 @@ window.__availableDataSources = @Html.Raw(System.Text.Json.JsonSerializer.Serial
                                         <label class="lab">Kolon A</label>
                                         <select class="inp" :value="selected.formulaA || ''" @@change="setField('formulaA', $event.target.value || null)">
                                             <option value="">— yok —</option>
-                                            <template x-for="(rs, i) in resultSets()" :key="i">
-                                                <optgroup :label="resultSetTitle(rs, i)">
-                                                    <template x-for="col in (rs.columns || [])" :key="col">
-                                                        <option :value="col" x-text="col"></option>
-                                                    </template>
-                                                </optgroup>
+                                            <template x-for="col in selectedRsColumns()" :key="col">
+                                                <option :value="col" x-text="col"></option>
                                             </template>
                                         </select>
                                     </div>
@@ -358,12 +339,8 @@ window.__availableDataSources = @Html.Raw(System.Text.Json.JsonSerializer.Serial
                                                 <label class="lab">Kolon B</label>
                                                 <select class="inp" :value="selected.formulaB || ''" @@change="setField('formulaB', $event.target.value || null)">
                                                     <option value="">— yok —</option>
-                                                    <template x-for="(rs, i) in resultSets()" :key="i">
-                                                        <optgroup :label="resultSetTitle(rs, i)">
-                                                            <template x-for="col in (rs.columns || [])" :key="col">
-                                                                <option :value="col" x-text="col"></option>
-                                                            </template>
-                                                        </optgroup>
+                                                    <template x-for="col in selectedRsColumns()" :key="col">
+                                                        <option :value="col" x-text="col"></option>
                                                     </template>
                                                 </select>
                                             </div>
@@ -372,10 +349,6 @@ window.__availableDataSources = @Html.Raw(System.Text.Json.JsonSerializer.Serial
                                                     style="background:transparent; border:none; color:var(--ink-3); font-size:10px; cursor:pointer; text-transform:uppercase; letter-spacing:.04em;">
                                                 <i class="fas fa-rotate-left text-[9px]"></i> Formülü temizle
                                             </button>
-                                            <p style="font-size:10px; color:var(--ink-4); margin-top:6px;">
-                                                Formül seçildiğinde "Hesap" alanı yerine <code>A &lt;op&gt; B</code> sonucu gösterilir.
-                                                Tek satırlık result set'lerde <em>İlk Değer</em>, çok satırlıda <em>Toplam</em> default.
-                                            </p>
                                         </div>
                                     </template>
                                 </div>
