@@ -29,6 +29,8 @@
                 paramDirty: false, // Kullanıcı param değiştirdi ama Çalıştır'a basmadı
                 dataModal: { open: false, rsIdx: null, comp: null }, // Çift-tıkla veri modal'ı
                 colDragSrc: null, // Plan 05.A: tablo Setup tab kolon drag-drop kaynağı (kolon adı)
+                // Plan 05.B: hesaplı kolon ekleme inline formu
+                calcColForm: { open: false, alias: '', formula: '', format: 'auto', error: null, errorPos: null, busy: false },
 
                 // ---- Init ----
                 init() {

@@ -1014,6 +1014,58 @@ body.builder-v2-page .builder-v2.preview-mode .param-bar { background: var(--pap
 .builder-v2 .align-toggle button:hover { background: var(--line-2); color: var(--ink-1); }
 .builder-v2 .align-toggle button.on { background: var(--accent); color: #fff; }
 
+/* Plan 05.B: hesaplı kolon ekleme — "+ Yeni Hesaplı Kolon" buton + inline form */
+.builder-v2 .calc-col-section {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px dashed var(--line-2);
+}
+.builder-v2 .calc-col-add-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 5px 10px;
+    background: transparent;
+    border: 1px dashed var(--ink-4);
+    border-radius: 6px;
+    color: var(--ink-2);
+    font-size: 11px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all .12s;
+}
+.builder-v2 .calc-col-add-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent-ink);
+    background: var(--accent-soft);
+}
+.builder-v2 .calc-col-form {
+    margin-top: 6px;
+    padding: 10px 12px;
+    background: var(--accent-soft);
+    border: 1px solid var(--accent);
+    border-radius: 6px;
+}
+.builder-v2 .calc-col-form .form-error {
+    margin-top: 4px;
+    padding: 5px 8px;
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: 4px;
+    color: #991b1b;
+    font-size: 10.5px;
+    line-height: 1.4;
+    display: flex; align-items: flex-start; gap: 5px;
+}
+.builder-v2 .calc-col-form-actions {
+    display: flex; justify-content: flex-end; gap: 6px;
+    margin-top: 8px;
+}
+.builder-v2 .calc-col-form-actions .btn {
+    padding: 5px 12px;
+    font-size: 11px;
+    height: 28px;
+    border-radius: 5px;
+}
+
 /* Widget seçilince drawer Veri tab'ında bağlı kolon kartı pulse highlight */
 .builder-v2 .col-card.focus-pulse {
     animation: bv2-col-pulse 1.4s ease-out;

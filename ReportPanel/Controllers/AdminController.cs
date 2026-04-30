@@ -6,6 +6,7 @@ using Microsoft.Data.SqlClient;
 using System.Data;
 using System.Text.RegularExpressions;
 using ReportPanel.Services;
+using ReportPanel.Services.Eval;
 using ReportPanel.ViewModels;
 
 namespace ReportPanel.Controllers
@@ -216,6 +217,22 @@ namespace ReportPanel.Controllers
                 return BadRequest(result.Error);
             }
             return Json(new { options = result.Options });
+        }
+
+        // Plan 05.B: Hesaplı kolon formula sözdizim doğrulama (V2 builder textarea blur + Kaydet öncesi).
+        // Tek source-of-truth backend FormulaParser; client-side parser portu yok.
+        [HttpPost]
+        [Route("Admin/ValidateFormula")]
+        [ValidateAntiForgeryToken]
+        public IActionResult ValidateFormula([FromForm] string? formula)
+        {
+            if (string.IsNullOrWhiteSpace(formula))
+                return Ok(new { valid = false, error = "Formül boş olamaz.", position = 0 });
+
+            if (FormulaParser.TryParse(formula, out _, out var err, out var pos))
+                return Ok(new { valid = true });
+
+            return Ok(new { valid = false, error = err, position = pos });
         }
 
         // DataSource'taki stored procedure listesi (builder dropdown'i icin)

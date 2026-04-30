@@ -334,6 +334,123 @@
                 this.syncConfig();
             },
 
+            // ---- Plan 05.B: Hesaplı kolon ekleme ----
+
+            openCalcColForm() {
+                this.calcColForm = { open: true, alias: '', formula: '', format: 'auto', error: null, errorPos: null, busy: false };
+            },
+
+            cancelCalcColForm() {
+                this.calcColForm = { open: false, alias: '', formula: '', format: 'auto', error: null, errorPos: null, busy: false };
+            },
+
+            // Server-side validate (FormulaParser.TryParse) — textarea blur veya Kaydet öncesi.
+            // Tek source-of-truth backend; client-side parser portu yok (build/test maliyeti).
+            validateFormulaLive() {
+                var f = this.calcColForm;
+                if (!f.formula || !f.formula.trim()) { f.error = null; f.errorPos = null; return; }
+                var token = document.querySelector('input[name="__RequestVerificationToken"]');
+                if (!token) { f.error = 'AntiForgery token yok'; return; }
+                f.busy = true;
+                var self = this;
+                var body = new URLSearchParams();
+                body.append('formula', f.formula);
+                fetch('/Admin/ValidateFormula', {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'RequestVerificationToken': token.value
+                    },
+                    body: body.toString()
+                })
+                    .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, body: j }; }); })
+                    .then(function (res) {
+                        f.busy = false;
+                        if (res.body && res.body.valid) {
+                            f.error = null; f.errorPos = null;
+                        } else {
+                            f.error = (res.body && res.body.error) || 'Doğrulama başarısız.';
+                            f.errorPos = (res.body && res.body.position) || null;
+                        }
+                    })
+                    .catch(function (err) {
+                        f.busy = false;
+                        f.error = 'Sunucu doğrulamasında hata: ' + err.message;
+                    });
+            },
+
+            addCalcColumn() {
+                var f = this.calcColForm;
+                if (!this.selected || this.selected.type !== 'table') return;
+                var alias = (f.alias || '').trim();
+                var formula = (f.formula || '').trim();
+                if (!alias) { f.error = 'Kolon adı gerekli.'; return; }
+                if (!/^[a-zA-Z][a-zA-Z0-9_]*$/.test(alias)) {
+                    f.error = 'Kolon adı harfle başlamalı, sadece harf/rakam/alt çizgi (örn: marj, kategoriEtiket).'; return;
+                }
+                if (!formula) { f.error = 'Formül gerekli.'; return; }
+                if (!this.selected.columns) this.selected.columns = [];
+                if (this.selected.columns.some(function (c) { return c.key === alias; })) {
+                    f.error = 'Bu kolon adı zaten kullanılıyor.'; return;
+                }
+                // Server-side validate, sonra ekle
+                var self = this;
+                var token = document.querySelector('input[name="__RequestVerificationToken"]');
+                if (!token) { f.error = 'AntiForgery token yok'; return; }
+                f.busy = true;
+                var body = new URLSearchParams();
+                body.append('formula', formula);
+                fetch('/Admin/ValidateFormula', {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'RequestVerificationToken': token.value
+                    },
+                    body: body.toString()
+                })
+                    .then(function (r) { return r.json(); })
+                    .then(function (res) {
+                        f.busy = false;
+                        if (!res.valid) {
+                            f.error = res.error || 'Formül geçersiz.';
+                            f.errorPos = res.position || null;
+                            return;
+                        }
+                        self.selected.columns.push({
+                            key: alias,
+                            label: alias,
+                            align: 'left',
+                            format: f.format || 'auto',
+                            formula: formula
+                        });
+                        self.cancelCalcColForm();
+                        self.refreshAllWidgets();
+                        self.syncConfig();
+                    })
+                    .catch(function (err) {
+                        f.busy = false;
+                        f.error = 'Sunucu doğrulamasında hata: ' + err.message;
+                    });
+            },
+
+            removeColumn(colName) {
+                if (!this.selected || !this.selected.columns) return;
+                var idx = this.selected.columns.findIndex(function (c) { return c.key === colName; });
+                if (idx < 0) return;
+                this.selected.columns.splice(idx, 1);
+                this.refreshAllWidgets();
+                this.syncConfig();
+            },
+
+            // Bir kolon hesaplı mı (formula sahibi)?
+            isComputedColumn(colName) {
+                if (!this.selected || !this.selected.columns) return false;
+                var col = this.selected.columns.find(function (c) { return c.key === colName; });
+                return !!(col && col.formula);
+            },
+
             // Widget çift-tıkla → bağlı RS için modal aç
             openWidgetData(comp) {
                 if (!comp) return;
