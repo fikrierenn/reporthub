@@ -156,6 +156,12 @@
             setField(field, val) {
                 var c = this.selected; if (!c) return;
                 if (field === 'span') val = parseInt(val, 10);
+                // Icon: 'fa-users' → 'fas fa-users' (FontAwesome prefix gerekli, renderer plain class kullanır)
+                if (field === 'icon' && val) {
+                    if (!/^(fas|far|fab|fa-solid|fa-regular|fa-brands)\s/.test(val) && /^fa-/.test(val)) {
+                        val = 'fas ' + val;
+                    }
+                }
                 c[field] = val;
                 // Alpine x-for içinden çağrılınca this.$el button'u gösterir;
                 // root yerine document üzerinden ara (builder-v2 tek instance).

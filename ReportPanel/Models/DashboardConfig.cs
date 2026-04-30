@@ -45,11 +45,21 @@ namespace ReportPanel.Models
             // 1. name-based binding
             if (!string.IsNullOrEmpty(comp.Result))
             {
-                if (ResultContract == null || !ResultContract.TryGetValue(comp.Result, out var entry))
-                    return null; // unknown name
-                if (entry.ResultSet < 0 || entry.ResultSet >= resultSetCount)
-                    return null; // out of bounds
-                return entry.ResultSet;
+                if (ResultContract != null && ResultContract.TryGetValue(comp.Result, out var entry))
+                {
+                    if (entry.ResultSet < 0 || entry.ResultSet >= resultSetCount)
+                        return null; // out of bounds
+                    return entry.ResultSet;
+                }
+
+                // V2 builder default "rsN" pattern fallback — resultContract entry yoksa
+                // string "rs0/rs1/rs2/..." doğrudan int index olarak yorumlanır.
+                var m = System.Text.RegularExpressions.Regex.Match(comp.Result, @"^rs(\d+)$");
+                if (m.Success && int.TryParse(m.Groups[1].Value, out var rsIdx)
+                    && rsIdx >= 0 && rsIdx < resultSetCount)
+                    return rsIdx;
+
+                return null; // unknown name
             }
 
             // 2. legacy index binding

@@ -209,13 +209,19 @@ namespace ReportPanel.Services
                             }
                         }
 
-                        // Binding
+                        // Binding — name-based veya "rsN" pattern fallback
                         if (!string.IsNullOrEmpty(comp.Result))
                         {
-                            if (config.ResultContract == null || !config.ResultContract.ContainsKey(comp.Result))
-                                result.Errors.Add($"{widgetLabel}: '{comp.Result}' adlı isim tanımı yok.");
-                            else
+                            if (config.ResultContract != null && config.ResultContract.ContainsKey(comp.Result))
+                            {
                                 usedContractKeys.Add(comp.Result);
+                            }
+                            else if (!Regex.IsMatch(comp.Result, @"^rs\d+$"))
+                            {
+                                // contract entry yok ve "rsN" pattern de değil → bilinmeyen isim
+                                result.Errors.Add($"{widgetLabel}: '{comp.Result}' adlı isim tanımı yok.");
+                            }
+                            // "rsN" pattern → resolver int index olarak çözer (DashboardConfig.ResolveResultSet)
                         }
                         else if (comp.ResultSet.HasValue)
                         {
