@@ -1,7 +1,13 @@
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace ReportPanel.Models
 {
+    // Plan 05 B: JsonExtensionData — frontend'in eklediği typed olmayan alanlar Extra dict'e
+    // düşer, save/load sırasında round-trip korunur. Yeni alan ihtiyacı çıktığında frontend
+    // serbest ekler; backend o alanı **kullanmak istediğinde** Extra'dan parse eder.
+    // Typed alanlar mevcut behavior; Extra "henüz typed olmayan ama frontend'in iletmek
+    // istediği her şey" için bypass valve.
     public class DashboardConfig
     {
         [JsonPropertyName("schemaVersion")]
@@ -20,6 +26,10 @@ namespace ReportPanel.Models
         // Widget column/labelColumn/datasets referansina katilabilir.
         [JsonPropertyName("calculatedFields")]
         public List<CalculatedField>? CalculatedFields { get; set; }
+
+        // Plan 05 B: schema-by-default + bypass valve.
+        [JsonExtensionData]
+        public Dictionary<string, JsonElement>? Extra { get; set; }
 
         // ADR-007 Faz 1: Widget.Result > Widget.ResultSet precedence + bounds check.
         //
@@ -75,6 +85,9 @@ namespace ReportPanel.Models
 
         [JsonPropertyName("components")]
         public List<DashboardComponent> Components { get; set; } = new();
+
+        [JsonExtensionData]
+        public Dictionary<string, JsonElement>? Extra { get; set; }
     }
 
     public class DashboardComponent
@@ -162,6 +175,9 @@ namespace ReportPanel.Models
         // ADR-008 v2: Tablo ayarlari (toplam satiri, cizgili, sticky baslik, client arama, sayfalama)
         [JsonPropertyName("tableOptions")]
         public TableOptions? TableOptions { get; set; }
+
+        [JsonExtensionData]
+        public Dictionary<string, JsonElement>? Extra { get; set; }
     }
 
     public class ChartDataset
@@ -204,6 +220,9 @@ namespace ReportPanel.Models
         // Save-time validator FormulaParser.TryParse ile sözdizimi doğrular.
         [JsonPropertyName("formula")]
         public string? Formula { get; set; }
+
+        [JsonExtensionData]
+        public Dictionary<string, JsonElement>? Extra { get; set; }
     }
 
     // ============================================================
