@@ -157,14 +157,15 @@
                 var c = this.selected; if (!c) return;
                 if (field === 'span') val = parseInt(val, 10);
                 c[field] = val;
-                if (field === 'title') {
-                    var el = this.$el.querySelector('[data-widget-id="' + c.id + '"] .w-head .title');
-                    if (el) el.textContent = val;
+                // Alpine x-for içinden çağrılınca this.$el button'u gösterir;
+                // root yerine document üzerinden ara (builder-v2 tek instance).
+                var widgetEl = document.querySelector('.builder-v2 [data-widget-id="' + c.id + '"]');
+                if (field === 'title' && widgetEl) {
+                    var titleEl = widgetEl.querySelector('.w-head .title');
+                    if (titleEl) titleEl.textContent = val;
                 }
-                if (field === 'span' && this.grid) {
-                    var w = val * 3;
-                    var spanEl = this.$el.querySelector('[data-widget-id="' + c.id + '"]');
-                    if (spanEl) this.grid.update(spanEl, { w: w });
+                if (field === 'span' && this.grid && widgetEl) {
+                    this.grid.update(widgetEl, { w: val * 3 });
                 }
                 this.syncConfig();
             },
