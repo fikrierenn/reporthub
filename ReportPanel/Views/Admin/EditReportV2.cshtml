@@ -578,13 +578,29 @@ window.__availableDataSources = @Html.Raw(System.Text.Json.JsonSerializer.Serial
                     </datalist>
                 </div>
 
-                <div class="field" x-show="procParams.length > 0" x-cloak>
-                    <label class="lab">SP Parametreleri (otomatik)</label>
-                    <div class="inp" style="background:var(--canvas); font-family:'JetBrains Mono',monospace; font-size:11px; line-height:1.5;">
-                        <template x-for="p in procParams" :key="p.name">
-                            <div>· <span x-text="p.name"></span> <span style="color:var(--ink-3);" x-text="'(' + p.type + ')'"></span></div>
-                        </template>
-                    </div>
+                <div class="field">
+                    <label class="lab" style="display:flex; align-items:center; justify-content:space-between;">
+                        <span>Parametre Şeması (JSON)</span>
+                        <button type="button" x-show="dataSourceKey && procName"
+                                x-on:click="loadProcParams()"
+                                style="background:transparent; border:none; color:var(--accent-ink); font-size:10px; font-weight:600; cursor:pointer; text-transform:uppercase; letter-spacing:.04em;">
+                            <i class="fas fa-rotate text-[9px]"></i> SP'den yeniden çek
+                        </button>
+                    </label>
+                    <textarea class="inp" rows="7" x-model="paramSchemaJson"
+                              style="font-family:'JetBrains Mono',monospace; font-size:11px; line-height:1.45; white-space:pre;"
+                              placeholder='{ "fields": [ { "name": "Tarih", "type": "date", "required": false, "default": "today" } ] }'></textarea>
+                    <p style="font-size:10px; color:var(--ink-4); margin-top:4px; line-height:1.4;">
+                        Sadece kullanıcının doldurması gereken parametreleri bırakın. Kaldırılan SP parametreleri için SP default değerleri kullanılır.
+                    </p>
+                    <details x-show="procParams.length > 0" x-cloak style="margin-top:6px;">
+                        <summary style="cursor:pointer; font-size:10.5px; color:var(--ink-3); padding:4px 0;">SP'nin tüm parametreleri (referans)</summary>
+                        <div class="inp" style="background:var(--canvas); font-family:'JetBrains Mono',monospace; font-size:11px; line-height:1.5; margin-top:4px;">
+                            <template x-for="p in procParams" :key="p.name">
+                                <div>· <span x-text="p.name"></span> <span style="color:var(--ink-3);" x-text="'(' + p.type + ')'"></span></div>
+                            </template>
+                        </div>
+                    </details>
                 </div>
 
                 <div class="field">
