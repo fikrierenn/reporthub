@@ -85,76 +85,7 @@ window.__availableDataSources = @Html.Raw(System.Text.Json.JsonSerializer.Serial
     <input type="hidden" name="DataSourceKey" form="reportCreateFormV2" :value="dataSourceKey" />
     <input type="hidden" name="ProcName" form="reportCreateFormV2" :value="procName" />
     <input type="hidden" name="ParamSchemaJson" form="reportCreateFormV2" :value="paramSchemaJson" />
-    <aside class="palette">
-        <div class="pal-section">
-            <div class="pal-title">Bileşen Ekle</div>
-            <div class="pal-sub">Tuvale sürükle ya da + ile ekle</div>
-        </div>
-        <div class="pal-cards">
-            <div class="palette-card" draggable="true"
-                 @@dragstart="onPaletteDragStart($event, 'kpi')"
-                 @@click="addWidget('kpi')">
-                <div class="palette-icon kpi"><i class="fas fa-chart-line"></i></div>
-                <div class="info"><div class="t">KPI</div><div class="d">Tek sayı + delta</div></div>
-                <button type="button" class="add" @@click.stop="addWidget('kpi')"><i class="fas fa-plus"></i></button>
-            </div>
-            <div class="palette-card" draggable="true"
-                 @@dragstart="onPaletteDragStart($event, 'chart')"
-                 @@click="addWidget('chart')">
-                <div class="palette-icon chart"><i class="fas fa-chart-column"></i></div>
-                <div class="info"><div class="t">Grafik</div><div class="d">Bar, line, area, donut</div></div>
-                <button type="button" class="add" @@click.stop="addWidget('chart')"><i class="fas fa-plus"></i></button>
-            </div>
-            <div class="palette-card" draggable="true"
-                 @@dragstart="onPaletteDragStart($event, 'table')"
-                 @@click="addWidget('table')">
-                <div class="palette-icon table"><i class="fas fa-table"></i></div>
-                <div class="info"><div class="t">Tablo</div><div class="d">Result set satırları</div></div>
-                <button type="button" class="add" @@click.stop="addWidget('table')"><i class="fas fa-plus"></i></button>
-            </div>
-        </div>
-
-        <div class="pal-section" style="padding-top:18px;">
-            <div class="pal-title">Veri Setleri</div>
-            <div class="pal-sub">SP'den dönen result set'ler — etiket ekleyebilirsin</div>
-        </div>
-        <div class="contract">
-            <div class="contract-list">
-                <template x-for="(rs, i) in resultSets()" :key="i">
-                    <div class="contract-row" @@click="openDataModal(i, null)" :title="'Tıkla: ' + (rs.rows || []).length + ' satırı tabloyla göster'">
-                        <input type="text" class="name" style="background:transparent; border:1px dashed transparent; border-radius:3px; padding:1px 4px; flex:1; min-width:0; color:var(--ink-1); font-family:'JetBrains Mono',monospace; font-size:11.5px;"
-                               :value="resultSetTitle(rs, i)"
-                               @@click.stop
-                               @@blur="setContractName(i, $event.target.value)"
-                               @@keydown.enter="$event.target.blur()"
-                               title="İsim düzenlemek için tıkla; veri görmek için satır boşluğuna tıkla" />
-                        <span class="rs" x-text="(rs.rows || []).length + 's'"></span>
-                        <button type="button" @@click.stop="openDataModal(i, null)" title="Veri tablosunda göster" style="background:transparent; border:none; color:var(--ink-3); cursor:pointer; padding:2px 4px; border-radius:3px;">
-                            <i class="fas fa-table"></i>
-                        </button>
-                    </div>
-                </template>
-                <div x-show="resultSets().length === 0" style="padding:8px 10px; font-size:11px; color:var(--ink-4); text-align:center;">
-                    Veri kaynağı + ProcName seçince yüklenir
-                </div>
-            </div>
-        </div>
-
-        <div class="pal-section" style="padding-top:8px;">
-            <div class="pal-title">Bileşenler <span x-text="'(' + components.length + ')'"></span></div>
-        </div>
-        <div class="pal-list">
-            <template x-for="comp in components" :key="comp.id">
-                <div class="comp-row" :class="selectedId === comp.id && 'editing'"
-                     @@click="selectedId = comp.id; refreshSelection()">
-                    <span class="grip"><i class="fas fa-grip-vertical"></i></span>
-                    <span class="type-chip" :class="'type-' + comp.type" x-text="typeLabel(comp.type)"></span>
-                    <span class="title" x-text="comp.title || typeLabel(comp.type)"></span>
-                    <span class="meta" x-text="(comp.span || 1) + '/4'"></span>
-                </div>
-            </template>
-        </div>
-    </aside>
+    @* palette aside kaldırıldı (Plan 04 redesign) — bileşen ekle artık canvas-toolbar'da *@
 
     <main class="canvas"
           @@dragover="onCanvasDragOver($event)"
@@ -175,6 +106,40 @@ window.__availableDataSources = @Html.Raw(System.Text.Json.JsonSerializer.Serial
                 <i class="fas fa-plus text-[10px]"></i> Yeni Sekme
             </button>
         </div>
+
+        @* Canvas toolbar — bileşen ekle butonları + Veri Setleri chip (palette yerine) *@
+        <div class="canvas-toolbar">
+            <div class="cv-add-group">
+                <button type="button" class="cv-add-btn" draggable="true"
+                        @@dragstart="onPaletteDragStart($event, 'kpi')"
+                        @@click="addWidget('kpi')" title="KPI ekle (sürükle veya tıkla)">
+                    <i class="fas fa-chart-line"></i> <span>KPI</span>
+                </button>
+                <button type="button" class="cv-add-btn" draggable="true"
+                        @@dragstart="onPaletteDragStart($event, 'chart')"
+                        @@click="addWidget('chart')" title="Grafik ekle">
+                    <i class="fas fa-chart-column"></i> <span>Grafik</span>
+                </button>
+                <button type="button" class="cv-add-btn" draggable="true"
+                        @@dragstart="onPaletteDragStart($event, 'table')"
+                        @@click="addWidget('table')" title="Tablo ekle">
+                    <i class="fas fa-table"></i> <span>Tablo</span>
+                </button>
+            </div>
+            <button type="button" class="cv-rs-chip" @@click="openDataModal(0, null)"
+                    x-show="resultSets().length > 0" x-cloak
+                    :title="resultSets().length + ' veri seti — tıkla satırları gör'">
+                <i class="fas fa-database text-[10px]"></i>
+                <span x-text="resultSets().length + ' set'"></span>
+                <span class="dot">·</span>
+                <span x-text="resultSets().reduce((a, rs) => a + (rs.rowCount || (rs.rows||[]).length), 0) + ' satır'"></span>
+            </button>
+            <span class="cv-rs-chip muted" x-show="resultSets().length === 0" x-cloak>
+                <i class="fas fa-info-circle text-[10px]"></i>
+                Veri kaynağı + SP seçilince yüklenir
+            </span>
+        </div>
+
         <div class="param-bar">
             <span class="lbl">Parametreler</span>
             <template x-if="paramFields().length === 0">
@@ -208,25 +173,48 @@ window.__availableDataSources = @Html.Raw(System.Text.Json.JsonSerializer.Serial
                 <span x-text="paramDirty ? 'Çalıştır (değişti)' : 'Çalıştır'"></span>
             </button>
         </div>
-        <div class="grid-stack"></div>
+        @* Empty state — bu sekmede henüz widget yok, kullanıcıya 3 büyük CTA *@
+        <div class="empty-canvas" x-show="components.length === 0" x-cloak>
+            <div class="ec-icon"><i class="fas fa-chart-pie"></i></div>
+            <div class="ec-title">Bu sekmede henüz bileşen yok</div>
+            <div class="ec-sub">Aşağıdan birini seçerek başlayın · sonra sağ panelden veri bağlayın</div>
+            <div class="ec-cta-row">
+                <button type="button" class="ec-cta" @@click="addWidget('kpi')">
+                    <span class="ec-ico kpi"><i class="fas fa-chart-line"></i></span>
+                    <span class="ec-lbl">KPI</span>
+                    <span class="ec-desc">Tek sayı + delta</span>
+                </button>
+                <button type="button" class="ec-cta" @@click="addWidget('chart')">
+                    <span class="ec-ico chart"><i class="fas fa-chart-column"></i></span>
+                    <span class="ec-lbl">Grafik</span>
+                    <span class="ec-desc">Bar, line, area, donut</span>
+                </button>
+                <button type="button" class="ec-cta" @@click="addWidget('table')">
+                    <span class="ec-ico table"><i class="fas fa-table"></i></span>
+                    <span class="ec-lbl">Tablo</span>
+                    <span class="ec-desc">Result set satırları</span>
+                </button>
+            </div>
+        </div>
+        <div class="grid-stack" x-show="components.length > 0"></div>
     </main>
 
     <aside class="drawer">
-        <div class="drawer-tabs">
-            <button type="button" :class="drawerTab === 'veri' && 'active'" @@click="drawerTab = 'veri'">
-                <i class="fas fa-database text-[10px]"></i> Veri
-            </button>
-            <button type="button" :class="drawerTab === 'gorunum' && 'active'" @@click="drawerTab = 'gorunum'">
-                <i class="fas fa-palette text-[10px]"></i> Görünüm
-            </button>
-            <button type="button" :class="drawerTab === 'ayarlar' && 'active'" @@click="drawerTab = 'ayarlar'">
-                <i class="fas fa-gear text-[10px]"></i> Ayarlar
-            </button>
-        </div>
+        @* Plan 04 redesign: tab strip sadece widget seçili iken görünür *@
+        <template x-if="selected">
+            <div class="drawer-tabs">
+                <button type="button" :class="drawerTab === 'setup' && 'active'" @@click="drawerTab = 'setup'">
+                    <i class="fas fa-database text-[10px]"></i> Setup
+                </button>
+                <button type="button" :class="drawerTab === 'style' && 'active'" @@click="drawerTab = 'style'">
+                    <i class="fas fa-palette text-[10px]"></i> Stil
+                </button>
+            </div>
+        </template>
         <div class="drawer-content">
 
-            @* VERİ — 1-tıkla bağla *@
-            <div x-show="drawerTab === 'veri'">
+            @* SETUP — veri bağlama (eski "Veri" tab) *@
+            <div x-show="selected && drawerTab === 'setup'" x-cloak>
                 <template x-if="selected && selected.column">
                     <div class="selected-bound">
                         <span class="lbl">Bağlı</span>
@@ -356,7 +344,7 @@ window.__availableDataSources = @Html.Raw(System.Text.Json.JsonSerializer.Serial
             </div>
 
             @* GÖRÜNÜM — renk + icon grid *@
-            <div x-show="drawerTab === 'gorunum'" x-cloak>
+            <div x-show="selected && drawerTab === 'style'" x-cloak>
                 <template x-if="!selected">
                     <div style="text-align:center; padding:40px 20px; color:var(--ink-4);">
                         <i class="fas fa-arrow-pointer" style="font-size:24px; opacity:.4;"></i>
@@ -408,7 +396,7 @@ window.__availableDataSources = @Html.Raw(System.Text.Json.JsonSerializer.Serial
             </div>
 
             @* AYARLAR — rapor metadata *@
-            <div x-show="drawerTab === 'ayarlar'" x-cloak>
+            <div x-show="!selected" x-cloak>
                 <div class="selected-banner">
                     <span class="ico"><i class="fas fa-gear"></i></span>
                     <span class="name">Rapor Ayarları</span>

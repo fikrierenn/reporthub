@@ -16,7 +16,7 @@
                 config: { schemaVersion: 2, tabs: [{ title: 'Genel', components: [] }] },
                 activeTab: 0,
                 selectedId: null,
-                drawerTab: 'veri', // 'veri' | 'gorunum' | 'ayarlar'
+                drawerTab: 'setup', // 'setup' | 'style' (Plan 04 redesign — no-selection iken tab gizli, rapor ayarları gösterilir)
                 spPreview: null,
                 grid: null,
                 mode: 'edit', // 'edit' | 'preview' — topbar mode-seg ile $store.builderV2Mode senkron
