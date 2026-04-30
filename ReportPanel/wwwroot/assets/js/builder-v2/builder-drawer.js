@@ -241,6 +241,99 @@
                 });
             },
 
+            // ---- Plan 05.A: Tablo widget Setup tab kolon yönetimi ----
+
+            // Görüntülenecek kolon listesi: önce comp.Columns sırasındaki seçili kolonlar,
+            // sonra RS'te olup henüz seçilmemiş kolonlar (sona).
+            tableDisplayedColumns() {
+                if (!this.selected || this.selected.type !== 'table') return [];
+                var rs = this.selectedRs();
+                if (!rs) return [];
+                var rsCols = rs.columns || [];
+                var selectedKeys = (this.selected.columns || []).map(function (c) { return c.key; });
+                var unselected = rsCols.filter(function (c) { return selectedKeys.indexOf(c) < 0; });
+                // Seçili kolon RS'te yoksa (eski config) yine listede tut, sonradan unbind opsiyonu görünsün.
+                var orphans = selectedKeys.filter(function (k) { return rsCols.indexOf(k) < 0; });
+                return selectedKeys.filter(function (k) { return rsCols.indexOf(k) >= 0; })
+                    .concat(unselected)
+                    .concat(orphans);
+            },
+
+            isTableColumnSelected(colName) {
+                if (!this.selected || !this.selected.columns) return false;
+                return this.selected.columns.some(function (c) { return c.key === colName; });
+            },
+
+            getTableColumnAlign(colName) {
+                if (!this.selected || !this.selected.columns) return 'left';
+                var col = this.selected.columns.find(function (c) { return c.key === colName; });
+                return (col && col.align) || 'left';
+            },
+
+            toggleTableColumn(colName) {
+                if (!this.selected || this.selected.type !== 'table') return;
+                if (!this.selected.columns) this.selected.columns = [];
+                var idx = this.selected.columns.findIndex(function (c) { return c.key === colName; });
+                if (idx >= 0) {
+                    this.selected.columns.splice(idx, 1);
+                } else {
+                    this.selected.columns.push({ key: colName, label: colName, align: 'left' });
+                }
+                this.refreshAllWidgets();
+                this.syncConfig();
+            },
+
+            setTableColumnAlign(colName, align) {
+                if (!this.selected || !this.selected.columns) return;
+                var col = this.selected.columns.find(function (c) { return c.key === colName; });
+                if (!col) return;
+                col.align = align;
+                this.refreshAllWidgets();
+                this.syncConfig();
+            },
+
+            setTableColumnLabel(colName, label) {
+                if (!this.selected || !this.selected.columns) return;
+                var col = this.selected.columns.find(function (c) { return c.key === colName; });
+                if (!col) return;
+                col.label = (label && label.trim()) || colName;
+                this.refreshAllWidgets();
+                this.syncConfig();
+            },
+
+            // Drag-drop: sadece seçili kolonlar arasında reorder yapar.
+            // colDragSrc state IIFE-level tanımlandı (builder.js).
+            onColDragStart(colName, ev) {
+                if (!this.isTableColumnSelected(colName)) {
+                    ev.preventDefault();
+                    return;
+                }
+                this.colDragSrc = colName;
+                ev.dataTransfer.effectAllowed = 'move';
+                ev.dataTransfer.setData('text/plain', colName);
+            },
+
+            onColDragOver(ev) {
+                if (this.colDragSrc) ev.preventDefault();
+            },
+
+            onColDrop(targetColName, ev) {
+                ev.preventDefault();
+                var src = this.colDragSrc;
+                this.colDragSrc = null;
+                if (!src || src === targetColName) return;
+                if (!this.selected || !this.selected.columns) return;
+                if (!this.isTableColumnSelected(targetColName)) return; // sadece seçili → seçili
+                var cols = this.selected.columns;
+                var fromIdx = cols.findIndex(function (c) { return c.key === src; });
+                var toIdx = cols.findIndex(function (c) { return c.key === targetColName; });
+                if (fromIdx < 0 || toIdx < 0) return;
+                var moved = cols.splice(fromIdx, 1)[0];
+                cols.splice(toIdx, 0, moved);
+                this.refreshAllWidgets();
+                this.syncConfig();
+            },
+
             // Widget çift-tıkla → bağlı RS için modal aç
             openWidgetData(comp) {
                 if (!comp) return;

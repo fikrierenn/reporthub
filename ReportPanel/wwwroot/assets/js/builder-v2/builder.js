@@ -28,6 +28,7 @@
                 paramEditing: null, // Hangi chip inline-edit modunda (field.name)
                 paramDirty: false, // Kullanıcı param değiştirdi ama Çalıştır'a basmadı
                 dataModal: { open: false, rsIdx: null, comp: null }, // Çift-tıkla veri modal'ı
+                colDragSrc: null, // Plan 05.A: tablo Setup tab kolon drag-drop kaynağı (kolon adı)
 
                 // ---- Init ----
                 init() {

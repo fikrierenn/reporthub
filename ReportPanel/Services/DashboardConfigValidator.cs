@@ -123,8 +123,6 @@ namespace ReportPanel.Services
 
                     if (string.IsNullOrWhiteSpace(cf.Formula))
                         result.Errors.Add($"{label}: formül boş olamaz.");
-                    else if (!FormulaParser.TryParse(cf.Formula, out _, out var fErr, out var fPos))
-                        result.Errors.Add($"{label}: formül geçersiz (poz {fPos}): {fErr}");
 
                     if (!string.IsNullOrEmpty(cf.Format) && !KnownNumberFormats.Contains(cf.Format))
                         result.Errors.Add($"{label}: format '{cf.Format}' geçersiz. Beklenen: {string.Join(", ", KnownNumberFormats)}.");
@@ -202,6 +200,11 @@ namespace ReportPanel.Services
 
                                     if (col.ConditionalFormat != null && !KnownConditionalModes.Contains(col.ConditionalFormat.Mode))
                                         result.Errors.Add($"{widgetLabel} → {colLabel}: koşullu format modu '{col.ConditionalFormat.Mode}' geçersiz. Beklenen: {string.Join(", ", KnownConditionalModes)}.");
+
+                                    // Plan 05.B: hesaplı kolon formula sözdizim doğrulaması
+                                    if (!string.IsNullOrWhiteSpace(col.Formula)
+                                        && !FormulaParser.TryParse(col.Formula, out _, out var fErr, out var fPos))
+                                        result.Errors.Add($"{widgetLabel} → {colLabel}: formül geçersiz (poz {fPos}): {fErr}");
                                 }
                             }
                         }

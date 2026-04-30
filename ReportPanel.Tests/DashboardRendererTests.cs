@@ -250,20 +250,22 @@ public class DashboardRendererTests
     }
 
     // ============================================================
-    // Plan 05 Faz 2 — CalculatedFields render-time enrichment
+    // Plan 05.B — Tablo widget kolon-bazlı formula enrichment
     // ============================================================
 
+    private static DashboardComponent TableComp(int rs, List<TableColumnDef> cols)
+        => new() { Type = "table", Title = "T", ResultSet = rs, Columns = cols };
+
     [Fact]
-    public void CalculatedFields_enrich_rows_with_arithmetic_result()
+    public void TableFormula_enriches_rows_with_arithmetic_result()
     {
-        var cfg = new DashboardConfig
+        var comp = TableComp(0, new()
         {
-            Tabs = new() { new DashboardTab { Title = "T" } },
-            CalculatedFields = new()
-            {
-                new CalculatedField { Name = "kar", Formula = "satis - maliyet" }
-            }
-        };
+            new TableColumnDef { Key = "satis", Label = "Satış" },
+            new TableColumnDef { Key = "maliyet", Label = "Maliyet" },
+            new TableColumnDef { Key = "kar", Label = "Kar", Formula = "satis - maliyet" }
+        });
+        var cfg = ConfigWithTab("T", comp);
         var rs = new List<List<Dictionary<string, object>>>
         {
             new()
@@ -280,16 +282,15 @@ public class DashboardRendererTests
     }
 
     [Fact]
-    public void CalculatedFields_iif_label_added_to_each_row()
+    public void TableFormula_iif_label_added_to_each_row()
     {
-        var cfg = new DashboardConfig
+        var comp = TableComp(0, new()
         {
-            Tabs = new() { new DashboardTab { Title = "T" } },
-            CalculatedFields = new()
-            {
-                new CalculatedField { Name = "kategori", Formula = "IIF(adet > 100, 'Buyuk', 'Kucuk')" }
-            }
-        };
+            new TableColumnDef { Key = "adet", Label = "Adet" },
+            new TableColumnDef { Key = "kategori", Label = "Kategori",
+                                 Formula = "IIF(adet > 100, 'Buyuk', 'Kucuk')" }
+        });
+        var cfg = ConfigWithTab("T", comp);
         var rs = new List<List<Dictionary<string, object>>>
         {
             new()
@@ -306,17 +307,14 @@ public class DashboardRendererTests
     }
 
     [Fact]
-    public void CalculatedFields_unknown_column_yields_dbnull_not_throw()
+    public void TableFormula_unknown_column_yields_dbnull_not_throw()
     {
         // Plan 05: satır-bazlı eval hatası dashboard'u çöktürmez, cell DBNull.
-        var cfg = new DashboardConfig
+        var comp = TableComp(0, new()
         {
-            Tabs = new() { new DashboardTab { Title = "T" } },
-            CalculatedFields = new()
-            {
-                new CalculatedField { Name = "x", Formula = "yokKolon * 2" }
-            }
-        };
+            new TableColumnDef { Key = "x", Formula = "yokKolon * 2" }
+        });
+        var cfg = ConfigWithTab("T", comp);
         var rs = new List<List<Dictionary<string, object>>>
         {
             new() { new Dictionary<string, object> { ["adet"] = 5m } }
@@ -329,22 +327,14 @@ public class DashboardRendererTests
     }
 
     [Fact]
-    public void CalculatedFields_scope_limits_target_resultset()
+    public void TableFormula_only_target_widget_resultset_is_enriched()
     {
-        // ResultScope = "ozet" → sadece resultContract'a göre RS 0'a uygulanır, RS 1 dokunmaz.
-        var cfg = new DashboardConfig
+        // Tablo widget RS=0'a bağlı; RS=1 dokunmaz.
+        var comp = TableComp(0, new()
         {
-            ResultContract = new()
-            {
-                ["ozet"] = new() { ResultSet = 0 },
-                ["detay"] = new() { ResultSet = 1 }
-            },
-            Tabs = new() { new DashboardTab { Title = "T" } },
-            CalculatedFields = new()
-            {
-                new CalculatedField { Name = "etiket", Formula = "'X'", ResultScope = "ozet" }
-            }
-        };
+            new TableColumnDef { Key = "etiket", Formula = "'X'" }
+        });
+        var cfg = ConfigWithTab("T", comp);
         var rs = new List<List<Dictionary<string, object>>>
         {
             new() { new Dictionary<string, object> { ["a"] = 1m } },

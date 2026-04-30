@@ -16,11 +16,6 @@ namespace ReportPanel.Services
     {
         public static string Render(DashboardConfig config, List<List<Dictionary<string, object>>> resultSets)
         {
-            // Plan 05 Faz 2: render öncesi result set satırlarını CalculatedFields ile zenginleştir.
-            // InjectResultSets sonrası client-side JS (window.__RS) zenginleşmiş veriyi görür,
-            // tablo body / KPI / chart hepsi computed kolonu doğal olarak okur.
-            EnrichWithCalculatedFields(config, resultSets);
-
             var sb = new StringBuilder();
 
             DashboardShellRenderer.BeginHtml(sb);
@@ -55,6 +50,7 @@ namespace ReportPanel.Services
                             ChartRenderer.Render(sb, comp, spanCls, rs.Value);
                             break;
                         case "table":
+                            EnrichTableFormulas(comp, resultSets[rs.Value]);
                             TableRenderer.Render(sb, comp, spanCls, rs.Value);
                             break;
                         default:
@@ -74,70 +70,40 @@ namespace ReportPanel.Services
             return sb.ToString();
         }
 
-        // Plan 05 Faz 2: Her CalculatedField için AST parse 1 kez, scope'a giren her satırda
-        // evaluate edip row dict'e yeni anahtar (cf.Name) ekler. ResultScope null = tüm RS'lere
-        // uygula; string verilirse resultContract key'i çözülür → ilgili RS index.
+        // Plan 05.B: Tablo widget'ın bağlı RS satırlarını, kolon-bazlı formula'larla
+        // zenginleştirir. Sadece formula sahibi kolonlar için satır-bazlı eval; row[col.Key]
+        // sonuçla yazılır (yoksa eklenir, varsa override edilir — kullanıcının açık tercihi).
         //
-        // Hata politikası (silent_failure_hunter notu): satır-bazlı eval hatası
-        // (tanımsız kolon, type mismatch) tek satırı null'a düşürür ama dashboard'u
-        // çöktürmez. Plan 05 Done Criteria #5: "computed kolon evaluate fail → cell null".
-        // Save-time formula sözdizim hatası DashboardConfigValidator'da yakalanır,
-        // bu noktaya gelmez. TryParse fail eden formula da silent skip — config tamamen
-        // bozulmuş senaryosu (validator atlanmış).
-        private static void EnrichWithCalculatedFields(
-            DashboardConfig config,
-            List<List<Dictionary<string, object>>> resultSets)
+        // Hata politikası: satır-bazlı eval fail → DBNull cell (dashboard çökmez). Save-time
+        // validator FormulaParser.TryParse ile sözdizim hatasını yakalar; bu noktaya
+        // sözdizim açısından geçerli formula gelir, ama tanımsız kolon / type mismatch
+        // runtime'da görülebilir.
+        private static void EnrichTableFormulas(DashboardComponent comp, List<Dictionary<string, object>> rs)
         {
-            if (config.CalculatedFields == null || config.CalculatedFields.Count == 0) return;
-            if (resultSets.Count == 0) return;
+            if (comp.Columns == null || comp.Columns.Count == 0) return;
 
-            foreach (var cf in config.CalculatedFields)
+            foreach (var col in comp.Columns)
             {
-                if (string.IsNullOrWhiteSpace(cf.Name) || string.IsNullOrWhiteSpace(cf.Formula)) continue;
-                if (!FormulaParser.TryParse(cf.Formula, out var node, out _, out _) || node == null) continue;
+                if (string.IsNullOrWhiteSpace(col.Formula) || string.IsNullOrWhiteSpace(col.Key)) continue;
+                if (!FormulaParser.TryParse(col.Formula, out var node, out _, out _) || node == null) continue;
 
                 var ev = new FormulaEvaluator(node);
-
-                foreach (var rsIdx in ResolveScope(config, cf.ResultScope, resultSets.Count))
+                foreach (var row in rs)
                 {
-                    var rs = resultSets[rsIdx];
-                    foreach (var row in rs)
+                    try
                     {
-                        try
-                        {
-                            var val = ev.Evaluate(name =>
-                                row.TryGetValue(name, out var v)
-                                    ? (v is DBNull ? null : v)
-                                    : throw new FormulaEvaluationException($"Tanımsız kolon: {name}"));
-                            row[cf.Name] = val ?? (object)DBNull.Value;
-                        }
-                        catch (FormulaEvaluationException)
-                        {
-                            // Satır-bazlı eval hatası — cell null. Bütün dashboard çökmesi tercih edilemez.
-                            row[cf.Name] = DBNull.Value;
-                        }
+                        var val = ev.Evaluate(name =>
+                            row.TryGetValue(name, out var v)
+                                ? (v is DBNull ? null : v)
+                                : throw new FormulaEvaluationException($"Tanımsız kolon: {name}"));
+                        row[col.Key] = val ?? (object)DBNull.Value;
+                    }
+                    catch (FormulaEvaluationException)
+                    {
+                        row[col.Key] = DBNull.Value;
                     }
                 }
             }
-        }
-
-        private static IEnumerable<int> ResolveScope(DashboardConfig config, string? scope, int rsCount)
-        {
-            if (string.IsNullOrEmpty(scope))
-            {
-                for (var i = 0; i < rsCount; i++) yield return i;
-                yield break;
-            }
-
-            if (config.ResultContract != null
-                && config.ResultContract.TryGetValue(scope, out var entry)
-                && entry != null
-                && entry.ResultSet >= 0
-                && entry.ResultSet < rsCount)
-            {
-                yield return entry.ResultSet;
-            }
-            // unknown scope → no-op (validator save-time'da yakalar; renderer sessiz)
         }
     }
 }

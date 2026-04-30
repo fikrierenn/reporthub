@@ -266,7 +266,7 @@ window.__availableDataSources = @Html.Raw(System.Text.Json.JsonSerializer.Serial
                             </template>
                         </select>
                     </div>
-                    <div class="field" x-show="selected && selected.result">
+                    <div class="field" x-show="selected && selected.result && selected.type !== 'table'">
                         <label class="lab">Kolon</label>
                         <select class="inp"
                                 :value="selected ? (selected.column || '') : ''"
@@ -293,6 +293,54 @@ window.__availableDataSources = @Html.Raw(System.Text.Json.JsonSerializer.Serial
                         </select>
                     </div>
                 </div>
+
+                @* Plan 05.A: Tablo widget — kolon checkbox + drag-drop sıralama + hizalama *@
+                <template x-if="selected && selected.type === 'table'">
+                    <div class="col-picker-block">
+                        <div class="qb-header" style="margin-top:14px;">
+                            <i class="fas fa-table-cells text-[10px]"></i> Kolonlar
+                        </div>
+                        <template x-if="!selected.result">
+                            <p style="font-size:11px; color:var(--ink-4); padding:8px 0;">Önce yukarıdan Veri Seti seçin.</p>
+                        </template>
+                        <template x-if="selected.result">
+                            <div class="col-picker">
+                                <template x-for="col in tableDisplayedColumns()" :key="col">
+                                    <div class="col-row"
+                                         :class="isTableColumnSelected(col) && 'selected'"
+                                         :draggable="isTableColumnSelected(col) ? 'true' : 'false'"
+                                         x-on:dragstart="onColDragStart(col, $event)"
+                                         x-on:dragover="onColDragOver($event)"
+                                         x-on:drop="onColDrop(col, $event)">
+                                        <i class="fas fa-grip-vertical drag-handle" :style="!isTableColumnSelected(col) && 'visibility:hidden;'"></i>
+                                        <input type="checkbox"
+                                               :checked="isTableColumnSelected(col)"
+                                               x-on:change="toggleTableColumn(col)" />
+                                        <span class="col-name" x-text="col"></span>
+                                        <span class="col-kind" x-text="columnKindFor(col)"></span>
+                                        <div class="align-toggle" x-show="isTableColumnSelected(col)">
+                                            <button type="button" :class="getTableColumnAlign(col) === 'left' && 'on'"
+                                                    x-on:click="setTableColumnAlign(col, 'left')" title="Sola hizala">
+                                                <i class="fas fa-align-left text-[10px]"></i>
+                                            </button>
+                                            <button type="button" :class="getTableColumnAlign(col) === 'center' && 'on'"
+                                                    x-on:click="setTableColumnAlign(col, 'center')" title="Ortaya hizala">
+                                                <i class="fas fa-align-center text-[10px]"></i>
+                                            </button>
+                                            <button type="button" :class="getTableColumnAlign(col) === 'right' && 'on'"
+                                                    x-on:click="setTableColumnAlign(col, 'right')" title="Sağa hizala">
+                                                <i class="fas fa-align-right text-[10px]"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </template>
+                                <p x-show="(tableDisplayedColumns() || []).length === 0" style="font-size:11px; color:var(--ink-4); padding:8px 0;">
+                                    Bu veri setinde kolon bulunmuyor.
+                                </p>
+                            </div>
+                        </template>
+                    </div>
+                </template>
 
                 @* İleri ayar — minimal: alt yazı + 2-kolon formül (KPI), genişlik (Stil tab'da) *@
                 <template x-if="selected">

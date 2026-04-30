@@ -199,10 +199,11 @@ namespace ReportPanel.Models
         [JsonPropertyName("conditionalFormat")]
         public ConditionalFormat? ConditionalFormat { get; set; }
 
-        // Plan 05.B: bu kolon CalculatedField'a referans (Key == CalculatedField.Name).
-        // True ise UI'da "hesaplı" badge gösterir, kaldırınca CalculatedField de silinir.
-        [JsonPropertyName("computed")]
-        public bool? Computed { get; set; }
+        // Plan 05.B: kolon hesaplı ise formula sözdizimi (FormulaEvaluator AST).
+        // Null = SP'den gelen ham kolon. Var = render-time satır-bazlı eval, row[Key] = result.
+        // Save-time validator FormulaParser.TryParse ile sözdizimi doğrular.
+        [JsonPropertyName("formula")]
+        public string? Formula { get; set; }
     }
 
     // ============================================================
