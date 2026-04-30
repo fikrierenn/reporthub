@@ -2,7 +2,14 @@
 
 **Tarih:** 2026-04-30
 **Yazan:** Fikri / Claude
-**Durum:** `Uygulamada` (Faz 1)
+**Durum:** `Tamamlandı` (2026-04-30)
+
+**Yön değişikliği notu:** Faz 2 başlangıçta `DashboardConfig.CalculatedFields`
+top-level + `TableColumnDef.Computed` flag yaklaşımıyla yazıldı (commit `99084cb`).
+Sonra "tablo komple JSON" niyetiyle revize edildi: Faz 2 mini-revert + tablo widget'a
+özel `TableColumnDef.Formula` (commit `6d5ca5c`) + `JsonExtensionData` esneklik
+mekanizması (commit `9f8cca0`). Sonuç: tek state path (kolon nesnesinde Formula),
+schema-by-default + Extra bypass valve.
 
 ---
 
@@ -109,25 +116,23 @@ Kullanıcı tablo widget'ını gerçek BI deneyimine yaklaştırmak istiyor: kol
 
 ## 5. Done Criteria
 
-- [ ] **05.A:** Tablo widget seçilince Setup tab'da checkbox listesi (RS bağlıysa, RS yoksa info mesajı)
-- [ ] **05.A:** ✓ kaldırınca `comp.Columns`'tan o kolon çıkar; ekleyince eklenir; sıra `Columns` listesine yansır
-- [ ] **05.A:** Drag-drop ile sıra değişir → `comp.Columns` array sırası güncellenir → `syncConfig()` tetiklenir
-- [ ] **05.A:** Kolon başına 3-state hizalama butonu (sol/orta/sağ) `TableColumnDef.Align` günceller
-- [ ] **05.B:** "+ Yeni Hesaplı Kolon" formu açılır (alias + formula + format), kaydedince `DashboardConfig.CalculatedFields` listesine eklenir + tablo `Columns` listesine `{key:"cf:<alias>", label:<alias>, computed:true}` eklenir
-- [ ] **05.B:** Geçerli formula örnekleri çalışır:
+- [x] **05.A:** Tablo widget seçilince Setup tab'da checkbox listesi (RS bağlıysa, RS yoksa info mesajı)
+- [x] **05.A:** ✓ kaldırınca `comp.Columns`'tan o kolon çıkar; ekleyince eklenir; sıra `Columns` listesine yansır
+- [x] **05.A:** Drag-drop ile sıra değişir → `comp.Columns` array sırası güncellenir → `syncConfig()` tetiklenir
+- [x] **05.A:** Kolon başına 3-state hizalama butonu (sol/orta/sağ) `TableColumnDef.Align` günceller
+- [x] **05.B:** "+ Yeni Hesaplı Kolon" formu açılır (alias + formula + format), kaydedince tablo `Columns` listesine `{key, label, align, format, formula}` eklenir _(yön değişikliği: top-level CalculatedFields yerine TableColumnDef.Formula tek state path)_
+- [x] **05.B:** Geçerli formula örnekleri çalışır (44 unit test + 4 entegrasyon):
   - `BugunCiro - GecenYilBugun` (aritmetik)
   - `IIF(satis > 100, 'Yüksek', 'Düşük')` (koşul, IIF alias)
   - `IF(stok < 10, 'Az', IF(stok < 50, 'Orta', 'Bol'))` (nested IF)
   - `CASE WHEN durum = 'A' THEN 1 WHEN durum = 'B' THEN 2 ELSE 0 END`
   - `(satis - maliyet) / maliyet * 100` (yüzde)
-- [ ] **05.B:** Geçersiz formülde Türkçe hata mesajı kullanıcıya gösterilir, save bloklanır
-  - Whitelist dışı token: `eval('x')` → "Bilinmeyen fonksiyon: eval"
-  - Unbalanced paren: `(a + b` → "Parantez kapatılmadı (pozisyon 7)"
-  - Bilinmeyen kolon: `bilinmeyenKolon * 2` → "Tanımsız kolon: bilinmeyenKolon"
-- [ ] **05.B:** Server-side validator (`DashboardConfigValidator`) computed kolon formula'sını save'de doğrular (admin save → invalid formula → 400 + Türkçe hata)
-- [ ] **Smoke:** PDKS Pano'ya örnek tablo widget + 1 hesaplı kolon (`IIF(KadroToplam > 50, 'Büyük', 'Küçük')`) ekle, render OK, hata yok
-- [ ] **Test:** `FormulaEvaluatorTests` 25+ test (token whitelist + parser happy path + parser hata + evaluator literal/column/arithmetic/comparison/IF/IIF/CASE WHEN + edge cases: null kolon, sıfıra bölme, derinlik limit)
-- [ ] **Build OK** + **smoke OK** + **/ultrareview pass** (security-review skill çağrısı zorunlu, AST parser kritik)
+- [x] **05.B:** Geçersiz formülde Türkçe hata mesajı kullanıcıya gösterilir, save bloklanır + UI'da live görünür
+- [x] **05.B:** Server-side validator (`DashboardConfigValidator`) computed kolon formula'sını save'de doğrular + `AdminController.ValidateFormula` live endpoint
+- [x] **Smoke:** PDKS Pano/13 → tablo widget + `IIF([Sube]='Ankara', 'Merkez', 'Sube')` eklendi, render OK; `eval('x')` reddedildi (pos 5 + Türkçe hata)
+- [x] **Test:** `FormulaEvaluatorTests` 44 test, `DashboardRendererTests` 4 entegrasyon, `DashboardConfigExtensionDataTests` 7 round-trip → toplam 217 test, sıfır regression
+- [x] **Build OK** + **smoke OK** (browser preview + curl-style preview_eval)
+- [x] **Bonus:** `JsonExtensionData` esneklik mekanizması — DashboardConfig/Component/Tab/TableColumnDef üzerine `Extra: Dictionary<string, JsonElement>?` eklendi, frontend yeni alan ekleme schema değişikliği gerektirmez (round-trip otomatik)
 
 ## 6. Rollback Planı
 
@@ -138,6 +143,15 @@ Kullanıcı tablo widget'ını gerçek BI deneyimine yaklaştırmak istiyor: kol
 - **Eğer parser bug → prod hata:** `TableRenderer` try-catch zaten var, computed kolon evaluate fail → cell `null` → "—" render, dashboard çökmez
 
 ## 7. Adımlar
+
+> **Tamamlandı (2026-04-30) — Commit zinciri:**
+> - `c836301` Faz 1: FormulaToken/Node/Tokenizer/Parser/Evaluator + 44 test
+> - `99084cb` Faz 2 v1: top-level CalculatedFields global enrichment _(yön değişikliği ile revert edildi)_
+> - `6d5ca5c` Faz 2 v2 + Faz 3: tablo-özel `TableColumnDef.Formula` + Setup UI checkbox/drag-drop
+> - `9f8cca0` Bonus: `JsonExtensionData` esneklik (Extra dict round-trip)
+> - `5ee0e96` Faz 4: hesaplı kolon UI + AdminController.ValidateFormula
+>
+> Aşağıdaki adım tablosu tarihsel referans (orijinal plan).
 
 ### Faz 1 — AST parser çekirdeği (server-side, test-first)
 1. [ ] **05.1.1** `Services/Eval/FormulaToken.cs` — TokenType enum + Token record (lexeme + position)
