@@ -1,6 +1,7 @@
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using ReportPanel.Models;
+using ReportPanel.Services.Eval;
 
 namespace ReportPanel.Services
 {
@@ -122,6 +123,8 @@ namespace ReportPanel.Services
 
                     if (string.IsNullOrWhiteSpace(cf.Formula))
                         result.Errors.Add($"{label}: formül boş olamaz.");
+                    else if (!FormulaParser.TryParse(cf.Formula, out _, out var fErr, out var fPos))
+                        result.Errors.Add($"{label}: formül geçersiz (poz {fPos}): {fErr}");
 
                     if (!string.IsNullOrEmpty(cf.Format) && !KnownNumberFormats.Contains(cf.Format))
                         result.Errors.Add($"{label}: format '{cf.Format}' geçersiz. Beklenen: {string.Join(", ", KnownNumberFormats)}.");

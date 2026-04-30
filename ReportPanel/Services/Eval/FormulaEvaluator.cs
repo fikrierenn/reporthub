@@ -26,10 +26,18 @@ namespace ReportPanel.Services.Eval
         public object? Evaluate(IDictionary<string, object?> row)
         {
             if (row == null) throw new ArgumentNullException(nameof(row));
-            return Eval(_root, row);
+            return Evaluate(name => row.TryGetValue(name, out var v) ? v : throw new FormulaEvaluationException($"Tanımsız kolon: {name}"));
         }
 
-        private static object? Eval(IFormulaNode node, IDictionary<string, object?> row)
+        // Esnek overload: caller kolon lookup'ı sağlar (renderer Dictionary<string,object> için kullanır).
+        // getColumn kontratı: kolon yoksa FormulaEvaluationException at; varsa value (DBNull dahil) dön.
+        public object? Evaluate(Func<string, object?> getColumn)
+        {
+            if (getColumn == null) throw new ArgumentNullException(nameof(getColumn));
+            return Eval(_root, getColumn);
+        }
+
+        private static object? Eval(IFormulaNode node, Func<string, object?> getColumn)
         {
             switch (node)
             {
@@ -37,41 +45,39 @@ namespace ReportPanel.Services.Eval
                     return lit.Value;
 
                 case ColumnNode col:
-                    if (!row.TryGetValue(col.Name, out var val))
-                        throw new FormulaEvaluationException($"Tanımsız kolon: {col.Name}");
-                    // DBNull → null
+                    var val = getColumn(col.Name);
                     return val is DBNull ? null : val;
 
                 case UnaryOpNode un:
-                    return EvalUnary(un, row);
+                    return EvalUnary(un, getColumn);
 
                 case BinaryOpNode bin:
-                    return EvalBinary(bin, row);
+                    return EvalBinary(bin, getColumn);
 
                 case IfNode ifn:
                     {
-                        var cond = ToBool(Eval(ifn.Condition, row));
-                        if (cond == true) return Eval(ifn.Then, row);
-                        if (cond == false) return Eval(ifn.Else, row);
+                        var cond = ToBool(Eval(ifn.Condition, getColumn));
+                        if (cond == true) return Eval(ifn.Then, getColumn);
+                        if (cond == false) return Eval(ifn.Else, getColumn);
                         return null; // null condition → null
                     }
 
                 case CaseNode cn:
                     foreach (var br in cn.Branches)
                     {
-                        var c = ToBool(Eval(br.Condition, row));
-                        if (c == true) return Eval(br.Value, row);
+                        var c = ToBool(Eval(br.Condition, getColumn));
+                        if (c == true) return Eval(br.Value, getColumn);
                     }
-                    return cn.Else != null ? Eval(cn.Else, row) : null;
+                    return cn.Else != null ? Eval(cn.Else, getColumn) : null;
 
                 default:
                     throw new FormulaEvaluationException($"Bilinmeyen node tipi: {node.GetType().Name}");
             }
         }
 
-        private static object? EvalUnary(UnaryOpNode un, IDictionary<string, object?> row)
+        private static object? EvalUnary(UnaryOpNode un, Func<string, object?> getColumn)
         {
-            var v = Eval(un.Operand, row);
+            var v = Eval(un.Operand, getColumn);
             if (v == null) return null;
             return un.Op switch
             {
@@ -81,30 +87,30 @@ namespace ReportPanel.Services.Eval
             };
         }
 
-        private static object? EvalBinary(BinaryOpNode bin, IDictionary<string, object?> row)
+        private static object? EvalBinary(BinaryOpNode bin, Func<string, object?> getColumn)
         {
             // Short-circuit logic operatörleri
             if (bin.Op == "AND")
             {
-                var l = ToBool(Eval(bin.Left, row));
+                var l = ToBool(Eval(bin.Left, getColumn));
                 if (l == false) return false;
-                var r = ToBool(Eval(bin.Right, row));
+                var r = ToBool(Eval(bin.Right, getColumn));
                 if (r == false) return false;
                 if (l == null || r == null) return null;
                 return true;
             }
             if (bin.Op == "OR")
             {
-                var l = ToBool(Eval(bin.Left, row));
+                var l = ToBool(Eval(bin.Left, getColumn));
                 if (l == true) return true;
-                var r = ToBool(Eval(bin.Right, row));
+                var r = ToBool(Eval(bin.Right, getColumn));
                 if (r == true) return true;
                 if (l == null || r == null) return null;
                 return false;
             }
 
-            var lv = Eval(bin.Left, row);
-            var rv = Eval(bin.Right, row);
+            var lv = Eval(bin.Left, getColumn);
+            var rv = Eval(bin.Right, getColumn);
 
             // 3VL — herhangi biri null → null (eşitlik dahil)
             if (lv == null || rv == null) return null;

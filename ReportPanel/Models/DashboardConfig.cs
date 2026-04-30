@@ -198,6 +198,11 @@ namespace ReportPanel.Models
         // Simdilik schema'da declare — renderer tarafi F-6'da.
         [JsonPropertyName("conditionalFormat")]
         public ConditionalFormat? ConditionalFormat { get; set; }
+
+        // Plan 05.B: bu kolon CalculatedField'a referans (Key == CalculatedField.Name).
+        // True ise UI'da "hesaplı" badge gösterir, kaldırınca CalculatedField de silinir.
+        [JsonPropertyName("computed")]
+        public bool? Computed { get; set; }
     }
 
     // ============================================================

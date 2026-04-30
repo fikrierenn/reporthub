@@ -248,4 +248,112 @@ public class DashboardRendererTests
         Assert.Contains("Eksik zorunlu veri", html);
         Assert.Contains("summary", html);
     }
+
+    // ============================================================
+    // Plan 05 Faz 2 — CalculatedFields render-time enrichment
+    // ============================================================
+
+    [Fact]
+    public void CalculatedFields_enrich_rows_with_arithmetic_result()
+    {
+        var cfg = new DashboardConfig
+        {
+            Tabs = new() { new DashboardTab { Title = "T" } },
+            CalculatedFields = new()
+            {
+                new CalculatedField { Name = "kar", Formula = "satis - maliyet" }
+            }
+        };
+        var rs = new List<List<Dictionary<string, object>>>
+        {
+            new()
+            {
+                new Dictionary<string, object> { ["satis"] = 150m, ["maliyet"] = 100m },
+                new Dictionary<string, object> { ["satis"] = 80m,  ["maliyet"] = 30m }
+            }
+        };
+
+        DashboardRenderer.Render(cfg, rs);
+
+        Assert.Equal(50m, rs[0][0]["kar"]);
+        Assert.Equal(50m, rs[0][1]["kar"]);
+    }
+
+    [Fact]
+    public void CalculatedFields_iif_label_added_to_each_row()
+    {
+        var cfg = new DashboardConfig
+        {
+            Tabs = new() { new DashboardTab { Title = "T" } },
+            CalculatedFields = new()
+            {
+                new CalculatedField { Name = "kategori", Formula = "IIF(adet > 100, 'Buyuk', 'Kucuk')" }
+            }
+        };
+        var rs = new List<List<Dictionary<string, object>>>
+        {
+            new()
+            {
+                new Dictionary<string, object> { ["adet"] = 250m },
+                new Dictionary<string, object> { ["adet"] = 50m }
+            }
+        };
+
+        DashboardRenderer.Render(cfg, rs);
+
+        Assert.Equal("Buyuk", rs[0][0]["kategori"]);
+        Assert.Equal("Kucuk", rs[0][1]["kategori"]);
+    }
+
+    [Fact]
+    public void CalculatedFields_unknown_column_yields_dbnull_not_throw()
+    {
+        // Plan 05: satır-bazlı eval hatası dashboard'u çöktürmez, cell DBNull.
+        var cfg = new DashboardConfig
+        {
+            Tabs = new() { new DashboardTab { Title = "T" } },
+            CalculatedFields = new()
+            {
+                new CalculatedField { Name = "x", Formula = "yokKolon * 2" }
+            }
+        };
+        var rs = new List<List<Dictionary<string, object>>>
+        {
+            new() { new Dictionary<string, object> { ["adet"] = 5m } }
+        };
+
+        var ex = Record.Exception(() => DashboardRenderer.Render(cfg, rs));
+
+        Assert.Null(ex);
+        Assert.Equal(System.DBNull.Value, rs[0][0]["x"]);
+    }
+
+    [Fact]
+    public void CalculatedFields_scope_limits_target_resultset()
+    {
+        // ResultScope = "ozet" → sadece resultContract'a göre RS 0'a uygulanır, RS 1 dokunmaz.
+        var cfg = new DashboardConfig
+        {
+            ResultContract = new()
+            {
+                ["ozet"] = new() { ResultSet = 0 },
+                ["detay"] = new() { ResultSet = 1 }
+            },
+            Tabs = new() { new DashboardTab { Title = "T" } },
+            CalculatedFields = new()
+            {
+                new CalculatedField { Name = "etiket", Formula = "'X'", ResultScope = "ozet" }
+            }
+        };
+        var rs = new List<List<Dictionary<string, object>>>
+        {
+            new() { new Dictionary<string, object> { ["a"] = 1m } },
+            new() { new Dictionary<string, object> { ["a"] = 2m } }
+        };
+
+        DashboardRenderer.Render(cfg, rs);
+
+        Assert.Equal("X", rs[0][0]["etiket"]);
+        Assert.False(rs[1][0].ContainsKey("etiket"));
+    }
 }

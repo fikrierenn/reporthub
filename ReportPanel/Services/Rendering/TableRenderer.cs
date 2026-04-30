@@ -21,6 +21,7 @@ namespace ReportPanel.Services.Rendering
                 align = c.Align,
                 color = c.Color ?? "",
                 format = c.Format ?? "auto",
+                computed = c.Computed == true, // Plan 05.B: client-side "hesaplı" badge
                 condFormat = c.ConditionalFormat == null ? null : new
                 {
                     mode = c.ConditionalFormat.Mode,
