@@ -38,7 +38,10 @@ window.__reportMeta = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(new {
     isActive = Model.Report.IsActive,
     description = Model.Report.Description ?? string.Empty,
     paramSchemaJson = Model.Report.ParamSchemaJson ?? string.Empty,
-    editClassicUrl = $"/Admin/EditReport/{Model.Report.ReportId}"
+    availableRoles = (Model.AvailableRoles ?? new()).Select(r => new { id = r.RoleId, name = r.Name }),
+    selectedRoleIds = Model.SelectedRoleIds ?? new HashSet<int>(),
+    availableCategories = (Model.AvailableCategories ?? new()).Select(c => new { id = c.CategoryId, name = c.Name }),
+    selectedCategoryIds = Model.SelectedCategoryIds ?? new HashSet<int>()
 }));
 window.__availableDataSources = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
     (Model.DataSources ?? new()).Where(d => d.IsActive).Select(d => new { key = d.DataSourceKey, title = d.Title })));
@@ -47,12 +50,8 @@ window.__availableDataSources = @Html.Raw(System.Text.Json.JsonSerializer.Serial
 <form method="post" action="/Admin/EditReport/@Model.Report.ReportId" id="reportEditFormV2"
       x-data="{}" x-on:input="$store.builder.dirty = true">
     @Html.AntiForgeryToken()
-    @* Title/DataSourceKey/ProcName/ParamSchemaJson hidden input'ları builder-v2 div'inde reactive sync *@
     <input type="hidden" name="ReportId" value="@Model.Report.ReportId" />
-    <input type="hidden" name="Description" value="@(Model.Report.Description ?? string.Empty)" />
-    @if (Model.Report.IsActive) { <input type="hidden" name="IsActive" value="true" /> }
-    @foreach (var rid in (Model.SelectedRoleIds ?? new HashSet<int>())) { <input type="hidden" name="SelectedRoles" value="@rid" /> }
-    @foreach (var cid in (Model.SelectedCategoryIds ?? new HashSet<int>())) { <input type="hidden" name="SelectedCategories" value="@cid" /> }
+    @* Description, IsActive, Roles, Categories → Alpine reactive hidden input'lar builder-v2 div'inde *@
     <textarea name="DashboardConfigJson" id="DashboardConfigJson" style="display:none;">@Model.Report.DashboardConfigJson</textarea>
 </form>
 
@@ -76,6 +75,14 @@ window.__availableDataSources = @Html.Raw(System.Text.Json.JsonSerializer.Serial
     <input type="hidden" name="DataSourceKey" form="reportEditFormV2" :value="dataSourceKey" />
     <input type="hidden" name="ProcName" form="reportEditFormV2" :value="procName" />
     <input type="hidden" name="ParamSchemaJson" form="reportEditFormV2" :value="paramSchemaJson" />
+    <input type="hidden" name="Description" form="reportEditFormV2" :value="description" />
+    <input type="hidden" name="IsActive" form="reportEditFormV2" :value="isActive ? 'true' : 'false'" />
+    <template x-for="rid in selectedRoleIds" :key="rid">
+        <input type="hidden" name="SelectedRoles" form="reportEditFormV2" :value="rid" />
+    </template>
+    <template x-for="cid in selectedCategoryIds" :key="cid">
+        <input type="hidden" name="SelectedCategories" form="reportEditFormV2" :value="cid" />
+    </template>
 
     @* SOL: PALETTE *@
     @* palette aside kaldırıldı (Plan 04 redesign) — bileşen ekle artık canvas-toolbar'da, veri setleri chip + modal *@
@@ -318,6 +325,11 @@ window.__availableDataSources = @Html.Raw(System.Text.Json.JsonSerializer.Serial
                                                x-on:change="toggleTableColumn(col)" />
                                         <span class="col-name" x-text="col"></span>
                                         <span class="col-kind" x-text="columnKindFor(col)"></span>
+                                        <button type="button" x-show="isComputedColumn(col)"
+                                                style="background:transparent; border:none; color:var(--accent-ink); cursor:pointer; padding:2px 4px;" title="Formül düzenle"
+                                                x-on:click="editCalcColumn(col)">
+                                            <i class="fas fa-pen text-[10px]"></i>
+                                        </button>
                                         <div class="align-toggle" x-show="isTableColumnSelected(col)">
                                             <button type="button" :class="getTableColumnAlign(col) === 'left' && 'on'"
                                                     x-on:click="setTableColumnAlign(col, 'left')" title="Sola hizala">
@@ -353,6 +365,8 @@ window.__availableDataSources = @Html.Raw(System.Text.Json.JsonSerializer.Serial
                                         <label class="lab">Kolon Adı (alias)</label>
                                         <input type="text" class="inp"
                                                x-model="calcColForm.alias"
+                                               :readonly="!!calcColForm.editingKey"
+                                               :style="calcColForm.editingKey ? 'opacity:0.6; cursor:not-allowed;' : ''"
                                                placeholder="örn: marj, kategoriEtiket"
                                                maxlength="40" />
                                     </div>
@@ -386,7 +400,7 @@ window.__availableDataSources = @Html.Raw(System.Text.Json.JsonSerializer.Serial
                                         <button type="button" class="btn"
                                                 :disabled="calcColForm.busy"
                                                 x-on:click="addCalcColumn()">
-                                            <span x-show="!calcColForm.busy">Kaydet</span>
+                                            <span x-show="!calcColForm.busy" x-text="calcColForm.editingKey ? 'Güncelle' : 'Kaydet'"></span>
                                             <span x-show="calcColForm.busy" x-cloak><i class="fas fa-spinner fa-spin text-[10px]"></i> Doğrulanıyor</span>
                                         </button>
                                     </div>
@@ -604,14 +618,52 @@ window.__availableDataSources = @Html.Raw(System.Text.Json.JsonSerializer.Serial
                 </div>
 
                 <div class="field">
-                    <label class="lab">Aktif</label>
-                    <div class="inp" style="display:flex; align-items:center;" x-text="reportMeta.isActive ? 'Evet' : 'Hayır'"></div>
+                    <label class="lab">Açıklama</label>
+                    <textarea class="inp" rows="3" x-model="description"
+                              placeholder="Rapor hakkında kısa açıklama…"></textarea>
                 </div>
 
-                <a :href="reportMeta.editClassicUrl" class="btn"
-                   style="display:inline-flex; gap:6px; align-items:center; padding:8px 12px; background:var(--paper); border:1px solid var(--line); border-radius:6px; color:var(--ink-1); text-decoration:none; font-size:12px;">
-                    <i class="fas fa-arrow-up-right-from-square text-[10px]"></i> Klasik formda düzenle (rol/kategori/açıklama)
-                </a>
+                <div class="field">
+                    <label class="lab" style="display:flex; align-items:center; gap:8px;">
+                        Aktif
+                        <label style="position:relative; display:inline-block; width:36px; height:20px; cursor:pointer; margin:0;">
+                            <input type="checkbox" :checked="isActive" x-on:change="isActive = $el.checked"
+                                   style="opacity:0; width:0; height:0;" />
+                            <span :style="'position:absolute; inset:0; border-radius:10px; transition:.2s; background:' + (isActive ? 'var(--accent-ink)' : 'var(--line)')"></span>
+                            <span :style="'position:absolute; top:2px; width:16px; height:16px; border-radius:50%; transition:.2s; background:#fff; left:' + (isActive ? '18px' : '2px')"></span>
+                        </label>
+                    </label>
+                </div>
+
+                <template x-if="availableRoles.length > 0">
+                    <div class="field">
+                        <label class="lab">İzinli Roller</label>
+                        <div style="display:flex; flex-direction:column; gap:4px; max-height:140px; overflow-y:auto; padding:6px 8px; border:1px solid var(--line); border-radius:6px; background:var(--paper);">
+                            <template x-for="role in availableRoles" :key="role.id">
+                                <label style="display:flex; align-items:center; gap:6px; font-size:12px; cursor:pointer;">
+                                    <input type="checkbox" :checked="selectedRoleIds.includes(role.id)"
+                                           x-on:change="toggleRole(role.id)" />
+                                    <span x-text="role.name"></span>
+                                </label>
+                            </template>
+                        </div>
+                    </div>
+                </template>
+
+                <template x-if="availableCategories.length > 0">
+                    <div class="field">
+                        <label class="lab">Kategoriler</label>
+                        <div style="display:flex; flex-direction:column; gap:4px; max-height:140px; overflow-y:auto; padding:6px 8px; border:1px solid var(--line); border-radius:6px; background:var(--paper);">
+                            <template x-for="cat in availableCategories" :key="cat.id">
+                                <label style="display:flex; align-items:center; gap:6px; font-size:12px; cursor:pointer;">
+                                    <input type="checkbox" :checked="selectedCategoryIds.includes(cat.id)"
+                                           x-on:change="toggleCategory(cat.id)" />
+                                    <span x-text="cat.name"></span>
+                                </label>
+                            </template>
+                        </div>
+                    </div>
+                </template>
             </div>
 
         </div>

@@ -14,6 +14,12 @@
             dataSourceKey: '',
             procName: '',
             paramSchemaJson: '',
+            description: '',
+            isActive: true,
+            availableRoles: [],
+            selectedRoleIds: [],
+            availableCategories: [],
+            selectedCategoryIds: [],
             availableDataSources: [],
             spList: [],
             procParams: [],
@@ -25,9 +31,26 @@
                 this.dataSourceKey = meta.dataSourceKey || '';
                 this.procName = meta.procName || '';
                 this.paramSchemaJson = meta.paramSchemaJson || '';
+                this.description = meta.description || '';
+                this.isActive = meta.isActive !== undefined ? meta.isActive : true;
+                this.availableRoles = meta.availableRoles || [];
+                this.selectedRoleIds = meta.selectedRoleIds ? Array.from(meta.selectedRoleIds) : [];
+                this.availableCategories = meta.availableCategories || [];
+                this.selectedCategoryIds = meta.selectedCategoryIds ? Array.from(meta.selectedCategoryIds) : [];
                 this.availableDataSources = window.__availableDataSources || [];
-                // Mevcut DataSource için SP listesini ön-yükle
                 if (this.dataSourceKey) this.loadSpList();
+            },
+
+            toggleRole(roleId) {
+                var idx = this.selectedRoleIds.indexOf(roleId);
+                if (idx === -1) this.selectedRoleIds.push(roleId);
+                else this.selectedRoleIds.splice(idx, 1);
+            },
+
+            toggleCategory(catId) {
+                var idx = this.selectedCategoryIds.indexOf(catId);
+                if (idx === -1) this.selectedCategoryIds.push(catId);
+                else this.selectedCategoryIds.splice(idx, 1);
             },
 
             // DataSource değişti → SP listesi yenilenir, mevcut ProcName temizlenir
