@@ -81,7 +81,7 @@ Ayrıntılı kurallar `.claude/rules/` altında — burada sadece değişmez pre
    - **Slash commands (`.claude/commands/`):**
      - `/feature-dev` — 7 fazlı guided feature development (discovery → exploration → clarify → architect → implement → review → summary)
      - `/review-pr` — multi-agent comprehensive PR review
-   - **Proje skill'leri:** `session-handoff` (oturum sonu journal + auto-commit), `plan-tracker` (TodoWrite ↔ TODO.md senkron).
+   - **Proje skill'leri:** `session-handoff` (oturum sonu journal + auto-commit + memory kaydet + NotebookLM Brain push), `plan-tracker` (TodoWrite ↔ TODO.md senkron), `notebooklm` (Google NotebookLM CLI — podcast/video/rapor/quiz üret).
    - **Frontend tasarım skill'leri** (M-11 F-7+ dashboard builder UI + M-13 Plan 03 sayfa migration fazlarında tetiklenir): `frontend-design`, `visual-design-foundations`, `design-system-patterns`, `interaction-design`, `responsive-design`, `web-component-design` (Razor projesi için SKIP), `accessibility-compliance`.
    - **`ui-ux-pro-max`** (M-13 sırasında en güçlü audit aracı) — 161 color palette, 99 UX guideline, 25 chart type, 10 priority-ranked rule kategorisi (accessibility CRITICAL → charts LOW). UI değişikliği yaparken otomatik tetiklenir, WCAG contrast/touch target/anti-pattern checklist uygular.
    - Hazır skill'ler: `security-review`, `review`, `simplify`, `init`, `consolidate-memory`, `schedule`, `loop`, `claude-api`.
@@ -99,6 +99,8 @@ Ayrıntılı kurallar `.claude/rules/` altında — burada sadece değişmez pre
 7. **Bağlam yönetimi disiplini.** Aynı bilgi iki yerde yaşamaz (CLAUDE.md kimlik, `.claude/rules/` kural, `TODO.md` plan, `docs/ADR/` karar, `docs/journal/` günlük). Detay: [`.claude/rules/session-memory.md`](.claude/rules/session-memory.md).
 
 8. **200 satır eşiği.** CLAUDE.md ve her `.claude/rules/*.md` dosyası 200 satır altında. Aşarsa konu bölünür.
+
+9. **Kodlama disiplini.** Spekülatif feature/abstraction ekleme, drive-by refactoring yapma. Detay: [`.claude/rules/coding-discipline.md`](.claude/rules/coding-discipline.md).
 
 ---
 
