@@ -438,6 +438,23 @@ body.builder-v2-page .builder-v2.preview-mode .param-bar { background: var(--pap
 .builder-v2 .icon-pick:hover { border-color: var(--ink-4); }
 .builder-v2 .icon-pick.on { border-color: var(--accent); background: var(--accent-soft); color: var(--accent-ink); }
 
+/* Variant picker — KPI 4 kart (2×2), Chart 10 tip (5×2) */
+.builder-v2 .variant-grid { display: grid; gap: 6px; }
+.builder-v2 .variant-grid--kpi { grid-template-columns: repeat(2, 1fr); }
+.builder-v2 .variant-grid--chart { grid-template-columns: repeat(5, 1fr); }
+.builder-v2 .variant-card {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 2px; padding: 10px 4px;
+    border: 1px solid var(--line); border-radius: 8px;
+    background: var(--paper); cursor: pointer; transition: all .12s;
+}
+.builder-v2 .variant-card:hover { border-color: var(--ink-4); background: var(--bg-2); }
+.builder-v2 .variant-card.on { border-color: var(--accent); background: var(--accent-soft); color: var(--accent-ink); }
+.builder-v2 .variant-card .variant-label { font-size: 10px; font-weight: 600; line-height: 1.2; text-align: center; }
+.builder-v2 .variant-card .variant-desc { font-size: 9px; color: var(--ink-4); line-height: 1.2; text-align: center; }
+.builder-v2 .variant-card--sm { padding: 8px 2px; }
+.builder-v2 .variant-card--sm .variant-label { font-size: 9.5px; }
+
 .builder-v2 .span-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; }
 .builder-v2 .span-pick {
     height: 32px;
