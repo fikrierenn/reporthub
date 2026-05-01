@@ -396,11 +396,18 @@
                     f.error = 'Kolon adı harfle başlamalı, sadece harf/rakam/alt çizgi (örn: marj, kategoriEtiket).'; return;
                 }
                 if (!formula) { f.error = 'Formül gerekli.'; return; }
-                if (!this.selected.columns) this.selected.columns = [];
-                if (this.selected.columns.some(function (c) { return c.key === alias; })) {
+                if (!this.selected.columns || this.selected.columns.length === 0) {
+                    var rs = this.selectedRs ? this.selectedRs() : null;
+                    var rsCols = rs ? (rs.columns || []) : [];
+                    var firstRow = rs && rs.rows && rs.rows.length > 0 ? rs.rows[0] : {};
+                    this.selected.columns = rsCols.map(function (c) {
+                        return { key: c, label: c, align: typeof firstRow[c] === 'number' ? 'right' : 'left', format: 'auto' };
+                    });
+                }
+                var isEdit = !!f.editingKey;
+                if (!isEdit && this.selected.columns.some(function (c) { return c.key === alias; })) {
                     f.error = 'Bu kolon adı zaten kullanılıyor.'; return;
                 }
-                // Server-side validate, sonra ekle
                 var self = this;
                 var token = document.querySelector('input[name="__RequestVerificationToken"]');
                 if (!token) { f.error = 'AntiForgery token yok'; return; }
@@ -424,13 +431,25 @@
                             f.errorPos = res.position || null;
                             return;
                         }
-                        self.selected.columns.push({
-                            key: alias,
-                            label: alias,
-                            align: 'left',
-                            format: f.format || 'auto',
-                            formula: formula
-                        });
+                        if (isEdit) {
+                            var existing = self.selected.columns.find(function (c) { return c.key === f.editingKey; });
+                            if (existing) {
+                                existing.formula = formula;
+                                existing.format = f.format || 'auto';
+                                if (alias !== f.editingKey) {
+                                    existing.key = alias;
+                                    existing.label = alias;
+                                }
+                            }
+                        } else {
+                            self.selected.columns.push({
+                                key: alias,
+                                label: alias,
+                                align: 'left',
+                                format: f.format || 'auto',
+                                formula: formula
+                            });
+                        }
                         self.cancelCalcColForm();
                         self.refreshAllWidgets();
                         self.syncConfig();
@@ -439,6 +458,22 @@
                         f.busy = false;
                         f.error = 'Sunucu doğrulamasında hata: ' + err.message;
                     });
+            },
+
+            editCalcColumn(colName) {
+                if (!this.selected || !this.selected.columns) return;
+                var col = this.selected.columns.find(function (c) { return c.key === colName; });
+                if (!col || !col.formula) return;
+                this.calcColForm = {
+                    open: true,
+                    alias: col.key,
+                    formula: col.formula,
+                    format: col.format || 'auto',
+                    error: null,
+                    errorPos: null,
+                    busy: false,
+                    editingKey: col.key
+                };
             },
 
             removeColumn(colName) {

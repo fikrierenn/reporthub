@@ -405,19 +405,8 @@ namespace ReportPanel.Controllers
             if (dataSource == null)
                 return BadRequest("Veri kaynağı bulunamadı veya pasif.");
 
-            // 3. ParamSchema parse
-            var paramFields = new List<ReportParamField>();
-            if (!string.IsNullOrWhiteSpace(paramSchemaJson))
-            {
-                try
-                {
-                    var parsed = JsonSerializer.Deserialize<List<ReportParamField>>(
-                        paramSchemaJson,
-                        new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-                    if (parsed != null) paramFields = parsed;
-                }
-                catch { /* paramFields boş → SP default kullanır */ }
-            }
+            // 3. ParamSchema parse — { "fields": [...] } wrapper + legacy format destekli
+            var paramFields = ReportParamValidator.ParseSchema(paramSchemaJson);
 
             // 4. paramsJson + ParamSchema default → fakeForm
             var formDict = new Dictionary<string, Microsoft.Extensions.Primitives.StringValues>();

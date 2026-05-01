@@ -18,6 +18,16 @@ namespace ReportPanel.Services
         {
             var sb = new StringBuilder();
 
+            // Hesaplı kolonları InjectResultSets'ten ÖNCE çalıştır — serialize sonrası
+            // row dict değişiklikleri window.__RS'e yansımaz.
+            for (var t = 0; t < config.Tabs.Count; t++)
+                foreach (var comp in config.Tabs[t].Components)
+                {
+                    if (comp.Type != "table") continue;
+                    var rs = config.ResolveResultSet(comp, resultSets.Count);
+                    if (rs is not null) EnrichTableFormulas(comp, resultSets[rs.Value]);
+                }
+
             DashboardShellRenderer.BeginHtml(sb);
             DashboardShellRenderer.InjectResultSets(sb, resultSets);
             DashboardShellRenderer.RenderTabsHeader(sb, config);
@@ -50,7 +60,6 @@ namespace ReportPanel.Services
                             ChartRenderer.Render(sb, comp, spanCls, rs.Value);
                             break;
                         case "table":
-                            EnrichTableFormulas(comp, resultSets[rs.Value]);
                             TableRenderer.Render(sb, comp, spanCls, rs.Value);
                             break;
                         default:
@@ -93,9 +102,14 @@ namespace ReportPanel.Services
                     try
                     {
                         var val = ev.Evaluate(name =>
-                            row.TryGetValue(name, out var v)
-                                ? (v is DBNull ? null : v)
-                                : throw new FormulaEvaluationException($"Tanımsız kolon: {name}"));
+                        {
+                            if (row.TryGetValue(name, out var v))
+                                return v is DBNull ? null : v;
+                            var match = row.Keys.FirstOrDefault(k => string.Equals(k, name, StringComparison.OrdinalIgnoreCase));
+                            if (match != null && row.TryGetValue(match, out var v2))
+                                return v2 is DBNull ? null : v2;
+                            throw new FormulaEvaluationException($"Tanımsız kolon: {name}");
+                        });
                         row[col.Key] = val ?? (object)DBNull.Value;
                     }
                     catch (FormulaEvaluationException)
