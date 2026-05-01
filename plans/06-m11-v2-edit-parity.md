@@ -69,13 +69,13 @@ Bu UX kırılması dashboard builder bağlamından çıkma gerektiriyor — V2 k
 
 ## 5. Done Criteria
 
-- [ ] Description textarea V2 drawer'da görünür ve form POST'a dahil
-- [ ] IsActive toggle çalışır, true/false doğru gider
-- [ ] Roles checklist tüm available role'ları gösterir, seçili olanlar checked
-- [ ] Categories checklist aynı şekilde çalışır
-- [ ] "Klasik formda düzenle" linki kaldırılmış
-- [ ] Form POST sonrası tüm alanlar doğru kaydedilir (smoke test)
-- [ ] Mevcut V2 builder fonksiyonları kırılmamış (widget ekleme, taşıma, kaydetme)
+- [x] Description textarea V2 drawer'da görünür ve form POST'a dahil
+- [x] IsActive toggle çalışır, true/false doğru gider
+- [x] Roles checklist tüm available role'ları gösterir, seçili olanlar checked
+- [x] Categories checklist aynı şekilde çalışır
+- [x] "Klasik formda düzenle" linki kaldırılmış
+- [x] Form POST sonrası tüm alanlar doğru kaydedilir (smoke test)
+- [x] Mevcut V2 builder fonksiyonları kırılmamış (widget ekleme, taşıma, kaydetme)
 
 ## 6. Rollback Planı
 
@@ -83,13 +83,13 @@ Bu UX kırılması dashboard builder bağlamından çıkma gerektiriyor — V2 k
 
 ## 7. Adımlar
 
-1. [ ] **06.B-1** `EditReportV2.cshtml`: `window.__reportMeta`'ya `availableRoles`, `selectedRoleIds`, `availableCategories`, `selectedCategoryIds` ekle
-2. [ ] **06.B-2** `EditReportV2.cshtml`: Hardcoded Description/IsActive/Roles/Categories hidden input'ları kaldır
-3. [ ] **06.B-3** `builder-settings.js`: `description`, `isActive`, `selectedRoleIds`, `selectedCategoryIds` reactive state + `initSettings()` init
-4. [ ] **06.B-4** `EditReportV2.cshtml`: Drawer "Rapor Ayarları"na Description textarea + IsActive toggle + Roles checklist + Categories checklist ekle
-5. [ ] **06.B-5** `EditReportV2.cshtml`: Alpine reactive hidden input'lar ekle (form dışı div'de, `form="reportEditFormV2"`)
-6. [ ] **06.B-6** `EditReportV2.cshtml`: "Klasik formda düzenle" linkini kaldır
-7. [ ] **06.B-7** Smoke test: V2'den kaydet → DB'de doğru değerler, V1'e geçip kontrol
+1. [x] **06.B-1** `EditReportV2.cshtml`: `window.__reportMeta`'ya `availableRoles`, `selectedRoleIds`, `availableCategories`, `selectedCategoryIds` ekle — `caf8822`
+2. [x] **06.B-2** `EditReportV2.cshtml`: Hardcoded Description/IsActive/Roles/Categories hidden input'ları kaldır — `caf8822`
+3. [x] **06.B-3** `builder-settings.js`: `description`, `isActive`, `selectedRoleIds`, `selectedCategoryIds` reactive state + `initSettings()` init — `caf8822`
+4. [x] **06.B-4** `EditReportV2.cshtml`: Drawer "Rapor Ayarları"na Description textarea + IsActive toggle + Roles checklist + Categories checklist ekle — `caf8822`
+5. [x] **06.B-5** `EditReportV2.cshtml`: Alpine reactive hidden input'lar ekle (form dışı div'de, `form="reportEditFormV2"`) — `caf8822`
+6. [x] **06.B-6** `EditReportV2.cshtml`: "Klasik formda düzenle" linkini kaldır — `caf8822`
+7. [x] **06.B-7** Smoke test: V2'den kaydet → DB'de doğru değerler — `2b62d39` (preview + formula fix ile birlikte doğrulandı)
 
 ## 8. İlişkili
 
@@ -103,6 +103,7 @@ Bu UX kırılması dashboard builder bağlamından çıkma gerektiriyor — V2 k
 
 > Kullanıcı onay verene kadar implement edilmez.
 
-- [ ] Plan kullanıcıya gösterildi
-- [ ] Geri bildirim alındı
-- [ ] Onay alındı: _tarih_
+- [x] Plan kullanıcıya gösterildi — 2026-05-01
+- [x] Geri bildirim alındı
+- [x] Onay alındı: 2026-05-01
+- [x] Tamamlandı: 2026-05-01 (commit: `caf8822`)

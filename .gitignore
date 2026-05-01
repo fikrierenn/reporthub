@@ -46,6 +46,9 @@ kod_toplayici_v*.ps1
 ReportPanel/start.bat
 kodlari_topla_v2.bat
 
+# Python virtual environments (NotebookLM CLI vb.)
+.venv/
+
 # OS junk
 .DS_Store
 Thumbs.db
