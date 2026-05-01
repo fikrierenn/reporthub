@@ -2,7 +2,7 @@
 
 **Tarih:** 2026-04-29
 **Yazan:** Fikri direktif + Claude (web araştırması + dosyaya geçirildi)
-**Durum:** Onaylandı (29 Nisan 2026, "yap bakalım her şeyin en iyisini al")
+**Durum:** `Tamamlandı` (implement: 29-30 Nisan, smoke test: 2026-05-01 oturum 5)
 **Branch:** `feature/m-11-dashboard-builder-redesign`
 **İlişkili:** Plan 03 (V2 stand-alone) tamamlandı
 
