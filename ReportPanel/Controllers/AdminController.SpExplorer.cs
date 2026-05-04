@@ -25,10 +25,10 @@ namespace ReportPanel.Controllers
         [HttpGet]
         [Authorize(Roles = "admin")]
         [Route("Admin/FilterOptions")]
-        // M-13 R4.1: Logic FilterOptionsService.GetAsync'e tasindi (28 Nisan 2026).
-        public async Task<IActionResult> FilterOptions(string filterKey, string? dataSourceKey = null)
+        // Plan 07 Faz 3: DataSourceKey parametresi kaldirildi (FilterDefinition master'dan otorite).
+        public async Task<IActionResult> FilterOptions(string filterKey)
         {
-            var result = await _filterOptions.GetAsync(filterKey, dataSourceKey);
+            var result = await _filterOptions.GetAsync(filterKey);
             if (!result.Success && result.Error == "FilterKey gerekli.")
             {
                 return BadRequest(result.Error);

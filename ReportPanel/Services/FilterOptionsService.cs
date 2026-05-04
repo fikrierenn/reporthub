@@ -5,14 +5,23 @@ using ReportPanel.Models;
 namespace ReportPanel.Services;
 
 /// <summary>
-/// Kullanıcı veri filtresi seçenekleri (UserDataFilter UI dropdown'ları).
-/// Whitelist'li filterKey için (sube/bolum vb.) DataSource üzerinden distinct değerleri listeler.
-/// AdminController.FilterOptions action'ından çıkarıldı (M-13 R4.1, 28 Nisan 2026).
+/// Plan 07 Faz 3 — DB-driven filter options.
+/// FilterDefinition (master) lookup + Scope'a gore kaynak:
+/// - reportAccess: NativeSources registry (kod-side, type-safe EF — orn. raporKategori → ReportCategories)
+/// - spInjection: FilterDefinition.DataSourceKey + OptionsQuery (admin yazar, IsSafeOptionsQuery ile dogrulanir, exec)
 /// </summary>
 public class FilterOptionsService
 {
     private readonly ReportPanelContext _context;
     private readonly ILogger<FilterOptionsService> _logger;
+
+    private static readonly Dictionary<string, Func<ReportPanelContext, Task<List<FilterOption>>>> NativeSources = new()
+    {
+        ["raporKategori"] = async ctx => await ctx.ReportCategories
+            .AsNoTracking().Where(c => c.IsActive).OrderBy(c => c.Name)
+            .Select(c => new FilterOption(c.CategoryId.ToString(), c.Name))
+            .ToListAsync()
+    };
 
     public FilterOptionsService(ReportPanelContext context, ILogger<FilterOptionsService> logger)
     {
@@ -20,39 +29,75 @@ public class FilterOptionsService
         _logger = logger;
     }
 
-    public async Task<FilterOptionsResult> GetAsync(string filterKey, string? dataSourceKey)
+    public async Task<FilterOptionsResult> GetAsync(string filterKey)
     {
         if (string.IsNullOrWhiteSpace(filterKey))
         {
             return new FilterOptionsResult(false, "FilterKey gerekli.", Array.Empty<FilterOption>());
         }
 
-        // Data source bul — belirtilmişse onu, yoksa ilk aktif DS'i.
-        var dsKey = dataSourceKey;
-        if (string.IsNullOrWhiteSpace(dsKey))
-        {
-            var first = await _context.DataSources.AsNoTracking()
-                .FirstOrDefaultAsync(d => d.IsActive);
-            dsKey = first?.DataSourceKey;
-        }
-
-        var ds = await _context.DataSources.AsNoTracking()
-            .FirstOrDefaultAsync(d => d.DataSourceKey == dsKey && d.IsActive);
-        if (ds == null)
+        var def = await _context.FilterDefinitions.AsNoTracking()
+            .FirstOrDefaultAsync(f => f.FilterKey == filterKey);
+        if (def == null || !def.IsActive)
         {
             return new FilterOptionsResult(true, null, Array.Empty<FilterOption>());
         }
 
-        // Whitelist'li filterKey → SQL. Bilinmeyen key'lerde boş liste (silent reject).
-        string sql = filterKey.ToLowerInvariant() switch
+        if (def.Scope == FilterDefinition.ScopeReportAccess)
         {
-            "sube" => "SELECT CAST(SubeNo AS varchar(10)) AS Value, SubeAd AS Label FROM vrd.SubeListe ORDER BY SubeAd",
-            "bolum" => "SELECT DISTINCT Bolum AS Value, Bolum AS Label FROM vrd.VardiyaDetay WHERE Bolum IS NOT NULL AND Bolum <> '' ORDER BY Bolum",
-            _ => ""
-        };
+            return await GetFromNativeSourceAsync(filterKey);
+        }
 
-        if (string.IsNullOrEmpty(sql))
+        return await GetFromSpInjectionAsync(def);
+    }
+
+    private async Task<FilterOptionsResult> GetFromNativeSourceAsync(string filterKey)
+    {
+        if (!NativeSources.TryGetValue(filterKey, out var src))
         {
+            _logger.LogWarning(
+                "FilterDefinition '{FilterKey}' Scope=reportAccess ama NativeSources registry'de kayit yok.",
+                filterKey);
+            return new FilterOptionsResult(true, null, Array.Empty<FilterOption>());
+        }
+
+        try
+        {
+            var opts = await src(_context);
+            return new FilterOptionsResult(true, null, opts);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Native source query failed for {FilterKey}", filterKey);
+            return new FilterOptionsResult(true, null, Array.Empty<FilterOption>());
+        }
+    }
+
+    private async Task<FilterOptionsResult> GetFromSpInjectionAsync(FilterDefinition def)
+    {
+        if (string.IsNullOrWhiteSpace(def.DataSourceKey) || string.IsNullOrWhiteSpace(def.OptionsQuery))
+        {
+            _logger.LogWarning(
+                "FilterDefinition '{FilterKey}' Scope=spInjection ama DataSourceKey veya OptionsQuery eksik.",
+                def.FilterKey);
+            return new FilterOptionsResult(true, null, Array.Empty<FilterOption>());
+        }
+
+        if (!FilterDefinitionService.IsSafeOptionsQuery(def.OptionsQuery, out var unsafeReason))
+        {
+            _logger.LogError(
+                "FilterDefinition '{FilterKey}' OptionsQuery guvenlik kontrolunden gecmedi: {Reason}",
+                def.FilterKey, unsafeReason);
+            return new FilterOptionsResult(false, "Filtre sorgusu guvenlik kontrolunden gecmedi.", Array.Empty<FilterOption>());
+        }
+
+        var ds = await _context.DataSources.AsNoTracking()
+            .FirstOrDefaultAsync(d => d.DataSourceKey == def.DataSourceKey && d.IsActive);
+        if (ds == null)
+        {
+            _logger.LogWarning(
+                "FilterDefinition '{FilterKey}' DataSource '{DataSourceKey}' bulunamadi veya pasif.",
+                def.FilterKey, def.DataSourceKey);
             return new FilterOptionsResult(true, null, Array.Empty<FilterOption>());
         }
 
@@ -61,7 +106,7 @@ public class FilterOptionsService
         {
             await using var conn = new SqlConnection(ds.ConnString);
             await conn.OpenAsync();
-            await using var cmd = new SqlCommand(sql, conn);
+            await using var cmd = new SqlCommand(def.OptionsQuery, conn);
             await using var reader = await cmd.ExecuteReaderAsync();
             while (await reader.ReadAsync())
             {
@@ -73,8 +118,8 @@ public class FilterOptionsService
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "FilterOptions query failed for {FilterKey} on {DataSourceKey}", filterKey, dsKey);
-            // Connection hatası — boş liste dön (UI bozulmasın).
+            _logger.LogWarning(ex, "FilterOptions query failed for {FilterKey} on {DataSourceKey}",
+                def.FilterKey, def.DataSourceKey);
         }
 
         return new FilterOptionsResult(true, null, options);
