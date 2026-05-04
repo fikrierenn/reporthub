@@ -23,13 +23,19 @@ namespace ReportPanel.Controllers
                 .Where(ds => ds.IsActive)
                 .OrderBy(ds => ds.Title)
                 .ToListAsync();
+            var filterDefs = await _context.FilterDefinitions
+                .AsNoTracking()
+                .Where(f => f.IsActive)
+                .OrderBy(f => f.DisplayOrder).ThenBy(f => f.Label)
+                .ToListAsync();
             return View(new AdminUserFormViewModel
             {
                 User = new User { IsActive = true },
                 AvailableRoles = roles,
                 SelectedRoleIds = new HashSet<int>(),
                 DataFilters = new List<UserDataFilter>(),
-                DataSources = dataSources
+                DataSources = dataSources,
+                FilterDefinitions = filterDefs
             });
         }
 
@@ -78,13 +84,19 @@ namespace ReportPanel.Controllers
                 .Where(ds => ds.IsActive)
                 .OrderBy(ds => ds.Title)
                 .ToListAsync();
+            var filterDefs = await _context.FilterDefinitions
+                .AsNoTracking()
+                .Where(f => f.IsActive)
+                .OrderBy(f => f.DisplayOrder).ThenBy(f => f.Label)
+                .ToListAsync();
             return View(new AdminUserFormViewModel
             {
                 User = user,
                 AvailableRoles = roles,
                 SelectedRoleIds = selectedRoleIds.ToHashSet(),
                 DataFilters = dataFilters,
-                DataSources = dataSources
+                DataSources = dataSources,
+                FilterDefinitions = filterDefs
             });
         }
 
@@ -160,6 +172,11 @@ namespace ReportPanel.Controllers
                     DataSourceKey = string.IsNullOrWhiteSpace(ds) ? null : ds
                 });
             }
+            var filterDefs = await _context.FilterDefinitions
+                .AsNoTracking()
+                .Where(f => f.IsActive)
+                .OrderBy(f => f.DisplayOrder).ThenBy(f => f.Label)
+                .ToListAsync();
             return new AdminUserFormViewModel
             {
                 User = user,
@@ -167,6 +184,7 @@ namespace ReportPanel.Controllers
                 SelectedRoleIds = selectedRoleIds,
                 DataFilters = postedFilters,
                 DataSources = dataSources,
+                FilterDefinitions = filterDefs,
                 Message = message,
                 MessageType = messageType
             };

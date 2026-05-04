@@ -1,23 +1,37 @@
 @model ReportPanel.ViewModels.AdminUserFormViewModel
 @*
-    Veri filtreleri paneli — EditUser + CreateUser ortak.
+    Plan 07 Faz 5 — FilterDefinition-driven dinamik field UI.
+    Onceki M-13 R3.2 generic "filter row" UI (FilterKey dropdown + FilterValue dropdown +
+    addFilter butonu) bu fazda kalkti — her aktif FilterDefinition icin kalici section
+    + "Hepsi" toggle + multi-select.
 
-    M-13 R3.2 (28 Nisan 2026): Vanilla JS DOM API (createFilterRow + createElement spam +
-    button.onclick + 137 satir partial) Alpine.js x-data/x-for/@click directives ile
-    ~70 satira indirildi. Reactive filter array, async loadOptions per-row,
-    splice ile row remove. Build step yok, tum mantik HTML attribute'larinda.
+    Default (Onaylanmis karar 4 Mayis madde 3): yeni user formunda "Hepsi" KAPALI + multi-select
+    bos. Admin secim yapmadan kaydederse o key icin DB'de 0 satir → kullanici 403 (deny-by-default).
+    Backfill (Migration 20) mevcut user'lara her aktif key icin '*' kaydi ekledi → EditUser'da
+    "Hepsi" ON.
 *@
 @{
-    var dataSources = Model.DataSources ?? new List<ReportPanel.Models.DataSource>();
-    var initialFilters = Model.DataFilters
-        .Select(f => new {
-            key = f.FilterKey,
-            value = f.FilterValue,
-            ds = f.DataSourceKey ?? "",
+    var definitions = Model.FilterDefinitions ?? new List<ReportPanel.Models.FilterDefinition>();
+    var sectionsData = definitions.Select(def =>
+    {
+        var userRecords = Model.DataFilters
+            .Where(f => string.Equals(f.FilterKey, def.FilterKey, StringComparison.OrdinalIgnoreCase))
+            .ToList();
+        var hasStar = userRecords.Any(r => r.FilterValue == ReportPanel.Models.FilterDefinition.ValueAll);
+        var concreteValues = userRecords
+            .Where(r => r.FilterValue != ReportPanel.Models.FilterDefinition.ValueAll)
+            .Select(r => r.FilterValue)
+            .ToList();
+        return new
+        {
+            key = def.FilterKey,
+            label = def.Label,
+            isAll = hasStar,
+            selected = concreteValues,
             options = new object[0]
-        })
-        .ToList();
-    var initJson = System.Text.Json.JsonSerializer.Serialize(initialFilters);
+        };
+    }).ToList();
+    var sectionsJson = System.Text.Json.JsonSerializer.Serialize(sectionsData);
 }
 
 <div style="background:var(--paper); border:1px solid var(--line); border-radius:10px; overflow:hidden; max-width:880px; margin-bottom:18px;">
@@ -27,66 +41,75 @@
             Veri Filtreleri
         </h2>
         <div style="font-size:12px; color:var(--ink-3); margin-top:2px;">
-            Kullanıcının görebileceği veriler. Boş = tüm veriler. Aynı tip = VEYA, farklı tip = VE.
+            Her filtre için "Hepsi" işaretli ya da spesifik değerler seçili olmalı. Hiçbiri seçilmezse kullanıcı bu kapsamda rapor çalıştıramaz.
         </div>
     </div>
 
     <div style="padding:18px 20px;"
          x-data="{
-            filters: @Html.Raw(initJson),
+            sections: @Html.Raw(sectionsJson),
             async loadOptions(i) {
-                var f = this.filters[i];
-                var url = '/Admin/FilterOptions?filterKey=' + encodeURIComponent(f.key);
-                if (f.ds) url += '&dataSourceKey=' + encodeURIComponent(f.ds);
+                var s = this.sections[i];
                 try {
-                    var r = await fetch(url);
+                    var r = await fetch('/Admin/FilterOptions?filterKey=' + encodeURIComponent(s.key));
                     var d = await r.json();
-                    f.options = (d.options && d.options.length) ? d.options : [];
-                } catch { f.options = []; }
+                    s.options = (d.options && d.options.length) ? d.options : [];
+                } catch { s.options = []; }
             },
-            addFilter() {
-                this.filters.push({key:'sube', value:'', ds:'', options:[]});
-                this.loadOptions(this.filters.length - 1);
+            toggleAll(i) {
+                if (this.sections[i].isAll) this.sections[i].selected = [];
             },
-            init() { this.filters.forEach((_, i) => this.loadOptions(i)); }
+            init() { this.sections.forEach((_, i) => this.loadOptions(i)); }
          }"
          x-init="init()">
 
-        <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:12px;">
-            <template x-for="(f, i) in filters" :key="i">
-                <div style="display:flex; align-items:center; gap:8px;">
-                    <select x-model="f.key" @@change="loadOptions(i)" name="FilterKeys" class="inp" style="width:140px; flex-shrink:0;">
-                        <option value="sube">Şube</option>
-                        <option value="bolum">Bölüm</option>
-                        <option value="bolge">Bölge</option>
-                        <option value="kategori">Kategori</option>
-                        <option value="maliyet_merkezi">Maliyet Merkezi</option>
-                    </select>
-                    <select x-model="f.value" name="FilterValues" class="inp" style="flex:1;">
-                        <option value="" x-show="!f.options || f.options.length === 0">Yükleniyor / Liste boş</option>
-                        <template x-for="opt in (f.options || [])" :key="opt.value">
-                            <option :value="opt.value" :selected="opt.value === f.value" x-text="opt.label"></option>
-                        </template>
-                    </select>
-                    <select x-model="f.ds" @@change="loadOptions(i)" name="FilterDataSources" class="inp" style="width:160px; flex-shrink:0;">
-                        <option value="">Tüm kaynaklar</option>
-                        @foreach (var ds in dataSources)
-                        {
-                            <option value="@ds.DataSourceKey">@ds.Title</option>
-                        }
-                    </select>
-                    <button type="button" @@click="filters.splice(i, 1)"
-                            class="btn ghost" style="color:var(--accent-ink); flex-shrink:0;"
-                            title="Filtreyi sil">
-                        <i class="fas fa-trash text-[10px]"></i>
-                    </button>
-                </div>
-            </template>
-        </div>
+        <template x-if="sections.length === 0">
+            <div style="font-size:12px; color:var(--ink-3);">Aktif filtre tanımı yok. Yönetim Paneli &gt; Filtreler bölümünden ekleyebilirsiniz.</div>
+        </template>
 
-        <button type="button" @@click="addFilter()" class="btn ghost" style="font-size:12px;">
-            <i class="fas fa-circle-plus text-[10px]"></i>
-            Filtre Ekle
-        </button>
+        <template x-for="(s, i) in sections" :key="s.key">
+            <div style="border:1px solid var(--line); border-radius:8px; padding:12px 14px; margin-bottom:10px;">
+                <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
+                    <label style="font-size:13px; font-weight:600; color:var(--ink-1);" x-text="s.label"></label>
+                    <label style="margin-left:auto; font-size:12px; color:var(--ink-2); display:flex; align-items:center; gap:5px; cursor:pointer;">
+                        <input type="checkbox" x-model="s.isAll" @@change="toggleAll(i)">
+                        Hepsi
+                    </label>
+                </div>
+                <select multiple x-model="s.selected" :disabled="s.isAll"
+                        size="6" class="inp"
+                        style="width:100%; min-height:120px;"
+                        :style="s.isAll ? 'width:100%; min-height:120px; background:#f5f5f5; opacity:0.5;' : 'width:100%; min-height:120px;'">
+                    <template x-for="opt in (s.options || [])" :key="opt.value">
+                        <option :value="opt.value" x-text="opt.label"></option>
+                    </template>
+                </select>
+                <div style="font-size:11px; margin-top:4px; min-height:14px;">
+                    <span x-show="s.isAll" style="color:var(--ink-3);">"Hepsi" işaretli — kullanıcı tüm değerleri görür.</span>
+                    <span x-show="!s.isAll && s.selected.length === 0" style="color:#b91c1c;">
+                        Hiçbir değer seçili değil — kullanıcı bu kapsamda rapor çalıştıramaz.
+                    </span>
+                    <span x-show="!s.isAll && s.selected.length > 0" style="color:var(--ink-3);" x-text="s.selected.length + ' değer seçili'"></span>
+                </div>
+
+                @* Backend flat array: FilterKeys[] / FilterValues[] / FilterDataSources[] (paralel index). *@
+                <template x-if="s.isAll">
+                    <span>
+                        <input type="hidden" name="FilterKeys" :value="s.key">
+                        <input type="hidden" name="FilterValues" value="*">
+                        <input type="hidden" name="FilterDataSources" value="">
+                    </span>
+                </template>
+                <template x-if="!s.isAll">
+                    <template x-for="v in s.selected" :key="v">
+                        <span>
+                            <input type="hidden" name="FilterKeys" :value="s.key">
+                            <input type="hidden" name="FilterValues" :value="v">
+                            <input type="hidden" name="FilterDataSources" value="">
+                        </span>
+                    </template>
+                </template>
+            </div>
+        </template>
     </div>
 </div>
