@@ -89,7 +89,7 @@ Bu liste 5 plan dosyasi (`plans/02-06`) + asagidaki FAZ 1-3 + son 5 journal'in y
 - [ ] **G-09 · SP read-only login** ⚠️ CANLIYA CIKMADAN ZORUNLU (FAZ 2 madde 28.5)
 - [x] **dashboard-builder.js split** ✅ 4 Mayis 2026 audit — V1 monolithic dosya F-7 split'inde (commit serisi M-11) zaten 7 module bolundu (`dashboard-builder/{core,list,canvas,contract,drawer,preview,templates}.js`), tum modeller hard-limit 350 altinda. **Yeni asim**: `builder-v2/builder-drawer.js` 511 satir → ayri madde olarak eklendi (bkz Orta kategorisi).
 
-- [ ] **builder-v2/builder-drawer.js split** (yeni 4 Mayis 2026) — 511 satir, js-conventions hard-limit 350 asimi. Mantikli alt-modul: tablo Setup tab + hesaplı kolon form ayri dosyaya cikabilir. Alpine mixin pattern gerekli (component this scope korunacak).
+- [x] **builder-v2/builder-drawer.js split** ✅ 4 Mayis 2026 — 511 → 269 (drawer) + 259 (yeni `builder-table.js` tablo Setup + hesapli kolon mixin). Alpine mixin pattern: `window.__builderV2.tableMixin()` builder.js Object.assign listesine eklendi. EditReportV2 + CreateReportV2'a script tag.
 - [ ] **SP mimarisi · sp_PdksPano → inline TVF refactor** (FAZ 2 madde 21) — ADR-004 adayi
 - [ ] **M-10 Faz 4-6 · Named Result Contract** (FAZ 2 madde 29)
 - [ ] **DateTime Faz D · DB DEFAULT GETDATE → GETUTCDATE** (FAZ 2 madde 28)
