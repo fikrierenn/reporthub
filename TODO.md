@@ -102,7 +102,7 @@ Bu liste 5 plan dosyasi (`plans/02-06`) + asagidaki FAZ 1-3 + son 5 journal'in y
 - [x] **Dashboard P1 · Tailwind local serve** ✅ 4 Mayis 2026 — Tailwind Play CDN (407KB) `wwwroot/lib/tailwindcss/tailwindcss.js`'a indirildi, `_AppLayout.cshtml` script src güncellendi. Chart.js sadece iframe srcdoc içinde (about:srcdoc base + relative URL çözümlenmez), CDN bırakıldı. Font Awesome CDN bırakıldı (webfonts ayrı iş).
 - [ ] **Dashboard P1 · Inline RS boyut limiti / lazy-load** (10K satir)
 - [x] **F-05 · Türkçe UTF-8 normalize** ✅ 4 Mayis 2026 — JS dosyalarındaki ASCII kalıntıları (`Duzenle`, `Bilesen`, `Iptal`, `Once`, `secin`, `basarisiz`, `calisti`, `donmedi` vb.) UTF-8'e çevrildi: param-builder.js, sp-helper.js, builder-core.js, builder-list.js, builder-drawer.js. View'lar zaten temizdi.
-- [ ] **CreateUser veri filtresi bölümü (P0)** — EditUser'da var, Create'te yok
+- [x] **CreateUser veri filtresi bölümü (P0)** ✅ 4 Mayis 2026 audit — `CreateUser.cshtml:133` zaten `_AdminUserDataFilterPanel` partial'ını cagiriyor; AdminController.Users.cs `BuildUserFormInput` filter parsing yapiyor; UserManagementService.CreateAsync `SyncDataFiltersAsync` ile DB'ye yaziyor. Sentez yanılgıydı.
 
 #### Büyük (>4h, çok-fazlı)
 - [ ] **M-11 Plan 02 · F-9 live preview endpoint** (~5h)
