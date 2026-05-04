@@ -62,6 +62,79 @@ Bu dosya yapilanlari ve kalanlari detayli takip icin kullanilir.
 
 ## Devam eden isler (aktif)
 
+### AKTIF SIRA — 2026-05-04 SENTEZI (kolaydan zora)
+
+Bu liste 5 plan dosyasi (`plans/02-06`) + asagidaki FAZ 1-3 + son 5 journal'in yarim kalan kismi taranarak cikarildi. Madde sirasi: efor (kolay → zor). Detay icin ilgili FAZ/plan dosyasina bak.
+
+#### Trivia / housekeeping (~30 dk toplam, en kolay)
+- [ ] **CSV İndir butonu commit** — 4 dosya uncommitted (oturum 2026-05-04, TableRenderer + DashboardClientScripts + Run.cshtml + Edit/CreateReportV2)
+- [ ] **Plan 04 arsivle** — commit `108560e` ile tamamlandi: `git mv plans/04-*.md plans/archive/`
+- [ ] **Plan 06.B arsivle** — Done criteria ✓ (`caf8822`+`2b62d39`): `git mv plans/06-*.md plans/archive/`
+- [ ] **Plan 03 durumu kontrol** — Done criteria check, kapaliysa arsivle
+- [ ] **M-13 sub-nav unchecked'lar isaretle** — commit'leri var (`7bc8cb0` `831319b` `9ba3c61` `fc55063` `4ada9e6` `4d2f5d2` `c8ce59f`), [x] yap (asagidaki Plan 03 cizelgesi satir 279-317)
+- [ ] **NotebookLM re-login** — kullanici terminalde: `D:/Dev/reporthub/.venv/notebooklm/Scripts/notebooklm.exe login`
+
+#### Küçük işler (~1h)
+- [ ] **F-03 · dashboard-builder.js memory leak** (FAZ 2 madde 19) — event delegation veya AbortController
+- [ ] **M-03 Faz C · User.Roles kolon drop** (FAZ 2 madde 25) — `16_DropUserRolesCsv.sql` + model field sil
+- [ ] **G-07 · Dashboard iframe policy review** (FAZ 3 madde 36)
+- [ ] **G-08 · DashboardRenderer JSON escape regresyon test** (FAZ 3 madde 37)
+- [ ] **Hesaplı kolon autocomplete** — SP preview kolonlarindan datalist (M-11 builder UX)
+- [ ] **M-02 son grep** (FAZ 1 kalan) — AuthController + servisler ex.Message leak
+- [ ] **F-02 admin override UI tamamla** (FAZ 1 yarim) — SP Onizle parametre override
+- [ ] **ADR-001 + ADR-002 yazimi** (FAZ 3 madde 38) — data-access + dashboard-architecture
+- [ ] **ReportParamValidator Run path kök fix** — `{"fields":[...]}` parse Run yolunda (PreviewDashboardV2'de cozuldu, Run karsiligi)
+
+#### Orta (2-4h)
+- [ ] **G-09 · SP read-only login** ⚠️ CANLIYA CIKMADAN ZORUNLU (FAZ 2 madde 28.5)
+- [ ] **dashboard-builder.js split** (FAZ 2 madde 27) — 567 satir
+- [ ] **SP mimarisi · sp_PdksPano → inline TVF refactor** (FAZ 2 madde 21) — ADR-004 adayi
+- [ ] **M-10 Faz 4-6 · Named Result Contract** (FAZ 2 madde 29)
+- [ ] **DateTime Faz D · DB DEFAULT GETDATE → GETUTCDATE** (FAZ 2 madde 28)
+- [ ] **M-08 Async tutarlilik** (FAZ 3 madde 31)
+- [ ] **M-09 AsNoTracking sweep** (FAZ 3 madde 32)
+- [ ] **M-07 ViewModel BindNever + DTO** (FAZ 3 madde 30)
+- [ ] **Dashboard P0 · Config deserialize try/catch** — `ReportsController.cs:240`
+- [ ] **Dashboard P1 · Result set index validation** server-side
+- [ ] **Dashboard P1 · Mobile responsive grid** — `grid-cols-1 sm:grid-cols-2 lg:grid-cols-4`
+- [ ] **Dashboard P1 · Tailwind/Chart.js local serve** (production)
+- [ ] **Dashboard P1 · Inline RS boyut limiti / lazy-load** (10K satir)
+- [ ] **F-05 · Türkçe UTF-8 normalize** (FAZ 3 madde 33) — turkish-ui-normalizer skill
+- [ ] **CreateUser veri filtresi bölümü (P0)** — EditUser'da var, Create'te yok
+
+#### Büyük (>4h, çok-fazlı)
+- [ ] **M-11 Plan 02 · F-9 live preview endpoint** (~5h)
+- [ ] **M-11 Plan 02 · F-10 sablon + kbd shortcuts** (~3h)
+- [ ] **M-11 Plan 02 · F-11 smart defaults** (~3h)
+- [ ] **M-11 Plan 02 · F-12 e2e + screenshot + journal** (~3h)
+- [ ] **Plan 05 · AST formula parser** (~6h+) — kendi recursive descent parser
+- [ ] **DateTime Faz E · Veri shift + SP/seed hizalama** (yarim gun, FAZ 2 madde 28)
+- [ ] **User P1 · Phone/Dept/Position alanlari** (FAZ 2 madde 24)
+- [ ] **User P1 · Admin liste arama+filtre+son giris** (FAZ 2 madde 23)
+- [ ] **ReportCatalog.AllowedRoles CSV deprecate** (FAZ 2 madde 26)
+- [ ] **F-06 · CSP politikasi** (FAZ 3 madde 34)
+- [ ] **M-06 · EF Core Migrations gecisi** (FAZ 3 madde 29)
+- [ ] **Test coverage %30 hedefi** (FAZ 3 madde 35)
+
+#### User yönetimi P2 (operasyonel iyileştirme — TODO satır 525-536)
+- [ ] Hesap kilitleme (5 basarisiz → 15dk)
+- [ ] Sifre karmasikligi kurallari
+- [ ] Zorla sifre degistirme flag
+- [ ] Admin sifre sifirlama (token ile)
+- [ ] Toplu CSV import (ClosedXML)
+- [ ] AD/LDAP senkronizasyon
+- [ ] Kullanici kopyalama
+- [ ] Avatar / tercihler / aktivite ozeti (P3)
+
+#### Stratejik / belirsiz vade (TARTIŞMA gerekli)
+- [ ] Plan 04 (potansiyel) · Alpine.js + htmx adoption (FAZ 3 madde 40)
+- [ ] Plan 05 (potansiyel) · Scheduled Reports + Email Hangfire (FAZ 3 madde 41)
+- [ ] Yeni proje adi brainstorm (TODO satir 207)
+- [ ] vNext · Sirket ici portal architecture (TODO satir 215)
+- [ ] Yetki revizyonu — granular roller (TODO satir 193, TODO madde 39)
+
+---
+
 ### BIRLESIK ONCELIK SIRASI (22 Nisan 2026 sabah)
 Bu liste asagidakilerin sentezidir:
 - `docs/CONTEXT_MANAGEMENT.md` — bagalm yonetimi anayasasi (bugunku arastirma)
@@ -258,67 +331,7 @@ Plan dosyasi: [plans/archive/03-project-wide-design-system-harmonization.md](pla
 
 **Net etki:** ~1850 satir azalma, 7 yeni commit, 17 view + 4 CSS/JS dosyasi etkilendi.
 
-#### Faz A — Shell skeleton ✅ KAPANDI (27-28 Nisan)
-- ✅ `9c9706c` _AppLayout rewrite (sidebar + topbar slot) + app-shell.css/js + Inter font + ADR-011
-
-#### Faz B P0 — Kritik 3 sayfa ✅ KAPANDI (28 Nisan)
-- ✅ `9c9706c`+`d7a3c0e` Dashboard/Index hero + 4 KPI + saatlik trend SVG + qcard favori + .dt aktivite
-- ✅ `8f8b6e7` Reports/Index qcard grid + filter bar
-- ⚠️ EditReport builder topbar duplicate (consolidation Faz D'ye ertelendi)
-
-#### Faz B P1 — 3 sayfa ✅ KAPANDI (28 Nisan)
-- ✅ `978b2a3` Logs/Index .dt + 7-col filter
-- ✅ `978b2a3` Profile/Index paper card + .field/.lab/.inp + .btn
-- ✅ `d3297f9` _FooterHint partial + section comment cleanup
-- ✅ `7bc8cb0` _FooterHint partial Dashboard model mismatch fix
-
-#### Faz C+D+E — Component pattern + Builder topbar + Auth (28 Nisan, AKTIF)
-Audit (28 Nisan smoke): 4 sayfa migrated, 13 sayfa hala eski Tailwind utility. Faz C atlandigi farkedildi, C+D+E birlesik tek pass yapilacak.
-
-**C1 — Kucuk view'lar (~30dk)**
-- [ ] AccessDenied: btn-brand-outline → .btn pattern
-- [ ] Reports/Run: param form .field/.lab/.inp + result .dt + .btn
-- [ ] Test/Index: dev only, minimum dokunus
-
-**C2 — Admin form'lari (~1.5h)**
-- [ ] EditUser: 10 utility → .field/.lab/.inp + .btn pattern
-- [ ] CreateUser: aynisi (P0 #2 EditUser ile birlestir veriDataFilter ekle yoksa)
-- [ ] EditRole: 5 utility → form pattern
-- [ ] EditCategory: 5 utility → form pattern
-- [ ] EditDataSource: 15 utility → form pattern
-- [ ] CreateDataSource: 15 utility → form pattern
-
-**C3 — Admin/Index hub (~1h)**
-- [ ] sub-nav (Raporlar/Kullanicilar/Roller/Kategoriler/DataSources)
-- [ ] qcard grid veya .dt liste her sekme icerigi icin
-- [ ] paper container
-
-**D — EditReport + CreateReport + builder-topbar consolidation (~2h)**
-- [ ] EditReport: <div class="builder-topbar"> blok SIL
-- [ ] @section Breadcrumb override (Yonetim/Raporlar/Title) + @section TopActions (mode segmented + dirty chip + Onizle/Geri Al/JSON/Kaydet)
-- [ ] dashboard-builder.css'te .builder-topbar/.brand-mark/.breadcrumb/.dirty-chip/.topbar-actions stilleri SIL (devir _AppLayout topbar)
-- [ ] mode segmented: role="tablist" + aria-selected + ←/→ keyboard nav (ui-ux-pro-max audit gereği)
-- [ ] dirty chip: text + icon (color-only info reddedildi)
-- [ ] CreateReport ayni pattern
-- [ ] form alti "Degisiklikleri Kaydet" buton kalir mi karar (topbar'da Kaydet var, alt buton legacy)
-- [ ] Plan 02 alt-3b Gridstack canvas mount: AYRI commit/oturum (Faz D scope dışı bırakildi)
-
-**E — Auth ayrimi (~30dk)**
-- [ ] _AuthLayout.cshtml yeni — sidebar'siz, brand-mark + paper card
-- [ ] Login.cshtml Layout = "_AuthLayout" + brand pattern
-- [ ] _Layout.cshtml legacy Bootstrap — Home/* kullanım kontrol, gereksizse SIL
-
-**F — Final pass (~1h)**
-- [ ] ui-ux-pro-max full audit: WCAG contrast, touch target 44px mobile media query, focus ring, prefers-reduced-motion, dirty chip color+icon
-- [ ] Smoke: tüm 17+ sayfa preview ile dolaş, 0 console error
-- [ ] 4 screenshot: docs/screenshots/m13-shell-{home,reports,builder,login}.png
-- [ ] Journal handoff entry
-- [ ] Plan 03 dosyasini plans/archive/'a tasi
-- [ ] TODO.md'de Plan 03 KAPANDI işareti
-
-#### Faz D karar noktalari
-- **Plan 02 alt-3b (Gridstack canvas)**: Faz D'den çıkarıldı, ayrı oturum/commit. Builder topbar consolidation odakli kalsin.
-- **_Layout.cshtml legacy**: Home/* kullanim kontrol Faz E'de, gereksizse Faz F'te sil.
+**Detay Faz A/B/C/D/E/F çizelgesi:** [plans/archive/03-project-wide-design-system-harmonization.md](plans/archive/03-project-wide-design-system-harmonization.md). Tum fazlar ✅ kapandi (commit'ler yukarida).
 
 ---
 
