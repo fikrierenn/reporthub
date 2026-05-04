@@ -310,6 +310,22 @@ namespace ReportPanel.Controllers
             return RedirectToAction("Index", "Reports");
         }
 
+        // Plan 07 Faz 4: deny-by-default audit. UserDataFilterInjector exception'ini
+        // catch eden 5 caller (Run/Export/RunJsonV2/RunJsonV2Preview/PreviewDashboardV2) burayi cagirir.
+        private async Task LogDataFilterDenyAsync(UserDataFilterDeniedException ex, int? reportId, string? dataSourceKey)
+        {
+            await _auditLog.LogAsync(new AuditLogEntry
+            {
+                EventType = "data_filter_denied",
+                TargetType = "user_data_filter",
+                TargetKey = ex.FilterKey,
+                ReportId = reportId,
+                DataSourceKey = dataSourceKey,
+                Description = $"User {ex.UserId} access denied: '{ex.FilterKey}' filter unassigned",
+                IsSuccess = false
+            });
+        }
+
         private async Task LogRun(
             ReportCatalog report,
             string paramsJson,

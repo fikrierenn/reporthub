@@ -83,11 +83,22 @@ namespace ReportPanel.Controllers
             }
 
             // Kullanıcı veri filtrelerini SP parametrelerine ekle (M-13 R6.2: UserDataFilterInjector).
-            await _filterInjector.InjectAsync(
-                validation.Parameters,
-                CurrentUserId,
-                context.SelectedReport.ReportId,
-                context.SelectedReport.DataSourceKey);
+            try
+            {
+                await _filterInjector.InjectAsync(
+                    validation.Parameters,
+                    CurrentUserId,
+                    context.SelectedReport.ReportId,
+                    context.SelectedReport.DataSourceKey);
+            }
+            catch (UserDataFilterDeniedException ex)
+            {
+                // Plan 07 Faz 4: deny-by-default — atlanan/eksik veri filtresi → 403.
+                await LogDataFilterDenyAsync(ex, context.SelectedReport.ReportId, context.SelectedReport.DataSourceKey);
+                Response.StatusCode = 403;
+                model.RunError = "Veri filtreniz atanmamis. Lütfen yöneticinize başvurun.";
+                return View("Run", model);
+            }
 
             var searchTerm = form["ResultSearch"].ToString();
             model.ResultSearch = searchTerm;
@@ -200,6 +211,21 @@ namespace ReportPanel.Controllers
             if (context.SelectedReport.DataSource == null || !context.SelectedReport.DataSource.IsActive)
             {
                 return BadRequest("Data source not found or inactive.");
+            }
+
+            // Plan 07 Faz 4: Export'a UserDataFilterInjector eklendi (mevcut multi-tenant guvenlik gap'i).
+            try
+            {
+                await _filterInjector.InjectAsync(
+                    validation.Parameters,
+                    CurrentUserId,
+                    context.SelectedReport.ReportId,
+                    context.SelectedReport.DataSourceKey);
+            }
+            catch (UserDataFilterDeniedException ex)
+            {
+                await LogDataFilterDenyAsync(ex, context.SelectedReport.ReportId, context.SelectedReport.DataSourceKey);
+                return StatusCode(403, "Veri filtreniz atanmamis. Lütfen yöneticinize başvurun.");
             }
 
             var result = await _spExecutor.ExecuteAsync(

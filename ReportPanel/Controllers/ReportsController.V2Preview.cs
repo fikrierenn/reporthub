@@ -53,11 +53,20 @@ namespace ReportPanel.Controllers
             if (!validation.Success)
                 return Json(new { success = false, error = string.Join(" ", validation.Errors) });
 
-            await _filterInjector.InjectAsync(
-                validation.Parameters,
-                CurrentUserId,
-                context.SelectedReport.ReportId,
-                context.SelectedReport.DataSourceKey);
+            try
+            {
+                await _filterInjector.InjectAsync(
+                    validation.Parameters,
+                    CurrentUserId,
+                    context.SelectedReport.ReportId,
+                    context.SelectedReport.DataSourceKey);
+            }
+            catch (UserDataFilterDeniedException ex)
+            {
+                await LogDataFilterDenyAsync(ex, context.SelectedReport.ReportId, context.SelectedReport.DataSourceKey);
+                Response.StatusCode = 403;
+                return Json(new { success = false, error = "Veri filtreniz atanmamis. Lütfen yöneticinize başvurun." });
+            }
 
             var stopwatch = System.Diagnostics.Stopwatch.StartNew();
             try
@@ -167,7 +176,16 @@ namespace ReportPanel.Controllers
                 return Json(new { success = false, error = string.Join(" ", validation.Errors) });
 
             // reportId yok → 0; UserDataFilterInjector genel (rapor-bağımsız) filter'leri uygular.
-            await _filterInjector.InjectAsync(validation.Parameters, CurrentUserId, 0, dataSourceKey);
+            try
+            {
+                await _filterInjector.InjectAsync(validation.Parameters, CurrentUserId, 0, dataSourceKey);
+            }
+            catch (UserDataFilterDeniedException ex)
+            {
+                await LogDataFilterDenyAsync(ex, null, dataSourceKey);
+                Response.StatusCode = 403;
+                return Json(new { success = false, error = "Veri filtreniz atanmamis. Lütfen yöneticinize başvurun." });
+            }
 
             var stopwatch = System.Diagnostics.Stopwatch.StartNew();
             try
@@ -296,7 +314,16 @@ namespace ReportPanel.Controllers
             if (!validation.Success)
                 return BadRequest(string.Join(" ", validation.Errors));
 
-            await _filterInjector.InjectAsync(validation.Parameters, CurrentUserId, reportId ?? 0, dataSourceKey);
+            try
+            {
+                await _filterInjector.InjectAsync(validation.Parameters, CurrentUserId, reportId ?? 0, dataSourceKey);
+            }
+            catch (UserDataFilterDeniedException ex)
+            {
+                await LogDataFilterDenyAsync(ex, reportId, dataSourceKey);
+                Response.StatusCode = 403;
+                return Json(new { success = false, error = "Veri filtreniz atanmamis. Lütfen yöneticinize başvurun." });
+            }
 
             var stopwatch = System.Diagnostics.Stopwatch.StartNew();
             try
