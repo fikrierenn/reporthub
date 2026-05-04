@@ -37,7 +37,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@@400;500;600;700&family=JetBrains+Mono:wght@@400;500&display=swap" rel="stylesheet">
-    <script src="https://cdn.tailwindcss.com"></script>
+    @* Tailwind Play CDN local serve (4 Mayıs 2026, P1 production performance + offline). Font Awesome CDN bırakıldı (webfonts ayrı iş). *@
+    <script src="~/lib/tailwindcss/tailwindcss.js" asp-append-version="true"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     @* M-13 R2 (28 Nisan): style.css 744 sat, 4 modüler dosyaya bölündü.
        Yükleme sırası ZORUNLU: tokens (variables) → components (cascade ihtiyacı yok ama tutarlılık) →

@@ -99,7 +99,7 @@ Bu liste 5 plan dosyasi (`plans/02-06`) + asagidaki FAZ 1-3 + son 5 journal'in y
 - [x] **Dashboard P0 · Config deserialize try/catch** ✅ 4 Mayis 2026 audit — Run path zaten tam kapsanmis (line 591-612: try/catch + `dashboard_config_invalid` audit + bos template fallback + kullanici uyarisi). PreviewDashboardV2'ye de paralel audit eklendi (tutarlilik).
 - [x] **Dashboard P1 · Result set index validation** ✅ 4 Mayis 2026 audit — Save zamani validator negatif kontrol (`DashboardConfigValidator.cs:228`), Render zamani `DashboardConfig.ResolveResultSet` out-of-bounds → PlaceholderRenderer fallback. 6 `ResolveResultSet_*` testi coverage saglar.
 - [x] **Dashboard P1 · Mobile responsive grid** ✅ 4 Mayis 2026 — `DashboardShellRenderer.GridColsClass`: `grid-cols-4` → `grid-cols-1 sm:grid-cols-2 lg:grid-cols-4`, compact da `grid-cols-1 sm:grid-cols-2`. Tailwind CDN runtime JIT class'lari yakalar.
-- [ ] **Dashboard P1 · Tailwind/Chart.js local serve** (production)
+- [x] **Dashboard P1 · Tailwind local serve** ✅ 4 Mayis 2026 — Tailwind Play CDN (407KB) `wwwroot/lib/tailwindcss/tailwindcss.js`'a indirildi, `_AppLayout.cshtml` script src güncellendi. Chart.js sadece iframe srcdoc içinde (about:srcdoc base + relative URL çözümlenmez), CDN bırakıldı. Font Awesome CDN bırakıldı (webfonts ayrı iş).
 - [ ] **Dashboard P1 · Inline RS boyut limiti / lazy-load** (10K satir)
 - [x] **F-05 · Türkçe UTF-8 normalize** ✅ 4 Mayis 2026 — JS dosyalarındaki ASCII kalıntıları (`Duzenle`, `Bilesen`, `Iptal`, `Once`, `secin`, `basarisiz`, `calisti`, `donmedi` vb.) UTF-8'e çevrildi: param-builder.js, sp-helper.js, builder-core.js, builder-list.js, builder-drawer.js. View'lar zaten temizdi.
 - [ ] **CreateUser veri filtresi bölümü (P0)** — EditUser'da var, Create'te yok
