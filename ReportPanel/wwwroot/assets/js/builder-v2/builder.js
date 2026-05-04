@@ -102,6 +102,30 @@
                 },
                 get reportMeta() { return window.__reportMeta || {}; },
 
+                // Plan 05.B: hesaplı kolon formula yazarken aktif tablo widget'ın
+                // resultSet kolonlarını öneri olarak listele. spPreview yoksa boş.
+                get availableColumnsForFormula() {
+                    var sel = this.selected;
+                    if (!sel || sel.type !== 'table') return [];
+                    var sp = this.spPreview;
+                    if (!sp || !sp.resultSets) return [];
+                    var rsIdx = sel.resultSet;
+                    if (rsIdx == null) return [];
+                    var rs = sp.resultSets.find(function (r) { return r.index === rsIdx; });
+                    return rs ? (rs.columns || []) : [];
+                },
+
+                // Suggest pill click → kolon adını formula textarea'ya iliştir.
+                // Türkçe/non-identifier kolon adları [Köşeli] formatında.
+                insertColumnIntoFormula(name) {
+                    var f = this.calcColForm;
+                    if (!f) return;
+                    var token = /^[A-Za-z_][A-Za-z0-9_]*$/.test(name) ? name : '[' + name + ']';
+                    var cur = f.formula || '';
+                    var sep = cur && !/\s$/.test(cur) ? ' ' : '';
+                    f.formula = cur + sep + token;
+                },
+
                 // ---- Sync: config → hidden textarea (form POST için) ----
                 syncConfig() {
                     var el = document.getElementById('DashboardConfigJson');

@@ -80,8 +80,8 @@ Bu liste 5 plan dosyasi (`plans/02-06`) + asagidaki FAZ 1-3 + son 5 journal'in y
 - [x] **G-07 · Dashboard iframe policy review** ✅ audit tamamlandi (4 Mayis 2026): Run.cshtml `allow-scripts allow-downloads` ✓ (prod, same-origin yok). V2 preview iframe'leri (`EditReportV2`/`CreateReportV2`) `allow-same-origin` icerir — `07ccee8` commit'i tab tiklama bug fix gerekcesiyle, admin-only path icin kabul edilebilir risk. Follow-up: ileride iframe-ici tab switching srcdoc-ici JS ile sandbox-bagimsiz yapilirsa allow-same-origin kalkar.
 - [x] **G-08 · DashboardRenderer JSON escape regresyon test** ✅ zaten kapsanmış — `DashboardRendererTests.cs` 6 escape testi: `</script>` lower/upper/mixed-case + `<!--` + eval guard + data island
 - [ ] **Hesaplı kolon autocomplete** — SP preview kolonlarindan datalist (M-11 builder UX)
-- [ ] **M-02 son grep** (FAZ 1 kalan) — AuthController + servisler ex.Message leak
-- [ ] **F-02 admin override UI tamamla** (FAZ 1 yarim) — SP Onizle parametre override
+- [x] **M-02 son grep** ✅ 4 Mayis 2026 audit — Tum `ex.Message` kullanimlari tarandi (5 nokta). Hepsi kabul edilebilir: AdminController suppress + audit log alanlari (5x) + FormulaParseException TR-friendly + DashboardConfigValidator admin-only JSON debug. User-facing leak yok.
+- [x] **F-02 admin override UI** ✅ zaten kapali (commit `816c8c2`) — `sp-helper.js:34-89` override paneli + typed inputs + paramsJson query. 4 Mayis sentezinde yanlis "yarim" yazilmis, audit ile duzeltildi.
 - [x] **ADR-001 yazimi** ✅ 4 Mayis 2026 — `docs/ADR/001-data-access.md` (SP rapor/dashboard + EF metadata hibrit, Dapper red, inline TVF reuse). ADR-002 zaten ADR-005 olarak yazili (dashboard-architecture).
 - [ ] **ReportParamValidator Run path kök fix** — `{"fields":[...]}` parse Run yolunda (PreviewDashboardV2'de cozuldu, Run karsiligi)
 

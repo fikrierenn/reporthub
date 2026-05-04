@@ -1083,6 +1083,40 @@ body.builder-v2-page .builder-v2.preview-mode .param-bar { background: var(--pap
     border-radius: 5px;
 }
 
+/* Plan 05.B: hesaplı kolon formula yazarken aktif tablonun kolonlarını öneri olarak göster */
+.builder-v2 .calc-col-suggest {
+    margin-top: 6px;
+    padding: 6px 8px;
+    background: var(--canvas, #f9fafb);
+    border: 1px dashed var(--line-2, #e5e7eb);
+    border-radius: 5px;
+}
+.builder-v2 .calc-col-suggest-label {
+    display: block;
+    font-size: 10px;
+    color: var(--ink-4, #6b7280);
+    margin-bottom: 4px;
+}
+.builder-v2 .calc-col-suggest-pills {
+    display: flex; flex-wrap: wrap; gap: 4px;
+}
+.builder-v2 .calc-col-suggest-pill {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10.5px;
+    padding: 3px 7px;
+    background: var(--paper, #fff);
+    border: 1px solid var(--line, #d1d5db);
+    border-radius: 3px;
+    color: var(--ink-2, #374151);
+    cursor: pointer;
+    transition: all 0.15s;
+}
+.builder-v2 .calc-col-suggest-pill:hover {
+    background: var(--accent-50, #eff6ff);
+    border-color: var(--accent, #3b82f6);
+    color: var(--accent, #3b82f6);
+}
+
 /* Widget seçilince drawer Veri tab'ında bağlı kolon kartı pulse highlight */
 .builder-v2 .col-card.focus-pulse {
     animation: bv2-col-pulse 1.4s ease-out;

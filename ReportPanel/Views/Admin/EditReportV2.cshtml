@@ -381,6 +381,16 @@ window.__availableDataSources = @Html.Raw(System.Text.Json.JsonSerializer.Serial
                                             <span x-text="calcColForm.error"></span>
                                             <span x-show="calcColForm.errorPos" x-text="' (poz ' + calcColForm.errorPos + ')'"></span>
                                         </div>
+                                        <div x-show="availableColumnsForFormula.length > 0" x-cloak class="calc-col-suggest">
+                                            <span class="calc-col-suggest-label">Mevcut kolonlar (tıkla → formüle ekle):</span>
+                                            <div class="calc-col-suggest-pills">
+                                                <template x-for="col in availableColumnsForFormula" :key="col">
+                                                    <button type="button" class="calc-col-suggest-pill"
+                                                            x-text="col"
+                                                            x-on:click="insertColumnIntoFormula(col)"></button>
+                                                </template>
+                                            </div>
+                                        </div>
                                         <p style="font-size:10px; color:var(--ink-4); margin-top:4px;">
                                             Aritmetik (+ − × ÷), karşılaştırma (= != &lt; &gt; &lt;= &gt;=), AND/OR/NOT, IF/IIF, CASE WHEN/THEN/ELSE/END. Türkçe kolon adı: <code>[Şube]</code>.
                                         </p>
