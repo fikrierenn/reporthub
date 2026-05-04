@@ -144,6 +144,31 @@ Mevcut `UserDataFilters` mekaniği çalışıyor ama **3 ciddi UX/güvenlik soru
 - [ ] Yeni user formunda default tüm filter'lar "Hepsi" işaretli (atlama tolere eder)
 - [ ] Browser smoke: yeni user oluştur → DB'de doğru kayıtlar (her filter için `*`)
 
+### Faz 5b — Sube canonical master + SubeMapping (4 Mayis 2026 ek)
+
+**Tetik:** Faz 5 implementasyonu sırasinda kullanici 3 DataSource (PDKS/DER/IK=Zirve) icin
+**ayri sube listeleri** olmasi sorununu acti. Tek `sube` FilterDefinition + tek
+`@sube_Filtre` parametresi yetersiz — her sistemde sube kodlari farkli (FSM = '101' PDKS'de,
+'FSM' DerinSIS'te, '01_FSM' Zirve'da).
+
+**Yaklasim:** Master `Sube` tablosu (canonical liste) + `SubeMapping` (DataSourceKey, ExternalCode)
+mapping tablosu. Admin canonical liste secer, UserDataFilters SubeId tutar,
+UserDataFilterInjector parametreye yazarken DataSourceKey'e gore SubeMapping'den ExternalCode'a
+cevirir. **Eksik mapping = sessiz drop** (kullanici karari) — o sube o sistemin raporlarinda
+gozukmez, exception yok.
+
+- [ ] Migration 21 — `Sube` + `SubeMapping` tablolari (idempotent)
+- [ ] Schema research: vrd.SubeListe (PDKS) + DerinSIS sube + IK/Zirve sube — kolon adlari
+- [ ] Canonical Sube seed — 3 DataSource verilerinin union'u (manuel review)
+- [ ] SubeMapping seed — her DataSource icin (SubeId, ExternalCode) eslestirme
+- [ ] FilterDefinition.sube OptionsQuery update: canonical Sube'den cek
+- [ ] UserDataFilterInjector translate logic: SubeMapping lookup, eksik mapping → drop
+- [ ] Backfill: mevcut UserDataFilters `sube` kayitlari external code → SubeId convert
+- [ ] Tests: translate happy path + missing mapping silent drop + canonical select
+- [ ] Commit: `feat(filter): Sube canonical + SubeMapping (plan: 07)`
+
+**Tahmini boyut:** ~6h, 2-3 commit. Faz 6 (Admin Filtreler CRUD) bundan sonra.
+
 ### Faz 6 — Admin "Filtreler" alt-sayfası
 - [ ] `Views/Admin/_AdminTabFilters.cshtml` (liste)
 - [ ] `Views/Admin/EditFilterDefinition.cshtml` (CRUD form)

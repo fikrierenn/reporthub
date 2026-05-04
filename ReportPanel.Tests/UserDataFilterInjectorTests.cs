@@ -54,7 +54,7 @@ public class UserDataFilterInjectorTests
         {
             FilterId = 1,
             UserId = 5,
-            FilterKey = "sube",
+            FilterKey = "bolum",
             FilterValue = "FSM",
             ReportId = null,
             DataSourceKey = null
@@ -65,7 +65,7 @@ public class UserDataFilterInjectorTests
         await sut.InjectAsync(parameters, userId: 5, reportId: 1, dataSourceKey: "PDKS");
 
         Assert.Single(parameters);
-        Assert.Equal("@sube_Filtre", parameters[0].ParameterName);
+        Assert.Equal("@bolum_Filtre", parameters[0].ParameterName);
         Assert.Equal("FSM", parameters[0].Value);
     }
 
@@ -74,8 +74,8 @@ public class UserDataFilterInjectorTests
     {
         var (sut, ctx) = CreateSut();
         ctx.UserDataFilters.AddRange(
-            new UserDataFilter { FilterId = 1, UserId = 5, FilterKey = "sube", FilterValue = "FSM" },
-            new UserDataFilter { FilterId = 2, UserId = 5, FilterKey = "sube", FilterValue = "HEYKEL" }
+            new UserDataFilter { FilterId = 1, UserId = 5, FilterKey = "bolum", FilterValue = "FSM" },
+            new UserDataFilter { FilterId = 2, UserId = 5, FilterKey = "bolum", FilterValue = "HEYKEL" }
         );
         await ctx.SaveChangesAsync();
 
@@ -92,7 +92,7 @@ public class UserDataFilterInjectorTests
         var (sut, ctx) = CreateSut();
         ctx.UserDataFilters.Add(new UserDataFilter
         {
-            FilterId = 1, UserId = 999, FilterKey = "sube", FilterValue = "FSM"
+            FilterId = 1, UserId = 999, FilterKey = "bolum", FilterValue = "FSM"
         });
         await ctx.SaveChangesAsync();
 
@@ -108,13 +108,13 @@ public class UserDataFilterInjectorTests
         var (sut, ctx) = CreateSut();
         ctx.UserDataFilters.Add(new UserDataFilter
         {
-            FilterId = 1, UserId = 5, FilterKey = "sube", FilterValue = "FSM"
+            FilterId = 1, UserId = 5, FilterKey = "bolum", FilterValue = "FSM"
         });
         await ctx.SaveChangesAsync();
 
         var parameters = new List<SqlParameter>
         {
-            new("@sube_Filtre", "USER_OVERRIDE")  // form'dan zaten geldi
+            new("@bolum_Filtre", "USER_OVERRIDE")  // form'dan zaten geldi
         };
         await sut.InjectAsync(parameters, userId: 5, reportId: 1, dataSourceKey: "PDKS");
 
@@ -151,7 +151,7 @@ public class UserDataFilterInjectorTests
         var (sut, ctx) = CreateSut();
         ctx.FilterDefinitions.Add(new FilterDefinition
         {
-            FilterKey = "sube",
+            FilterKey = "bolum",
             Label = "Şube",
             Scope = FilterDefinition.ScopeSpInjection,
             DataSourceKey = "PDKS",
@@ -165,7 +165,7 @@ public class UserDataFilterInjectorTests
         var ex = await Assert.ThrowsAsync<UserDataFilterDeniedException>(() =>
             sut.InjectAsync(parameters, userId: 5, reportId: 1, dataSourceKey: "PDKS"));
 
-        Assert.Equal("sube", ex.FilterKey);
+        Assert.Equal("bolum", ex.FilterKey);
         Assert.Equal(5, ex.UserId);
         Assert.Empty(parameters);
     }
@@ -177,7 +177,7 @@ public class UserDataFilterInjectorTests
         var (sut, ctx) = CreateSut();
         ctx.FilterDefinitions.Add(new FilterDefinition
         {
-            FilterKey = "sube",
+            FilterKey = "bolum",
             Label = "Şube",
             Scope = FilterDefinition.ScopeSpInjection,
             IsActive = false
@@ -197,7 +197,7 @@ public class UserDataFilterInjectorTests
         var (sut, ctx) = CreateSut();
         ctx.FilterDefinitions.Add(new FilterDefinition
         {
-            FilterKey = "sube",
+            FilterKey = "bolum",
             Label = "Şube",
             Scope = FilterDefinition.ScopeSpInjection,
             IsActive = true
@@ -206,7 +206,7 @@ public class UserDataFilterInjectorTests
         {
             FilterId = 1,
             UserId = 5,
-            FilterKey = "sube",
+            FilterKey = "bolum",
             FilterValue = FilterDefinition.ValueAll
         });
         await ctx.SaveChangesAsync();
@@ -223,11 +223,11 @@ public class UserDataFilterInjectorTests
     {
         var (sut, ctx) = CreateSut();
         ctx.FilterDefinitions.AddRange(
-            new FilterDefinition { FilterKey = "sube", Label = "Şube", Scope = FilterDefinition.ScopeSpInjection, IsActive = true },
+            new FilterDefinition { FilterKey = "bolum", Label = "Şube", Scope = FilterDefinition.ScopeSpInjection, IsActive = true },
             new FilterDefinition { FilterKey = "bolum", Label = "Bölüm", Scope = FilterDefinition.ScopeSpInjection, IsActive = true }
         );
         ctx.UserDataFilters.AddRange(
-            new UserDataFilter { FilterId = 1, UserId = 5, FilterKey = "sube", FilterValue = "FSM" },
+            new UserDataFilter { FilterId = 1, UserId = 5, FilterKey = "bolum", FilterValue = "FSM" },
             new UserDataFilter { FilterId = 2, UserId = 5, FilterKey = "bolum", FilterValue = FilterDefinition.ValueAll }
         );
         await ctx.SaveChangesAsync();
@@ -236,7 +236,7 @@ public class UserDataFilterInjectorTests
         await sut.InjectAsync(parameters, userId: 5, reportId: 1, dataSourceKey: "PDKS");
 
         Assert.Single(parameters);
-        Assert.Equal("@sube_Filtre", parameters[0].ParameterName);
+        Assert.Equal("@bolum_Filtre", parameters[0].ParameterName);
         Assert.Equal("FSM", parameters[0].Value);
     }
 
@@ -246,12 +246,12 @@ public class UserDataFilterInjectorTests
     {
         var (sut, ctx) = CreateSut();
         ctx.FilterDefinitions.AddRange(
-            new FilterDefinition { FilterKey = "sube", Label = "Şube", Scope = FilterDefinition.ScopeSpInjection, IsActive = true },
+            new FilterDefinition { FilterKey = "bolum", Label = "Şube", Scope = FilterDefinition.ScopeSpInjection, IsActive = true },
             new FilterDefinition { FilterKey = "kategori", Label = "Kategori", Scope = FilterDefinition.ScopeReportAccess, IsActive = true }
         );
         ctx.UserDataFilters.Add(new UserDataFilter
         {
-            FilterId = 1, UserId = 5, FilterKey = "sube", FilterValue = "FSM"
+            FilterId = 1, UserId = 5, FilterKey = "bolum", FilterValue = "FSM"
         });
         await ctx.SaveChangesAsync();
 
@@ -263,13 +263,91 @@ public class UserDataFilterInjectorTests
         Assert.Equal("kategori", ex.FilterKey);
     }
 
+    // Plan 07 Faz 5b: canonical sube → SubeMapping translate (SubeId → ExternalCode).
+    [Fact]
+    public async Task InjectAsync_sube_canonical_translates_to_external_code()
+    {
+        var (sut, ctx) = CreateSut();
+        ctx.Subeler.AddRange(
+            new Sube { SubeId = 1, SubeAd = "FSM", IsActive = true },
+            new Sube { SubeId = 2, SubeAd = "HEYKEL", IsActive = true }
+        );
+        ctx.SubeMappings.AddRange(
+            new SubeMapping { MappingId = 1, SubeId = 1, DataSourceKey = "PDKS", ExternalCode = "2" },
+            new SubeMapping { MappingId = 2, SubeId = 2, DataSourceKey = "PDKS", ExternalCode = "4" }
+        );
+        ctx.UserDataFilters.AddRange(
+            new UserDataFilter { FilterId = 1, UserId = 5, FilterKey = "sube", FilterValue = "1" },
+            new UserDataFilter { FilterId = 2, UserId = 5, FilterKey = "sube", FilterValue = "2" }
+        );
+        await ctx.SaveChangesAsync();
+
+        var parameters = new List<SqlParameter>();
+        await sut.InjectAsync(parameters, userId: 5, reportId: 1, dataSourceKey: "PDKS");
+
+        Assert.Single(parameters);
+        Assert.Equal("@sube_Filtre", parameters[0].ParameterName);
+        var values = parameters[0].Value!.ToString()!.Split(',').OrderBy(v => v).ToArray();
+        Assert.Equal(new[] { "2", "4" }, values);
+    }
+
+    // Plan 07 Faz 5b: SubeMapping eksik DataSource'ta sube parametre olarak gonderilmez (sessiz drop).
+    [Fact]
+    public async Task InjectAsync_sube_no_mapping_silent_drop()
+    {
+        var (sut, ctx) = CreateSut();
+        ctx.Subeler.Add(new Sube { SubeId = 1, SubeAd = "FSM", IsActive = true });
+        ctx.SubeMappings.Add(new SubeMapping
+        {
+            MappingId = 1, SubeId = 1, DataSourceKey = "PDKS", ExternalCode = "2"
+        });
+        // DER icin mapping yok
+        ctx.UserDataFilters.Add(new UserDataFilter
+        {
+            FilterId = 1, UserId = 5, FilterKey = "sube", FilterValue = "1"
+        });
+        await ctx.SaveChangesAsync();
+
+        var parameters = new List<SqlParameter>();
+        await sut.InjectAsync(parameters, userId: 5, reportId: 1, dataSourceKey: "DER");
+
+        Assert.Empty(parameters);
+    }
+
+    // Plan 07 Faz 5b: bazi SubeId'lerde mapping eksik → sadece mapping olanlar enjekte edilir.
+    [Fact]
+    public async Task InjectAsync_sube_partial_mapping_only_mapped_injected()
+    {
+        var (sut, ctx) = CreateSut();
+        ctx.Subeler.AddRange(
+            new Sube { SubeId = 1, SubeAd = "FSM", IsActive = true },
+            new Sube { SubeId = 2, SubeAd = "FSM KAFE", IsActive = true }
+        );
+        // Sadece SubeId=1 icin DER mapping; SubeId=2 (FSM KAFE) DER'de yok
+        ctx.SubeMappings.Add(new SubeMapping
+        {
+            MappingId = 1, SubeId = 1, DataSourceKey = "DER", ExternalCode = "M01"
+        });
+        ctx.UserDataFilters.AddRange(
+            new UserDataFilter { FilterId = 1, UserId = 5, FilterKey = "sube", FilterValue = "1" },
+            new UserDataFilter { FilterId = 2, UserId = 5, FilterKey = "sube", FilterValue = "2" }
+        );
+        await ctx.SaveChangesAsync();
+
+        var parameters = new List<SqlParameter>();
+        await sut.InjectAsync(parameters, userId: 5, reportId: 1, dataSourceKey: "DER");
+
+        Assert.Single(parameters);
+        Assert.Equal("M01", parameters[0].Value);
+    }
+
     [Fact]
     public async Task InjectAsync_report_specific_filter_applies_only_to_matching_report()
     {
         var (sut, ctx) = CreateSut();
         ctx.UserDataFilters.Add(new UserDataFilter
         {
-            FilterId = 1, UserId = 5, FilterKey = "sube", FilterValue = "FSM",
+            FilterId = 1, UserId = 5, FilterKey = "bolum", FilterValue = "FSM",
             ReportId = 13
         });
         await ctx.SaveChangesAsync();

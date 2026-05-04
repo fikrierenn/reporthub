@@ -95,6 +95,24 @@ public class UserDataFilterInjector
                 g => g.Key,
                 g => string.Join(",", g.Select(f => f.FilterValue)));
 
+        // Plan 07 Faz 5b: 'sube' icin SubeMapping translate (canonical SubeId → DataSource ExternalCode).
+        // Mapping eksikse o sube o sistemin parametresine girmez (sessiz drop).
+        var subeKey = grouped.Keys.FirstOrDefault(k => string.Equals(k, "sube", StringComparison.OrdinalIgnoreCase));
+        Dictionary<int, string>? subeIdToExternal = null;
+        if (subeKey != null)
+        {
+            var subeIds = grouped[subeKey].Split(',', StringSplitOptions.RemoveEmptyEntries)
+                .Select(s => int.TryParse(s.Trim(), out var id) ? id : (int?)null)
+                .Where(x => x.HasValue).Select(x => x!.Value).Distinct().ToList();
+
+            if (subeIds.Count > 0)
+            {
+                subeIdToExternal = await _context.SubeMappings.AsNoTracking()
+                    .Where(m => subeIds.Contains(m.SubeId) && m.DataSourceKey == dataSourceKey)
+                    .ToDictionaryAsync(m => m.SubeId, m => m.ExternalCode);
+            }
+        }
+
         // Her filtre grubu için @key_Filtre parametresi ekle.
         // Zaten aynı isimde parametre varsa (kullanıcı formdan girmiş) ekleme.
         foreach (var kvp in grouped)
@@ -103,9 +121,30 @@ public class UserDataFilterInjector
             if (parameters.Any(p => p.ParameterName.Equals(paramName, StringComparison.OrdinalIgnoreCase)))
                 continue;
 
+            string paramValue = kvp.Value;
+
+            // sube ozel: canonical SubeId → ExternalCode translate, eksik mapping drop
+            if (string.Equals(kvp.Key, "sube", StringComparison.OrdinalIgnoreCase))
+            {
+                if (subeIdToExternal == null || subeIdToExternal.Count == 0)
+                {
+                    continue; // hicbir mapping yok, bu sistem icin sube kisitlamasi yok = sessiz drop
+                }
+
+                var translated = kvp.Value.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                    .Select(s => int.TryParse(s.Trim(), out var id) ? id : (int?)null)
+                    .Where(id => id.HasValue && subeIdToExternal.ContainsKey(id!.Value))
+                    .Select(id => subeIdToExternal[id!.Value])
+                    .Distinct()
+                    .ToList();
+
+                if (translated.Count == 0) continue; // tum SubeId'ler bu DataSource'ta drop edildi
+                paramValue = string.Join(",", translated);
+            }
+
             parameters.Add(new SqlParameter(paramName, SqlDbType.NVarChar, 500)
             {
-                Value = kvp.Value
+                Value = paramValue
             });
         }
     }

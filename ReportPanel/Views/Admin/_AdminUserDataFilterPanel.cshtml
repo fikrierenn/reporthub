@@ -34,6 +34,10 @@
     var sectionsJson = System.Text.Json.JsonSerializer.Serialize(sectionsData);
 }
 
+@* x-data inline JSON HTML attribute parse'ini kirar (JSON'daki " attribute'u kapatir).
+   Script tag ile global degisken set edip x-data'da referans veriyoruz — daha temiz pattern. *@
+<script>window.__userFilterSections = @Html.Raw(sectionsJson);</script>
+
 <div style="background:var(--paper); border:1px solid var(--line); border-radius:10px; overflow:hidden; max-width:880px; margin-bottom:18px;">
     <div style="padding:14px 18px; border-bottom:1px solid var(--line);">
         <h2 style="font-size:13px; font-weight:600; color:var(--ink-1); margin:0;">
@@ -47,7 +51,7 @@
 
     <div style="padding:18px 20px;"
          x-data="{
-            sections: @Html.Raw(sectionsJson),
+            sections: window.__userFilterSections || [],
             async loadOptions(i) {
                 var s = this.sections[i];
                 try {

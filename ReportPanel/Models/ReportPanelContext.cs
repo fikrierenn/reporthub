@@ -21,6 +21,8 @@ namespace ReportPanel.Models
         public DbSet<ReportAllowedRole> ReportAllowedRoles { get; set; }
         public DbSet<UserDataFilter> UserDataFilters { get; set; }
         public DbSet<FilterDefinition> FilterDefinitions { get; set; }
+        public DbSet<Sube> Subeler { get; set; }
+        public DbSet<SubeMapping> SubeMappings { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -207,6 +209,41 @@ namespace ReportPanel.Models
                     .WithMany()
                     .HasForeignKey(e => e.ReportId)
                     .OnDelete(DeleteBehavior.SetNull);
+            });
+
+            // Sube canonical master (Plan 07 Faz 5b — Migration 21)
+            modelBuilder.Entity<Sube>(entity =>
+            {
+                entity.ToTable("Sube");
+                entity.HasKey(e => e.SubeId);
+                entity.Property(e => e.SubeAd).HasMaxLength(100).IsRequired();
+                entity.Property(e => e.IsActive).HasDefaultValue(true);
+                entity.Property(e => e.DisplayOrder).HasDefaultValue(0);
+                entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETDATE()");
+                entity.HasIndex(e => e.SubeAd).IsUnique();
+            });
+
+            // SubeMapping per-DataSource external code (Plan 07 Faz 5b — Migration 21)
+            modelBuilder.Entity<SubeMapping>(entity =>
+            {
+                entity.ToTable("SubeMapping");
+                entity.HasKey(e => e.MappingId);
+                entity.Property(e => e.DataSourceKey).HasMaxLength(50).IsRequired();
+                entity.Property(e => e.ExternalCode).HasMaxLength(50).IsRequired();
+                entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETDATE()");
+
+                entity.HasIndex(e => new { e.SubeId, e.DataSourceKey }).IsUnique();
+                entity.HasIndex(e => new { e.DataSourceKey, e.ExternalCode }).IsUnique();
+
+                entity.HasOne(e => e.Sube)
+                    .WithMany()
+                    .HasForeignKey(e => e.SubeId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(e => e.DataSource)
+                    .WithMany()
+                    .HasForeignKey(e => e.DataSourceKey)
+                    .OnDelete(DeleteBehavior.Restrict);
             });
 
             // FilterDefinition configuration (Plan 07 Faz 2 — master tablo, Migration 20)

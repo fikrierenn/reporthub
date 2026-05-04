@@ -20,8 +20,21 @@ public class FilterOptionsService
         ["raporKategori"] = async ctx => await ctx.ReportCategories
             .AsNoTracking().Where(c => c.IsActive).OrderBy(c => c.Name)
             .Select(c => new FilterOption(c.CategoryId.ToString(), c.Name))
+            .ToListAsync(),
+        // Plan 07 Faz 5b — canonical Sube master. UserDataFilterInjector SubeMapping uzerinden
+        // DataSource'a ozgu ExternalCode'a cevirir. Mapping yoksa o sube o sistemde sessizce drop.
+        ["sube"] = async ctx => await ctx.Subeler
+            .AsNoTracking().Where(s => s.IsActive)
+            .OrderBy(s => s.DisplayOrder).ThenBy(s => s.SubeAd)
+            .Select(s => new FilterOption(s.SubeId.ToString(), s.SubeAd))
             .ToListAsync()
     };
+
+    /// <summary>
+    /// FilterDefinitionService validator'unun spInjection + DataSourceKey/OptionsQuery NULL
+    /// kombinasyonunu kabul edip etmemesi icin native registry kontrolu.
+    /// </summary>
+    public static bool HasNativeSource(string filterKey) => NativeSources.ContainsKey(filterKey);
 
     public FilterOptionsService(ReportPanelContext context, ILogger<FilterOptionsService> logger)
     {
@@ -43,8 +56,17 @@ public class FilterOptionsService
             return new FilterOptionsResult(true, null, Array.Empty<FilterOption>());
         }
 
+        // Plan 07 Faz 5b: spInjection scope'unda da NativeSources registry kontrol edilir
+        // (canonical sube → SubeMapping translate). DataSourceKey/OptionsQuery NULL ise
+        // mutlaka native source olmali.
+        if (NativeSources.ContainsKey(filterKey))
+        {
+            return await GetFromNativeSourceAsync(filterKey);
+        }
+
         if (def.Scope == FilterDefinition.ScopeReportAccess)
         {
+            // Native registry'de yoksa reportAccess fallback (log + bos)
             return await GetFromNativeSourceAsync(filterKey);
         }
 
