@@ -94,9 +94,9 @@ Bu liste 5 plan dosyasi (`plans/02-06`) + asagidaki FAZ 1-3 + son 5 journal'in y
 - [ ] **M-08 Async tutarlilik** (FAZ 3 madde 31)
 - [ ] **M-09 AsNoTracking sweep** (FAZ 3 madde 32)
 - [ ] **M-07 ViewModel BindNever + DTO** (FAZ 3 madde 30)
-- [ ] **Dashboard P0 · Config deserialize try/catch** — `ReportsController.cs:240`
-- [ ] **Dashboard P1 · Result set index validation** server-side
-- [ ] **Dashboard P1 · Mobile responsive grid** — `grid-cols-1 sm:grid-cols-2 lg:grid-cols-4`
+- [x] **Dashboard P0 · Config deserialize try/catch** ✅ 4 Mayis 2026 audit — Run path zaten tam kapsanmis (line 591-612: try/catch + `dashboard_config_invalid` audit + bos template fallback + kullanici uyarisi). PreviewDashboardV2'ye de paralel audit eklendi (tutarlilik).
+- [x] **Dashboard P1 · Result set index validation** ✅ 4 Mayis 2026 audit — Save zamani validator negatif kontrol (`DashboardConfigValidator.cs:228`), Render zamani `DashboardConfig.ResolveResultSet` out-of-bounds → PlaceholderRenderer fallback. 6 `ResolveResultSet_*` testi coverage saglar.
+- [x] **Dashboard P1 · Mobile responsive grid** ✅ 4 Mayis 2026 — `DashboardShellRenderer.GridColsClass`: `grid-cols-4` → `grid-cols-1 sm:grid-cols-2 lg:grid-cols-4`, compact da `grid-cols-1 sm:grid-cols-2`. Tailwind CDN runtime JIT class'lari yakalar.
 - [ ] **Dashboard P1 · Tailwind/Chart.js local serve** (production)
 - [ ] **Dashboard P1 · Inline RS boyut limiti / lazy-load** (10K satir)
 - [ ] **F-05 · Türkçe UTF-8 normalize** (FAZ 3 madde 33) — turkish-ui-normalizer skill

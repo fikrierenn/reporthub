@@ -86,7 +86,9 @@ namespace ReportPanel.Services.Rendering
         }
 
         public static string GridColsClass(string? layout) =>
-            layout == "compact" ? "grid-cols-2" : layout == "wide" ? "grid-cols-1" : "grid-cols-4";
+            layout == "compact" ? "grid-cols-1 sm:grid-cols-2"
+            : layout == "wide" ? "grid-cols-1"
+            : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-4";
 
         public static void RenderModal(StringBuilder sb)
         {

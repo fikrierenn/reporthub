@@ -440,8 +440,18 @@ namespace ReportPanel.Controllers
                     dashConfig = JsonSerializer.Deserialize<DashboardConfig>(configJson,
                         new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                 }
-                catch (JsonException)
+                catch (JsonException jx)
                 {
+                    await _auditLog.LogAsync(new AuditLogEntry
+                    {
+                        EventType = "dashboard_config_invalid",
+                        TargetType = "datasource",
+                        TargetKey = dataSourceKey,
+                        ReportId = reportId,
+                        DataSourceKey = dataSourceKey,
+                        Description = $"PreviewDashboardV2 configOverride deserialize failed: {jx.Message}",
+                        IsSuccess = false
+                    });
                     return BadRequest("Pano yapılandırması parse edilemedi.");
                 }
                 if (dashConfig == null) return BadRequest("Pano yapılandırması boş.");
