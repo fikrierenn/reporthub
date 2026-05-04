@@ -201,30 +201,17 @@ namespace ReportPanel.Services
 
             if (scopeNorm == FilterDefinition.ScopeSpInjection)
             {
-                // Plan 07 Faz 5b: 'sube' gibi canonical native source'lar DataSourceKey/OptionsQuery NULL.
-                // FilterOptionsService.NativeSources registry'sinde varsa bu kombinasyon kabul.
-                var hasNative = FilterOptionsService.HasNativeSource(key);
-                var hasDs = !string.IsNullOrWhiteSpace(dataSourceKey);
-                var hasQuery = !string.IsNullOrWhiteSpace(optionsQuery);
+                if (string.IsNullOrWhiteSpace(dataSourceKey))
+                    return AdminOperationResult.Fail("spInjection scope icin DataSourceKey zorunludur.");
+                if (string.IsNullOrWhiteSpace(optionsQuery))
+                    return AdminOperationResult.Fail("spInjection scope icin OptionsQuery zorunludur.");
+                if (!IsSafeOptionsQuery(optionsQuery, out var reason))
+                    return AdminOperationResult.Fail($"OptionsQuery gecersiz: {reason}");
 
-                if (hasNative && !hasDs && !hasQuery)
-                {
-                    // Canonical native source path — extra validation atlanir.
-                }
-                else
-                {
-                    if (!hasDs)
-                        return AdminOperationResult.Fail("spInjection scope icin DataSourceKey zorunludur (canonical native source haric).");
-                    if (!hasQuery)
-                        return AdminOperationResult.Fail("spInjection scope icin OptionsQuery zorunludur (canonical native source haric).");
-                    if (!IsSafeOptionsQuery(optionsQuery, out var reason))
-                        return AdminOperationResult.Fail($"OptionsQuery gecersiz: {reason}");
-
-                    var dsExists = await _context.DataSources.AsNoTracking()
-                        .AnyAsync(d => d.DataSourceKey == dataSourceKey);
-                    if (!dsExists)
-                        return AdminOperationResult.Fail("Belirtilen DataSourceKey bulunamadi.");
-                }
+                var dsExists = await _context.DataSources.AsNoTracking()
+                    .AnyAsync(d => d.DataSourceKey == dataSourceKey);
+                if (!dsExists)
+                    return AdminOperationResult.Fail("Belirtilen DataSourceKey bulunamadi.");
             }
             else // reportAccess
             {
@@ -234,10 +221,14 @@ namespace ReportPanel.Services
                     return AdminOperationResult.Fail("reportAccess scope OptionsQuery almamali (native EF source).");
             }
 
+            // Plan B (5 Mayis): composite unique (DataSourceKey, FilterKey)
+            var dsKeyNormalized = string.IsNullOrWhiteSpace(dataSourceKey) ? null : dataSourceKey.Trim();
             var duplicate = await _context.FilterDefinitions.AsNoTracking()
-                .AnyAsync(f => f.FilterKey == key && (existingId == null || f.FilterDefinitionId != existingId));
+                .AnyAsync(f => f.FilterKey == key
+                    && f.DataSourceKey == dsKeyNormalized
+                    && (existingId == null || f.FilterDefinitionId != existingId));
             if (duplicate)
-                return AdminOperationResult.Fail("Bu FilterKey zaten mevcut.");
+                return AdminOperationResult.Fail("Bu DataSource icin bu FilterKey zaten mevcut.");
 
             return AdminOperationResult.Ok("");
         }

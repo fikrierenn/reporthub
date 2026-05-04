@@ -34,10 +34,14 @@ public class UserDataFilterInjector
     {
         if (userId == null) return;
 
-        // Plan 07 Faz 4: Aktif FilterDefinition'lar — deny-by-default check icin.
+        // Plan 07 Faz 4 + Plan B (5 Mayis): Aktif FilterDefinition'lar bu DataSource icin.
+        // (DataSourceKey == null) cross-cutting (orn. raporKategori) — her DataSource'ta uygulanir.
+        // (DataSourceKey == dataSourceKey) sadece bu sistem icin (orn. (PDKS, sube)).
         var activeKeys = await _context.FilterDefinitions.AsNoTracking()
-            .Where(f => f.IsActive)
+            .Where(f => f.IsActive
+                && (f.DataSourceKey == null || f.DataSourceKey == dataSourceKey))
             .Select(f => f.FilterKey)
+            .Distinct()
             .ToListAsync();
 
         // Kullanıcının tüm filtrelerini çek (bu rapor + genel).
@@ -48,8 +52,8 @@ public class UserDataFilterInjector
             .ToListAsync();
 
         // Plan 07 Faz 4: Aktif her FilterDefinition icin kullanicinin en az 1 kaydi
-        // (concrete veya '*') olmali; yoksa caller'i 403 ile durdur. Backfill (Migration 20)
-        // mevcut user'lara her aktif key icin '*' kaydi ekledi — atlanan yeni user'lar deny.
+        // (concrete veya '*') olmali; yoksa caller'i 403 ile durdur. Backfill (Migration 20+22)
+        // mevcut user'lara her aktif (DataSourceKey, FilterKey) icin '*' kaydi ekledi.
         foreach (var defKey in activeKeys)
         {
             var hasRecord = filters.Any(f =>
@@ -95,24 +99,6 @@ public class UserDataFilterInjector
                 g => g.Key,
                 g => string.Join(",", g.Select(f => f.FilterValue)));
 
-        // Plan 07 Faz 5b: 'sube' icin SubeMapping translate (canonical SubeId → DataSource ExternalCode).
-        // Mapping eksikse o sube o sistemin parametresine girmez (sessiz drop).
-        var subeKey = grouped.Keys.FirstOrDefault(k => string.Equals(k, "sube", StringComparison.OrdinalIgnoreCase));
-        Dictionary<int, string>? subeIdToExternal = null;
-        if (subeKey != null)
-        {
-            var subeIds = grouped[subeKey].Split(',', StringSplitOptions.RemoveEmptyEntries)
-                .Select(s => int.TryParse(s.Trim(), out var id) ? id : (int?)null)
-                .Where(x => x.HasValue).Select(x => x!.Value).Distinct().ToList();
-
-            if (subeIds.Count > 0)
-            {
-                subeIdToExternal = await _context.SubeMappings.AsNoTracking()
-                    .Where(m => subeIds.Contains(m.SubeId) && m.DataSourceKey == dataSourceKey)
-                    .ToDictionaryAsync(m => m.SubeId, m => m.ExternalCode);
-            }
-        }
-
         // Her filtre grubu için @key_Filtre parametresi ekle.
         // Zaten aynı isimde parametre varsa (kullanıcı formdan girmiş) ekleme.
         foreach (var kvp in grouped)
@@ -121,30 +107,9 @@ public class UserDataFilterInjector
             if (parameters.Any(p => p.ParameterName.Equals(paramName, StringComparison.OrdinalIgnoreCase)))
                 continue;
 
-            string paramValue = kvp.Value;
-
-            // sube ozel: canonical SubeId → ExternalCode translate, eksik mapping drop
-            if (string.Equals(kvp.Key, "sube", StringComparison.OrdinalIgnoreCase))
-            {
-                if (subeIdToExternal == null || subeIdToExternal.Count == 0)
-                {
-                    continue; // hicbir mapping yok, bu sistem icin sube kisitlamasi yok = sessiz drop
-                }
-
-                var translated = kvp.Value.Split(',', StringSplitOptions.RemoveEmptyEntries)
-                    .Select(s => int.TryParse(s.Trim(), out var id) ? id : (int?)null)
-                    .Where(id => id.HasValue && subeIdToExternal.ContainsKey(id!.Value))
-                    .Select(id => subeIdToExternal[id!.Value])
-                    .Distinct()
-                    .ToList();
-
-                if (translated.Count == 0) continue; // tum SubeId'ler bu DataSource'ta drop edildi
-                paramValue = string.Join(",", translated);
-            }
-
             parameters.Add(new SqlParameter(paramName, SqlDbType.NVarChar, 500)
             {
-                Value = paramValue
+                Value = kvp.Value
             });
         }
     }
