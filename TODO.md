@@ -79,11 +79,11 @@ Bu liste 5 plan dosyasi (`plans/02-06`) + asagidaki FAZ 1-3 + son 5 journal'in y
 - [x] **M-03 Faz C · User.Roles kolon drop** ✅ 4 Mayis 2026 — `Database/19_DropUserRolesCsv.sql` (idempotent), `User.Roles` field + EF mapping + pragma silindi. DB drop edildi, build/217 test yesil.
 - [x] **G-07 · Dashboard iframe policy review** ✅ audit tamamlandi (4 Mayis 2026): Run.cshtml `allow-scripts allow-downloads` ✓ (prod, same-origin yok). V2 preview iframe'leri (`EditReportV2`/`CreateReportV2`) `allow-same-origin` icerir — `07ccee8` commit'i tab tiklama bug fix gerekcesiyle, admin-only path icin kabul edilebilir risk. Follow-up: ileride iframe-ici tab switching srcdoc-ici JS ile sandbox-bagimsiz yapilirsa allow-same-origin kalkar.
 - [x] **G-08 · DashboardRenderer JSON escape regresyon test** ✅ zaten kapsanmış — `DashboardRendererTests.cs` 6 escape testi: `</script>` lower/upper/mixed-case + `<!--` + eval guard + data island
-- [ ] **Hesaplı kolon autocomplete** — SP preview kolonlarindan datalist (M-11 builder UX)
+- [x] **Hesaplı kolon autocomplete** ✅ 4 Mayis 2026 (commit `36dd2f3`) — V2 builder formula textarea altina suggest pill grid; tikla → kolon adi formula'ya iliştirilir, Turkce/non-identifier `[Kose]` formatinda.
 - [x] **M-02 son grep** ✅ 4 Mayis 2026 audit — Tum `ex.Message` kullanimlari tarandi (5 nokta). Hepsi kabul edilebilir: AdminController suppress + audit log alanlari (5x) + FormulaParseException TR-friendly + DashboardConfigValidator admin-only JSON debug. User-facing leak yok.
 - [x] **F-02 admin override UI** ✅ zaten kapali (commit `816c8c2`) — `sp-helper.js:34-89` override paneli + typed inputs + paramsJson query. 4 Mayis sentezinde yanlis "yarim" yazilmis, audit ile duzeltildi.
 - [x] **ADR-001 yazimi** ✅ 4 Mayis 2026 — `docs/ADR/001-data-access.md` (SP rapor/dashboard + EF metadata hibrit, Dapper red, inline TVF reuse). ADR-002 zaten ADR-005 olarak yazili (dashboard-architecture).
-- [ ] **ReportParamValidator Run path kök fix** — `{"fields":[...]}` parse Run yolunda (PreviewDashboardV2'de cozuldu, Run karsiligi)
+- [x] **ReportParamValidator Run path kök fix** ✅ 4 Mayis 2026 audit — Run path (`ReportsController.cs:269`) zaten `ReportParamValidator.ParseSchema()` kullaniyor; commit `2b62d39` PreviewDashboardV2'yi duzeltirken tum parse noktalari ortak helper'a yonlendirildi. Inline `JsonSerializer.Deserialize<List<ReportParamField>>` kalmadi. `ParseSchema_parses_modern_fields_array` testi `{"fields":[...]}` formatini dogruluyor.
 
 #### Orta (2-4h)
 - [ ] **G-09 · SP read-only login** ⚠️ CANLIYA CIKMADAN ZORUNLU (FAZ 2 madde 28.5)
