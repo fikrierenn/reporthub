@@ -13,6 +13,7 @@ Bu dosya her Claude oturumunun başında okunur. **Değişmez kurallar + kimlik.
 - `plans/NN-<slug>.md` — Tier 3 iş planları (zorunlu, ADR-010)
 - `docs/CONTEXT_MANAGEMENT.md` — bağlam yönetimi anayasası (ilkeler)
 - `docs/CLAUDE_TOOLING_PROPOSAL.md` — Claude araç setinin tam önerisi
+- **Cross-project brain:** `D:/Dev/brain` (Obsidian vault, Plan 08, Karpathy LLM Wiki). Schema: `D:/Dev/brain/CLAUDE.md`. NotebookLM (`f2407372`) ile paralel. Bu repo'daki ham bilgi (journal, plan, ADR) burada kalır; **sentez** brain'de yaşar.
 
 ---
 
