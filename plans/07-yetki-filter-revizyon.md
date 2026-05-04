@@ -30,7 +30,7 @@ Mevcut `UserDataFilters` mekaniği çalışıyor ama **3 ciddi UX/güvenlik soru
 - **DB:** Yeni tablo `FilterDefinition` (master), `UserDataFilters` schema değişmez
 - **Backend:** `FilterDefinition` EF model + `FilterDefinitionService` + `FilterOptionsService` refactor + `UserDataFilterInjector` "0 kayıt = deny" mantığı
 - **UI:** `_AdminUserDataFilterPanel.cshtml` dinamik field rendering (FilterDefinition loop), her field "Hepsi" toggle + multi-select. Admin Panel'de yeni "Filtreler" alt-sayfası CRUD
-- **Migration:** Migration 20 — FilterDefinition tablosu + 2 seed (sube, kategori) + backfill mevcut user'lara `*`
+- **Migration:** Migration 20 — FilterDefinition tablosu + 2 seed (`sube` external SQL, `raporKategori` native EF) + backfill mevcut user'lara `*`
 - **Audit:** `data_filter_denied` event 0 kayıt durumunda
 
 ### Kapsam dışı (sonraki plan)
@@ -80,7 +80,8 @@ Mevcut `UserDataFilters` mekaniği çalışıyor ama **3 ciddi UX/güvenlik soru
 ### C (SEÇİLEN): Soyut FilterDefinition + UserDataFilters mevcut + UI dinamik field (her aktif FilterDefinition için kalıcı alan)
 
 **Açıklama:**
-- Master `FilterDefinition` tablosu (FilterKey, Label, Scope, DataSourceKey, OptionsQuery, IsActive, DisplayOrder).
+- Master `FilterDefinition` tablosu (FilterKey, Label, Scope, DataSourceKey nullable, OptionsQuery **nullable**, IsActive, DisplayOrder).
+- **OptionsSource 2 yol:** Scope='reportAccess' → kod-side native source registry (örn: ReportCategories EF DbSet — OptionsQuery NULL). Scope='spInjection' → external DataSource ConnString üzerinde OptionsQuery exec.
 - UserDataFilters mevcut — schema değişmez. `FilterValue='*'` magic string = "Hepsi" (explicit kayıt).
 - User formunda her aktif FilterDefinition için **kalıcı field** (label + multi-select + "Hepsi" toggle).
 - 0 kayıt = deny (yeni user atlanırsa rapor 403 döner).
@@ -117,7 +118,7 @@ Mevcut `UserDataFilters` mekaniği çalışıyor ama **3 ciddi UX/güvenlik soru
 
 ### Faz 1 — DB schema + seed + backfill
 - [ ] `Database/20_AddFilterDefinition.sql` (idempotent, FilterDefinition tablosu + PK + FK→DataSources)
-- [ ] Seed: `sube` (spInjection, OptionsQuery vrd.SubeListe) + `kategori` (reportAccess, ReportCategories SELECT)
+- [ ] Seed: `sube` (spInjection, DataSourceKey=PDKS/DerinSIS, OptionsQuery=`SELECT CAST(SubeNo AS varchar(10)) AS Value, SubeAd AS Label FROM vrd.SubeListe ORDER BY SubeAd`) + `raporKategori` (reportAccess, DataSourceKey=NULL, OptionsQuery=NULL — native EF: ReportCategories DbSet)
 - [ ] Backfill: tüm aktif kullanıcılara her aktif FilterDefinition için `FilterValue='*'` kayıt
 - [ ] DB'de çalıştırıldı, idempotency doğrulandı (yeniden çalıştırma patlamaz)
 
@@ -255,9 +256,23 @@ Eğer sadece Faz 4 (deny by default) sorun çıkarırsa: `UserDataFilterInjector
 4. **Faz 7 dahili ✅** — Reports/Index kategori filtresi (Scope=reportAccess) plan kapsamında.
 
 **Naming netleştirme:**
-- `sube` (Scope=spInjection, OptionsQuery=vrd.SubeListe) — mevcut, korunur
-- `raporKategori` (Scope=reportAccess, OptionsQuery=ReportCategories SELECT) — YENİ, /Reports listesi filtresi
-- **`urunKategori`** (Scope=spInjection, satış raporlarındaki kitap/kırtasiye/mağaza/satınalma) — Plan 07 seed dahil DEĞİL; admin sonradan FilterDefinition CRUD ile ekler (ürün master tablosu/SQL netleşince)
+- **`sube`** (Scope=spInjection, DataSourceKey=PDKS/DerinSIS, OptionsQuery=`SELECT CAST(SubeNo AS varchar(10)) AS Value, SubeAd AS Label FROM vrd.SubeListe ORDER BY SubeAd`) — mevcut FilterOptionsService.cs:49 davranışı, korunur. DerinSIS bağlantısı PDKS DataSource ConnString'i üzerinden.
+- **`raporKategori`** (Scope=reportAccess, DataSourceKey=NULL, OptionsQuery=NULL) — YENİ, native EF source: `ReportCategories` DbSet (Where IsActive=1, OrderBy Name). `/Reports` listesi filtresi.
+- **`urunKategori`** (Scope=spInjection, satış raporlarındaki kitap/kırtasiye/mağaza/satınalma) — Plan 07 seed dahil DEĞİL; admin sonradan FilterDefinition CRUD ile ekler (ürün master tablosu/SQL netleşince).
+
+**Native source registry (kod-side, Scope='reportAccess' için):**
+```csharp
+// FilterOptionsService.cs içinde
+private static readonly Dictionary<string, Func<ReportPanelContext, Task<List<FilterOption>>>> NativeSources = new()
+{
+    ["raporKategori"] = async ctx => await ctx.ReportCategories
+        .AsNoTracking().Where(c => c.IsActive).OrderBy(c => c.Name)
+        .Select(c => new FilterOption(c.CategoryId.ToString(), c.Name))
+        .ToListAsync(),
+    // İleride başka native source: ["yeniKey"] = ...
+};
+```
+Yeni `Scope='reportAccess'` filter eklemek için: registry'ye Func + FilterDefinition INSERT. OptionsQuery yazmaya gerek yok — type-safe EF.
 
 ---
 
