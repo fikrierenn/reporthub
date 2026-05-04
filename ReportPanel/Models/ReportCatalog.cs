@@ -1,11 +1,14 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace ReportPanel.Models
 {
+    // M-07: ReportId + CreatedAt [BindNever] — mass assignment koruması.
     public class ReportCatalog
     {
         [Key]
+        [BindNever]
         public int ReportId { get; set; }
         
         [Required]
@@ -41,9 +44,10 @@ namespace ReportPanel.Models
         public string AllowedRoles { get; set; } = string.Empty;
         
         public bool IsActive { get; set; } = true;
-        
+
+        [BindNever]
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-        
+
         // Navigation property
         [ForeignKey("DataSourceKey")]
         public virtual DataSource? DataSource { get; set; }

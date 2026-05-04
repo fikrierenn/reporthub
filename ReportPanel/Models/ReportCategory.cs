@@ -1,10 +1,13 @@
 using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace ReportPanel.Models
 {
+    // M-07: CategoryId + CreatedAt [BindNever] — mass assignment koruması.
     public class ReportCategory
     {
         [Key]
+        [BindNever]
         public int CategoryId { get; set; }
 
         [Required]
@@ -16,6 +19,7 @@ namespace ReportPanel.Models
 
         public bool IsActive { get; set; } = true;
 
+        [BindNever]
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     }
 }
