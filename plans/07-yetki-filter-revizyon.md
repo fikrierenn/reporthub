@@ -37,7 +37,7 @@ Mevcut `UserDataFilters` mekaniği çalışıyor ama **3 ciddi UX/güvenlik soru
 
 - **Rol-bazlı filter atama** (`RoleDataFilters` junction) — kullanıcı sayısı 300+ olduğunda atomasyon için zorunlu ama bu plan'da yok. Plan 08'e bırakıldı.
 - **Granular role + permission sistemi** — Plan 06 vNext (şirket içi portal) kapsamında.
-- **Kategori için Reports/Index liste filtresi** (Scope='reportAccess' uygulaması) — Faz 7 olarak şu plana dahil ama opsiyonel.
+- (Faz 7 plan-dahili: Reports/Index liste filtresi rapor kategorisi için aktif — kullanıcı sadece atanmış kategorideki raporları görür)
 
 ### Etkilenen dosyalar (tahmin)
 
@@ -243,16 +243,21 @@ Eğer sadece Faz 4 (deny by default) sorun çıkarırsa: `UserDataFilterInjector
 > Kullanıcı onay verene kadar implement edilmez.
 
 - [x] Plan kullanıcıya gösterildi — 2026-05-04 oturumu
-- [ ] Geri bildirim alındı (varsa düzeltildi)
-- [ ] Onay alındı: <tarih, kullanıcı imzası>
+- [x] Geri bildirim alındı + plan güncellendi
+- [x] Onay alındı: 2026-05-04 (Fikri)
 - [ ] Implement edildi: <commit serisi>
 - [ ] Tamamlandı: <tarih>
 
-**Cevapsız sorular (Faz 1 öncesi netleştir):**
-1. **0 kayıt → 403 reddet** doğru mu? Yoksa "boş döndür" tercih edersin?
-2. **Migration backfill** — mevcut 7 user için `*` ekle (atlanırsa erişim 403). Onaylar mısın?
-3. **Yeni user formunda default "Hepsi"** mi (atlanırsa user çalışır), yoksa **boş** (admin mutlaka karar versin) mi?
-4. **Faz 7 (reports/index kategori)** scope dahili mi, opsiyonel mi (sonraki plan'a)?
+**Onaylanmış kararlar (4 Mayıs 2026):**
+1. **0 kayıt → 403 reddet** ✅ (a) — açık feedback, sessiz boş döndürme yok. Audit `data_filter_denied`.
+2. **Migration backfill ✅** — mevcut 7 user için tek seferde tüm aktif FilterDefinition'lara `*` kaydı ekle. Geçişte kimse kapı dışı kalmaz, herşeye yetki ile başlar, admin sonradan daraltır.
+3. **Yeni user formunda default boş ✅** (b) — admin mutlaka karar vermeli. Atlanırsa user 0 kayıt = 403 (madde 1 ile tutarlı).
+4. **Faz 7 dahili ✅** — Reports/Index kategori filtresi (Scope=reportAccess) plan kapsamında.
+
+**Naming netleştirme:**
+- `sube` (Scope=spInjection, OptionsQuery=vrd.SubeListe) — mevcut, korunur
+- `raporKategori` (Scope=reportAccess, OptionsQuery=ReportCategories SELECT) — YENİ, /Reports listesi filtresi
+- **`urunKategori`** (Scope=spInjection, satış raporlarındaki kitap/kırtasiye/mağaza/satınalma) — Plan 07 seed dahil DEĞİL; admin sonradan FilterDefinition CRUD ile ekler (ürün master tablosu/SQL netleşince)
 
 ---
 
