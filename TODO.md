@@ -101,7 +101,7 @@ Bu liste 5 plan dosyasi (`plans/02-06`) + asagidaki FAZ 1-3 + son 5 journal'in y
 - [x] **Dashboard P1 · Mobile responsive grid** ✅ 4 Mayis 2026 — `DashboardShellRenderer.GridColsClass`: `grid-cols-4` → `grid-cols-1 sm:grid-cols-2 lg:grid-cols-4`, compact da `grid-cols-1 sm:grid-cols-2`. Tailwind CDN runtime JIT class'lari yakalar.
 - [ ] **Dashboard P1 · Tailwind/Chart.js local serve** (production)
 - [ ] **Dashboard P1 · Inline RS boyut limiti / lazy-load** (10K satir)
-- [ ] **F-05 · Türkçe UTF-8 normalize** (FAZ 3 madde 33) — turkish-ui-normalizer skill
+- [x] **F-05 · Türkçe UTF-8 normalize** ✅ 4 Mayis 2026 — JS dosyalarındaki ASCII kalıntıları (`Duzenle`, `Bilesen`, `Iptal`, `Once`, `secin`, `basarisiz`, `calisti`, `donmedi` vb.) UTF-8'e çevrildi: param-builder.js, sp-helper.js, builder-core.js, builder-list.js, builder-drawer.js. View'lar zaten temizdi.
 - [ ] **CreateUser veri filtresi bölümü (P0)** — EditUser'da var, Create'te yok
 
 #### Büyük (>4h, çok-fazlı)

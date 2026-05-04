@@ -167,11 +167,11 @@
             var editingComp = state.config.tabs[state.activeTab].components[state.editIndex];
             var editingTitle = editingComp && editingComp.title ? editingComp.title : ('#' + (state.editIndex + 1));
             html += '<div class="flex items-center justify-between mb-2">';
-            html += '<h4 class="text-sm font-bold text-blue-800"><i class="fas fa-pen mr-1"></i> Duzenleniyor: ' + esc(editingTitle) + '</h4>';
-            html += '<button type="button" class="text-xs text-gray-500 hover:text-gray-700 underline" onclick="window._dbCancelEdit()">Iptal</button>';
+            html += '<h4 class="text-sm font-bold text-blue-800"><i class="fas fa-pen mr-1"></i> Düzenleniyor: ' + esc(editingTitle) + '</h4>';
+            html += '<button type="button" class="text-xs text-gray-500 hover:text-gray-700 underline" onclick="window._dbCancelEdit()">İptal</button>';
             html += '</div>';
         } else {
-            html += '<h4 class="text-sm font-bold text-gray-700 mb-2"><i class="fas fa-plus-circle mr-1 text-blue-600"></i> Yeni Bilesen</h4>';
+            html += '<h4 class="text-sm font-bold text-gray-700 mb-2"><i class="fas fa-plus-circle mr-1 text-blue-600"></i> Yeni Bileşen</h4>';
         }
         html += DB.drawer.renderForm();
         html += '</div>';

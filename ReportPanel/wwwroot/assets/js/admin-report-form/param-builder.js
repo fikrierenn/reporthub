@@ -56,7 +56,7 @@
             editBtn.type = 'button';
             editBtn.className = 'text-blue-600 text-sm font-semibold';
             editBtn.dataset.editIndex = String(index);
-            editBtn.textContent = 'Duzenle';
+            editBtn.textContent = 'Düzenle';
 
             const removeBtn = document.createElement('button');
             removeBtn.type = 'button';
@@ -161,7 +161,7 @@
     const addParamBtn = document.getElementById('addParamBtn');
     if (addParamBtn) {
         const setAddButtonText = () => {
-            addParamBtn.textContent = editIndex >= 0 ? 'Duzenle' : 'Ekle';
+            addParamBtn.textContent = editIndex >= 0 ? 'Düzenle' : 'Ekle';
         };
 
         const resetForm = () => {
@@ -245,7 +245,7 @@
             const procName = document.querySelector('input[name="ProcName"]')?.value || '';
 
             if (!dataSourceKey || !procName) {
-                alert('Once veri kaynagi ve prosedur adini girin.');
+                alert('Önce veri kaynağı ve prosedür adını girin.');
                 return;
             }
 

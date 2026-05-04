@@ -146,9 +146,9 @@
 
         // Action button
         html += '<div class="mt-4 flex gap-3">';
-        html += '<button type="button" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-semibold" onclick="window._dbSaveComp()">' + (state.editIndex >= 0 ? 'Guncelle' : 'Ekle') + '</button>';
+        html += '<button type="button" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-semibold" onclick="window._dbSaveComp()">' + (state.editIndex >= 0 ? 'Güncelle' : 'Ekle') + '</button>';
         if (state.editIndex >= 0) {
-            html += '<button type="button" class="text-gray-500 hover:text-gray-700 px-4 py-2 text-sm" onclick="window._dbCancelEdit()">Iptal</button>';
+            html += '<button type="button" class="text-gray-500 hover:text-gray-700 px-4 py-2 text-sm" onclick="window._dbCancelEdit()">İptal</button>';
         }
         html += '</div>';
 

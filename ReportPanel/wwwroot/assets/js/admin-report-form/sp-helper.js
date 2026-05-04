@@ -104,11 +104,11 @@
             previewBtn.addEventListener('click', function () {
                 var dsKey = dsSelect.value;
                 var proc = (procInput.value || '').trim();
-                if (!dsKey) { alert('Once veri kaynagini secin.'); return; }
-                if (!proc) { alert('Stored procedure adi girin.'); procInput.focus(); return; }
+                if (!dsKey) { alert('Önce veri kaynağını seçin.'); return; }
+                if (!proc) { alert('Stored procedure adını girin.'); procInput.focus(); return; }
 
                 previewPanel.classList.remove('hidden');
-                previewPanel.innerHTML = '<div class="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-700"><i class="fas fa-spinner fa-spin mr-2"></i>SP calistiriliyor...</div>';
+                previewPanel.innerHTML = '<div class="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-700"><i class="fas fa-spinner fa-spin mr-2"></i>SP çalıştırılıyor...</div>';
 
                 var url = '/Admin/SpPreview?dataSourceKey=' + encodeURIComponent(dsKey) +
                           '&procName=' + encodeURIComponent(proc);
@@ -120,7 +120,7 @@
                     .then(function (r) { return r.json(); })
                     .then(function (data) { renderPreview(data); })
                     .catch(function (err) {
-                        previewPanel.innerHTML = '<div class="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700">Istek basarisiz: ' + escText(String(err)) + '</div>';
+                        previewPanel.innerHTML = '<div class="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700">İstek başarısız: ' + escText(String(err)) + '</div>';
                     });
             });
         }
@@ -132,7 +132,7 @@
                 err.className = 'bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700';
                 err.innerHTML = '<i class="fas fa-exclamation-triangle mr-2"></i>';
                 var errText = document.createElement('span');
-                errText.textContent = data.error || 'SP onizleme basarisiz';
+                errText.textContent = data.error || 'SP önizleme başarısız';
                 err.appendChild(errText);
                 previewPanel.appendChild(err);
                 return;
@@ -141,7 +141,7 @@
             if (resultSets.length === 0) {
                 var empty = document.createElement('div');
                 empty.className = 'bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm text-amber-700';
-                empty.textContent = 'SP calisti ama hic result set donmedi.';
+                empty.textContent = 'SP çalıştı ama hiç result set dönmedi.';
                 previewPanel.appendChild(empty);
                 window.__spPreview = { resultSets: [] };
                 return;
