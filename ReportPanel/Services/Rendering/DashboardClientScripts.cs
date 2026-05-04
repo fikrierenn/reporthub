@@ -346,6 +346,7 @@ document.querySelectorAll('[data-tbl]').forEach(function(tableEl) {
   var pageInfo = widgetRoot.querySelector('[data-tbl-page-info]');
   var btnPrev = widgetRoot.querySelector('[data-tbl-prev]');
   var btnNext = widgetRoot.querySelector('[data-tbl-next]');
+  var btnExport = widgetRoot.querySelector('[data-tbl-export]');
 
   var state = { page: 0, filter: '' };
   var pageSize = opts.pageSize > 0 ? opts.pageSize : 0;
@@ -510,6 +511,34 @@ document.querySelectorAll('[data-tbl]').forEach(function(tableEl) {
     var rows = filteredRows();
     var maxPage = Math.max(0, Math.ceil(rows.length / pageSize) - 1);
     if (state.page < maxPage) { state.page++; renderTable(); }
+  });
+
+  // CSV indir — UTF-8 BOM + ; delimiter (Türk Excel uyumlu). Filtreli satırlar inilir.
+  if (btnExport) btnExport.addEventListener('click', function() {
+    var rows = filteredRows();
+    function esc(v) {
+      if (v == null) return '';
+      var s = String(v);
+      if (s.indexOf(';') !== -1 || s.indexOf('""') !== -1 || s.indexOf('\n') !== -1 || s.indexOf('\r') !== -1) {
+        s = '""' + s.replace(/""/g, '""""') + '""';
+      }
+      return s;
+    }
+    var lines = [cfg.cols.map(function(c) { return esc(c.label || c.key); }).join(';')];
+    rows.forEach(function(r) {
+      lines.push(cfg.cols.map(function(c) { return esc(r[c.key]); }).join(';'));
+    });
+    var csv = '﻿' + lines.join('\r\n');
+    var blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+    var url = URL.createObjectURL(blob);
+    var d = new Date();
+    var pad = function(n) { return n < 10 ? '0' + n : '' + n; };
+    var stamp = d.getFullYear() + pad(d.getMonth()+1) + pad(d.getDate()) + '_' + pad(d.getHours()) + pad(d.getMinutes()) + pad(d.getSeconds());
+    var safeTitle = (cfg.title || 'tablo').replace(/[^\wÀ-ſ]+/g, '_').replace(/^_+|_+$/g, '');
+    var a = document.createElement('a');
+    a.href = url; a.download = safeTitle + '_' + stamp + '.csv';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(function() { URL.revokeObjectURL(url); }, 1000);
   });
 
   renderTable();

@@ -35,6 +35,7 @@ namespace ReportPanel.Services.Rendering
                 rs,
                 cols,
                 click = comp.ClickDetail,
+                title = comp.Title ?? "tablo",
                 opts = new
                 {
                     totalRow = opts.TotalRow,
@@ -49,10 +50,15 @@ namespace ReportPanel.Services.Rendering
             sb.AppendLine($"<div class='bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden{spanCls}'>");
             sb.AppendLine($"  <div class='px-5 py-3 border-b border-gray-100 flex items-center justify-between gap-2'>");
             sb.AppendLine($"    <h3 class='text-xs font-semibold text-gray-500 uppercase tracking-wide'>{RenderContext.Esc(comp.Title)}</h3>");
+            sb.AppendLine($"    <div class='flex items-center gap-2'>");
             if (opts.ClientSearch)
             {
-                sb.AppendLine($"    <input type='search' placeholder='Ara...' data-tbl-search class='text-xs px-2 py-1 border border-gray-200 rounded focus:border-blue-400 focus:outline-none w-40'>");
+                sb.AppendLine($"      <input type='search' placeholder='Ara...' data-tbl-search class='text-xs px-2 py-1 border border-gray-200 rounded focus:border-blue-400 focus:outline-none w-40'>");
             }
+            sb.AppendLine($"      <button type='button' data-tbl-export title='CSV indir' class='text-xs px-2 py-1 border border-gray-200 rounded hover:bg-gray-50 hover:border-emerald-400 hover:text-emerald-700 inline-flex items-center gap-1'>");
+            sb.AppendLine($"        <i class='fas fa-file-csv text-[10px]'></i><span>CSV</span>");
+            sb.AppendLine($"      </button>");
+            sb.AppendLine($"    </div>");
             sb.AppendLine($"  </div>");
             sb.AppendLine($"  <div class='overflow-x-auto{(opts.StickyHeader ? " max-h-96" : "")}'>");
             sb.AppendLine($"    <table class='w-full text-sm' data-tbl='{tblData}'></table>");
