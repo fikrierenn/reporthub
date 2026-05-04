@@ -103,16 +103,19 @@ namespace ReportPanel.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Route("Admin/EditUser/{id}")]
-        public async Task<IActionResult> EditUser(User user)
+        public async Task<IActionResult> EditUser(int id, User user)
         {
+            // User.UserId'de [BindNever] (M-07 mass assignment koruması) — form'dan
+            // UserId hidden input gelse bile bind edilmez. Route parametresi id'yi kullan.
             var input = BuildUserFormInput(user);
-            var result = await _userService.UpdateAsync(user.UserId, input);
+            var result = await _userService.UpdateAsync(id, input);
             if (result.Success)
             {
                 TempData["Message"] = result.Message;
                 TempData["MessageType"] = "success";
                 return RedirectToAction("Index", new { tab = "users" });
             }
+            user.UserId = id; // view'de "Pasif" gibi yanilticarengi state olusmasin
             var allRoles = await _context.Roles.AsNoTracking().Where(r => r.IsActive).OrderBy(r => r.Name).ToListAsync();
             return View(new AdminUserFormViewModel
             {
