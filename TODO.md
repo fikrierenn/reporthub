@@ -87,7 +87,9 @@ Bu liste 5 plan dosyasi (`plans/02-06`) + asagidaki FAZ 1-3 + son 5 journal'in y
 
 #### Orta (2-4h)
 - [ ] **G-09 · SP read-only login** ⚠️ CANLIYA CIKMADAN ZORUNLU (FAZ 2 madde 28.5)
-- [ ] **dashboard-builder.js split** (FAZ 2 madde 27) — 567 satir
+- [x] **dashboard-builder.js split** ✅ 4 Mayis 2026 audit — V1 monolithic dosya F-7 split'inde (commit serisi M-11) zaten 7 module bolundu (`dashboard-builder/{core,list,canvas,contract,drawer,preview,templates}.js`), tum modeller hard-limit 350 altinda. **Yeni asim**: `builder-v2/builder-drawer.js` 511 satir → ayri madde olarak eklendi (bkz Orta kategorisi).
+
+- [ ] **builder-v2/builder-drawer.js split** (yeni 4 Mayis 2026) — 511 satir, js-conventions hard-limit 350 asimi. Mantikli alt-modul: tablo Setup tab + hesaplı kolon form ayri dosyaya cikabilir. Alpine mixin pattern gerekli (component this scope korunacak).
 - [ ] **SP mimarisi · sp_PdksPano → inline TVF refactor** (FAZ 2 madde 21) — ADR-004 adayi
 - [ ] **M-10 Faz 4-6 · Named Result Contract** (FAZ 2 madde 29)
 - [ ] **DateTime Faz D · DB DEFAULT GETDATE → GETUTCDATE** (FAZ 2 madde 28)
@@ -187,7 +189,7 @@ Bu liste asagidakilerin sentezidir:
 24. **User P1 · User modeline Phone/Department/Position** (4h) — migration 16 + form alanlari.
 25. ✅ **M-03 Faz C · User.Roles kolon drop** — 4 Mayis 2026 tamamlandi. `Database/19_DropUserRolesCsv.sql` (idempotent), `User.Roles` field + EF mapping + pragma silindi. DB drop edildi.
 26. **ReportCatalog.AllowedRoles CSV deprecate** (1 gun) — ADR-004 adayi. ReportAllowedRole junction birincil, CSV kaldir.
-27. **dashboard-builder.js split** (2h) — dosya 567 satir (500 kirmizi cizgi). Mantikli split: `dashboard-builder-core.js` (state + render + events) + `dashboard-builder-forms.js` (component forms + validators).
+27. ✅ **dashboard-builder.js (V1) split** — 4 Mayis 2026 audit. F-7 modulerlestirmesinde zaten yapildi: `dashboard-builder/{core,list,canvas,contract,drawer,preview,templates}.js` (en buyuk 333 satir, hard-limit 350 altinda). Yeni gorev: `builder-v2/builder-drawer.js` 511 satir asimi (AKTIF SIRA Orta'da listelendi).
 28. ✅ **DateTime.Now → DateTime.UtcNow sweep (app kodu / ADR-006 Faz C)** — tum 19 usage UtcNow'a cevrildi. ADR-006 yazildi. Takip eden iki ayri is:
     - **Faz D · DB DEFAULT `GETDATE()` → `GETUTCDATE()`** (2-3h) — 14+ DEFAULT constraint (02_CreateTables.sql + Migrations/*). ALTER TABLE DROP CONSTRAINT + ADD CONSTRAINT migration + backup gerekli.
     - **Faz E · Veri shift + SP/seed hizalama** (yarim gun) — eski "naive-local" satirlari UtcNow ile hizala (tum tarih kolonlarinda `-180 dk`). SP'lerde `GETDATE()` → `GETUTCDATE()` audit. 03_SeedData.sql guncelleme. Backup/rollback plani sart.
