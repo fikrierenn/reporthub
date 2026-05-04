@@ -92,10 +92,6 @@ namespace ReportPanel.Models
                 entity.Property(e => e.PasswordHash).HasMaxLength(255).IsRequired();
                 entity.Property(e => e.FullName).HasMaxLength(100).IsRequired();
                 entity.Property(e => e.Email).HasMaxLength(100);
-                // M-03 Faz B: User.Roles CSV deprecate — nullable, [Obsolete]. Legacy okuma icin alan korunuyor.
-#pragma warning disable CS0618
-                entity.Property(e => e.Roles).HasMaxLength(200);
-#pragma warning restore CS0618
                 entity.Property(e => e.IsAdUser).HasDefaultValue(false);
                 entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETDATE()");
                 entity.Property(e => e.UpdatedAt).HasDefaultValueSql("GETDATE()");

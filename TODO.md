@@ -76,9 +76,9 @@ Bu liste 5 plan dosyasi (`plans/02-06`) + asagidaki FAZ 1-3 + son 5 journal'in y
 
 #### Küçük işler (~1h)
 - [ ] **F-03 · dashboard-builder.js memory leak** (FAZ 2 madde 19) — event delegation veya AbortController
-- [ ] **M-03 Faz C · User.Roles kolon drop** (FAZ 2 madde 25) — `16_DropUserRolesCsv.sql` + model field sil
-- [ ] **G-07 · Dashboard iframe policy review** (FAZ 3 madde 36)
-- [ ] **G-08 · DashboardRenderer JSON escape regresyon test** (FAZ 3 madde 37)
+- [x] **M-03 Faz C · User.Roles kolon drop** ✅ 4 Mayis 2026 — `Database/19_DropUserRolesCsv.sql` (idempotent), `User.Roles` field + EF mapping + pragma silindi. DB drop edildi, build/217 test yesil.
+- [x] **G-07 · Dashboard iframe policy review** ✅ audit tamamlandi (4 Mayis 2026): Run.cshtml `allow-scripts allow-downloads` ✓ (prod, same-origin yok). V2 preview iframe'leri (`EditReportV2`/`CreateReportV2`) `allow-same-origin` icerir — `07ccee8` commit'i tab tiklama bug fix gerekcesiyle, admin-only path icin kabul edilebilir risk. Follow-up: ileride iframe-ici tab switching srcdoc-ici JS ile sandbox-bagimsiz yapilirsa allow-same-origin kalkar.
+- [x] **G-08 · DashboardRenderer JSON escape regresyon test** ✅ zaten kapsanmış — `DashboardRendererTests.cs` 6 escape testi: `</script>` lower/upper/mixed-case + `<!--` + eval guard + data island
 - [ ] **Hesaplı kolon autocomplete** — SP preview kolonlarindan datalist (M-11 builder UX)
 - [ ] **M-02 son grep** (FAZ 1 kalan) — AuthController + servisler ex.Message leak
 - [ ] **F-02 admin override UI tamamla** (FAZ 1 yarim) — SP Onizle parametre override
@@ -185,7 +185,7 @@ Bu liste asagidakilerin sentezidir:
 22. **Dashboard canli onizleme iframe** (4h) — builder'da gercek render preview.
 23. **User P1 · Admin listesi arama + filtre + son giris** (1 gun) — admin user tab'a arama kutusu, rol/aktif/AD filtresi, LastLoginAt gosterimi.
 24. **User P1 · User modeline Phone/Department/Position** (4h) — migration 16 + form alanlari.
-25. **M-03 Faz C · User.Roles kolon drop** (30dk-1h) — `16_DropUserRolesCsv.sql` + model field sil. ADR-003 "cok sonra" — veri validation + Faz B'nin DB'de yayginlasmasi sonra.
+25. ✅ **M-03 Faz C · User.Roles kolon drop** — 4 Mayis 2026 tamamlandi. `Database/19_DropUserRolesCsv.sql` (idempotent), `User.Roles` field + EF mapping + pragma silindi. DB drop edildi.
 26. **ReportCatalog.AllowedRoles CSV deprecate** (1 gun) — ADR-004 adayi. ReportAllowedRole junction birincil, CSV kaldir.
 27. **dashboard-builder.js split** (2h) — dosya 567 satir (500 kirmizi cizgi). Mantikli split: `dashboard-builder-core.js` (state + render + events) + `dashboard-builder-forms.js` (component forms + validators).
 28. ✅ **DateTime.Now → DateTime.UtcNow sweep (app kodu / ADR-006 Faz C)** — tum 19 usage UtcNow'a cevrildi. ADR-006 yazildi. Takip eden iki ayri is:
@@ -249,8 +249,8 @@ Bu liste asagidakilerin sentezidir:
 33. **F-05 · Turkce UTF-8 normalize** (3h) — `turkish-ui-normalizer` skill'i ile tum "Duzenle"/"Bilesen" → "Düzenle"/"Bileşen".
 34. **F-06 · CSP politikasi** (1 gun) — opsiyonel; inline onclick/script temizle, header ekle.
 35. **Test coverage %30 hedefi** (1 hafta) — AdminController integration, ReportsController.Run, Admin SpPreview, PasswordHasher edge cases.
-36. **G-07 · Dashboard iframe policy sikisitirma** (30dk) — Referrer-policy + sandbox kombinasyonu gozden gecir.
-37. **G-08 · DashboardRenderer JSON escape regresyon testi** (1h) — `</script>`, `<!--`, case-insensitive bypass test.
+36. ✅ **G-07 · Dashboard iframe policy sikisitirma** — 4 Mayis 2026 audit. Run.cshtml temiz; V2 preview iframe'leri `allow-same-origin` icerir (07ccee8 tab bug fix), admin-only kabul edilebilir risk. Detay: AKTIF SIRA.
+37. ✅ **G-08 · DashboardRenderer JSON escape regresyon testi** — `DashboardRendererTests.cs` zaten 6 escape testi içeriyor (lower/upper/mixed `</script>` + `<!--` + eval guard + data island). 4 Mayıs 2026 audit.
 38. **ADR yazimi** (1h) — ADR-001 data-access, ADR-002 dashboard-architecture. (ADR-003 role-model ✅ yazildi 22 Nisan, ADR-004 skill-design ✅ yazildi 22 Nisan.)
 41. **PLAN 05 (potansiyel) — Scheduled Reports + Email Delivery** (kullanici 28 Nisan 2026 oturum 4: "sisteme cron job ekleyip raporlari mail olarak belirlenen zamanda gonderme sansimiz olabilir mi") — Tier 3, R refactor + Plan 04 sonrasi.
    - **Yol**: Hangfire (cron + dashboard + persistence) + MailKit (SMTP). Vanilla BackgroundService + Cronos alternatif (minimal).

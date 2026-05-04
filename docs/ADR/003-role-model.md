@@ -47,11 +47,13 @@ Bu iki yapı yan yana yaşamaya başladı:
 - `Models/User.Roles` alanına `[Obsolete]` işaret konur, model consumer kalmadığından rahat.
 - Opsiyonel: mevcut CSV verilerinden UserRole junction doluluğunu doğrulayan bir migration check scripti çalıştırılır, eksik olan kullanıcılar log'lanır.
 
-### Faz C — Kolonu drop + model field sil (çok sonra, rollback uzun)
+### Faz C — Kolonu drop + model field sil ✅ TAMAMLANDI (4 Mayıs 2026)
 
-- `Database/16_DropUserRolesCsv.sql`: `ALTER TABLE Users DROP COLUMN Roles;`
-- `Models/User` sınıfından `Roles` alanı silinir.
-- Bu noktada kodda tek bir `user.Roles` kalmamalıdır; güvenlik için repo grep + regresyon test şart.
+- `Database/19_DropUserRolesCsv.sql` (idempotent, default constraint handler dahil): `ALTER TABLE Users DROP COLUMN Roles;` çalıştırıldı.
+- `Models/User.Roles` field + `[Obsolete]` attribute + summary comment silindi.
+- `ReportPanelContext` `entity.Property(e => e.Roles).HasMaxLength(200)` mapping ve `#pragma warning disable CS0618` blokları temizlendi.
+- `UserManagementService.cs` create entity init etrafındaki pragma disable/restore satırları silindi.
+- Build temiz, 217 test yeşil. Kod tarafında `user.Roles` referansı kalmadı.
 
 ## Alternatifler
 
