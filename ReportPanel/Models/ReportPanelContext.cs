@@ -20,6 +20,7 @@ namespace ReportPanel.Models
         public DbSet<ReportCategoryLink> ReportCategoryLinks { get; set; }
         public DbSet<ReportAllowedRole> ReportAllowedRoles { get; set; }
         public DbSet<UserDataFilter> UserDataFilters { get; set; }
+        public DbSet<FilterDefinition> FilterDefinitions { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -206,6 +207,27 @@ namespace ReportPanel.Models
                     .WithMany()
                     .HasForeignKey(e => e.ReportId)
                     .OnDelete(DeleteBehavior.SetNull);
+            });
+
+            // FilterDefinition configuration (Plan 07 Faz 2 — master tablo, Migration 20)
+            modelBuilder.Entity<FilterDefinition>(entity =>
+            {
+                entity.ToTable("FilterDefinition");
+                entity.HasKey(e => e.FilterDefinitionId);
+                entity.Property(e => e.FilterKey).HasMaxLength(50).IsRequired();
+                entity.Property(e => e.Label).HasMaxLength(100).IsRequired();
+                entity.Property(e => e.Scope).HasMaxLength(20).IsRequired();
+                entity.Property(e => e.DataSourceKey).HasMaxLength(50);
+                entity.Property(e => e.IsActive).HasDefaultValue(true);
+                entity.Property(e => e.DisplayOrder).HasDefaultValue(0);
+                entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETDATE()");
+
+                entity.HasIndex(e => e.FilterKey).IsUnique();
+
+                entity.HasOne(e => e.DataSource)
+                    .WithMany()
+                    .HasForeignKey(e => e.DataSourceKey)
+                    .OnDelete(DeleteBehavior.Restrict);
             });
 
             base.OnModelCreating(modelBuilder);
