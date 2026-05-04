@@ -91,8 +91,8 @@ Bu liste 5 plan dosyasi (`plans/02-06`) + asagidaki FAZ 1-3 + son 5 journal'in y
 - [ ] **SP mimarisi · sp_PdksPano → inline TVF refactor** (FAZ 2 madde 21) — ADR-004 adayi
 - [ ] **M-10 Faz 4-6 · Named Result Contract** (FAZ 2 madde 29)
 - [ ] **DateTime Faz D · DB DEFAULT GETDATE → GETUTCDATE** (FAZ 2 madde 28)
-- [ ] **M-08 Async tutarlilik** (FAZ 3 madde 31)
-- [ ] **M-09 AsNoTracking sweep** (FAZ 3 madde 32)
+- [x] **M-08 Async tutarlilik** ✅ 4 Mayis 2026 — `AdminController.CreateUser` GET sync→async (DB hit'li tek sync action; .ToList()→.ToListAsync()). Diger sync action'larda DB hit yok.
+- [x] **M-09 AsNoTracking sweep** ✅ 4 Mayis 2026 — Read-only EF query'lerde AsNoTracking eklendi: AdminController/Index (5 query), AdminController/CreateUser/EditReport/EditUser/BuildCreateUserFormAsync (8 query), TestController/Index (1 query). Write-track gerektiren `RoleManagementService.PropagateRename`/`UpdateLastLogin`/`Profile.Index` POST'ta dokunulmadi.
 - [ ] **M-07 ViewModel BindNever + DTO** (FAZ 3 madde 30)
 - [x] **Dashboard P0 · Config deserialize try/catch** ✅ 4 Mayis 2026 audit — Run path zaten tam kapsanmis (line 591-612: try/catch + `dashboard_config_invalid` audit + bos template fallback + kullanici uyarisi). PreviewDashboardV2'ye de paralel audit eklendi (tutarlilik).
 - [x] **Dashboard P1 · Result set index validation** ✅ 4 Mayis 2026 audit — Save zamani validator negatif kontrol (`DashboardConfigValidator.cs:228`), Render zamani `DashboardConfig.ResolveResultSet` out-of-bounds → PlaceholderRenderer fallback. 6 `ResolveResultSet_*` testi coverage saglar.

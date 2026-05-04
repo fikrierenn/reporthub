@@ -64,16 +64,17 @@ namespace ReportPanel.Controllers
                 ActiveTab = tab,
                 Message = TempData["Message"]?.ToString() ?? "",
                 MessageType = TempData["MessageType"]?.ToString() ?? "",
-                DataSources = await _context.DataSources.OrderBy(d => d.DataSourceKey).ToListAsync(),
+                DataSources = await _context.DataSources.AsNoTracking().OrderBy(d => d.DataSourceKey).ToListAsync(),
                 Reports = await _context.ReportCatalog
+                    .AsNoTracking()
                     .Include(r => r.DataSource)
                     .Include(r => r.ReportCategories)
                         .ThenInclude(rc => rc.Category)
                     .OrderBy(r => r.ReportId)
                     .ToListAsync(),
-                Users = await _context.Users.OrderBy(u => u.Username).ToListAsync(),
-                Roles = await _context.Roles.OrderBy(r => r.Name).ToListAsync(),
-                Categories = await _context.ReportCategories.OrderBy(c => c.Name).ToListAsync()
+                Users = await _context.Users.AsNoTracking().OrderBy(u => u.Username).ToListAsync(),
+                Roles = await _context.Roles.AsNoTracking().OrderBy(r => r.Name).ToListAsync(),
+                Categories = await _context.ReportCategories.AsNoTracking().OrderBy(c => c.Name).ToListAsync()
             };
 
             // M-03 Faz B: user -> rol isimleri UserRole junction'dan (deprecate User.Roles CSV yerine).
@@ -414,7 +415,7 @@ namespace ReportPanel.Controllers
             try
             {
                 // Tum veri kaynaklarini kontrol et
-                var allDataSources = await _context.DataSources.ToListAsync();
+                var allDataSources = await _context.DataSources.AsNoTracking().ToListAsync();
                 var activeDataSources = allDataSources.Where(d => d.IsActive).ToList();
                 var roles = await _context.Roles
                     .AsNoTracking()
@@ -526,7 +527,7 @@ namespace ReportPanel.Controllers
                 return RedirectToAction("Index", new { tab = "reports" });
             }
 
-            var dataSources = await _context.DataSources.Where(d => d.IsActive).ToListAsync();
+            var dataSources = await _context.DataSources.AsNoTracking().Where(d => d.IsActive).ToListAsync();
             var roles = await _context.Roles
                 .AsNoTracking()
                 .Where(r => r.IsActive)
@@ -586,9 +587,9 @@ namespace ReportPanel.Controllers
         // Referans placeholder — asagidaki bloklar ayri actions'in bitimini mulayim tutmak icin.
         private async Task<AdminReportFormViewModel> BuildReportFormViewModel(ReportCatalog report, ReportFormInput input, string message)
         {
-            var dataSources = await _context.DataSources.Where(d => d.IsActive).ToListAsync();
-            var roles = await _context.Roles.Where(r => r.IsActive).OrderBy(r => r.Name).ToListAsync();
-            var categories = await _context.ReportCategories.Where(c => c.IsActive).OrderBy(c => c.Name).ToListAsync();
+            var dataSources = await _context.DataSources.AsNoTracking().Where(d => d.IsActive).ToListAsync();
+            var roles = await _context.Roles.AsNoTracking().Where(r => r.IsActive).OrderBy(r => r.Name).ToListAsync();
+            var categories = await _context.ReportCategories.AsNoTracking().Where(c => c.IsActive).OrderBy(c => c.Name).ToListAsync();
             return new AdminReportFormViewModel
             {
                 Report = report,
@@ -603,18 +604,18 @@ namespace ReportPanel.Controllers
         }
 
         [Route("Admin/CreateUser")]
-        public IActionResult CreateUser()
+        public async Task<IActionResult> CreateUser()
         {
-            var roles = _context.Roles
+            var roles = await _context.Roles
                 .AsNoTracking()
                 .Where(r => r.IsActive)
                 .OrderBy(r => r.Name)
-                .ToList();
-            var dataSources = _context.DataSources
+                .ToListAsync();
+            var dataSources = await _context.DataSources
                 .AsNoTracking()
                 .Where(ds => ds.IsActive)
                 .OrderBy(ds => ds.Title)
-                .ToList();
+                .ToListAsync();
             return View(new AdminUserFormViewModel
             {
                 User = new User { IsActive = true },
@@ -692,7 +693,7 @@ namespace ReportPanel.Controllers
                 TempData["MessageType"] = "success";
                 return RedirectToAction("Index", new { tab = "users" });
             }
-            var allRoles = await _context.Roles.Where(r => r.IsActive).OrderBy(r => r.Name).ToListAsync();
+            var allRoles = await _context.Roles.AsNoTracking().Where(r => r.IsActive).OrderBy(r => r.Name).ToListAsync();
             return View(new AdminUserFormViewModel
             {
                 User = user,
@@ -894,8 +895,8 @@ namespace ReportPanel.Controllers
 
         private async Task<AdminUserFormViewModel> BuildCreateUserFormAsync(User user, HashSet<int> selectedRoleIds, string message, string messageType)
         {
-            var roles = await _context.Roles.Where(r => r.IsActive).OrderBy(r => r.Name).ToListAsync();
-            var dataSources = await _context.DataSources.Where(ds => ds.IsActive).OrderBy(ds => ds.Title).ToListAsync();
+            var roles = await _context.Roles.AsNoTracking().Where(r => r.IsActive).OrderBy(r => r.Name).ToListAsync();
+            var dataSources = await _context.DataSources.AsNoTracking().Where(ds => ds.IsActive).OrderBy(ds => ds.Title).ToListAsync();
             // Form tarafindan gonderilen filtreleri geri yukle ki kullanici kayip hissetmesin
             var filterKeys = Request.Form["FilterKeys"].ToArray();
             var filterValues = Request.Form["FilterValues"].ToArray();
