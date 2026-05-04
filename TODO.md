@@ -75,14 +75,14 @@ Bu liste 5 plan dosyasi (`plans/02-06`) + asagidaki FAZ 1-3 + son 5 journal'in y
 - [ ] **NotebookLM re-login** — kullanici terminalde: `D:/Dev/reporthub/.venv/notebooklm/Scripts/notebooklm.exe login`
 
 #### Küçük işler (~1h)
-- [ ] **F-03 · dashboard-builder.js memory leak** (FAZ 2 madde 19) — event delegation veya AbortController
+- [x] **F-03 · dashboard-builder.js memory leak** ✅ 4 Mayis 2026 audit — F-7 modul split sirasinda zaten cozulmus: `builder-list.js:71` `attachDragDrop()` parent container'a tek listener (delegation) + `dragDropBound` guard re-attach'i engelliyor. js-conventions.md "Memory leak uyarisi" cozumu uygulanmis durumda.
 - [x] **M-03 Faz C · User.Roles kolon drop** ✅ 4 Mayis 2026 — `Database/19_DropUserRolesCsv.sql` (idempotent), `User.Roles` field + EF mapping + pragma silindi. DB drop edildi, build/217 test yesil.
 - [x] **G-07 · Dashboard iframe policy review** ✅ audit tamamlandi (4 Mayis 2026): Run.cshtml `allow-scripts allow-downloads` ✓ (prod, same-origin yok). V2 preview iframe'leri (`EditReportV2`/`CreateReportV2`) `allow-same-origin` icerir — `07ccee8` commit'i tab tiklama bug fix gerekcesiyle, admin-only path icin kabul edilebilir risk. Follow-up: ileride iframe-ici tab switching srcdoc-ici JS ile sandbox-bagimsiz yapilirsa allow-same-origin kalkar.
 - [x] **G-08 · DashboardRenderer JSON escape regresyon test** ✅ zaten kapsanmış — `DashboardRendererTests.cs` 6 escape testi: `</script>` lower/upper/mixed-case + `<!--` + eval guard + data island
 - [ ] **Hesaplı kolon autocomplete** — SP preview kolonlarindan datalist (M-11 builder UX)
 - [ ] **M-02 son grep** (FAZ 1 kalan) — AuthController + servisler ex.Message leak
 - [ ] **F-02 admin override UI tamamla** (FAZ 1 yarim) — SP Onizle parametre override
-- [ ] **ADR-001 + ADR-002 yazimi** (FAZ 3 madde 38) — data-access + dashboard-architecture
+- [x] **ADR-001 yazimi** ✅ 4 Mayis 2026 — `docs/ADR/001-data-access.md` (SP rapor/dashboard + EF metadata hibrit, Dapper red, inline TVF reuse). ADR-002 zaten ADR-005 olarak yazili (dashboard-architecture).
 - [ ] **ReportParamValidator Run path kök fix** — `{"fields":[...]}` parse Run yolunda (PreviewDashboardV2'de cozuldu, Run karsiligi)
 
 #### Orta (2-4h)
@@ -179,7 +179,7 @@ Bu liste asagidakilerin sentezidir:
 16. ✅ **G-05 · Cookie HttpOnly/Secure/SameSite/ExpireTimeSpan** — commit `fdc97ca`. Program.cs AddCookie.
 17. ✅ **G-06 · TestController [Authorize(Roles="admin")] + [ValidateAntiForgeryToken]** — commit `fdc97ca` (G-05 ile birlesik).
 18. ✅ **M-05 · DashboardHtml legacy retirement** — 3 faz tamamlandi: Faz A (CSV kaldir ~ ADR-005), Faz B (`a2feb5d`) legacy retirement + audit event, Faz C (`0f73478`) DB DROP COLUMN + model sil. Migration `17_DropDashboardHtml.sql`, ADR-005.
-19. **F-03 · dashboard-builder.js memory leak** (1h) — event delegation veya AbortController. Drag-drop listener re-attach sorunu. **Siradaki is — 23 Nisan ilk.**
+19. ✅ **F-03 · dashboard-builder.js memory leak** — 4 Mayis 2026 audit. F-7 split sirasinda cozulmus: `builder-list.js:71` event delegation + `dragDropBound` guard. js-conventions.md cozumu uygulanmis.
 20. ✅ **F-04 · AGENT.md yaniltici icerik** — commit `7a7b81d` (silindi).
 21. **SP mimarisi · sp_PdksPano → inline TVF refactor** (3h) — `fn_PdksDetay`, `fn_PdksKpiOzet`, `fn_PdksDepartmanKirilim` + orkestrator SP. ADR-004.
 22. **Dashboard canli onizleme iframe** (4h) — builder'da gercek render preview.
@@ -251,7 +251,7 @@ Bu liste asagidakilerin sentezidir:
 35. **Test coverage %30 hedefi** (1 hafta) — AdminController integration, ReportsController.Run, Admin SpPreview, PasswordHasher edge cases.
 36. ✅ **G-07 · Dashboard iframe policy sikisitirma** — 4 Mayis 2026 audit. Run.cshtml temiz; V2 preview iframe'leri `allow-same-origin` icerir (07ccee8 tab bug fix), admin-only kabul edilebilir risk. Detay: AKTIF SIRA.
 37. ✅ **G-08 · DashboardRenderer JSON escape regresyon testi** — `DashboardRendererTests.cs` zaten 6 escape testi içeriyor (lower/upper/mixed `</script>` + `<!--` + eval guard + data island). 4 Mayıs 2026 audit.
-38. **ADR yazimi** (1h) — ADR-001 data-access, ADR-002 dashboard-architecture. (ADR-003 role-model ✅ yazildi 22 Nisan, ADR-004 skill-design ✅ yazildi 22 Nisan.)
+38. ✅ **ADR yazimi** — ADR-001 data-access ✅ (4 Mayis 2026, `docs/ADR/001-data-access.md`). ADR-002 dashboard-architecture zaten ADR-005 olarak yazildi (22 Nisan). ADR-003 role-model + ADR-004 skill-design ✅ 22 Nisan.
 41. **PLAN 05 (potansiyel) — Scheduled Reports + Email Delivery** (kullanici 28 Nisan 2026 oturum 4: "sisteme cron job ekleyip raporlari mail olarak belirlenen zamanda gonderme sansimiz olabilir mi") — Tier 3, R refactor + Plan 04 sonrasi.
    - **Yol**: Hangfire (cron + dashboard + persistence) + MailKit (SMTP). Vanilla BackgroundService + Cronos alternatif (minimal).
    - **Schema**: `ScheduledReport` (Id, ReportId, CronExpression, Recipients, Format html/xlsx, IsActive, NextRunAt, LastRunAt). Migration `18_CreateScheduledReports.sql`.
