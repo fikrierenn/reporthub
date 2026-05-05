@@ -2,9 +2,9 @@ using ReportPanel.Models;
 
 namespace ReportPanel.ViewModels
 {
-    public class AdminCategoryFormViewModel
+    public class AdminGroupFormViewModel
     {
-        public ReportCategory Category { get; set; } = new ReportCategory();
+        public ReportGroup Group { get; set; } = new ReportGroup();
         public string Message { get; set; } = "";
         public string MessageType { get; set; } = "";
     }

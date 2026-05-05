@@ -15,7 +15,7 @@ if (builder.Environment.IsDevelopment())
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ReportPanel.Services.AuditLogService>();
 builder.Services.AddScoped<ReportPanel.Services.UserRoleSyncService>();
-builder.Services.AddScoped<ReportPanel.Services.CategoryManagementService>();
+builder.Services.AddScoped<ReportPanel.Services.ReportGroupService>();
 builder.Services.AddScoped<ReportPanel.Services.RoleManagementService>();
 builder.Services.AddScoped<ReportPanel.Services.DataSourceManagementService>();
 builder.Services.AddScoped<ReportPanel.Services.ReportManagementService>();

@@ -7,8 +7,8 @@
     var dataSources = Model.DataSources ?? new List<ReportPanel.Models.DataSource>();
     var availableRoles = Model.AvailableRoles ?? new List<ReportPanel.Models.Role>();
     var selectedRoleIds = Model.SelectedRoleIds ?? new HashSet<int>();
-    var availableCategories = Model.AvailableCategories ?? new List<ReportPanel.Models.ReportCategory>();
-    var selectedCategoryIds = Model.SelectedCategoryIds ?? new HashSet<int>();
+    var availableGroups = Model.AvailableGroups ?? new List<ReportPanel.Models.ReportGroup>();
+    var selectedGroupIds = Model.SelectedGroupIds ?? new HashSet<int>();
 }
 
 @section Head {
@@ -59,9 +59,9 @@ window.__availableDataSources = @Html.Raw(System.Text.Json.JsonSerializer.Serial
     {
         <input type="hidden" name="SelectedRoles" value="@rid" />
     }
-    @foreach (var cid in selectedCategoryIds)
+    @foreach (var gid in selectedGroupIds)
     {
-        <input type="hidden" name="SelectedCategories" value="@cid" />
+        <input type="hidden" name="SelectedGroups" value="@gid" />
     }
     <textarea name="DashboardConfigJson" id="DashboardConfigJson" class="hidden" style="display:none;">@Model.Report.DashboardConfigJson</textarea>
 </form>

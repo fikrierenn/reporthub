@@ -80,10 +80,10 @@ public class FilterOptionsServiceTests
             Scope = FilterDefinition.ScopeReportAccess,
             IsActive = true
         });
-        ctx.ReportCategories.AddRange(
-            new ReportCategory { CategoryId = 1, Name = "Zenith", IsActive = true, CreatedAt = DateTime.UtcNow },
-            new ReportCategory { CategoryId = 2, Name = "Alpha", IsActive = true, CreatedAt = DateTime.UtcNow },
-            new ReportCategory { CategoryId = 3, Name = "Beta_Inactive", IsActive = false, CreatedAt = DateTime.UtcNow }
+        ctx.ReportGroups.AddRange(
+            new ReportGroup { GroupId = 1, Name = "Zenith", IsActive = true, CreatedAt = DateTime.UtcNow },
+            new ReportGroup { GroupId = 2, Name = "Alpha", IsActive = true, CreatedAt = DateTime.UtcNow },
+            new ReportGroup { GroupId = 3, Name = "Beta_Inactive", IsActive = false, CreatedAt = DateTime.UtcNow }
         );
         await ctx.SaveChangesAsync();
         var svc = NewService(ctx);

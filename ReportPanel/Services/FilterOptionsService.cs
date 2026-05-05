@@ -7,7 +7,7 @@ namespace ReportPanel.Services;
 /// <summary>
 /// Plan 07 Faz 3 — DB-driven filter options.
 /// FilterDefinition (master) lookup + Scope'a gore kaynak:
-/// - reportAccess: NativeSources registry (kod-side, type-safe EF — orn. raporKategori → ReportCategories)
+/// - reportAccess: NativeSources registry (kod-side, type-safe EF — orn. raporGrubu → ReportGroups)
 /// - spInjection: FilterDefinition.DataSourceKey + OptionsQuery (admin yazar, IsSafeOptionsQuery ile dogrulanir, exec)
 /// </summary>
 public class FilterOptionsService
@@ -17,9 +17,9 @@ public class FilterOptionsService
 
     private static readonly Dictionary<string, Func<ReportPanelContext, Task<List<FilterOption>>>> NativeSources = new()
     {
-        ["raporGrubu"] = async ctx => await ctx.ReportCategories
+        ["raporGrubu"] = async ctx => await ctx.ReportGroups
             .AsNoTracking().Where(c => c.IsActive).OrderBy(c => c.Name)
-            .Select(c => new FilterOption(c.CategoryId.ToString(), c.Name))
+            .Select(c => new FilterOption(c.GroupId.ToString(), c.Name))
             .ToListAsync()
     };
 

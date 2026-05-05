@@ -40,8 +40,8 @@ window.__reportMeta = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(new {
     paramSchemaJson = Model.Report.ParamSchemaJson ?? string.Empty,
     availableRoles = (Model.AvailableRoles ?? new()).Select(r => new { id = r.RoleId, name = r.Name }),
     selectedRoleIds = Model.SelectedRoleIds ?? new HashSet<int>(),
-    availableCategories = (Model.AvailableCategories ?? new()).Select(c => new { id = c.CategoryId, name = c.Name }),
-    selectedCategoryIds = Model.SelectedCategoryIds ?? new HashSet<int>()
+    availableGroups = (Model.AvailableGroups ?? new()).Select(c => new { id = c.GroupId, name = c.Name }),
+    selectedGroupIds = Model.SelectedGroupIds ?? new HashSet<int>()
 }));
 window.__availableDataSources = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
     (Model.DataSources ?? new()).Where(d => d.IsActive).Select(d => new { key = d.DataSourceKey, title = d.Title })));
@@ -51,7 +51,7 @@ window.__availableDataSources = @Html.Raw(System.Text.Json.JsonSerializer.Serial
       x-data="{}" x-on:input="$store.builder.dirty = true">
     @Html.AntiForgeryToken()
     <input type="hidden" name="ReportId" value="@Model.Report.ReportId" />
-    @* Description, IsActive, Roles, Categories → Alpine reactive hidden input'lar builder-v2 div'inde *@
+    @* Description, IsActive, Roles, Groups → Alpine reactive hidden input'lar builder-v2 div'inde *@
     <textarea name="DashboardConfigJson" id="DashboardConfigJson" style="display:none;">@Model.Report.DashboardConfigJson</textarea>
 </form>
 
@@ -80,8 +80,8 @@ window.__availableDataSources = @Html.Raw(System.Text.Json.JsonSerializer.Serial
     <template x-for="rid in selectedRoleIds" :key="rid">
         <input type="hidden" name="SelectedRoles" form="reportEditFormV2" :value="rid" />
     </template>
-    <template x-for="cid in selectedCategoryIds" :key="cid">
-        <input type="hidden" name="SelectedCategories" form="reportEditFormV2" :value="cid" />
+    <template x-for="gid in selectedGroupIds" :key="gid">
+        <input type="hidden" name="SelectedGroups" form="reportEditFormV2" :value="gid" />
     </template>
 
     @* SOL: PALETTE *@
@@ -707,15 +707,15 @@ window.__availableDataSources = @Html.Raw(System.Text.Json.JsonSerializer.Serial
                     </div>
                 </template>
 
-                <template x-if="availableCategories.length > 0">
+                <template x-if="availableGroups.length > 0">
                     <div class="field">
-                        <label class="lab">Kategoriler</label>
+                        <label class="lab">Gruplar</label>
                         <div style="display:flex; flex-direction:column; gap:4px; max-height:140px; overflow-y:auto; padding:6px 8px; border:1px solid var(--line); border-radius:6px; background:var(--paper);">
-                            <template x-for="cat in availableCategories" :key="cat.id">
+                            <template x-for="grp in availableGroups" :key="grp.id">
                                 <label style="display:flex; align-items:center; gap:6px; font-size:12px; cursor:pointer;">
-                                    <input type="checkbox" :checked="selectedCategoryIds.includes(cat.id)"
-                                           x-on:change="toggleCategory(cat.id)" />
-                                    <span x-text="cat.name"></span>
+                                    <input type="checkbox" :checked="selectedGroupIds.includes(grp.id)"
+                                           x-on:change="toggleGroup(grp.id)" />
+                                    <span x-text="grp.name"></span>
                                 </label>
                             </template>
                         </div>

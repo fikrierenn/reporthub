@@ -55,17 +55,17 @@ namespace ReportPanel.Controllers
             .Distinct()
             .ToArray();
 
-        public async Task<IActionResult> Index(int? reportId, string? q, string? category)
+        public async Task<IActionResult> Index(int? reportId, string? q, string? group)
         {
-            var context = await BuildReportsContext(reportId, q, category);
+            var context = await BuildReportsContext(reportId, q, group);
             var model = new ReportsIndexViewModel
             {
                 UserRoles = context.UserRoles,
                 Reports = context.Reports,
                 FavoriteReportIds = context.FavoriteReportIds,
-                Categories = context.Categories,
+                Groups = context.Groups,
                 SearchTerm = context.SearchTerm,
-                SelectedCategory = context.SelectedCategory
+                SelectedGroup = context.SelectedGroup
             };
             return View(model);
         }
@@ -184,7 +184,7 @@ namespace ReportPanel.Controllers
                 .ToListAsync();
         }
 
-        private async Task<ReportsContext> BuildReportsContext(int? reportId, string? searchTerm, string? category)
+        private async Task<ReportsContext> BuildReportsContext(int? reportId, string? searchTerm, string? group)
         {
             var userRoleIds = await GetCurrentUserRoleIds();
 
@@ -192,8 +192,8 @@ namespace ReportPanel.Controllers
                 .Include(r => r.DataSource)
                 .Include(r => r.ReportAllowedRoles)
                     .ThenInclude(ar => ar.Role)
-                .Include(r => r.ReportCategories)
-                    .ThenInclude(rc => rc.Category)
+                .Include(r => r.ReportGroups)
+                    .ThenInclude(rg => rg.Group)
                 .Where(r => r.IsActive && r.DataSource != null && r.DataSource.IsActive);
 
             if (userRoleIds.Count > 0)
@@ -208,7 +208,7 @@ namespace ReportPanel.Controllers
 
             // Plan 07 Faz 7: raporGrubu reportAccess filtresi (önceki ad: raporKategori, urunKategori ile çakışıyordu).
             // Aktif (NULL, raporGrubu) FilterDefinition varsa kullanıcının atanmış kategori ID'leri ile filter.
-            // FilterValue='*' magic = tümü, concrete CategoryId = sadece o kategoriler, 0 kayıt = deny (bos liste).
+            // FilterValue='*' magic = tümü, concrete GroupId = sadece o gruplar, 0 kayıt = deny (boş liste).
             if (CurrentUserId.HasValue)
             {
                 var raporKategoriActive = await _context.FilterDefinitions
@@ -230,20 +230,20 @@ namespace ReportPanel.Controllers
                     var hasStar = raporKategoriFilters.Contains("*");
                     if (!hasStar)
                     {
-                        var allowedCategoryIds = raporKategoriFilters
+                        var allowedGroupIds = raporKategoriFilters
                             .Select(v => int.TryParse(v, out var i) ? (int?)i : null)
                             .Where(x => x.HasValue)
                             .Select(x => x!.Value)
                             .ToHashSet();
 
-                        if (allowedCategoryIds.Count == 0)
+                        if (allowedGroupIds.Count == 0)
                         {
                             accessibleReportsQuery = accessibleReportsQuery.Where(r => false);
                         }
                         else
                         {
                             accessibleReportsQuery = accessibleReportsQuery
-                                .Where(r => r.ReportCategories.Any(rc => allowedCategoryIds.Contains(rc.CategoryId)));
+                                .Where(r => r.ReportGroups.Any(rg => allowedGroupIds.Contains(rg.GroupId)));
                         }
                     }
                     // hasStar=true → tümü görünür, ek filter yok
@@ -254,15 +254,15 @@ namespace ReportPanel.Controllers
                 .OrderBy(r => r.Title)
                 .ToListAsync();
 
-            var categories = accessibleReports
-                .SelectMany(r => r.ReportCategories.Select(rc => rc.Category?.Name ?? ""))
+            var groups = accessibleReports
+                .SelectMany(r => r.ReportGroups.Select(rg => rg.Group?.Name ?? ""))
                 .Where(c => !string.IsNullOrWhiteSpace(c))
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .OrderBy(c => c)
                 .ToList();
 
             var normalizedSearch = (searchTerm ?? "").Trim();
-            var normalizedCategory = (category ?? "").Trim();
+            var normalizedGroup = (group ?? "").Trim();
 
             if (!string.IsNullOrWhiteSpace(normalizedSearch))
             {
@@ -271,17 +271,17 @@ namespace ReportPanel.Controllers
                     .Where(r =>
                         (r.Title ?? "").ToLowerInvariant().Contains(term) ||
                         (r.Description ?? "").ToLowerInvariant().Contains(term) ||
-                        r.ReportCategories.Any(rc => (rc.Category?.Name ?? "").ToLowerInvariant().Contains(term)) ||
+                        r.ReportGroups.Any(rg => (rg.Group?.Name ?? "").ToLowerInvariant().Contains(term)) ||
                         (r.DataSource?.Title ?? "").ToLowerInvariant().Contains(term) ||
                         (r.DataSourceKey ?? "").ToLowerInvariant().Contains(term))
                     .ToList();
             }
 
-            if (!string.IsNullOrWhiteSpace(normalizedCategory))
+            if (!string.IsNullOrWhiteSpace(normalizedGroup))
             {
                 accessibleReports = accessibleReports
-                    .Where(r => r.ReportCategories.Any(rc =>
-                        string.Equals(rc.Category?.Name?.Trim(), normalizedCategory, StringComparison.OrdinalIgnoreCase)))
+                    .Where(r => r.ReportGroups.Any(rg =>
+                        string.Equals(rg.Group?.Name?.Trim(), normalizedGroup, StringComparison.OrdinalIgnoreCase)))
                     .ToList();
             }
 
@@ -297,7 +297,7 @@ namespace ReportPanel.Controllers
 
             accessibleReports = accessibleReports
                 .OrderByDescending(r => favoriteIds.Contains(r.ReportId))
-                .ThenBy(r => r.ReportCategories.FirstOrDefault()?.Category?.Name ?? "")
+                .ThenBy(r => r.ReportGroups.FirstOrDefault()?.Group?.Name ?? "")
                 .ThenBy(r => r.Title)
                 .ToList();
 
@@ -313,9 +313,9 @@ namespace ReportPanel.Controllers
                 UserRoles = CurrentUserRoles,
                 Reports = accessibleReports,
                 FavoriteReportIds = favoriteIds,
-                Categories = categories,
+                Groups = groups,
                 SearchTerm = normalizedSearch,
-                SelectedCategory = normalizedCategory,
+                SelectedGroup = normalizedGroup,
                 SelectedReport = selectedReport,
                 ParamFields = selectedReport != null
                     ? ReportParamValidator.ParseSchema(selectedReport.ParamSchemaJson)
@@ -329,9 +329,9 @@ namespace ReportPanel.Controllers
             public string[] UserRoles { get; set; } = Array.Empty<string>();
             public List<ReportCatalog> Reports { get; set; } = new();
             public HashSet<int> FavoriteReportIds { get; set; } = new();
-            public List<string> Categories { get; set; } = new();
+            public List<string> Groups { get; set; } = new();
             public string SearchTerm { get; set; } = "";
-            public string SelectedCategory { get; set; } = "";
+            public string SelectedGroup { get; set; } = "";
             public ReportCatalog? SelectedReport { get; set; }
             public List<ReportParamField> ParamFields { get; set; } = new();
         }

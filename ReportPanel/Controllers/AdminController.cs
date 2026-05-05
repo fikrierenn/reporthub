@@ -21,7 +21,7 @@ namespace ReportPanel.Controllers
     //                                       BuildReportFormViewModel
     //   - AdminController.Users.cs        : CreateUser G+P, EditUser G+P,
     //                                       BuildUserFormInput, BuildCreateUserFormAsync
-    //   - AdminController.RolesCategories.cs : EditRole G+P, EditCategory G+P
+    //   - AdminController.RolesGroups.cs : EditRole G+P, EditGroup G+P
     [Authorize(Roles = "admin")]
     public partial class AdminController : Controller
     {
@@ -29,7 +29,7 @@ namespace ReportPanel.Controllers
         private readonly AuditLogService _auditLog;
         private readonly IConfiguration _configuration;
         private readonly UserRoleSyncService _userRoleSync;
-        private readonly CategoryManagementService _categoryService;
+        private readonly ReportGroupService _groupService;
         private readonly RoleManagementService _roleService;
         private readonly DataSourceManagementService _dataSourceService;
         private readonly ReportManagementService _reportService;
@@ -43,7 +43,7 @@ namespace ReportPanel.Controllers
             AuditLogService auditLog,
             IConfiguration configuration,
             UserRoleSyncService userRoleSync,
-            CategoryManagementService categoryService,
+            ReportGroupService groupService,
             RoleManagementService roleService,
             DataSourceManagementService dataSourceService,
             ReportManagementService reportService,
@@ -56,7 +56,7 @@ namespace ReportPanel.Controllers
             _auditLog = auditLog;
             _configuration = configuration;
             _userRoleSync = userRoleSync;
-            _categoryService = categoryService;
+            _groupService = groupService;
             _roleService = roleService;
             _dataSourceService = dataSourceService;
             _reportService = reportService;
@@ -82,13 +82,13 @@ namespace ReportPanel.Controllers
                 Reports = await _context.ReportCatalog
                     .AsNoTracking()
                     .Include(r => r.DataSource)
-                    .Include(r => r.ReportCategories)
-                        .ThenInclude(rc => rc.Category)
+                    .Include(r => r.ReportGroups)
+                        .ThenInclude(rg => rg.Group)
                     .OrderBy(r => r.ReportId)
                     .ToListAsync(),
                 Users = await _context.Users.AsNoTracking().OrderBy(u => u.Username).ToListAsync(),
                 Roles = await _context.Roles.AsNoTracking().OrderBy(r => r.Name).ToListAsync(),
-                Categories = await _context.ReportCategories.AsNoTracking().OrderBy(c => c.Name).ToListAsync(),
+                Groups = await _context.ReportGroups.AsNoTracking().OrderBy(c => c.Name).ToListAsync(),
                 FilterDefinitions = await _context.FilterDefinitions
                     .AsNoTracking()
                     .OrderBy(f => f.DataSourceKey).ThenBy(f => f.DisplayOrder).ThenBy(f => f.Label)
@@ -164,21 +164,21 @@ namespace ReportPanel.Controllers
                     case "delete_role":
                         ApplyResult(await _roleService.DeleteAsync(id));
                         break;
-                    case "create_category":
-                        ApplyResult(await _categoryService.CreateAsync(
+                    case "create_group":
+                        ApplyResult(await _groupService.CreateAsync(
                             Request.Form["Name"],
                             Request.Form["Description"],
                             ReadFormBool("IsActive")));
                         break;
-                    case "update_category":
-                        ApplyResult(await _categoryService.UpdateAsync(
+                    case "update_group":
+                        ApplyResult(await _groupService.UpdateAsync(
                             id,
                             Request.Form["Name"],
                             Request.Form["Description"],
                             ReadFormBool("IsActive")));
                         break;
-                    case "delete_category":
-                        ApplyResult(await _categoryService.DeleteAsync(id));
+                    case "delete_group":
+                        ApplyResult(await _groupService.DeleteAsync(id));
                         break;
                     case "delete_user":
                         ApplyResult(await _userService.DeleteAsync(id));
@@ -262,7 +262,7 @@ namespace ReportPanel.Controllers
             DataSourceKey: Request.Form["DataSourceKey"],
             ProcName: Request.Form["ProcName"],
             SelectedRoleIds: ParseIds(Request.Form["SelectedRoles"]),
-            SelectedCategoryIds: ParseIds(Request.Form["SelectedCategories"]),
+            SelectedGroupIds: ParseIds(Request.Form["SelectedGroups"]),
             IsActive: ReadFormBool("IsActive"),
             ReportType: "dashboard", // ADR-009 · M-11 F-1.5: form alanı kaldırıldı, hep dashboard.
             ParamSchemaJson: Request.Form["ParamSchemaJson"],
@@ -295,7 +295,7 @@ namespace ReportPanel.Controllers
 
         // M-01: SyncUserDataFilters UserManagementService.SyncDataFiltersAsync'e tasindi.
 
-        // M-01: SyncReportRolesAndCategories + NormalizeRolesByRoleIds + NormalizeParamSchema
+        // M-01: SyncReportRolesAndGroups + NormalizeRolesByRoleIds + NormalizeParamSchema
         // ReportManagementService'e tasindi (servis ici private).
 
         // M-01: Role CSV propagation helper'lari Services/RoleManagementService'e tasindi.

@@ -18,8 +18,8 @@
             isActive: true,
             availableRoles: [],
             selectedRoleIds: [],
-            availableCategories: [],
-            selectedCategoryIds: [],
+            availableGroups: [],
+            selectedGroupIds: [],
             availableDataSources: [],
             spList: [],
             procParams: [],
@@ -35,8 +35,8 @@
                 this.isActive = meta.isActive !== undefined ? meta.isActive : true;
                 this.availableRoles = meta.availableRoles || [];
                 this.selectedRoleIds = meta.selectedRoleIds ? Array.from(meta.selectedRoleIds) : [];
-                this.availableCategories = meta.availableCategories || [];
-                this.selectedCategoryIds = meta.selectedCategoryIds ? Array.from(meta.selectedCategoryIds) : [];
+                this.availableGroups = meta.availableGroups || [];
+                this.selectedGroupIds = meta.selectedGroupIds ? Array.from(meta.selectedGroupIds) : [];
                 this.availableDataSources = window.__availableDataSources || [];
                 if (this.dataSourceKey) this.loadSpList();
             },
@@ -47,10 +47,10 @@
                 else this.selectedRoleIds.splice(idx, 1);
             },
 
-            toggleCategory(catId) {
-                var idx = this.selectedCategoryIds.indexOf(catId);
-                if (idx === -1) this.selectedCategoryIds.push(catId);
-                else this.selectedCategoryIds.splice(idx, 1);
+            toggleGroup(grpId) {
+                var idx = this.selectedGroupIds.indexOf(grpId);
+                if (idx === -1) this.selectedGroupIds.push(grpId);
+                else this.selectedGroupIds.splice(idx, 1);
             },
 
             // DataSource değişti → SP listesi yenilenir, mevcut ProcName temizlenir

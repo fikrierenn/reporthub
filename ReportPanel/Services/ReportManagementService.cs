@@ -13,7 +13,7 @@ namespace ReportPanel.Services
         string? DataSourceKey,
         string? ProcName,
         HashSet<int> SelectedRoleIds,
-        HashSet<int> SelectedCategoryIds,
+        HashSet<int> SelectedGroupIds,
         bool IsActive,
         string? ReportType,
         string? ParamSchemaJson,
@@ -64,7 +64,7 @@ namespace ReportPanel.Services
 
             _context.ReportCatalog.Add(entity);
             await _context.SaveChangesAsync();
-            await SyncRolesAndCategoriesAsync(entity.ReportId, input.SelectedRoleIds, input.SelectedCategoryIds);
+            await SyncRolesAndGroupsAsync(entity.ReportId, input.SelectedRoleIds, input.SelectedGroupIds);
 
             await _auditLog.LogAsync(new AuditLogEntry
             {
@@ -114,7 +114,7 @@ namespace ReportPanel.Services
 #pragma warning restore CS0618
 
             await _context.SaveChangesAsync();
-            await SyncRolesAndCategoriesAsync(report.ReportId, input.SelectedRoleIds, input.SelectedCategoryIds);
+            await SyncRolesAndGroupsAsync(report.ReportId, input.SelectedRoleIds, input.SelectedGroupIds);
 
             await _auditLog.LogAsync(new AuditLogEntry
             {
@@ -218,17 +218,17 @@ namespace ReportPanel.Services
             return string.Join(",", names);
         }
 
-        private async Task SyncRolesAndCategoriesAsync(int reportId, HashSet<int> roleIds, HashSet<int> categoryIds)
+        private async Task SyncRolesAndGroupsAsync(int reportId, HashSet<int> roleIds, HashSet<int> groupIds)
         {
             var existingRoles = await _context.ReportAllowedRoles.Where(ar => ar.ReportId == reportId).ToListAsync();
             _context.ReportAllowedRoles.RemoveRange(existingRoles);
             foreach (var rid in roleIds)
                 _context.ReportAllowedRoles.Add(new ReportAllowedRole { ReportId = reportId, RoleId = rid, CreatedAt = DateTime.UtcNow });
 
-            var existingCategories = await _context.ReportCategoryLinks.Where(rc => rc.ReportId == reportId).ToListAsync();
-            _context.ReportCategoryLinks.RemoveRange(existingCategories);
-            foreach (var cid in categoryIds)
-                _context.ReportCategoryLinks.Add(new ReportCategoryLink { ReportId = reportId, CategoryId = cid, CreatedAt = DateTime.UtcNow });
+            var existingGroups = await _context.ReportGroupLinks.Where(rg => rg.ReportId == reportId).ToListAsync();
+            _context.ReportGroupLinks.RemoveRange(existingGroups);
+            foreach (var gid in groupIds)
+                _context.ReportGroupLinks.Add(new ReportGroupLink { ReportId = reportId, GroupId = gid, CreatedAt = DateTime.UtcNow });
 
             await _context.SaveChangesAsync();
         }

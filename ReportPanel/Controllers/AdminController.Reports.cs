@@ -23,7 +23,7 @@ namespace ReportPanel.Controllers
                     .Where(r => r.IsActive)
                     .OrderBy(r => r.Name)
                     .ToListAsync();
-                var categories = await _context.ReportCategories
+                var groups = await _context.ReportGroups
                     .AsNoTracking()
                     .Where(c => c.IsActive)
                     .OrderBy(c => c.Name)
@@ -37,8 +37,8 @@ namespace ReportPanel.Controllers
                     SelectedRoleIds = new HashSet<int>(roles
                         .Where(r => string.Equals(r.Name, "admin", StringComparison.OrdinalIgnoreCase))
                         .Select(r => r.RoleId)),
-                    AvailableCategories = categories,
-                    SelectedCategoryIds = new HashSet<int>()
+                    AvailableGroups = groups,
+                    SelectedGroupIds = new HashSet<int>()
                 };
 
                 // Debug bilgisi
@@ -78,8 +78,8 @@ namespace ReportPanel.Controllers
                     DataSources = new List<DataSource>(),
                     AvailableRoles = new List<Role>(),
                     SelectedRoleIds = new HashSet<int>(),
-                    AvailableCategories = new List<ReportCategory>(),
-                    SelectedCategoryIds = new HashSet<int>()
+                    AvailableGroups = new List<ReportGroup>(),
+                    SelectedGroupIds = new HashSet<int>()
                 });
             }
         }
@@ -134,7 +134,7 @@ namespace ReportPanel.Controllers
                 .Where(r => r.IsActive)
                 .OrderBy(r => r.Name)
                 .ToListAsync();
-            var categories = await _context.ReportCategories
+            var groups = await _context.ReportGroups
                 .AsNoTracking()
                 .Where(c => c.IsActive)
                 .OrderBy(c => c.Name)
@@ -143,9 +143,9 @@ namespace ReportPanel.Controllers
                 .Where(ar => ar.ReportId == report.ReportId)
                 .Select(ar => ar.RoleId)
                 .ToListAsync();
-            var selectedCategoryIds = await _context.ReportCategoryLinks
-                .Where(rc => rc.ReportId == report.ReportId)
-                .Select(rc => rc.CategoryId)
+            var selectedGroupIds = await _context.ReportGroupLinks
+                .Where(rg => rg.ReportId == report.ReportId)
+                .Select(rg => rg.GroupId)
                 .ToListAsync();
             var model = new AdminReportFormViewModel
             {
@@ -153,8 +153,8 @@ namespace ReportPanel.Controllers
                 DataSources = dataSources,
                 AvailableRoles = roles,
                 SelectedRoleIds = selectedRoleIds.ToHashSet(),
-                AvailableCategories = categories,
-                SelectedCategoryIds = selectedCategoryIds.ToHashSet()
+                AvailableGroups = groups,
+                SelectedGroupIds = selectedGroupIds.ToHashSet()
             };
 
             // Debug icin
@@ -190,15 +190,15 @@ namespace ReportPanel.Controllers
         {
             var dataSources = await _context.DataSources.AsNoTracking().Where(d => d.IsActive).ToListAsync();
             var roles = await _context.Roles.AsNoTracking().Where(r => r.IsActive).OrderBy(r => r.Name).ToListAsync();
-            var categories = await _context.ReportCategories.AsNoTracking().Where(c => c.IsActive).OrderBy(c => c.Name).ToListAsync();
+            var groups = await _context.ReportGroups.AsNoTracking().Where(c => c.IsActive).OrderBy(c => c.Name).ToListAsync();
             return new AdminReportFormViewModel
             {
                 Report = report,
                 DataSources = dataSources,
                 AvailableRoles = roles,
                 SelectedRoleIds = input.SelectedRoleIds,
-                AvailableCategories = categories,
-                SelectedCategoryIds = input.SelectedCategoryIds,
+                AvailableGroups = groups,
+                SelectedGroupIds = input.SelectedGroupIds,
                 Message = message,
                 MessageType = "error"
             };

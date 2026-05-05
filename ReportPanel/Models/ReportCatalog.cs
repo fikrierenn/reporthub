@@ -56,6 +56,6 @@ namespace ReportPanel.Models
 
         public virtual ICollection<ReportAllowedRole> ReportAllowedRoles { get; set; } = new List<ReportAllowedRole>();
 
-        public virtual ICollection<ReportCategoryLink> ReportCategories { get; set; } = new List<ReportCategoryLink>();
+        public virtual ICollection<ReportGroupLink> ReportGroups { get; set; } = new List<ReportGroupLink>();
     }
 }

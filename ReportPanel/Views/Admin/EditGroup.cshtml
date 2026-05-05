@@ -1,37 +1,37 @@
-@model ReportPanel.ViewModels.AdminCategoryFormViewModel
+@model ReportPanel.ViewModels.AdminGroupFormViewModel
 @{
     Layout = "_AppLayout";
-    ViewData["Title"] = "Kategori Düzenle - BKM Rapor Paneli";
-    ViewData["PageTitle"] = "Kategori Düzenle";
+    ViewData["Title"] = "Grup Düzenle - BKM Rapor Paneli";
+    ViewData["PageTitle"] = "Grup Düzenle";
     var message = Model.Message ?? "";
     var messageType = Model.MessageType ?? "";
-    var category = Model.Category ?? new ReportPanel.Models.ReportCategory();
+    var group = Model.Group ?? new ReportPanel.Models.ReportGroup();
 }
 
 @section Breadcrumb {
     <div class="crumbs">
         <a href="/Dashboard">BKM Kitap</a>
         <span class="sep">/</span>
-        <a href="/Admin?tab=categories">Yönetim</a>
+        <a href="/Admin?tab=groups">Yönetim</a>
         <span class="sep">/</span>
-        <a href="/Admin?tab=categories">Kategoriler</a>
+        <a href="/Admin?tab=groups">Gruplar</a>
         <span class="sep">/</span>
-        <span class="current">@(string.IsNullOrWhiteSpace(category.Name) ? "Düzenle" : category.Name)</span>
+        <span class="current">@(string.IsNullOrWhiteSpace(group.Name) ? "Düzenle" : group.Name)</span>
     </div>
 }
 
 @section TopActions {
-    <a href="/Admin?tab=categories" class="btn">
+    <a href="/Admin?tab=groups" class="btn">
         <i class="fas fa-xmark text-[10px]"></i>
         İptal
     </a>
 }
 
 <div class="hero">
-    <h1>Kategori Düzenle</h1>
+    <h1>Grup Düzenle</h1>
     <div class="sub">
-        <span>Kategori bilgilerini güncelleyin</span>
-        <span class="pill"><span class="mono">#@category.CategoryId</span></span>
+        <span>Grup bilgilerini güncelleyin</span>
+        <span class="pill"><span class="mono">#@group.GroupId</span></span>
     </div>
 </div>
 
@@ -50,42 +50,41 @@
     <div style="padding:14px 18px; border-bottom:1px solid var(--line);">
         <h2 style="font-size:13px; font-weight:600; color:var(--ink-1); margin:0;">
             <i class="fas fa-folder-tree" style="margin-right:6px; color:var(--ink-3);"></i>
-            Kategori Bilgileri
+            Grup Bilgileri
         </h2>
         <div style="font-size:12px; color:var(--ink-3); margin-top:2px;">Değişiklikleri kaydedin</div>
     </div>
 
     <form method="post" style="padding:20px;">
         @Html.AntiForgeryToken()
-        <input type="hidden" name="CategoryId" value="@category.CategoryId" />
 
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:14px;">
             <div class="field" style="margin-bottom:0;">
-                <label class="lab">Kategori Adı <span style="color:var(--accent);">*</span></label>
-                <input type="text" name="Name" value="@category.Name" required class="inp" />
+                <label class="lab">Grup Adı <span style="color:var(--accent);">*</span></label>
+                <input type="text" name="Name" value="@group.Name" required class="inp" />
             </div>
             <div class="field" style="margin-bottom:0;">
                 <label class="lab">Açıklama</label>
-                <input type="text" name="Description" value="@category.Description" class="inp" />
+                <input type="text" name="Description" value="@group.Description" class="inp" />
             </div>
         </div>
 
         <div style="display:flex; align-items:center; gap:8px; margin-bottom:18px;">
             <input type="hidden" name="IsActive" value="false" />
-            <input type="checkbox" name="IsActive" value="true" id="catActive"
-                   @(category.IsActive ? "checked" : "")
+            <input type="checkbox" name="IsActive" value="true" id="groupActive"
+                   @(group.IsActive ? "checked" : "")
                    style="width:16px; height:16px; accent-color:var(--accent);" />
-            <label for="catActive" class="lab" style="margin:0;">Kategoriyi aktif yap</label>
+            <label for="groupActive" class="lab" style="margin:0;">Grubu aktif yap</label>
         </div>
 
         <div style="display:flex; align-items:center; justify-content:space-between; padding-top:18px; border-top:1px solid var(--line);">
-            <a href="/Admin?tab=categories" class="btn ghost">
+            <a href="/Admin?tab=groups" class="btn ghost">
                 <i class="fas fa-arrow-left text-[10px]"></i>
                 Geri Dön
             </a>
             <button type="submit" class="btn primary">
                 <i class="fas fa-check text-[10px]"></i>
-                Kategoriyi Güncelle
+                Grubu Güncelle
             </button>
         </div>
     </form>

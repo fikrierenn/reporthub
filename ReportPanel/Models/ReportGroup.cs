@@ -3,12 +3,13 @@ using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace ReportPanel.Models
 {
-    // M-07: CategoryId + CreatedAt [BindNever] — mass assignment koruması.
-    public class ReportCategory
+    // M-07: GroupId + CreatedAt [BindNever] — mass assignment koruması.
+    // Plan 07 son rename: ReportCategory → ReportGroup (urunKategori ile çakışmasın).
+    public class ReportGroup
     {
         [Key]
         [BindNever]
-        public int CategoryId { get; set; }
+        public int GroupId { get; set; }
 
         [Required]
         [MaxLength(100)]

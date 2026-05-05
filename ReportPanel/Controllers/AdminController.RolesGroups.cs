@@ -78,67 +78,70 @@ namespace ReportPanel.Controllers
             return RedirectToAction("Index", new { tab = "roles" });
         }
 
-        [Route("Admin/EditCategory/{id}")]
-        public async Task<IActionResult> EditCategory(int id)
+        [Route("Admin/EditGroup/{id}")]
+        public async Task<IActionResult> EditGroup(int id)
         {
-            var category = await _context.ReportCategories.FindAsync(id);
-            if (category == null)
+            var group = await _context.ReportGroups.FindAsync(id);
+            if (group == null)
             {
-                TempData["Message"] = "Kategori bulunamadi.";
+                TempData["Message"] = "Grup bulunamadi.";
                 TempData["MessageType"] = "error";
-                return RedirectToAction("Index", new { tab = "categories" });
+                return RedirectToAction("Index", new { tab = "groups" });
             }
 
-            return View(new AdminCategoryFormViewModel
+            return View(new AdminGroupFormViewModel
             {
-                Category = category
+                Group = group
             });
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Route("Admin/EditCategory/{id}")]
-        public async Task<IActionResult> EditCategory(ReportCategory category)
+        [Route("Admin/EditGroup/{id}")]
+        public async Task<IActionResult> EditGroup(int id, ReportGroup group)
         {
-            var existing = await _context.ReportCategories.FindAsync(category.CategoryId);
+            // ReportGroup.GroupId [BindNever] — route id explicit.
+            var existing = await _context.ReportGroups.FindAsync(id);
             if (existing == null)
             {
-                TempData["Message"] = "Kategori bulunamadi.";
+                TempData["Message"] = "Grup bulunamadi.";
                 TempData["MessageType"] = "error";
-                return RedirectToAction("Index", new { tab = "categories" });
+                return RedirectToAction("Index", new { tab = "groups" });
             }
 
-            var name = category.Name?.Trim() ?? "";
+            var name = group.Name?.Trim() ?? "";
             if (string.IsNullOrWhiteSpace(name))
             {
-                return View(new AdminCategoryFormViewModel
+                group.GroupId = id;
+                return View(new AdminGroupFormViewModel
                 {
-                    Category = category,
-                    Message = "Kategori adi zorunludur.",
+                    Group = group,
+                    Message = "Grup adi zorunludur.",
                     MessageType = "error"
                 });
             }
 
-            var duplicate = await _context.ReportCategories
-                .AnyAsync(c => c.CategoryId != existing.CategoryId && c.Name.ToLower() == name.ToLower());
+            var duplicate = await _context.ReportGroups
+                .AnyAsync(c => c.GroupId != existing.GroupId && c.Name.ToLower() == name.ToLower());
             if (duplicate)
             {
-                return View(new AdminCategoryFormViewModel
+                group.GroupId = id;
+                return View(new AdminGroupFormViewModel
                 {
-                    Category = category,
-                    Message = "Ayni isimde kategori zaten var.",
+                    Group = group,
+                    Message = "Ayni isimde grup zaten var.",
                     MessageType = "error"
                 });
             }
 
             existing.Name = name;
-            existing.Description = category.Description?.Trim();
+            existing.Description = group.Description?.Trim();
             existing.IsActive = ReadFormBool("IsActive");
             await _context.SaveChangesAsync();
 
-            TempData["Message"] = "Kategori guncellendi.";
+            TempData["Message"] = "Grup guncellendi.";
             TempData["MessageType"] = "success";
-            return RedirectToAction("Index", new { tab = "categories" });
+            return RedirectToAction("Index", new { tab = "groups" });
         }
     }
 }

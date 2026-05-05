@@ -41,7 +41,7 @@
 @* Plan 04 F2.2: Alpine.js instant client-side filter. Server-side form submit (URL state) korundu —
    kullanıcı Enter veya Filtrele ile URL'ye yansır; ama Alpine ile her tuş vuruşunda anlık filter görsel.
    x-data scope: filter bar + qcard grid'i kapsar. *@
-<div x-data="{ q: '@Html.Raw(Model.SearchTerm?.Replace("'", "\\'") ?? "")', cat: '@Html.Raw(Model.SelectedCategory?.Replace("'", "\\'") ?? "")' }">
+<div x-data="{ q: '@Html.Raw(Model.SearchTerm?.Replace("'", "\\'") ?? "")', grp: '@Html.Raw(Model.SelectedGroup?.Replace("'", "\\'") ?? "")' }">
 
 <form method="get" class="report-filter-bar" style="background:var(--paper); border:1px solid var(--line); border-radius:10px; padding:14px 16px; margin-bottom:18px; display:flex; gap:12px; flex-wrap:wrap; align-items:end;">
     <div style="flex:1; min-width:240px;">
@@ -52,17 +52,17 @@
             </span>
             <input type="text" id="reportSearch" name="q" x-model="q"
                    class="inp" style="padding-left:32px;"
-                   placeholder="Rapor adı, açıklama veya kategori..." />
+                   placeholder="Rapor adı, açıklama veya grup..." />
         </div>
     </div>
 
     <div style="min-width:180px;">
-        <label class="lab" for="reportCategory">Kategori</label>
-        <select id="reportCategory" name="category" x-model="cat" class="inp">
-            <option value="">Tüm kategoriler</option>
-            @foreach (var category in Model.Categories)
+        <label class="lab" for="reportGroup">Grup</label>
+        <select id="reportGroup" name="group" x-model="grp" class="inp">
+            <option value="">Tüm gruplar</option>
+            @foreach (var grpName in Model.Groups)
             {
-                <option value="@category">@category</option>
+                <option value="@grpName">@grpName</option>
             }
         </select>
     </div>
@@ -72,7 +72,7 @@
             <i class="fas fa-filter text-[10px]"></i>
             Filtrele
         </button>
-        <button type="button" class="btn ghost" @@click="q = ''; cat = ''" x-show="q || cat" x-cloak>
+        <button type="button" class="btn ghost" @@click="q = ''; grp = ''" x-show="q || grp" x-cloak>
             <i class="fas fa-xmark text-[10px]"></i>
             Temizle
         </button>
@@ -84,7 +84,7 @@
     <div style="background:var(--paper); border:1px dashed var(--line); border-radius:10px; padding:48px 24px; text-align:center; color:var(--ink-3);">
         <i class="fas fa-folder-open" style="font-size:48px; opacity:.4; margin-bottom:12px;"></i>
         <h3 style="font-size:14px; font-weight:600; color:var(--ink-1); margin:0 0 4px;">Erişilebilir rapor bulunamadı</h3>
-        @if (!string.IsNullOrWhiteSpace(Model.SearchTerm) || !string.IsNullOrWhiteSpace(Model.SelectedCategory))
+        @if (!string.IsNullOrWhiteSpace(Model.SearchTerm) || !string.IsNullOrWhiteSpace(Model.SelectedGroup))
         {
             <p style="margin:0; font-size:12.5px;">Filtre kriterlerini değiştirin veya <a href="/Reports" style="color:var(--accent); font-weight:500;">filtreyi temizle</a>.</p>
         }
@@ -100,19 +100,19 @@ else
         @foreach (var report in Model.Reports)
         {
             var isFavorite = Model.FavoriteReportIds.Contains(report.ReportId);
-            var categoryNames = report.ReportCategories
-                .Select(rc => rc.Category?.Name ?? "")
+            var groupNames = report.ReportGroups
+                .Select(rg => rg.Group?.Name ?? "")
                 .Where(name => !string.IsNullOrWhiteSpace(name))
                 .ToList();
             var displaySub = string.IsNullOrWhiteSpace(report.Description)
-                ? (categoryNames.Count > 0 ? string.Join(", ", categoryNames) : (report.DataSource?.Title ?? report.DataSourceKey))
+                ? (groupNames.Count > 0 ? string.Join(", ", groupNames) : (report.DataSource?.Title ?? report.DataSourceKey))
                 : report.Description;
-            var searchHay = $"{report.Title} {report.Description} {string.Join(' ', categoryNames)} {report.DataSource?.Title} {report.DataSourceKey}".ToLowerInvariant();
-            var catHay = string.Join(",", categoryNames).ToLowerInvariant();
+            var searchHay = $"{report.Title} {report.Description} {string.Join(' ', groupNames)} {report.DataSource?.Title} {report.DataSourceKey}".ToLowerInvariant();
+            var grpHay = string.Join(",", groupNames).ToLowerInvariant();
             <div class="qcard" style="position:relative;"
                  data-search="@searchHay"
-                 data-cat="@catHay"
-                 x-show="(!q || $el.dataset.search.includes(q.toLowerCase())) && (!cat || $el.dataset.cat.includes(cat.toLowerCase()))"
+                 data-grp="@grpHay"
+                 x-show="(!q || $el.dataset.search.includes(q.toLowerCase())) && (!grp || $el.dataset.grp.includes(grp.toLowerCase()))"
                  x-cloak>
                 <div class="row1">
                     <span class="type-chip type-dash">Dashboard</span>
@@ -155,7 +155,7 @@ else
 @{
     var reportsFooter = $"{totalCount} rapor";
     if (!string.IsNullOrWhiteSpace(Model.SearchTerm)) reportsFooter += $" · arama \"{Model.SearchTerm}\"";
-    if (!string.IsNullOrWhiteSpace(Model.SelectedCategory)) reportsFooter += $" · kategori {Model.SelectedCategory}";
+    if (!string.IsNullOrWhiteSpace(Model.SelectedGroup)) reportsFooter += $" · grup {Model.SelectedGroup}";
 }
 
 </div>

@@ -2,17 +2,18 @@ using System.ComponentModel.DataAnnotations;
 
 namespace ReportPanel.Models
 {
-    public class ReportCategoryLink
+    // Plan 07 son rename: ReportCategoryLink → ReportGroupLink.
+    public class ReportGroupLink
     {
         [Required]
         public int ReportId { get; set; }
 
         [Required]
-        public int CategoryId { get; set; }
+        public int GroupId { get; set; }
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         public ReportCatalog? Report { get; set; }
-        public ReportCategory? Category { get; set; }
+        public ReportGroup? Group { get; set; }
     }
 }

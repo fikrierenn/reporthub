@@ -6,8 +6,8 @@
     var dataSources = Model.DataSources ?? new List<ReportPanel.Models.DataSource>();
     var availableRoles = Model.AvailableRoles ?? new List<ReportPanel.Models.Role>();
     var selectedRoleIds = Model.SelectedRoleIds ?? new HashSet<int>();
-    var availableCategories = Model.AvailableCategories ?? new List<ReportPanel.Models.ReportCategory>();
-    var selectedCategoryIds = Model.SelectedCategoryIds ?? new HashSet<int>();
+    var availableGroups = Model.AvailableGroups ?? new List<ReportPanel.Models.ReportGroup>();
+    var selectedGroupIds = Model.SelectedGroupIds ?? new HashSet<int>();
 }
 
 @section Head {
@@ -106,26 +106,26 @@
             </div>
 
             <div class="field" style="margin-bottom:0;">
-                <label class="lab">Kategoriler</label>
+                <label class="lab">Gruplar</label>
                 <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(160px, 1fr)); gap:6px; padding:8px 10px; background:var(--canvas); border:1px solid var(--line); border-radius:8px;">
-                    @if (!availableCategories.Any())
+                    @if (!availableGroups.Any())
                     {
-                        <div style="font-size:12px; color:var(--accent-ink);">Kategori listesi tanımlı değil.</div>
+                        <div style="font-size:12px; color:var(--accent-ink);">Grup listesi tanımlı değil.</div>
                     }
                     else
                     {
-                        foreach (var category in availableCategories)
+                        foreach (var group in availableGroups)
                         {
-                            var isChecked = selectedCategoryIds.Contains(category.CategoryId);
+                            var isChecked = selectedGroupIds.Contains(group.GroupId);
                             <label style="display:flex; align-items:center; gap:6px; font-size:12px; color:var(--ink-2); cursor:pointer;">
-                                <input type="checkbox" name="SelectedCategories" value="@category.CategoryId" @(isChecked ? "checked" : "")
+                                <input type="checkbox" name="SelectedGroups" value="@group.GroupId" @(isChecked ? "checked" : "")
                                        style="width:14px; height:14px; accent-color:var(--accent);" />
-                                <span>@category.Name</span>
+                                <span>@group.Name</span>
                             </label>
                         }
                     }
                 </div>
-                <p style="margin:6px 0 0; font-size:11px; color:var(--ink-3);">Birden fazla kategori seçilebilir.</p>
+                <p style="margin:6px 0 0; font-size:11px; color:var(--ink-3);">Birden fazla grup seçilebilir.</p>
             </div>
         </div>
     </div>

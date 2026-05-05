@@ -16,8 +16,8 @@ namespace ReportPanel.Models
         public DbSet<ReportFavorite> ReportFavorites { get; set; }
         public DbSet<Role> Roles { get; set; }
         public DbSet<UserRole> UserRoles { get; set; }
-        public DbSet<ReportCategory> ReportCategories { get; set; }
-        public DbSet<ReportCategoryLink> ReportCategoryLinks { get; set; }
+        public DbSet<ReportGroup> ReportGroups { get; set; }
+        public DbSet<ReportGroupLink> ReportGroupLinks { get; set; }
         public DbSet<ReportAllowedRole> ReportAllowedRoles { get; set; }
         public DbSet<UserDataFilter> UserDataFilters { get; set; }
         public DbSet<FilterDefinition> FilterDefinitions { get; set; }
@@ -124,29 +124,29 @@ namespace ReportPanel.Models
                     .OnDelete(DeleteBehavior.Cascade);
             });
 
-            // ReportCategories configuration
-            modelBuilder.Entity<ReportCategory>(entity =>
+            // ReportGroups configuration (Plan 07 son rename: ReportCategories → ReportGroups)
+            modelBuilder.Entity<ReportGroup>(entity =>
             {
-                entity.HasKey(e => e.CategoryId);
+                entity.HasKey(e => e.GroupId);
                 entity.Property(e => e.Name).HasMaxLength(100).IsRequired();
                 entity.Property(e => e.Description).HasMaxLength(300);
                 entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETDATE()");
             });
 
-            // ReportCategoryLinks configuration
-            modelBuilder.Entity<ReportCategoryLink>(entity =>
+            // ReportGroupLinks configuration
+            modelBuilder.Entity<ReportGroupLink>(entity =>
             {
-                entity.HasKey(e => new { e.ReportId, e.CategoryId });
+                entity.HasKey(e => new { e.ReportId, e.GroupId });
                 entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETDATE()");
 
                 entity.HasOne(e => e.Report)
-                    .WithMany(r => r.ReportCategories)
+                    .WithMany(r => r.ReportGroups)
                     .HasForeignKey(e => e.ReportId)
                     .OnDelete(DeleteBehavior.Cascade);
 
-                entity.HasOne(e => e.Category)
+                entity.HasOne(e => e.Group)
                     .WithMany()
-                    .HasForeignKey(e => e.CategoryId)
+                    .HasForeignKey(e => e.GroupId)
                     .OnDelete(DeleteBehavior.Cascade);
             });
 
