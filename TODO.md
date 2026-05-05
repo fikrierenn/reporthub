@@ -92,7 +92,7 @@ Bu liste 5 plan dosyasi (`plans/02-06`) + asagidaki FAZ 1-3 + son 5 journal'in y
 - [x] **builder-v2/builder-drawer.js split** ✅ 4 Mayis 2026 — 511 → 269 (drawer) + 259 (yeni `builder-table.js` tablo Setup + hesapli kolon mixin). Alpine mixin pattern: `window.__builderV2.tableMixin()` builder.js Object.assign listesine eklendi. EditReportV2 + CreateReportV2'a script tag.
 - [ ] **SP mimarisi · sp_PdksPano → inline TVF refactor** (FAZ 2 madde 21) — ADR-004 adayi
 - [ ] **M-10 Faz 4-6 · Named Result Contract** (FAZ 2 madde 29)
-- [ ] **DateTime Faz D · DB DEFAULT GETDATE → GETUTCDATE** (FAZ 2 madde 28)
+- [x] **DateTime Faz D · DB DEFAULT GETDATE → GETUTCDATE** ✅ 5 Mayıs 2026 — Migration 25 (`Database/25_DefaultGetUtcDate.sql`) dinamik cursor ile 13 DEFAULT constraint dönüştürdü, isim formatı `DF_<Tablo>_<Kolon>` tutarlı. Faz E (veri shift + SP audit) ayrı.
 - [x] **M-08 Async tutarlilik** ✅ 4 Mayis 2026 — `AdminController.CreateUser` GET sync→async (DB hit'li tek sync action; .ToList()→.ToListAsync()). Diger sync action'larda DB hit yok.
 - [x] **M-09 AsNoTracking sweep** ✅ 4 Mayis 2026 — Read-only EF query'lerde AsNoTracking eklendi: AdminController/Index (5 query), AdminController/CreateUser/EditReport/EditUser/BuildCreateUserFormAsync (8 query), TestController/Index (1 query). Write-track gerektiren `RoleManagementService.PropagateRename`/`UpdateLastLogin`/`Profile.Index` POST'ta dokunulmadi.
 - [x] **M-07 ViewModel BindNever** ✅ 4 Mayis 2026 — Models'a kritik alan `[BindNever]` (mass assignment defansif): User (UserId/PasswordHash/LastLoginAt/CreatedAt/UpdatedAt), ReportCatalog (ReportId/CreatedAt), Role (RoleId/CreatedAt), ReportCategory (CategoryId/CreatedAt), DataSource (CreatedAt). DTO refactor sonra (saf koruma katmanı yeterli).
