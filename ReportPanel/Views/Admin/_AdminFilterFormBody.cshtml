@@ -32,17 +32,45 @@
         <div class="field" style="margin-bottom:0;">
             <label class="lab">Scope <span style="color:var(--accent);">*</span></label>
             <select name="Scope" class="inp" required>
-                <option value="spInjection" @(def.Scope == "spInjection" ? "selected" : "")>SP Enjeksiyon (rapor parametresi)</option>
-                <option value="reportAccess" @(def.Scope == "reportAccess" ? "selected" : "")>Rapor Erişim (Reports/Index liste filtresi)</option>
+                @if (def.Scope == "spInjection")
+                {
+                    <option value="spInjection" selected>SP Enjeksiyon (rapor parametresi)</option>
+                }
+                else
+                {
+                    <option value="spInjection">SP Enjeksiyon (rapor parametresi)</option>
+                }
+                @if (def.Scope == "reportAccess")
+                {
+                    <option value="reportAccess" selected>Rapor Erişim (Reports/Index liste filtresi)</option>
+                }
+                else
+                {
+                    <option value="reportAccess">Rapor Erişim (Reports/Index liste filtresi)</option>
+                }
             </select>
         </div>
         <div class="field" style="margin-bottom:0;">
             <label class="lab">Veri Kaynağı</label>
             <select name="DataSourceKey" class="inp">
-                <option value="" @(string.IsNullOrEmpty(def.DataSourceKey) ? "selected" : "")>— Sistem (cross-cutting) —</option>
+                @if (string.IsNullOrEmpty(def.DataSourceKey))
+                {
+                    <option value="" selected>— Sistem (cross-cutting) —</option>
+                }
+                else
+                {
+                    <option value="">— Sistem (cross-cutting) —</option>
+                }
                 @foreach (var ds in dataSources)
                 {
-                    <option value="@ds.DataSourceKey" @(def.DataSourceKey == ds.DataSourceKey ? "selected" : "")>@ds.Title (@ds.DataSourceKey)</option>
+                    if (def.DataSourceKey == ds.DataSourceKey)
+                    {
+                        <option value="@ds.DataSourceKey" selected>@ds.Title (@ds.DataSourceKey)</option>
+                    }
+                    else
+                    {
+                        <option value="@ds.DataSourceKey">@ds.Title (@ds.DataSourceKey)</option>
+                    }
                 }
             </select>
             <div style="font-size:11px; color:var(--ink-3); margin-top:4px;">
