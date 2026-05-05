@@ -67,10 +67,10 @@ Bu dosya yapilanlari ve kalanlari detayli takip icin kullanilir.
 Bu liste 5 plan dosyasi (`plans/02-06`) + asagidaki FAZ 1-3 + son 5 journal'in yarim kalan kismi taranarak cikarildi. Madde sirasi: efor (kolay → zor). Detay icin ilgili FAZ/plan dosyasina bak.
 
 #### Trivia / housekeeping (~30 dk toplam, en kolay)
-- [ ] **CSV İndir butonu commit** — 4 dosya uncommitted (oturum 2026-05-04, TableRenderer + DashboardClientScripts + Run.cshtml + Edit/CreateReportV2)
-- [ ] **Plan 04 arsivle** — commit `108560e` ile tamamlandi: `git mv plans/04-*.md plans/archive/`
-- [ ] **Plan 06.B arsivle** — Done criteria ✓ (`caf8822`+`2b62d39`): `git mv plans/06-*.md plans/archive/`
-- [ ] **Plan 03 durumu kontrol** — Done criteria check, kapaliysa arsivle
+- [x] **CSV İndir butonu commit** ✅ commit `143e1d9` (önceki oturumda yapıldı)
+- [x] **Plan 04 arsivle** ✅ `plans/archive/04-m11-v2-builder-ux-redesign.md`
+- [x] **Plan 06.B arsivle** ✅ `plans/archive/06-m11-v2-edit-parity.md`
+- [x] **Plan 03 arsivle** ✅ `plans/archive/03-*.md` (2 dosya: dashboardv2-standalone + design-system-harmonization)
 - [ ] **M-13 sub-nav unchecked'lar isaretle** — commit'leri var (`7bc8cb0` `831319b` `9ba3c61` `fc55063` `4ada9e6` `4d2f5d2` `c8ce59f`), [x] yap (asagidaki Plan 03 cizelgesi satir 279-317)
 - [ ] **NotebookLM re-login** — kullanici terminalde: `D:/Dev/reporthub/.venv/notebooklm/Scripts/notebooklm.exe login`
 
