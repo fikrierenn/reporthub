@@ -275,7 +275,8 @@ window.__availableDataSources = @Html.Raw(System.Text.Json.JsonSerializer.Serial
                             </template>
                         </select>
                     </div>
-                    <div class="field" x-show="selected && selected.result && selected.type !== 'table'">
+                    @* KPI'a özgü kolon seçimi — chart kendi X/Y bloğunu kullanır, tablo kolon listesi *@
+                    <div class="field" x-show="selected && selected.result && selected.type === 'kpi'">
                         <label class="lab">Kolon</label>
                         <select class="inp"
                                 :value="selected ? (selected.column || '') : ''"
@@ -302,6 +303,87 @@ window.__availableDataSources = @Html.Raw(System.Text.Json.JsonSerializer.Serial
                         </select>
                     </div>
                 </div>
+
+                @* M-11 chart binding: variant'a göre otomatik X/Y doldurur, manuel override edilebilir *@
+                <template x-if="selected && selected.type === 'chart' && selected.result">
+                    <div class="col-picker-block">
+                        <div class="qb-header" style="margin-top:14px;">
+                            <i class="fas fa-chart-column text-[10px]"></i> Eksen Bağlantıları
+                        </div>
+
+                        @* Capacity uyarısı — yetersiz kolon *@
+                        <template x-if="chartCapacityWarning()">
+                            <div style="background:#fef3c7; border:1px solid #fde68a; color:#92400e; padding:8px 10px; border-radius:6px; font-size:11px; margin-bottom:10px;">
+                                <i class="fas fa-triangle-exclamation text-[10px]"></i>
+                                <span x-text="chartCapacityWarning()"></span>
+                            </div>
+                        </template>
+
+                        @* X ekseni — labelColumn (scatter dışındaki tipler) *@
+                        <div class="field" x-show="chartFieldRequirements(selected.variant || 'bar').needsLabel">
+                            <label class="lab">X Ekseni (Kategori)</label>
+                            <select class="inp"
+                                    :value="selected.labelColumn || ''"
+                                    @@change="setChartLabelColumn($event.target.value)">
+                                <option value="">— seç —</option>
+                                <template x-for="col in chartLabelCandidates()" :key="col">
+                                    <option :value="col"
+                                            :selected="selected.labelColumn === col"
+                                            x-text="col + ' · ' + columnKindFor(col)"></option>
+                                </template>
+                            </select>
+                            <p style="font-size:10px; color:var(--ink-4); margin-top:4px;">Tarih veya metin kolonu — kategorileri ayırır.</p>
+                        </div>
+
+                        @* Y serileri — datasets[] *@
+                        <div class="field">
+                            <label class="lab" style="display:flex; align-items:center; justify-content:space-between;">
+                                <span>Y Ekseni (Seriler)</span>
+                                <button type="button" class="btn ghost" style="height:24px; font-size:10px; padding:0 8px;"
+                                        x-show="canAddChartDataset()"
+                                        @@click="addChartDataset()" title="Yeni veri serisi ekle">
+                                    <i class="fas fa-plus text-[9px]"></i> Seri Ekle
+                                </button>
+                            </label>
+                            <template x-if="!selected.datasets || selected.datasets.length === 0">
+                                <p style="font-size:11px; color:var(--ink-4); padding:6px 0;">Henüz seri yok — variant değiştirince otomatik dolar veya "Seri Ekle" ile manuel ekleyin.</p>
+                            </template>
+                            <template x-for="(ds, di) in (selected.datasets || [])" :key="di">
+                                <div style="display:flex; gap:6px; align-items:center; margin-bottom:6px; padding:6px; background:var(--paper); border:1px solid var(--line); border-radius:6px;">
+                                    <select class="inp" style="flex:2; font-size:11px; height:28px;"
+                                            :value="ds.column || ''"
+                                            @@change="setChartDatasetField(di, 'column', $event.target.value); setChartDatasetField(di, 'label', $event.target.value)">
+                                        <option value="">— kolon —</option>
+                                        <template x-for="col in chartColumnsByKind()['sayı']" :key="col">
+                                            <option :value="col" :selected="ds.column === col" x-text="col"></option>
+                                        </template>
+                                    </select>
+                                    <input type="text" class="inp" style="flex:2; font-size:11px; height:28px;"
+                                           :value="ds.label || ''"
+                                           @@input="setChartDatasetField(di, 'label', $event.target.value)"
+                                           placeholder="Etiket" />
+                                    <select class="inp" style="flex:1; font-size:11px; height:28px;"
+                                            :value="ds.color || 'blue'"
+                                            @@change="setChartDatasetField(di, 'color', $event.target.value)"
+                                            title="Seri rengi">
+                                        <template x-for="c in ['blue','green','amber','violet','rose','slate','red']" :key="c">
+                                            <option :value="c" :selected="ds.color === c" x-text="c"></option>
+                                        </template>
+                                    </select>
+                                    <button type="button"
+                                            style="background:transparent; border:none; color:var(--ink-3); cursor:pointer; padding:4px; height:28px;"
+                                            @@click="removeChartDataset(di)" title="Bu seriyi kaldır">
+                                        <i class="fas fa-xmark text-[10px]"></i>
+                                    </button>
+                                </div>
+                            </template>
+                            <p style="font-size:10px; color:var(--ink-4); margin-top:4px;">
+                                <i class="fas fa-wand-magic-sparkles text-[9px]"></i>
+                                Grafik tipini seçince varsayılan kolonlar otomatik atanır.
+                            </p>
+                        </div>
+                    </div>
+                </template>
 
                 @* Plan 05.A: Tablo widget — kolon checkbox + drag-drop sıralama + hizalama *@
                 <template x-if="selected && selected.type === 'table'">
@@ -539,7 +621,7 @@ window.__availableDataSources = @Html.Raw(System.Text.Json.JsonSerializer.Serial
                                                            {k:'scatter',label:'Dağılım',icon:'fa-braille'}]" :key="v.k">
                                         <button type="button" class="variant-card variant-card--sm"
                                                 :class="(selected.variant || 'bar') === v.k && 'on'"
-                                                @@click="setField('variant', v.k)">
+                                                @@click="setChartVariant(v.k)">
                                             <i class="fas" :class="v.icon" style="font-size:14px;"></i>
                                             <span class="variant-label" x-text="v.label"></span>
                                         </button>
@@ -836,4 +918,5 @@ window.__availableDataSources = @Html.Raw(System.Text.Json.JsonSerializer.Serial
 <script src="~/assets/js/builder-v2/builder-tabs.js" asp-append-version="true"></script>
 <script src="~/assets/js/builder-v2/builder-preview.js" asp-append-version="true"></script>
 <script src="~/assets/js/builder-v2/builder-feedback.js" asp-append-version="true"></script>
+<script src="~/assets/js/builder-v2/builder-chart.js" asp-append-version="true"></script>
 <script src="~/assets/js/builder-v2/builder.js" asp-append-version="true"></script>

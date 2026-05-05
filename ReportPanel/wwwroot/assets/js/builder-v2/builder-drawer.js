@@ -93,11 +93,17 @@
             },
 
             // ---- Hızlı Bağla helper'ları (Plan 04: Setup tab'da basit cascading dropdown) ----
-            // Seçili widget'ın bağlı RS index'i ('rsN' formatından sayıya).
+            // Seçili widget'ın bağlı RS index'i — V2 builder default "rsN" + Migration 27 named binding.
             selectedRsIdx() {
                 if (!this.selected || !this.selected.result) return -1;
-                var m = String(this.selected.result).match(/^rs(\d+)$/);
-                return m ? parseInt(m[1], 10) : -1;
+                var r = String(this.selected.result);
+                // 1. "rsN" pattern (V2 builder default)
+                var m = r.match(/^rs(\d+)$/);
+                if (m) return parseInt(m[1], 10);
+                // 2. Named binding — ResultContract'tan int index'i çöz (M-10 Faz 6 sonrası standart)
+                var contract = (this.config && this.config.resultContract) ? this.config.resultContract[r] : null;
+                if (contract && typeof contract.resultSet === 'number') return contract.resultSet;
+                return -1;
             },
 
             selectedRs() {

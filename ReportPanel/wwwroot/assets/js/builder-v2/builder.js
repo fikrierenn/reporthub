@@ -255,7 +255,8 @@
                 window.__builderV2.settingsMixin(),
                 window.__builderV2.tabsMixin(),
                 window.__builderV2.previewMixin(),
-                window.__builderV2.feedbackMixin()
+                window.__builderV2.feedbackMixin(),
+                window.__builderV2.chartMixin()
             );
         };
     }
