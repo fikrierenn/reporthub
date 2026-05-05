@@ -48,6 +48,23 @@
         Tam Önizle
     </button>
 
+    @* F-9: live validate butonu — DashboardValidate endpoint'ine POST, banner+toast feedback *@
+    <button type="button" class="btn"
+            @@click="$dispatch('builder-validate')"
+            title="Pano yapılandırmasını sunucu validator'ından geçir">
+        <i class="fas fa-circle-check text-[10px]"></i>
+        Doğrula
+    </button>
+
+    @* F-9: Geri Al — son kayıtlı config'e döner (page load + her save sonrası snapshot) *@
+    <button type="button" class="btn"
+            @@click="$dispatch('builder-undo')"
+            x-bind:disabled="!$store.builder.dirty"
+            title="Son kaydedilen pano yapılandırmasına geri dön">
+        <i class="fas fa-rotate-left text-[10px]"></i>
+        Geri Al
+    </button>
+
     <button type="button" id="dbBtnJsonV2" class="btn"
             @@click="
                 let ta = document.getElementById('DashboardConfigJson');

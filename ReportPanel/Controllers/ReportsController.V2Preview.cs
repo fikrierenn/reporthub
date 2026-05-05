@@ -392,5 +392,25 @@ namespace ReportPanel.Controllers
                 return StatusCode(500, "Önizleme oluşturulamadı. SP veya veri kaynağı kontrol edin, audit log'a bakın.");
             }
         }
+
+        // F-9 madde 47: Live validation — draft configJson'u DB'ye yazmadan validator'dan geçir,
+        // hata + uyarı listesini JSON döndür. Builder drawer'daki kırmızı banner ve toast bunu tüketir.
+        [Authorize(Roles = "admin")]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Route("Admin/Reports/DashboardValidate")]
+        public IActionResult DashboardValidate([FromForm] string configJson)
+        {
+            if (string.IsNullOrWhiteSpace(configJson))
+                return Json(new { success = false, errors = new[] { "Pano yapılandırması boş." }, warnings = Array.Empty<string>() });
+
+            var r = Services.DashboardConfigValidator.Validate(configJson);
+            return Json(new
+            {
+                success = !r.HasErrors,
+                errors = r.Errors,
+                warnings = r.Warnings
+            });
+        }
     }
 }

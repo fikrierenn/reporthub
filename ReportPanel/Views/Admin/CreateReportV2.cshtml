@@ -80,6 +80,8 @@ window.__availableDataSources = @Html.Raw(System.Text.Json.JsonSerializer.Serial
 
 <div class="builder-v2" x-data="builderV2" x-cloak
      x-on:builder-preview-open.window="openPreview()">
+    @* F-9: validation banner + toast — builder root scope'unda render *@
+    @await Html.PartialAsync("_ReportFormBuilderFeedbackV2")
     @* Alpine reactive hidden input'lar — form="reportCreateFormV2" ile dış form'a bağlı *@
     <input type="hidden" name="Title" form="reportCreateFormV2" :value="title || 'Yeni Rapor'" />
     <input type="hidden" name="DataSourceKey" form="reportCreateFormV2" :value="dataSourceKey" />
@@ -731,4 +733,5 @@ window.__availableDataSources = @Html.Raw(System.Text.Json.JsonSerializer.Serial
 <script src="~/assets/js/builder-v2/builder-settings.js" asp-append-version="true"></script>
 <script src="~/assets/js/builder-v2/builder-tabs.js" asp-append-version="true"></script>
 <script src="~/assets/js/builder-v2/builder-preview.js" asp-append-version="true"></script>
+<script src="~/assets/js/builder-v2/builder-feedback.js" asp-append-version="true"></script>
 <script src="~/assets/js/builder-v2/builder.js" asp-append-version="true"></script>

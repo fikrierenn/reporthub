@@ -52,6 +52,9 @@
                     // Settings (DataSource/ProcName/ParamSchema) reactive state init
                     if (self.initSettings) self.initSettings();
 
+                    // F-9: Geri Al referansı için page-load anındaki kayıtlı config'i snapshot'la
+                    if (self.captureSnapshot) self.captureSnapshot();
+
                     // Gridstack init — DOM hazır olduktan sonra
                     self.$nextTick(function () {
                         self.initGridstack();
@@ -251,7 +254,8 @@
                 window.__builderV2.tableMixin(),
                 window.__builderV2.settingsMixin(),
                 window.__builderV2.tabsMixin(),
-                window.__builderV2.previewMixin()
+                window.__builderV2.previewMixin(),
+                window.__builderV2.feedbackMixin()
             );
         };
     }

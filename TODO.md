@@ -106,7 +106,7 @@ Bu liste 5 plan dosyasi (`plans/02-06`) + asagidaki FAZ 1-3 + son 5 journal'in y
 - [x] **CreateUser veri filtresi bölümü (P0)** ✅ 4 Mayis 2026 audit — `CreateUser.cshtml:133` zaten `_AdminUserDataFilterPanel` partial'ını cagiriyor; AdminController.Users.cs `BuildUserFormInput` filter parsing yapiyor; UserManagementService.CreateAsync `SyncDataFiltersAsync` ile DB'ye yaziyor. Sentez yanılgıydı.
 
 #### Büyük (>4h, çok-fazlı)
-- [ ] **M-11 Plan 02 · F-9 live preview endpoint** (~5h)
+- [x] **M-11 Plan 02 · F-9 live preview endpoint** ✅ 6 Mayıs 2026 — F-9 madde 46-55 tamamlandı: `DashboardValidate` JSON endpoint, `builder-feedback.js` mixin (validate/toast/undo), `_ReportFormBuilderFeedbackV2.cshtml` partial (banner + toast container), topbar Doğrula+Geri Al butonları, `init() → captureSnapshot()` page-load anında. **Throttle 300ms (madde 49) kapsam dışı bırakıldı** — manuel "Tam Önizle" buton yeterli, kullanıcı kararı.
 - [ ] **M-11 Plan 02 · F-10 sablon + kbd shortcuts** (~3h)
 - [ ] **M-11 Plan 02 · F-11 smart defaults** (~3h)
 - [ ] **M-11 Plan 02 · F-12 e2e + screenshot + journal** (~3h)
