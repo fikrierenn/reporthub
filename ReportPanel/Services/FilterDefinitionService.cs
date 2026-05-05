@@ -93,6 +93,8 @@ namespace ReportPanel.Services
             if (!validation.Success) return validation;
 
             var oldSnap = new { entity.FilterDefinitionId, entity.FilterKey, entity.Label, entity.Scope, entity.DataSourceKey, entity.IsActive, entity.DisplayOrder };
+            var oldFilterKey = entity.FilterKey;
+            var oldDataSourceKey = entity.DataSourceKey;
 
             entity.FilterKey = filterKey!.Trim();
             entity.Label = label!.Trim();
@@ -102,6 +104,23 @@ namespace ReportPanel.Services
             entity.IsActive = isActive;
             entity.DisplayOrder = displayOrder;
             entity.UpdatedAt = DateTime.Now;
+
+            // Cascade: FilterKey veya DataSourceKey değişirse UserDataFilters kayıtlarını da güncelle
+            // (aksi halde UserDataFilterInjector eski isimle parametre enjekte eder, SP'de yok hatası).
+            var keyChanged = !string.Equals(oldFilterKey, entity.FilterKey, StringComparison.OrdinalIgnoreCase);
+            var dsChanged = !string.Equals(oldDataSourceKey ?? "", entity.DataSourceKey ?? "", StringComparison.OrdinalIgnoreCase);
+            if (keyChanged || dsChanged)
+            {
+                var affected = await _context.UserDataFilters
+                    .Where(u => u.FilterKey == oldFilterKey
+                        && u.DataSourceKey == oldDataSourceKey)
+                    .ToListAsync();
+                foreach (var udf in affected)
+                {
+                    udf.FilterKey = entity.FilterKey;
+                    udf.DataSourceKey = entity.DataSourceKey;
+                }
+            }
 
             await _context.SaveChangesAsync();
 
