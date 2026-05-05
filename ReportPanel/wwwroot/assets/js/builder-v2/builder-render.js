@@ -23,13 +23,20 @@
 
             findResultSetForComp(comp) {
                 var sets = (this.spPreview && this.spPreview.resultSets) || [];
-                if (!sets.length) return null;
-                if (comp.result) {
-                    var byName = sets.find(function (rs, i) { return (rs.name || ('rs' + i)) === comp.result; });
-                    if (byName) return byName;
+                if (!sets.length || !comp || !comp.result) return null;
+                var r = String(comp.result);
+                // 1. V2 builder default "rsN" pattern
+                var m = r.match(/^rs(\d+)$/);
+                if (m) {
+                    var idx = parseInt(m[1], 10);
+                    return sets[idx] || null;
                 }
-                if (typeof comp.resultSet === 'number') return sets[comp.resultSet] || sets[0];
-                return sets[0];
+                // 2. Named binding (M-10 Faz 6 standart) — ResultContract'tan int index'e çöz
+                var contract = (this.config && this.config.resultContract) ? this.config.resultContract[r] : null;
+                if (contract && typeof contract.resultSet === 'number') return sets[contract.resultSet] || null;
+                // 3. RS.name eşleşmesi (manuel set edilmiş ad)
+                var byName = sets.find(function (rs, i) { return (rs.name || ('rs' + i)) === r; });
+                return byName || null;
             },
 
             computeKpiValue(rs, comp) {

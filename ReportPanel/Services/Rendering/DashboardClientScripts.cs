@@ -95,6 +95,27 @@ function aggVal(rs, agg, col, cond) {
   return data.length;
 }");
 
+            // KPI ileri ayar formul compute (fA op fB; op: + - * / % yuzde=100*A/B).
+            // Formul tum 3 alani dolu ise oncelikli; degilse cfg.col + cfg.agg fallback.
+            sb.AppendLine(@"
+function computeKpiBase(cfg) {
+  if (cfg && cfg.fA && cfg.fOp && cfg.fB) {
+    var aRaw = aggVal(cfg.rs, cfg.agg, cfg.fA, cfg.cond);
+    var bRaw = aggVal(cfg.rs, cfg.agg, cfg.fB, cfg.cond);
+    var a = parseFloat(aRaw), b = parseFloat(bRaw);
+    if (isNaN(a) || isNaN(b)) return null;
+    switch (cfg.fOp) {
+      case '+': return a + b;
+      case '-': return a - b;
+      case '*': return a * b;
+      case '/': return b === 0 ? null : a / b;
+      case '%': return b === 0 ? null : (100 * a / b);
+    }
+    return null;
+  }
+  return aggVal(cfg.rs, cfg.agg, cfg.col, cfg.cond);
+}");
+
             // KPI number formatter (ADR-008 F-4: numberFormat alan destegi)
             sb.AppendLine(@"
 function fmtKpi(v, fmt) {

@@ -12,7 +12,7 @@ namespace ReportPanel.Services.Rendering
 document.querySelectorAll('[data-kpi]').forEach(function(el) {
   var cfg = JSON.parse(el.dataset.kpi);
   var variant = cfg.variant || 'basic';
-  var val = aggVal(cfg.rs, cfg.agg, cfg.col, cfg.cond);
+  var val = computeKpiBase(cfg);
   var fmt = cfg.numberFormat || 'auto';
 
   if (variant === 'basic') {

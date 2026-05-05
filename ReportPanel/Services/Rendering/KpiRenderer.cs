@@ -39,7 +39,10 @@ namespace ReportPanel.Services.Rendering
                 agg = comp.Agg,
                 col = comp.Column ?? "",
                 cond = comp.Condition ?? "",
-                numberFormat = comp.NumberFormat ?? "auto"
+                numberFormat = comp.NumberFormat ?? "auto",
+                fA = comp.FormulaA ?? "",
+                fOp = comp.FormulaOp ?? "",
+                fB = comp.FormulaB ?? ""
             });
             kpiData = kpiData.Replace("\"", "&quot;");
 
@@ -70,6 +73,9 @@ namespace ReportPanel.Services.Rendering
                 col = comp.Column ?? "",
                 cond = comp.Condition ?? "",
                 numberFormat = comp.NumberFormat ?? "auto",
+                fA = comp.FormulaA ?? "",
+                fOp = comp.FormulaOp ?? "",
+                fB = comp.FormulaB ?? "",
                 compareColumn = comp.Delta?.CompareColumn ?? "",
                 compareLabel
             });
@@ -102,6 +108,9 @@ namespace ReportPanel.Services.Rendering
                 col = comp.Column ?? "",
                 cond = comp.Condition ?? "",
                 numberFormat = comp.NumberFormat ?? "auto",
+                fA = comp.FormulaA ?? "",
+                fOp = comp.FormulaOp ?? "",
+                fB = comp.FormulaB ?? "",
                 trendLabelCol = comp.Trend?.LabelColumn ?? "",
                 trendValueCol = comp.Trend?.ValueColumn ?? "",
                 colorHex = RenderContext.ChartColorHex.GetValueOrDefault(comp.Color, "#3b82f6")
@@ -136,6 +145,9 @@ namespace ReportPanel.Services.Rendering
                 col = comp.Column ?? "",
                 cond = comp.Condition ?? "",
                 numberFormat = comp.NumberFormat ?? "auto",
+                fA = comp.FormulaA ?? "",
+                fOp = comp.FormulaOp ?? "",
+                fB = comp.FormulaB ?? "",
                 targetColumn = comp.Progress?.TargetColumn ?? "",
                 targetValue = comp.Progress?.TargetValue,
                 colorHex = RenderContext.ChartColorHex.GetValueOrDefault(comp.Color, "#3b82f6")

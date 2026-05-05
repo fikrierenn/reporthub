@@ -165,6 +165,17 @@ namespace ReportPanel.Models
         [JsonPropertyName("tableOptions")]
         public TableOptions? TableOptions { get; set; }
 
+        // KPI ileri ayar: 2-kolon formul (A op B). FormulaA + FormulaOp + FormulaB hepsi dolu ise
+        // computeKpi onceligi formula'dadir; yoksa Column + Agg fallback. Op: + - * / % (yuzde: 100*A/B)
+        [JsonPropertyName("formulaA")]
+        public string? FormulaA { get; set; }
+
+        [JsonPropertyName("formulaOp")]
+        public string? FormulaOp { get; set; }
+
+        [JsonPropertyName("formulaB")]
+        public string? FormulaB { get; set; }
+
         [JsonExtensionData]
         public Dictionary<string, JsonElement>? Extra { get; set; }
     }
