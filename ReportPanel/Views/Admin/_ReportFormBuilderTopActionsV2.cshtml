@@ -42,6 +42,13 @@
     </span>
 
     <button type="button" class="btn"
+            @@click="$dispatch('builder-rs-open')"
+            title="SP'nin döndürdüğü ham RS'leri tab tab göster (config'den bağımsız)">
+        <i class="fas fa-database text-[10px]"></i>
+        Veri Setleri
+    </button>
+
+    <button type="button" class="btn"
             @@click="$dispatch('builder-preview-open')"
             title="Gerçek dashboard çıktısını yeni bir overlay'de göster">
         <i class="fas fa-window-maximize text-[10px]"></i>

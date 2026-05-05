@@ -93,6 +93,8 @@ window.__availableDataSources = @Html.Raw(System.Text.Json.JsonSerializer.Serial
     @* F-10: template picker + kbd shortcuts help modallar *@
     @await Html.PartialAsync("_ReportFormBuilderTemplatesV2")
     @await Html.PartialAsync("_ReportFormBuilderShortcutsV2")
+    @* SP RS viewer — topbar Veri Setleri butonu açar *@
+    @await Html.PartialAsync("_ReportFormBuilderRsViewerV2")
     @* Alpine reactive hidden input'lar — form="reportCreateFormV2" ile dış form'a bağlı *@
     <input type="hidden" name="Title" form="reportCreateFormV2" :value="title || 'Yeni Rapor'" />
     <input type="hidden" name="DataSourceKey" form="reportCreateFormV2" :value="dataSourceKey" />
@@ -827,4 +829,5 @@ window.__availableDataSources = @Html.Raw(System.Text.Json.JsonSerializer.Serial
 <script src="~/assets/js/builder-v2/builder-chart.js" asp-append-version="true"></script>
 <script src="~/assets/js/builder-v2/builder-templates.js" asp-append-version="true"></script>
 <script src="~/assets/js/builder-v2/builder-shortcuts.js" asp-append-version="true"></script>
+<script src="~/assets/js/builder-v2/builder-rs-viewer.js" asp-append-version="true"></script>
 <script src="~/assets/js/builder-v2/builder.js" asp-append-version="true"></script>

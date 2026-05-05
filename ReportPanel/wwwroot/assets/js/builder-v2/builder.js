@@ -261,7 +261,8 @@
                 window.__builderV2.feedbackMixin(),
                 window.__builderV2.chartMixin(),
                 window.__builderV2.templatesMixin(),
-                window.__builderV2.shortcutsMixin()
+                window.__builderV2.shortcutsMixin(),
+                window.__builderV2.rsViewerMixin()
             );
         };
     }
