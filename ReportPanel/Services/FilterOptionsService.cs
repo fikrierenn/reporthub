@@ -29,15 +29,16 @@ public class FilterOptionsService
         _logger = logger;
     }
 
-    public async Task<FilterOptionsResult> GetAsync(string filterKey)
+    public async Task<FilterOptionsResult> GetAsync(string filterKey, string? dataSourceKey = null)
     {
         if (string.IsNullOrWhiteSpace(filterKey))
         {
             return new FilterOptionsResult(false, "FilterKey gerekli.", Array.Empty<FilterOption>());
         }
 
+        // Plan B: aynı FilterKey birden fazla DataSource'ta olabilir; (DataSourceKey, FilterKey) composite.
         var def = await _context.FilterDefinitions.AsNoTracking()
-            .FirstOrDefaultAsync(f => f.FilterKey == filterKey);
+            .FirstOrDefaultAsync(f => f.FilterKey == filterKey && f.DataSourceKey == dataSourceKey);
         if (def == null || !def.IsActive)
         {
             return new FilterOptionsResult(true, null, Array.Empty<FilterOption>());

@@ -141,7 +141,7 @@ public class FilterOptionsServiceTests
         await ctx.SaveChangesAsync();
         var svc = NewService(ctx);
 
-        var result = await svc.GetAsync("evil");
+        var result = await svc.GetAsync("evil", "PDKS");
 
         Assert.False(result.Success);
         Assert.NotNull(result.Error);

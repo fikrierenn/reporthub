@@ -25,10 +25,12 @@ namespace ReportPanel.Controllers
         [HttpGet]
         [Authorize(Roles = "admin")]
         [Route("Admin/FilterOptions")]
-        // Plan 07 Faz 3: DataSourceKey parametresi kaldirildi (FilterDefinition master'dan otorite).
-        public async Task<IActionResult> FilterOptions(string filterKey)
+        // Plan 07 Plan B (5 Mayis): aynı FilterKey birden fazla DataSource'ta olabilir,
+        // dataSourceKey parametresi ile composite (DataSourceKey, FilterKey) lookup.
+        public async Task<IActionResult> FilterOptions(string filterKey, string? dataSourceKey = null)
         {
-            var result = await _filterOptions.GetAsync(filterKey);
+            var ds = string.IsNullOrWhiteSpace(dataSourceKey) ? null : dataSourceKey;
+            var result = await _filterOptions.GetAsync(filterKey, ds);
             if (!result.Success && result.Error == "FilterKey gerekli.")
             {
                 return BadRequest(result.Error);
