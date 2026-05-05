@@ -17,7 +17,7 @@ public class FilterOptionsService
 
     private static readonly Dictionary<string, Func<ReportPanelContext, Task<List<FilterOption>>>> NativeSources = new()
     {
-        ["raporKategori"] = async ctx => await ctx.ReportCategories
+        ["raporGrubu"] = async ctx => await ctx.ReportCategories
             .AsNoTracking().Where(c => c.IsActive).OrderBy(c => c.Name)
             .Select(c => new FilterOption(c.CategoryId.ToString(), c.Name))
             .ToListAsync()

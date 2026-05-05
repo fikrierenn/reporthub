@@ -206,6 +206,50 @@ namespace ReportPanel.Controllers
                 accessibleReportsQuery = accessibleReportsQuery.Where(r => false);
             }
 
+            // Plan 07 Faz 7: raporGrubu reportAccess filtresi (önceki ad: raporKategori, urunKategori ile çakışıyordu).
+            // Aktif (NULL, raporGrubu) FilterDefinition varsa kullanıcının atanmış kategori ID'leri ile filter.
+            // FilterValue='*' magic = tümü, concrete CategoryId = sadece o kategoriler, 0 kayıt = deny (bos liste).
+            if (CurrentUserId.HasValue)
+            {
+                var raporKategoriActive = await _context.FilterDefinitions
+                    .AsNoTracking()
+                    .AnyAsync(fd => fd.IsActive
+                        && fd.FilterKey == "raporGrubu"
+                        && fd.DataSourceKey == null);
+
+                if (raporKategoriActive)
+                {
+                    var raporKategoriFilters = await _context.UserDataFilters
+                        .AsNoTracking()
+                        .Where(f => f.UserId == CurrentUserId.Value
+                            && f.FilterKey == "raporGrubu"
+                            && f.DataSourceKey == null)
+                        .Select(f => f.FilterValue)
+                        .ToListAsync();
+
+                    var hasStar = raporKategoriFilters.Contains("*");
+                    if (!hasStar)
+                    {
+                        var allowedCategoryIds = raporKategoriFilters
+                            .Select(v => int.TryParse(v, out var i) ? (int?)i : null)
+                            .Where(x => x.HasValue)
+                            .Select(x => x!.Value)
+                            .ToHashSet();
+
+                        if (allowedCategoryIds.Count == 0)
+                        {
+                            accessibleReportsQuery = accessibleReportsQuery.Where(r => false);
+                        }
+                        else
+                        {
+                            accessibleReportsQuery = accessibleReportsQuery
+                                .Where(r => r.ReportCategories.Any(rc => allowedCategoryIds.Contains(rc.CategoryId)));
+                        }
+                    }
+                    // hasStar=true → tümü görünür, ek filter yok
+                }
+            }
+
             var accessibleReports = await accessibleReportsQuery
                 .OrderBy(r => r.Title)
                 .ToListAsync();

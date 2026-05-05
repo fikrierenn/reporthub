@@ -75,8 +75,8 @@ public class FilterOptionsServiceTests
         await using var ctx = NewContext(nameof(GetAsync_reportAccess_native_source_returns_active_categories_ordered));
         ctx.FilterDefinitions.Add(new FilterDefinition
         {
-            FilterKey = "raporKategori",
-            Label = "Rapor Kategorisi",
+            FilterKey = "raporGrubu",
+            Label = "Rapor Grubu",
             Scope = FilterDefinition.ScopeReportAccess,
             IsActive = true
         });
@@ -88,7 +88,7 @@ public class FilterOptionsServiceTests
         await ctx.SaveChangesAsync();
         var svc = NewService(ctx);
 
-        var result = await svc.GetAsync("raporKategori");
+        var result = await svc.GetAsync("raporGrubu");
 
         Assert.True(result.Success);
         Assert.Equal(2, result.Options.Count);
