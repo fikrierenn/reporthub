@@ -32,17 +32,17 @@
         <div class="field" style="margin-bottom:0;">
             <label class="lab">Scope <span style="color:var(--accent);">*</span></label>
             <select name="Scope" class="inp" required>
-                <option value="spInjection" selected="@(def.Scope == "spInjection")">SP Enjeksiyon (rapor parametresi)</option>
-                <option value="reportAccess" selected="@(def.Scope == "reportAccess")">Rapor Erişim (Reports/Index liste filtresi)</option>
+                <option value="spInjection" @(def.Scope == "spInjection" ? "selected" : "")>SP Enjeksiyon (rapor parametresi)</option>
+                <option value="reportAccess" @(def.Scope == "reportAccess" ? "selected" : "")>Rapor Erişim (Reports/Index liste filtresi)</option>
             </select>
         </div>
         <div class="field" style="margin-bottom:0;">
             <label class="lab">Veri Kaynağı</label>
             <select name="DataSourceKey" class="inp">
-                <option value="">— Sistem (cross-cutting) —</option>
+                <option value="" @(string.IsNullOrEmpty(def.DataSourceKey) ? "selected" : "")>— Sistem (cross-cutting) —</option>
                 @foreach (var ds in dataSources)
                 {
-                    <option value="@ds.DataSourceKey" selected="@(def.DataSourceKey == ds.DataSourceKey)">@ds.Title (@ds.DataSourceKey)</option>
+                    <option value="@ds.DataSourceKey" @(def.DataSourceKey == ds.DataSourceKey ? "selected" : "")>@ds.Title (@ds.DataSourceKey)</option>
                 }
             </select>
             <div style="font-size:11px; color:var(--ink-3); margin-top:4px;">
