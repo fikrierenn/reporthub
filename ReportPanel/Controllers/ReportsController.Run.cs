@@ -162,6 +162,32 @@ namespace ReportPanel.Controllers
                     model.RunMessage = (model.RunMessage ?? "") +
                         " (UYARI: Dashboard yapilandirmasi yok, bos sablonla gosteriliyor. Admin'e bildirin.)";
                 }
+                // M-10 Faz 4: required ResultContract entry'leri eksik/out-of-bounds ise soft-fail.
+                // Renderer placeholder zaten basıyor (DashboardShellRenderer.RenderRequiredMissingBanner +
+                // PlaceholderRenderer.RenderMissingResult); biz burada audit + kullanıcı mesajı.
+                if (dashConfig?.ResultContract != null)
+                {
+                    var missingRequired = dashConfig.ResultContract
+                        .Where(kv => kv.Value.Required
+                            && (kv.Value.ResultSet < 0 || kv.Value.ResultSet >= resultSets.Count))
+                        .Select(kv => kv.Key)
+                        .ToList();
+                    if (missingRequired.Count > 0)
+                    {
+                        await _auditLog.LogAsync(new AuditLogEntry
+                        {
+                            EventType = "dashboard_required_result_missing",
+                            TargetType = "report",
+                            TargetKey = context.SelectedReport.ReportId.ToString(),
+                            ReportId = context.SelectedReport.ReportId,
+                            Description = $"Required ResultContract eksik/out-of-bounds: {string.Join(",", missingRequired)} (resultSetCount={resultSets.Count})",
+                            IsSuccess = false
+                        });
+                        model.RunMessage = (model.RunMessage ?? "") +
+                            $" (UYARI: Bazi gerekli veri setleri donmedi: {string.Join(", ", missingRequired)}. Admin'e bildirin.)";
+                    }
+                }
+
                 model.DashboardRenderedHtml = DashboardRenderer.Render(
                     dashConfig ?? new DashboardConfig(), resultSets);
 
