@@ -10,13 +10,9 @@ namespace ReportPanel.Services.Rendering
     {
         public static void RenderMissingResult(StringBuilder sb, DashboardComponent comp, string spanCls)
         {
-            string bindInfo;
-            if (!string.IsNullOrEmpty(comp.Result))
-                bindInfo = $"result: &quot;{RenderContext.Esc(comp.Result)}&quot;";
-            else if (comp.ResultSet.HasValue)
-                bindInfo = $"resultSet: {comp.ResultSet.Value}";
-            else
-                bindInfo = "(binding yok)";
+            string bindInfo = !string.IsNullOrEmpty(comp.Result)
+                ? $"result: &quot;{RenderContext.Esc(comp.Result)}&quot;"
+                : "(binding yok)";
 
             sb.AppendLine($"<div class='bg-orange-50 border border-orange-200 rounded-xl p-5{spanCls}'>");
             sb.AppendLine($"  <div class='flex items-start gap-3'>");

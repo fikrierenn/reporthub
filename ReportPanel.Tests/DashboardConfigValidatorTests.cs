@@ -51,7 +51,7 @@ public class DashboardConfigValidatorTests
     {
         var json = """
         {
-          "tabs": [ { "components": [ { "type": "kpi", "resultSet": 0 } ] } ]
+          "tabs": [ { "components": [ { "type": "kpi", "result": "rs0" } ] } ]
         }
         """;
         var r = DashboardConfigValidator.Validate(json);
@@ -139,24 +139,12 @@ public class DashboardConfigValidatorTests
         Assert.Contains(r.Errors, e => e.Contains("adlı isim tanımı yok"));
     }
 
-    [Fact]
-    public void Validate_rejects_negative_widget_resultset()
-    {
-        var json = """
-        {
-          "tabs": [ { "components": [ { "type": "kpi", "resultSet": -1 } ] } ]
-        }
-        """;
-        var r = DashboardConfigValidator.Validate(json);
-        Assert.Contains(r.Errors, e => e.Contains("negatif"));
-    }
-
-    [Fact]
+[Fact]
     public void Validate_rejects_invalid_widget_id_format()
     {
         var json = """
         {
-          "tabs": [ { "components": [ { "id": "bad-id", "type": "kpi", "resultSet": 0 } ] } ]
+          "tabs": [ { "components": [ { "id": "bad-id", "type": "kpi", "result": "rs0" } ] } ]
         }
         """;
         var r = DashboardConfigValidator.Validate(json);
@@ -169,8 +157,8 @@ public class DashboardConfigValidatorTests
         var json = """
         {
           "tabs": [ { "components": [
-            { "id": "w_kpi_abcdef", "type": "kpi", "resultSet": 0 },
-            { "id": "w_kpi_abcdef", "type": "kpi", "resultSet": 1 }
+            { "id": "w_kpi_abcdef", "type": "kpi", "result": "rs0" },
+            { "id": "w_kpi_abcdef", "type": "kpi", "result": "rs1" }
           ] } ]
         }
         """;
@@ -202,7 +190,7 @@ public class DashboardConfigValidatorTests
     {
         var json = """
         {
-          "tabs": [ { "components": [ { "type": "heatmap", "resultSet": 0 } ] } ]
+          "tabs": [ { "components": [ { "type": "heatmap", "result": "rs0" } ] } ]
         }
         """;
         var r = DashboardConfigValidator.Validate(json);
@@ -210,8 +198,9 @@ public class DashboardConfigValidatorTests
         Assert.Contains(r.Warnings, w => w.Contains("bilinmeyen bileşen tipi"));
     }
 
+    // ADR-007 Faz 6: NoBinding artık hard error (V2 builder default `result: "rs0"` set eder, eksikse save bloklanır).
     [Fact]
-    public void Validate_warns_orphan_widget_no_binding()
+    public void Validate_errors_widget_no_binding()
     {
         var json = """
         {
@@ -219,8 +208,8 @@ public class DashboardConfigValidatorTests
         }
         """;
         var r = DashboardConfigValidator.Validate(json);
-        Assert.False(r.HasErrors);
-        Assert.Contains(r.Warnings, w => w.Contains("sonuç bağlantısı yok"));
+        Assert.True(r.HasErrors);
+        Assert.Contains(r.Errors, e => e.Contains("sonuç bağlantısı yok"));
     }
 
     // ============================================================
@@ -245,7 +234,7 @@ public class DashboardConfigValidatorTests
         var json = $$"""
         {
           "schemaVersion": 2,
-          "tabs": [ { "components": [ { "type": "kpi", "variant": "{{variant}}", "resultSet": 0 {{extras}} } ] } ]
+          "tabs": [ { "components": [ { "type": "kpi", "variant": "{{variant}}", "result": "rs0" {{extras}} } ] } ]
         }
         """;
         var r = DashboardConfigValidator.Validate(json);
@@ -258,7 +247,7 @@ public class DashboardConfigValidatorTests
         var json = """
         {
           "schemaVersion": 2,
-          "tabs": [ { "components": [ { "type": "kpi", "variant": "supersonic", "resultSet": 0 } ] } ]
+          "tabs": [ { "components": [ { "type": "kpi", "variant": "supersonic", "result": "rs0" } ] } ]
         }
         """;
         var r = DashboardConfigValidator.Validate(json);
@@ -281,7 +270,7 @@ public class DashboardConfigValidatorTests
         var json = $$"""
         {
           "schemaVersion": 2,
-          "tabs": [ { "components": [ { "type": "chart", "variant": "{{variant}}", "resultSet": 0 } ] } ]
+          "tabs": [ { "components": [ { "type": "chart", "variant": "{{variant}}", "result": "rs0" } ] } ]
         }
         """;
         var r = DashboardConfigValidator.Validate(json);
@@ -294,7 +283,7 @@ public class DashboardConfigValidatorTests
         var json = """
         {
           "schemaVersion": 2,
-          "tabs": [ { "components": [ { "type": "chart", "variant": "sankey", "resultSet": 0 } ] } ]
+          "tabs": [ { "components": [ { "type": "chart", "variant": "sankey", "result": "rs0" } ] } ]
         }
         """;
         var r = DashboardConfigValidator.Validate(json);
@@ -307,7 +296,7 @@ public class DashboardConfigValidatorTests
         var json = """
         {
           "schemaVersion": 2,
-          "tabs": [ { "components": [ { "type": "kpi", "numberFormat": "hex", "resultSet": 0 } ] } ]
+          "tabs": [ { "components": [ { "type": "kpi", "numberFormat": "hex", "result": "rs0" } ] } ]
         }
         """;
         var r = DashboardConfigValidator.Validate(json);
@@ -320,7 +309,7 @@ public class DashboardConfigValidatorTests
         var json = """
         {
           "schemaVersion": 2,
-          "tabs": [ { "components": [ { "type": "kpi", "variant": "delta", "resultSet": 0 } ] } ]
+          "tabs": [ { "components": [ { "type": "kpi", "variant": "delta", "result": "rs0" } ] } ]
         }
         """;
         var r = DashboardConfigValidator.Validate(json);
@@ -333,7 +322,7 @@ public class DashboardConfigValidatorTests
         var json = """
         {
           "schemaVersion": 2,
-          "tabs": [ { "components": [ { "type": "kpi", "variant": "sparkline", "trend": { "labelColumn": "t" }, "resultSet": 0 } ] } ]
+          "tabs": [ { "components": [ { "type": "kpi", "variant": "sparkline", "trend": { "labelColumn": "t" }, "result": "rs0" } ] } ]
         }
         """;
         var r = DashboardConfigValidator.Validate(json);
@@ -346,7 +335,7 @@ public class DashboardConfigValidatorTests
         var json = """
         {
           "schemaVersion": 2,
-          "tabs": [ { "components": [ { "type": "kpi", "variant": "progress", "resultSet": 0 } ] } ]
+          "tabs": [ { "components": [ { "type": "kpi", "variant": "progress", "result": "rs0" } ] } ]
         }
         """;
         var r = DashboardConfigValidator.Validate(json);
@@ -359,7 +348,7 @@ public class DashboardConfigValidatorTests
         var json = """
         {
           "schemaVersion": 2,
-          "tabs": [ { "components": [ { "type": "table", "resultSet": 0, "tableOptions": { "pageSize": 7 } } ] } ]
+          "tabs": [ { "components": [ { "type": "table", "result": "rs0", "tableOptions": { "pageSize": 7 } } ] } ]
         }
         """;
         var r = DashboardConfigValidator.Validate(json);
@@ -372,7 +361,7 @@ public class DashboardConfigValidatorTests
         var json = """
         {
           "schemaVersion": 2,
-          "tabs": [ { "components": [ { "type": "table", "resultSet": 0, "columns": [ { "key": "a", "label": "A", "conditionalFormat": { "mode": "rainbow" } } ] } ] } ]
+          "tabs": [ { "components": [ { "type": "table", "result": "rs0", "columns": [ { "key": "a", "label": "A", "conditionalFormat": { "mode": "rainbow" } } ] } ] } ]
         }
         """;
         var r = DashboardConfigValidator.Validate(json);

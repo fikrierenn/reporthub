@@ -107,7 +107,7 @@ public class DashboardConfigExtensionDataTests
             {
               "title": "Genel",
               "components": [
-                { "type": "kpi", "title": "K", "tooltip": "ipucu", "futureField": 99 }
+                { "type": "kpi", "title": "K", "result": "rs0", "tooltip": "ipucu", "futureField": 99 }
               ]
             }
           ]

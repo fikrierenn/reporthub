@@ -37,7 +37,7 @@ public class DashboardRendererTests
     [Fact]
     public void Render_component_title_is_html_encoded()
     {
-        var comp = new DashboardComponent { Type = "kpi", Title = "<img src=x onerror=alert(1)>", ResultSet = 0 };
+        var comp = new DashboardComponent { Type = "kpi", Title = "<img src=x onerror=alert(1)>", Result = "rs0" };
         var cfg = ConfigWithTab("Genel", comp);
         var html = DashboardRenderer.Render(cfg, EmptyRs());
 
@@ -50,7 +50,7 @@ public class DashboardRendererTests
     [Fact]
     public void Render_component_subtitle_is_html_encoded()
     {
-        var comp = new DashboardComponent { Type = "kpi", Title = "t", Subtitle = "<script>x</script>", ResultSet = 0 };
+        var comp = new DashboardComponent { Type = "kpi", Title = "t", Subtitle = "<script>x</script>", Result = "rs0" };
         var cfg = ConfigWithTab("Genel", comp);
         var html = DashboardRenderer.Render(cfg, EmptyRs());
 
@@ -62,7 +62,7 @@ public class DashboardRendererTests
     public void Render_component_icon_is_html_encoded()
     {
         // Icon is used inside a class attribute — breaking out via `'` must not succeed.
-        var comp = new DashboardComponent { Type = "kpi", Title = "t", Icon = "' onclick='alert(1)", ResultSet = 0 };
+        var comp = new DashboardComponent { Type = "kpi", Title = "t", Icon = "' onclick='alert(1)", Result = "rs0" };
         var cfg = ConfigWithTab("Genel", comp);
         var html = DashboardRenderer.Render(cfg, EmptyRs());
 
@@ -143,7 +143,7 @@ public class DashboardRendererTests
     // ---- ADR-007 resolver ----
 
     [Fact]
-    public void ResolveResultSet_prefers_name_over_legacy_index()
+    public void ResolveResultSet_resolves_name_to_contract_entry()
     {
         var cfg = new DashboardConfig
         {
@@ -152,7 +152,7 @@ public class DashboardRendererTests
                 ["chart"] = new() { ResultSet = 2 }
             }
         };
-        var comp = new DashboardComponent { Result = "chart", ResultSet = 999 };
+        var comp = new DashboardComponent { Result = "chart" };
         Assert.Equal(2, cfg.ResolveResultSet(comp, resultSetCount: 3));
     }
 
@@ -178,19 +178,20 @@ public class DashboardRendererTests
         Assert.Null(cfg.ResolveResultSet(comp, resultSetCount: 3));
     }
 
+    // V2 builder default: yeni widget'lar `result: "rs0"` ile gelir, contract entry yokken regex fallback ile resolve eder.
     [Fact]
-    public void ResolveResultSet_falls_back_to_legacy_index_when_result_not_set()
+    public void ResolveResultSet_rsN_pattern_resolves_to_int_index()
     {
         var cfg = new DashboardConfig();
-        var comp = new DashboardComponent { ResultSet = 1 };
+        var comp = new DashboardComponent { Result = "rs1" };
         Assert.Equal(1, cfg.ResolveResultSet(comp, resultSetCount: 3));
     }
 
     [Fact]
-    public void ResolveResultSet_returns_null_for_out_of_bounds_legacy_index()
+    public void ResolveResultSet_returns_null_for_out_of_bounds_rsN_pattern()
     {
         var cfg = new DashboardConfig();
-        var comp = new DashboardComponent { ResultSet = 10 };
+        var comp = new DashboardComponent { Result = "rs10" };
         Assert.Null(cfg.ResolveResultSet(comp, resultSetCount: 3));
     }
 
@@ -220,7 +221,7 @@ public class DashboardRendererTests
     [Fact]
     public void Render_unknown_widget_type_emits_removed_placeholder()
     {
-        var comp = new DashboardComponent { Type = "futureWidget", Id = "w_future_abc123", ResultSet = 0 };
+        var comp = new DashboardComponent { Type = "futureWidget", Id = "w_future_abc123", Result = "rs0" };
         var cfg = new DashboardConfig
         {
             Tabs = new() { new DashboardTab { Title = "T", Components = { comp } } }
@@ -254,7 +255,7 @@ public class DashboardRendererTests
     // ============================================================
 
     private static DashboardComponent TableComp(int rs, List<TableColumnDef> cols)
-        => new() { Type = "table", Title = "T", ResultSet = rs, Columns = cols };
+        => new() { Type = "table", Title = "T", Result = $"rs{rs}", Columns = cols };
 
     [Fact]
     public void TableFormula_enriches_rows_with_arithmetic_result()

@@ -31,47 +31,31 @@ namespace ReportPanel.Models
         [JsonExtensionData]
         public Dictionary<string, JsonElement>? Extra { get; set; }
 
-        // ADR-007 Faz 1: Widget.Result > Widget.ResultSet precedence + bounds check.
+        // ADR-007 Faz 6: Tek source = comp.Result. Legacy comp.ResultSet int index dal Migration 27 ile kaldirildi.
         //
         // Resolver kurali:
-        //   1. comp.Result != null        ->  contract hit + bounds OK  ? entry.ResultSet : null
-        //   2. comp.ResultSet.HasValue    ->  bounds OK                 ? comp.ResultSet.Value : null
-        //   3. hicbir binding yok         ->  null
+        //   1. comp.Result -> ResultContract entry varsa entry.ResultSet (bounds OK), yoksa "rsN" regex int parse fallback (V2 builder default)
+        //   2. binding yok -> null
         //
-        // null donen durumda renderer placeholder basar (Faz 4'te audit event eklenecek).
-        // -1 sentinel KULLANILMIYOR — contract UI davranisina bagli kalmasin.
+        // null donen durumda renderer placeholder basar + audit event "dashboard_required_result_missing".
         public int? ResolveResultSet(DashboardComponent comp, int resultSetCount)
         {
-            // 1. name-based binding
-            if (!string.IsNullOrEmpty(comp.Result))
+            if (string.IsNullOrEmpty(comp.Result))
+                return null;
+
+            if (ResultContract != null && ResultContract.TryGetValue(comp.Result, out var entry))
             {
-                if (ResultContract != null && ResultContract.TryGetValue(comp.Result, out var entry))
-                {
-                    if (entry.ResultSet < 0 || entry.ResultSet >= resultSetCount)
-                        return null; // out of bounds
-                    return entry.ResultSet;
-                }
-
-                // V2 builder default "rsN" pattern fallback — resultContract entry yoksa
-                // string "rs0/rs1/rs2/..." doğrudan int index olarak yorumlanır.
-                var m = System.Text.RegularExpressions.Regex.Match(comp.Result, @"^rs(\d+)$");
-                if (m.Success && int.TryParse(m.Groups[1].Value, out var rsIdx)
-                    && rsIdx >= 0 && rsIdx < resultSetCount)
-                    return rsIdx;
-
-                return null; // unknown name
-            }
-
-            // 2. legacy index binding
-            if (comp.ResultSet.HasValue)
-            {
-                var idx = comp.ResultSet.Value;
-                if (idx < 0 || idx >= resultSetCount)
+                if (entry.ResultSet < 0 || entry.ResultSet >= resultSetCount)
                     return null;
-                return idx;
+                return entry.ResultSet;
             }
 
-            // 3. no binding
+            // V2 builder default "rsN" pattern fallback — yeni widget'lar `result: "rs0"` ile gelir
+            var m = System.Text.RegularExpressions.Regex.Match(comp.Result, @"^rs(\d+)$");
+            if (m.Success && int.TryParse(m.Groups[1].Value, out var rsIdx)
+                && rsIdx >= 0 && rsIdx < resultSetCount)
+                return rsIdx;
+
             return null;
         }
     }
@@ -120,7 +104,7 @@ namespace ReportPanel.Models
         [JsonPropertyName("span")]
         public int Span { get; set; } = 1; // 1-4 grid span
 
-        // ADR-007: Name-based binding (preferred). If null, falls back to ResultSet int.
+        // ADR-007: Name-based binding. Tek source (Faz 6 sonrasi: legacy ResultSet int kaldirildi).
         [JsonPropertyName("result")]
         public string? Result { get; set; }
 
@@ -129,11 +113,6 @@ namespace ReportPanel.Models
 
         [JsonPropertyName("icon")]
         public string Icon { get; set; } = "fas fa-chart-bar";
-
-        // ADR-007 (Faz 6'da kaldirilacak): legacy index binding. Result field'i varsa yok sayilir.
-        // int? — "hic set edilmemis" ile "0'a set edilmis" ayirt edilebilsin diye nullable.
-        [JsonPropertyName("resultSet")]
-        public int? ResultSet { get; set; }
 
         [JsonPropertyName("agg")]
         public string Agg { get; set; } = "count"; // count, sum, avg, min, max, first, countWhere

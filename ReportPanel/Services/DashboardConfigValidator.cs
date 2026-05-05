@@ -209,29 +209,22 @@ namespace ReportPanel.Services
                             }
                         }
 
-                        // Binding — name-based veya "rsN" pattern fallback
-                        if (!string.IsNullOrEmpty(comp.Result))
+                        // ADR-007 Faz 6: Tek source = comp.Result. Legacy resultSet int kaldirildi.
+                        // Binding zorunlu — yoksa hard error (V2 builder yeni widget'larda default `result: "rs0"` set eder).
+                        if (string.IsNullOrEmpty(comp.Result))
                         {
-                            if (config.ResultContract != null && config.ResultContract.ContainsKey(comp.Result))
-                            {
-                                usedContractKeys.Add(comp.Result);
-                            }
-                            else if (!Regex.IsMatch(comp.Result, @"^rs\d+$"))
-                            {
-                                // contract entry yok ve "rsN" pattern de değil → bilinmeyen isim
-                                result.Errors.Add($"{widgetLabel}: '{comp.Result}' adlı isim tanımı yok.");
-                            }
-                            // "rsN" pattern → resolver int index olarak çözer (DashboardConfig.ResolveResultSet)
+                            result.Errors.Add($"{widgetLabel}: sonuç bağlantısı yok (result alanı boş).");
                         }
-                        else if (comp.ResultSet.HasValue)
+                        else if (config.ResultContract != null && config.ResultContract.ContainsKey(comp.Result))
                         {
-                            if (comp.ResultSet.Value < 0)
-                                result.Errors.Add($"{widgetLabel}: result set indeksi negatif olamaz ({comp.ResultSet.Value}).");
+                            usedContractKeys.Add(comp.Result);
                         }
-                        else
+                        else if (!Regex.IsMatch(comp.Result, @"^rs\d+$"))
                         {
-                            result.Warnings.Add($"{widgetLabel}: sonuç bağlantısı yok (ne isim ne result set seçilmiş) — runtime'da veri görünmez.");
+                            // contract entry yok ve "rsN" pattern de değil → bilinmeyen isim
+                            result.Errors.Add($"{widgetLabel}: '{comp.Result}' adlı isim tanımı yok.");
                         }
+                        // "rsN" pattern → resolver int index olarak çözer (DashboardConfig.ResolveResultSet)
                     }
                 }
             }
