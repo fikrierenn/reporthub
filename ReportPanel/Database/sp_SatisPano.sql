@@ -5,9 +5,10 @@
    posOzet* tablolarından hızlı aggregate, 7 result set.
 
    Kullanım:
-     EXEC dbo.sp_SatisPano;                  -- bugün, tüm mağazalar
-     EXEC dbo.sp_SatisPano '2026-04-15';     -- belirli gün
-     EXEC dbo.sp_SatisPano NULL, '1,4477';   -- mekanID filtreli
+     EXEC dbo.sp_SatisPano;                       -- bugün, tüm mağazalar, tüm kategoriler
+     EXEC dbo.sp_SatisPano '2026-04-15';          -- belirli gün
+     EXEC dbo.sp_SatisPano NULL, '1,4477';        -- mekanID filtreli (sube)
+     EXEC dbo.sp_SatisPano NULL, NULL, '2,3';     -- urunKategori filtreli (RS4 + RS5)
 
    Plan 07 Plan B (5 Mayıs 2026): @sube_Filtre artık doğrudan DerinSIS mekanID
    olarak yorumlanır (önceki vrd SubeNo → #subeMap pattern kaldırıldı). Her DataSource
@@ -25,8 +26,9 @@
    ======================================================================= */
 
 CREATE OR ALTER PROCEDURE bkm.sp_SatisPano
-  @Tarih        date = NULL,
-  @sube_Filtre  nvarchar(500) = NULL    -- DerinSIS mekanID virgülle ayrılmış (NULL=tüm aktif mağazalar)
+  @Tarih              date          = NULL,
+  @sube_Filtre        nvarchar(500) = NULL,  -- DerinSIS mekanID CSV (NULL=tüm aktif mağazalar)
+  @urunKategori_Filtre nvarchar(500) = NULL  -- urnKtgr2.ktgrID CSV (NULL=tüm kategoriler hariç Tanımsız)
 AS
 BEGIN
   SET NOCOUNT ON;
@@ -147,6 +149,14 @@ BEGIN
   GROUP BY g.Gun
   ORDER BY g.Gun;
 
+  -- Ürün kategori filtresi (Plan 07 sonrası — opsiyonel; NULL = tüm kategoriler hariç Tanımsız/Genel).
+  CREATE TABLE #ktgrFiltre (ktgrID int PRIMARY KEY);
+  IF @urunKategori_Filtre IS NOT NULL
+    INSERT INTO #ktgrFiltre
+    SELECT DISTINCT CAST(LTRIM(RTRIM(value)) AS int)
+    FROM STRING_SPLIT(@urunKategori_Filtre, ',')
+    WHERE LTRIM(RTRIM(value)) <> '';
+
   -- ===================================================================
   -- RS4: KATEGORİ BAZLI SATIŞLAR (bu ay)
   -- ===================================================================
@@ -155,9 +165,13 @@ BEGIN
     SUM(H.ehTutarN) AS Ciro,
     SUM(H.ehAdetN) AS Adet,
     CAST(100.0 * SUM(H.ehTutarN) / NULLIF((SELECT SUM(x.ehTutarN) FROM irsHrk x
+      INNER JOIN urn xu ON xu.stkID = x.ehstkID
       WHERE x.ehTrhS >= @AyBas AND x.ehTrhS <= @Gun
         AND x.ehMekan IN (SELECT mekanID FROM #mgzFiltre)
-        AND x.ehTip IN (4, 100) AND x.ehAltDepo = 0), 0) AS decimal(5,1)) AS CiroPay
+        AND x.ehTip IN (4, 100) AND x.ehAltDepo = 0
+        AND xu.urnKtgr2ID NOT IN (11)
+        AND (@urunKategori_Filtre IS NULL OR xu.urnKtgr2ID IN (SELECT ktgrID FROM #ktgrFiltre))
+      ), 0) AS decimal(5,1)) AS CiroPay
   FROM irsHrk H
   INNER JOIN urn U ON U.stkID = H.ehstkID
   LEFT JOIN urnKtgr2 k2 ON k2.ktgrID = U.urnKtgr2ID
@@ -166,6 +180,7 @@ BEGIN
     AND H.ehTip IN (4, 100)      -- mağaza + POS satış
     AND H.ehAltDepo = 0
     AND U.urnKtgr2ID NOT IN (11) -- Genel kategorisi hariç
+    AND (@urunKategori_Filtre IS NULL OR U.urnKtgr2ID IN (SELECT ktgrID FROM #ktgrFiltre))
   GROUP BY k2.ktgrAd
   ORDER BY Ciro DESC;
 
@@ -185,6 +200,7 @@ BEGIN
     AND H.ehTip IN (4, 100)
     AND H.ehAltDepo = 0
     AND U.urnKtgr2ID NOT IN (11)
+    AND (@urunKategori_Filtre IS NULL OR U.urnKtgr2ID IN (SELECT ktgrID FROM #ktgrFiltre))
   GROUP BY U.stkAd, k2.ktgrAd
   ORDER BY Adet DESC;
 
@@ -225,6 +241,6 @@ BEGIN
   -- ===================================================================
   -- TEMİZLİK
   -- ===================================================================
-  DROP TABLE IF EXISTS #mgzFiltre;
+  DROP TABLE IF EXISTS #mgzFiltre, #ktgrFiltre;
 END;
 GO
