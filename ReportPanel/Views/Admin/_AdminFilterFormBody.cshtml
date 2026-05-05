@@ -1,0 +1,155 @@
+@model ReportPanel.ViewModels.AdminFilterDefinitionFormViewModel
+@*
+    Plan 07 Faz 6 — Create + Edit ortak form gövdesi.
+    Caller: CreateFilter.cshtml ve EditFilter.cshtml.
+*@
+@{
+    var def = Model.Definition ?? new ReportPanel.Models.FilterDefinition();
+    var dataSources = Model.DataSources ?? new List<ReportPanel.Models.DataSource>();
+}
+
+<form method="post" style="padding:20px;">
+    @Html.AntiForgeryToken()
+
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:14px;">
+        <div class="field" style="margin-bottom:0;">
+            <label class="lab">Filter Anahtarı <span style="color:var(--accent);">*</span></label>
+            <input type="text" name="FilterKey" value="@def.FilterKey" required maxlength="50"
+                   pattern="^[a-zA-Z][a-zA-Z0-9_]*$" class="inp"
+                   placeholder="örn: sube, bolum, kategori" />
+            <div style="font-size:11px; color:var(--ink-3); margin-top:4px;">
+                SP parametresi <span class="mono">@@&lt;anahtar&gt;_Filtre</span> olarak gönderilir. Sadece harf/rakam/_, harfle başlamalı.
+            </div>
+        </div>
+        <div class="field" style="margin-bottom:0;">
+            <label class="lab">Etiket <span style="color:var(--accent);">*</span></label>
+            <input type="text" name="Label" value="@def.Label" required maxlength="100" class="inp"
+                   placeholder="örn: Şube, Bölüm, Kategori" />
+        </div>
+    </div>
+
+    <div style="display:grid; grid-template-columns:1fr 1fr 120px; gap:14px; margin-bottom:14px;">
+        <div class="field" style="margin-bottom:0;">
+            <label class="lab">Scope <span style="color:var(--accent);">*</span></label>
+            <select name="Scope" class="inp" required>
+                <option value="spInjection" selected="@(def.Scope == "spInjection")">SP Enjeksiyon (rapor parametresi)</option>
+                <option value="reportAccess" selected="@(def.Scope == "reportAccess")">Rapor Erişim (Reports/Index liste filtresi)</option>
+            </select>
+        </div>
+        <div class="field" style="margin-bottom:0;">
+            <label class="lab">Veri Kaynağı</label>
+            <select name="DataSourceKey" class="inp">
+                <option value="">— Sistem (cross-cutting) —</option>
+                @foreach (var ds in dataSources)
+                {
+                    <option value="@ds.DataSourceKey" selected="@(def.DataSourceKey == ds.DataSourceKey)">@ds.Title (@ds.DataSourceKey)</option>
+                }
+            </select>
+            <div style="font-size:11px; color:var(--ink-3); margin-top:4px;">
+                spInjection için zorunlu, reportAccess için boş.
+            </div>
+        </div>
+        <div class="field" style="margin-bottom:0;">
+            <label class="lab">Sıra</label>
+            <input type="number" name="DisplayOrder" value="@def.DisplayOrder" class="inp" min="0" />
+        </div>
+    </div>
+
+    <div class="field" style="margin-bottom:14px;">
+        <label class="lab">OptionsQuery (SQL)</label>
+        <textarea id="optionsQueryTxt" name="OptionsQuery" class="inp" rows="4"
+                  style="font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size:12px;"
+                  placeholder="SELECT CAST(SubeNo AS varchar(10)) AS Value, SubeAd AS Label FROM vrd.SubeListe">@def.OptionsQuery</textarea>
+        <div style="font-size:11px; color:var(--ink-3); margin-top:4px;">
+            Yalnız <span class="mono">SELECT</span> (veya <span class="mono">WITH ... SELECT</span>). EXEC/INSERT/UPDATE/DELETE/DROP yasak.
+            <span class="mono">Value</span> + <span class="mono">Label</span> kolonları döndürmeli.
+            spInjection için zorunlu; reportAccess için boş (native registry kullanır).
+        </div>
+        <div style="margin-top:10px; display:flex; gap:8px; align-items:center;">
+            <button type="button" id="testOptionsQueryBtn" class="btn ghost" style="font-size:12px;">
+                <i class="fas fa-flask text-[10px]"></i>
+                OptionsQuery Test Et
+            </button>
+            <span id="testOptionsQueryStatus" style="font-size:11px; color:var(--ink-3);"></span>
+        </div>
+        <div id="testOptionsQueryResult" style="margin-top:10px; display:none; background:rgba(0,0,0,0.03); border:1px solid var(--line); border-radius:6px; padding:10px; font-size:12px; max-height:240px; overflow:auto;">
+            <table class="dt" style="width:100%;">
+                <thead><tr><th>Value</th><th>Label</th></tr></thead>
+                <tbody id="testOptionsQueryRows"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+    (function () {
+        var btn = document.getElementById('testOptionsQueryBtn');
+        var status = document.getElementById('testOptionsQueryStatus');
+        var resultBox = document.getElementById('testOptionsQueryResult');
+        var rowsEl = document.getElementById('testOptionsQueryRows');
+        if (!btn) return;
+
+        btn.addEventListener('click', async function () {
+            var ds = (document.querySelector('select[name="DataSourceKey"]').value || '').trim();
+            var q = (document.getElementById('optionsQueryTxt').value || '').trim();
+            var token = (document.querySelector('input[name="__RequestVerificationToken"]') || {}).value || '';
+            if (!ds) { status.textContent = 'DataSource seçin.'; status.style.color = '#b91c1c'; return; }
+            if (!q)  { status.textContent = 'OptionsQuery boş.'; status.style.color = '#b91c1c'; return; }
+
+            status.textContent = 'Çalıştırılıyor…'; status.style.color = 'var(--ink-3)';
+            resultBox.style.display = 'none';
+            rowsEl.innerHTML = '';
+
+            try {
+                var fd = new FormData();
+                fd.append('dataSourceKey', ds);
+                fd.append('optionsQuery', q);
+                fd.append('__RequestVerificationToken', token);
+
+                var r = await fetch('/Admin/TestFilterOptionsQuery', { method: 'POST', body: fd });
+                var d = await r.json();
+                if (!d.success) {
+                    status.textContent = d.error || 'Bilinmeyen hata.';
+                    status.style.color = '#b91c1c';
+                    return;
+                }
+                if (!d.rows || d.rows.length === 0) {
+                    status.textContent = 'Sorgu başarılı ama 0 satır döndü.';
+                    status.style.color = 'var(--ink-3)';
+                    return;
+                }
+                status.textContent = d.total + ' satır (ilk 10).'; status.style.color = '#065f46';
+                d.rows.forEach(function (row) {
+                    var tr = document.createElement('tr');
+                    var tdV = document.createElement('td'); tdV.textContent = row.value;
+                    var tdL = document.createElement('td'); tdL.textContent = row.label;
+                    tr.appendChild(tdV); tr.appendChild(tdL);
+                    rowsEl.appendChild(tr);
+                });
+                resultBox.style.display = 'block';
+            } catch (err) {
+                status.textContent = 'İstek başarısız: ' + (err.message || err);
+                status.style.color = '#b91c1c';
+            }
+        });
+    })();
+    </script>
+
+    <div style="display:flex; align-items:center; gap:8px; margin-bottom:18px;">
+        <input type="hidden" name="IsActive" value="false" />
+        <input type="checkbox" name="IsActive" value="true" id="filterActive"
+               @(def.IsActive ? "checked" : "")
+               style="width:16px; height:16px; accent-color:var(--accent);" />
+        <label for="filterActive" class="lab" style="margin:0;">Filtre tanımı aktif</label>
+    </div>
+
+    <div style="display:flex; align-items:center; justify-content:space-between; padding-top:18px; border-top:1px solid var(--line);">
+        <a href="/Admin?tab=filters" class="btn ghost">
+            <i class="fas fa-arrow-left text-[10px]"></i>
+            Geri Dön
+        </a>
+        <button type="submit" class="btn primary">
+            <i class="fas fa-check text-[10px]"></i>
+            Kaydet
+        </button>
+    </div>
+</form>

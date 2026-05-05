@@ -36,6 +36,7 @@ namespace ReportPanel.Controllers
         private readonly UserManagementService _userService;
         private readonly SpExplorerService _spExplorer;
         private readonly FilterOptionsService _filterOptions;
+        private readonly FilterDefinitionService _filterDefService;
 
         public AdminController(
             ReportPanelContext context,
@@ -48,7 +49,8 @@ namespace ReportPanel.Controllers
             ReportManagementService reportService,
             UserManagementService userService,
             SpExplorerService spExplorer,
-            FilterOptionsService filterOptions)
+            FilterOptionsService filterOptions,
+            FilterDefinitionService filterDefService)
         {
             _context = context;
             _auditLog = auditLog;
@@ -60,6 +62,7 @@ namespace ReportPanel.Controllers
             _reportService = reportService;
             _userService = userService;
             _spExplorer = spExplorer;
+            _filterDefService = filterDefService;
             _filterOptions = filterOptions;
         }
 
@@ -85,7 +88,11 @@ namespace ReportPanel.Controllers
                     .ToListAsync(),
                 Users = await _context.Users.AsNoTracking().OrderBy(u => u.Username).ToListAsync(),
                 Roles = await _context.Roles.AsNoTracking().OrderBy(r => r.Name).ToListAsync(),
-                Categories = await _context.ReportCategories.AsNoTracking().OrderBy(c => c.Name).ToListAsync()
+                Categories = await _context.ReportCategories.AsNoTracking().OrderBy(c => c.Name).ToListAsync(),
+                FilterDefinitions = await _context.FilterDefinitions
+                    .AsNoTracking()
+                    .OrderBy(f => f.DataSourceKey).ThenBy(f => f.DisplayOrder).ThenBy(f => f.Label)
+                    .ToListAsync()
             };
 
             // M-03 Faz B: user -> rol isimleri UserRole junction'dan (deprecate User.Roles CSV yerine).
@@ -179,6 +186,10 @@ namespace ReportPanel.Controllers
 
                     case "test_datasource":
                         ApplyResult(await _dataSourceService.TestConnectionAsync(key));
+                        break;
+
+                    case "delete_filter":
+                        ApplyResult(await _filterDefService.DeleteAsync(id));
                         break;
 
                 }

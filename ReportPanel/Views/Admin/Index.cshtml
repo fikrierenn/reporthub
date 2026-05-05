@@ -52,6 +52,11 @@
         <span>Kategoriler</span>
         <span class="count">@Model.Categories.Count</span>
     </a>
+    <a href="/Admin?tab=filters" class="@TabClass("filters")">
+        <i class="fas fa-filter"></i>
+        <span>Filtreler</span>
+        <span class="count">@Model.FilterDefinitions.Count</span>
+    </a>
 </nav>
 
 @switch (tab)
@@ -60,5 +65,6 @@
     case "users":       @await Html.PartialAsync("_AdminTabUsers", Model);       break;
     case "roles":       @await Html.PartialAsync("_AdminTabRoles", Model);       break;
     case "categories":  @await Html.PartialAsync("_AdminTabCategories", Model);  break;
+    case "filters":     @await Html.PartialAsync("_AdminTabFilters", Model);     break;
     default:            @await Html.PartialAsync("_AdminTabDataSources", Model); break;
 }

@@ -1,0 +1,57 @@
+@model ReportPanel.ViewModels.AdminFilterDefinitionFormViewModel
+@{
+    Layout = "_AppLayout";
+    ViewData["Title"] = "Yeni Filtre - BKM Rapor Paneli";
+    ViewData["PageTitle"] = "Yeni Filtre";
+    var message = Model.Message ?? "";
+    var messageType = Model.MessageType ?? "";
+}
+
+@section Breadcrumb {
+    <div class="crumbs">
+        <a href="/Dashboard">BKM Kitap</a>
+        <span class="sep">/</span>
+        <a href="/Admin?tab=filters">Yönetim</a>
+        <span class="sep">/</span>
+        <a href="/Admin?tab=filters">Filtreler</a>
+        <span class="sep">/</span>
+        <span class="current">Yeni</span>
+    </div>
+}
+
+@section TopActions {
+    <a href="/Admin?tab=filters" class="btn">
+        <i class="fas fa-xmark text-[10px]"></i>
+        İptal
+    </a>
+}
+
+<div class="hero">
+    <h1>Yeni Filtre</h1>
+    <div class="sub">
+        <span>FilterDefinition oluştur — DataSource bazlı veya cross-cutting</span>
+    </div>
+</div>
+
+@if (!string.IsNullOrWhiteSpace(message))
+{
+    <div role="alert" style="margin-bottom:18px; padding:12px 16px; border-radius:10px; font-size:13px;
+                background: @(messageType == "success" ? "rgba(16,185,129,0.10)" : "rgba(220,38,38,0.10)");
+                border: 1px solid @(messageType == "success" ? "rgba(16,185,129,0.25)" : "rgba(220,38,38,0.25)");
+                color: @(messageType == "success" ? "#065f46" : "var(--accent-ink)");">
+        <i class="fas @(messageType == "success" ? "fa-check-circle" : "fa-exclamation-circle")" style="margin-right:8px;"></i>
+        @message
+    </div>
+}
+
+<div style="background:var(--paper); border:1px solid var(--line); border-radius:10px; overflow:hidden; max-width:880px;">
+    <div style="padding:14px 18px; border-bottom:1px solid var(--line);">
+        <h2 style="font-size:13px; font-weight:600; color:var(--ink-1); margin:0;">
+            <i class="fas fa-filter" style="margin-right:6px; color:var(--ink-3);"></i>
+            Filter Tanımı
+        </h2>
+        <div style="font-size:12px; color:var(--ink-3); margin-top:2px;">Aşağıdaki bilgileri doldurun</div>
+    </div>
+
+    @await Html.PartialAsync("_AdminFilterFormBody", Model)
+</div>

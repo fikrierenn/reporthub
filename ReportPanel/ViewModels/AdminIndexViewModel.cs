@@ -15,5 +15,7 @@ namespace ReportPanel.ViewModels
         public Dictionary<int, List<string>> UserRoleNames { get; set; } = new();
         public List<Role> Roles { get; set; } = new();
         public List<ReportCategory> Categories { get; set; } = new();
+        // Plan 07 Faz 6 — Admin "Filtreler" tab listesi.
+        public List<FilterDefinition> FilterDefinitions { get; set; } = new();
     }
 }
