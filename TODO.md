@@ -107,7 +107,7 @@ Bu liste 5 plan dosyasi (`plans/02-06`) + asagidaki FAZ 1-3 + son 5 journal'in y
 
 #### Büyük (>4h, çok-fazlı)
 - [x] **M-11 Plan 02 · F-9 live preview endpoint** ✅ 6 Mayıs 2026 — F-9 madde 46-55 tamamlandı: `DashboardValidate` JSON endpoint, `builder-feedback.js` mixin (validate/toast/undo), `_ReportFormBuilderFeedbackV2.cshtml` partial (banner + toast container), topbar Doğrula+Geri Al butonları, `init() → captureSnapshot()` page-load anında. **Throttle 300ms (madde 49) kapsam dışı bırakıldı** — manuel "Tam Önizle" buton yeterli, kullanıcı kararı.
-- [ ] **M-11 Plan 02 · F-10 sablon + kbd shortcuts** (~3h)
+- [x] **M-11 Plan 02 · F-10 sablon + kbd shortcuts** ✅ 6 Mayıs 2026 — `builder-templates.js` (3 preset: KPI Üçlüsü/Trend Grafik/Detay Tablosu) + `builder-shortcuts.js` (Ctrl+S/P, Esc, Delete, ?). 2 yeni partial: `_ReportFormBuilderTemplatesV2.cshtml` + `_ReportFormBuilderShortcutsV2.cshtml`. CreateReportV2 topbar'da "Şablondan Seç" buton. Smoke: 3 preset apply + 4 shortcut hepsi geçti.
 - [ ] **M-11 Plan 02 · F-11 smart defaults** (~3h)
 - [ ] **M-11 Plan 02 · F-12 e2e + screenshot + journal** (~3h)
 - [ ] **Plan 05 · AST formula parser** (~6h+) — kendi recursive descent parser

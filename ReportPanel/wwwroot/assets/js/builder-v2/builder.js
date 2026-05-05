@@ -55,6 +55,9 @@
                     // F-9: Geri Al referansı için page-load anındaki kayıtlı config'i snapshot'la
                     if (self.captureSnapshot) self.captureSnapshot();
 
+                    // F-10: keyboard shortcuts (Ctrl+S/P, Esc, Delete, ?)
+                    if (self.initShortcuts) self.initShortcuts();
+
                     // Gridstack init — DOM hazır olduktan sonra
                     self.$nextTick(function () {
                         self.initGridstack();
@@ -256,7 +259,9 @@
                 window.__builderV2.tabsMixin(),
                 window.__builderV2.previewMixin(),
                 window.__builderV2.feedbackMixin(),
-                window.__builderV2.chartMixin()
+                window.__builderV2.chartMixin(),
+                window.__builderV2.templatesMixin(),
+                window.__builderV2.shortcutsMixin()
             );
         };
     }

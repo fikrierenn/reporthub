@@ -30,6 +30,14 @@
 }
 
 @section TopActions {
+    @* F-10: yeni rapor oluştururken hızlı başlangıç için 3 preset şablon *@
+    <button type="button" class="btn"
+            x-data
+            @@click="$dispatch('builder-template-open')"
+            title="Hazır pano şablonundan başla (KPI Üçlüsü / Trend Grafik / Detay Tablosu)">
+        <i class="fas fa-grip text-[10px]"></i>
+        Şablondan Seç
+    </button>
     @await Html.PartialAsync("_ReportFormBuilderTopActionsV2", "reportCreateFormV2")
 }
 
@@ -82,6 +90,9 @@ window.__availableDataSources = @Html.Raw(System.Text.Json.JsonSerializer.Serial
      x-on:builder-preview-open.window="openPreview()">
     @* F-9: validation banner + toast — builder root scope'unda render *@
     @await Html.PartialAsync("_ReportFormBuilderFeedbackV2")
+    @* F-10: template picker + kbd shortcuts help modallar *@
+    @await Html.PartialAsync("_ReportFormBuilderTemplatesV2")
+    @await Html.PartialAsync("_ReportFormBuilderShortcutsV2")
     @* Alpine reactive hidden input'lar — form="reportCreateFormV2" ile dış form'a bağlı *@
     <input type="hidden" name="Title" form="reportCreateFormV2" :value="title || 'Yeni Rapor'" />
     <input type="hidden" name="DataSourceKey" form="reportCreateFormV2" :value="dataSourceKey" />
@@ -814,4 +825,6 @@ window.__availableDataSources = @Html.Raw(System.Text.Json.JsonSerializer.Serial
 <script src="~/assets/js/builder-v2/builder-preview.js" asp-append-version="true"></script>
 <script src="~/assets/js/builder-v2/builder-feedback.js" asp-append-version="true"></script>
 <script src="~/assets/js/builder-v2/builder-chart.js" asp-append-version="true"></script>
+<script src="~/assets/js/builder-v2/builder-templates.js" asp-append-version="true"></script>
+<script src="~/assets/js/builder-v2/builder-shortcuts.js" asp-append-version="true"></script>
 <script src="~/assets/js/builder-v2/builder.js" asp-append-version="true"></script>

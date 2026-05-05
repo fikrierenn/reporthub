@@ -1,0 +1,58 @@
+@*
+    V2 builder F-10 template picker modal.
+    Builder root x-data="builderV2" component'i içinde render edilir; templatesMixin'den
+    templateModal / templateOptions / applyTemplate / closeTemplateModal kullanılır.
+    Topbar'daki "Şablondan Seç" butonu $dispatch('builder-template-open') ile açar.
+*@
+
+<div @@builder-template-open.window="openTemplateModal()" style="display:none;"></div>
+
+<div x-show="templateModal && templateModal.open" x-cloak
+     class="fixed inset-0 z-40 flex items-center justify-center"
+     style="background:rgba(15, 23, 42, 0.5);"
+     @@click.self="closeTemplateModal()">
+    <div class="rounded-xl shadow-xl bg-white border border-slate-200"
+         style="width: min(640px, 90vw); max-height: 80vh; display:flex; flex-direction:column;">
+        <div class="flex items-center justify-between px-5 py-3 border-b border-slate-200">
+            <h2 class="text-sm font-semibold text-slate-800">
+                <i class="fas fa-grip text-[12px]"></i> Şablondan Seç
+            </h2>
+            <button type="button" @@click="closeTemplateModal()"
+                    class="text-slate-500 hover:text-slate-800" title="Kapat">
+                <i class="fas fa-xmark"></i>
+            </button>
+        </div>
+        <div style="overflow-y:auto; padding:14px;">
+            <p class="text-xs text-slate-500 mb-3">
+                Şablon seçince mevcut canvas yerini alır (boş canvas üzerine direkt yüklenir; doluyken onay ister).
+                Yüklenen widget'lar <code class="text-[10px] bg-slate-100 px-1 rounded">rs0</code> bağlamasıyla gelir;
+                kolonları drawer'dan ayarlarsınız.
+            </p>
+            <div style="display:grid; gap:10px;">
+                <template x-for="key in templateKeys()" :key="key">
+                    <button type="button"
+                            @@click="applyTemplate(key)"
+                            class="text-left rounded-lg border border-slate-200 hover:border-blue-400 hover:bg-blue-50 transition"
+                            style="padding:12px; cursor:pointer; background:white;">
+                        <div class="flex items-start gap-3">
+                            <div class="rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center"
+                                 style="width:36px; height:36px; flex-shrink:0;">
+                                <i class="fas" :class="templateOptions[key].icon" style="font-size:14px;"></i>
+                            </div>
+                            <div style="flex:1;">
+                                <div class="font-semibold text-sm text-slate-800" x-text="templateOptions[key].label"></div>
+                                <div class="text-xs text-slate-600 mt-0.5" x-text="templateOptions[key].description"></div>
+                                <div class="text-[10px] text-slate-500 mt-1.5"
+                                     x-text="(templateOptions[key].config.tabs[0].components || []).length + ' bileşen'"></div>
+                            </div>
+                            <i class="fas fa-arrow-right text-slate-400" style="font-size:11px; align-self:center;"></i>
+                        </div>
+                    </button>
+                </template>
+            </div>
+        </div>
+        <div class="flex items-center justify-end gap-2 px-5 py-3 border-t border-slate-200" style="background:#f8fafc;">
+            <button type="button" class="btn ghost" @@click="closeTemplateModal()">İptal</button>
+        </div>
+    </div>
+</div>

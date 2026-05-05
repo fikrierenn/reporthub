@@ -328,13 +328,13 @@ Plan: F-7..F-12 ile admin tarafı birinci-sınıf hale gelir, yeni variant'lar �
 54. [x] **Smoke:** Doğrula → geçerli config → toast "geçerli" + banner gizli ✓ / bozuk config → kırmızı banner + "1 hata bulundu" toast ✓
 55. [x] Commit: `feat(m-11 f-9): live validate banner + toast + Geri Al snapshot (plan: 02)`
 
-### F-10 — Şablon + kbd shortcuts (~3h)
-56. [ ] `builder-templates.js`: 3 şablon JSON (KPI Trio / Trend Grafik / Detay Tablo) — schemaVersion=2, validator'dan geçer
-57. [ ] "Şablondan Seç" butonu modal → 3 kart → tıklayınca canvas'a yükle
-58. [ ] `builder-core.js` keyboard listener: Ctrl+S=save, Ctrl+P=preview, Esc=cancel-edit, Delete=remove-selected
-59. [ ] `?` tuşu → kbd shortcuts modal (5 kısayol listesi)
-60. [ ] **Smoke:** boş canvas'a "Trend Grafik" şablonu yükle, render et
-61. [ ] Commit: `feat(m-11 f-10): 3 sablon + 5 kbd shortcut + ? modal (plan: 02)`
+### F-10 — Şablon + kbd shortcuts ✅ 6 Mayıs 2026
+56. [x] `builder-v2/builder-templates.js` mixin: 3 preset (KPI Üçlüsü / Trend Grafik / Detay Tablosu), `result: "rs0"` rsN-pattern fallback ile validator'dan geçer
+57. [x] "Şablondan Seç" topbar butonu (CreateReportV2) + `_ReportFormBuilderTemplatesV2.cshtml` 3 kart modal — apply confirm + dirty + toast
+58. [x] `builder-v2/builder-shortcuts.js` mixin (init() içinde document keydown): Ctrl/⌘+S=save, Ctrl/⌘+P=Tam Önizle, Esc=modal/seçim kapat, Delete=seçili widget sil, ?=help
+59. [x] `_ReportFormBuilderShortcutsV2.cshtml` ? help modal (5 kısayol listesi)
+60. [x] **Smoke:** Şablondan Seç → KPI Üçlüsü → 3 KPI widget (Metrik 1/2/3, span=1) ✓; ? → modal aç ✓; Esc → modal kapat ✓; widget seç + Delete → 3→2 ✓
+61. [x] Commit: `feat(m-11 f-10): 3 sablon + 5 kbd shortcut + ? modal (plan: 02)`
 
 ### F-11 — Smart defaults (~3h)
 62. [ ] `AdminController.SpPreview` kolon metadata'ya tip ekle (`{name, type: "date"|"number"|"string"|"bool"}`)
