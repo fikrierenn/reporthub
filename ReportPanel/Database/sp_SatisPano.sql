@@ -5,9 +5,14 @@
    posOzet* tablolarından hızlı aggregate, 7 result set.
 
    Kullanım:
-     EXEC dbo.sp_SatisPano;                  -- bugün
+     EXEC dbo.sp_SatisPano;                  -- bugün, tüm mağazalar
      EXEC dbo.sp_SatisPano '2026-04-15';     -- belirli gün
-     EXEC dbo.sp_SatisPano NULL, '1,4477';   -- şube filtreli
+     EXEC dbo.sp_SatisPano NULL, '1,4477';   -- mekanID filtreli
+
+   Plan 07 Plan B (5 Mayıs 2026): @sube_Filtre artık doğrudan DerinSIS mekanID
+   olarak yorumlanır (önceki vrd SubeNo → #subeMap pattern kaldırıldı). Her DataSource
+   kendi native ID'sini kullanır; FilterDefinition (DER, sube) OptionsQuery'si
+   posMagaza.mekanID döndürür, UserDataFilters'a yazılan mekanID'ler doğrudan SP'ye gider.
 
    Result Set Sırası:
      RS1. KPI tek satır (bugün, dün, ay kümüle, geçen yıl karşılaştırma)
@@ -21,7 +26,7 @@
 
 CREATE OR ALTER PROCEDURE bkm.sp_SatisPano
   @Tarih        date = NULL,
-  @sube_Filtre  nvarchar(500) = NULL    -- mekanID virgülle ayrılmış (NULL=tümü)
+  @sube_Filtre  nvarchar(500) = NULL    -- DerinSIS mekanID virgülle ayrılmış (NULL=tüm aktif mağazalar)
 AS
 BEGIN
   SET NOCOUNT ON;
@@ -36,26 +41,17 @@ BEGIN
   DECLARE @GecenYilAyBas date = DATEADD(YEAR, -1, @AyBas);
   DECLARE @Trend15Bas date = DATEADD(DAY, -14, @Gun);
 
-  -- vrd SubeNo → DerinSIS mekanID mapping
-  -- @sube_Filtre vrd SubeNo olarak gelir (PDKS ile aynı), mekanID'ye çevrilir
-  CREATE TABLE #subeMap (SubeNo int, mekanID int);
-  INSERT INTO #subeMap VALUES
-    (2, 1),        -- FSM
-    (3, 1),        -- FSM KAFE → FSM mağaza
-    (4, 4478),     -- HEYKEL → İst.Yolu (aynı bölge, ayrı mağaza yoksa düzelt)
-    (5, 4478),     -- İST. YOLU
-    (6, 4478),     -- İST. YOLU KAFE → İst.Yolu mağaza
-    (7, 4477),     -- ÖZLÜCE
-    (8, 4477),     -- ÖZLÜCE KAFE → Özlüce mağaza
-    (9, 4478);     -- ŞURA → İst.Yolu (ya da ayrı bir mekanID varsa düzelt)
-
+  -- Mağaza filtresi: @sube_Filtre = mekanID CSV (Plan 07 Plan B native ID semantiği).
+  -- NULL = tüm aktif mağazalar (mekanTip=0); önceki #subeMap hardcoded mapping kaldırıldı.
   CREATE TABLE #mgzFiltre (mekanID int PRIMARY KEY);
   IF @sube_Filtre IS NOT NULL
     INSERT INTO #mgzFiltre
-    SELECT DISTINCT sm.mekanID FROM #subeMap sm
-    WHERE sm.SubeNo IN (SELECT CAST(LTRIM(RTRIM(value)) AS int) FROM STRING_SPLIT(@sube_Filtre, ','));
+    SELECT DISTINCT CAST(LTRIM(RTRIM(value)) AS int)
+    FROM STRING_SPLIT(@sube_Filtre, ',')
+    WHERE LTRIM(RTRIM(value)) <> '';
   ELSE
-    INSERT INTO #mgzFiltre VALUES (1), (4477), (4478); -- FSM, Özlüce, İst.Yolu
+    INSERT INTO #mgzFiltre
+    SELECT mekanID FROM dbo.posMagaza WHERE mekanTip = 0;
 
   -- ===================================================================
   -- RS1: KPI TEK SATIR
@@ -229,6 +225,6 @@ BEGIN
   -- ===================================================================
   -- TEMİZLİK
   -- ===================================================================
-  DROP TABLE IF EXISTS #mgzFiltre, #subeMap;
+  DROP TABLE IF EXISTS #mgzFiltre;
 END;
 GO
