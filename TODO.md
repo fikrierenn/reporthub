@@ -265,11 +265,11 @@ Bu liste asagidakilerin sentezidir:
 
 40. **PLAN 04 (potansiyel) — Alpine.js + htmx adoption** (TARTISMA gerekli, R1-R5 refactor sonrasi) — Kullanici 28 Nisan 2026 oturum 4: "kod kisaltmasi da yapmak daha efektif kodlamalar yazmak lazim js yerine daha iyi bir js framework kullanmak isi hizlandirabilir mi". Vanilla JS DOM API kodu kalabaligi (~531 sat admin-report-form, ~333 sat builder-drawer). Aday kombinasyon: **Alpine.js** (form state, mode segmented, dirty chip, opt-card secim) + **htmx** (filter row add/remove, SP Onizle swap, datasource list reload). Build step yok (CDN), Razor MVC + Tailwind ile uyumlu. Kademeli adoption (sayfa basi). PLAN-FIRST: ayri oturum, Tier 3 plan, before/after metrik (satir basina kazanc), regresyon test.
 
-39. **YETKILENDIRME REVIZYONU — rapor + alan gorme** (TARTISMA gerekli, Plan 03 sonrasi) — Kullanici 28 Nisan 2026: "kullanici yetki tanimlama mantigi pratik olmamis ve tam istedigim gibi de degil. Rapor yetki + alan gorme konusunu konusalim bir ara, en sonda olabilir is bitince."
-   - **Mevcut model:** UserRole (junction) + ReportAllowedRole (rapor-rol) + UserDataFilter (kullanici-bazli WHERE injection). Tek role "admin" + ek custom roller var ama AdminController class-level `[Authorize(Roles="admin")]` — granular yetki YOK.
-   - **Sikayet noktalari (bekleniyor):** rapor yetkisi UX, alan/satir/sutun gorme granulariteci, admin-friendly tanimlama akisi.
-   - **Sidebar UX bagi (28 Nisan, Faz D):** Plan 03 Faz D'de YONETIM section 6 → 1 linke indi (Admin/Index subnav 5 tab handle ediyor). Granular yetki gelirse: sidebar'a alt-link'ler conditional render edilir (`@if (User.IsInRole("report_designer"))`). Yetki revizyonu sirasinda sidebar konusunu tekrar gozden gecir.
-   - **Aksiyon:** Plan 03 (M-13) tamamen kapaninca ayri oturum ac. Once mevcut akisi haritalayan sayfa-sayfa screenshot + sikayet detayini topla, sonra mimari karar (Tier 3 plan + ADR). Granular role tanimlari + AdminController action-level [Authorize] + sidebar conditional render birlikte degerlendirilmeli.
+39. **YETKILENDIRME REVIZYONU** ✅ **PLAN 07 İLE KAPANDI** (4-6 Mayıs 2026, `plans/archive/07-yetki-filter-revizyon.md`)
+   - **Yapılanlar:** FilterDefinition master tablo (DataSource bazlı composite unique) + UserDataFilters dinamik UI + deny-by-default + raporGrubu (eski raporKategori, urunKategori karışmasın diye rename) reportAccess scope + Reports/Index liste filtresi + Admin Filtreler CRUD (OptionsQuery Test butonu) + ReportCategories→ReportGroups tam rename
+   - **Migration'lar:** 20 (FilterDefinition + backfill), 21+22 (Sube canonical denemesi → geri sarıldı, Plan B), 23 (raporKategori → raporGrubu rename), 24 (ReportCategories → ReportGroups tablo+kolon)
+   - **Kalan:** SP refactor sp_PdksPano @bolum_Filtre default için yeni FilterDefinition (Faz 6 admin CRUD ile elle eklenebilir); IK (Zirve) sube tablosu netleşince (IK, sube) FilterDefinition aktif edilir; urunKategori (satış) DerinSIS urnKtgr2 üzerinden Faz 6 CRUD ile eklenir + sp_SatisPano `@urunKategori_Filtre` parametre eklenir
+   - **Granular role + permission** (AdminController action-level [Authorize], sidebar conditional render) hala bekliyor — Plan 06 vNext / şirket içi portal kapsamında ayrı oturum.
 
 #### Toplam efor tahmini
 - Faz 0 (bugun): 3 saat — blocker'lari kaldir
