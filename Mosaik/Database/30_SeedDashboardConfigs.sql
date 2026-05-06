@@ -27,3 +27,15 @@ BEGIN
     );
 END
 GO
+
+-- Satış Pano ReportAllowedRoles — mali(9) + yonetim(10)
+-- ReportId dinamik: ProcName üzerinden bulunur (idempotent)
+DECLARE @SatisPanoId INT = (SELECT TOP 1 ReportId FROM dbo.ReportCatalog WHERE ProcName = N'dbo.sp_SatisPano');
+IF @SatisPanoId IS NOT NULL
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM dbo.ReportAllowedRoles WHERE ReportId = @SatisPanoId AND RoleId = 9)
+        INSERT INTO dbo.ReportAllowedRoles (ReportId, RoleId, CreatedAt) VALUES (@SatisPanoId, 9, GETUTCDATE());
+    IF NOT EXISTS (SELECT 1 FROM dbo.ReportAllowedRoles WHERE ReportId = @SatisPanoId AND RoleId = 10)
+        INSERT INTO dbo.ReportAllowedRoles (ReportId, RoleId, CreatedAt) VALUES (@SatisPanoId, 10, GETUTCDATE());
+END
+GO
