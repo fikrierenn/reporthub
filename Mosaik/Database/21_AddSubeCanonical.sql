@@ -19,7 +19,7 @@
 -- Plan: plans/07-yetki-filter-revizyon.md (Faz 5b ek)
 -- ROLLBACK: 21_AddSubeCanonical_rollback.sql (DROP TABLE SubeMapping, Sube).
 
-USE [PortalHUB];
+USE [Mosaik];
 GO
 
 -- 1. Sube (canonical master)
@@ -133,7 +133,7 @@ GO
 -- Scope='spInjection' kalir ama OptionsQuery NULL — UserDataFilterInjector translate sirasinda
 -- bilir + FilterOptionsService canonical native source kullanir Faz 5b sonrasi).
 -- Ancak FilterOptionsService'in CHECK CONSTRAINT'leri bozulmasin diye OptionsQuery NULL yerine
--- canonical Sube SELECT'i konur — FilterOptionsService SELECT exec et, ama bu kez kendi PortalHUB'ta.
+-- canonical Sube SELECT'i konur — FilterOptionsService SELECT exec et, ama bu kez kendi Mosaik'ta.
 UPDATE dbo.FilterDefinition
 SET DataSourceKey = NULL,
     OptionsQuery = NULL,

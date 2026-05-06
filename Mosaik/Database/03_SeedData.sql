@@ -1,6 +1,6 @@
--- BKM Report Panel - Seed Data (PortalHUB)
+-- BKM Report Panel - Seed Data (Mosaik)
 
-USE [PortalHUB];
+USE [Mosaik];
 GO
 
 -- Roles
@@ -14,7 +14,7 @@ USING (VALUES
 ON target.Name = source.Name
 WHEN NOT MATCHED BY TARGET THEN
     INSERT (Name, Description, IsActive, CreatedAt)
-    VALUES (source.Name, source.Description, 1, GETDATE());
+    VALUES (source.Name, source.Description, 1, GETUTCDATE());
 GO
 
 -- DataSources
@@ -83,8 +83,8 @@ BEGIN
         INSERT INTO [dbo].[ReportRunLog]
             (RunId, Username, ReportId, DataSourceKey, ParamsJson, RunAt, DurationMs, ResultRowCount, IsSuccess, ErrorMessage)
         VALUES
-            (NEWID(), 'admin_staging', @ReportPersonelId, 'IK_STG', '{}', DATEADD(HOUR, -2, GETDATE()), 1250, 45, 1, NULL),
-            (NEWID(), 'ik_staging', @ReportPersonelId, 'IK_STG', '{}', DATEADD(HOUR, -1, GETDATE()), 980, 45, 1, NULL);
+            (NEWID(), 'admin_staging', @ReportPersonelId, 'IK_STG', '{}', DATEADD(HOUR, -2, GETUTCDATE()), 1250, 45, 1, NULL),
+            (NEWID(), 'ik_staging', @ReportPersonelId, 'IK_STG', '{}', DATEADD(HOUR, -1, GETUTCDATE()), 980, 45, 1, NULL);
     END
 
     IF @ReportMaasId IS NOT NULL
@@ -92,7 +92,7 @@ BEGIN
         INSERT INTO [dbo].[ReportRunLog]
             (RunId, Username, ReportId, DataSourceKey, ParamsJson, RunAt, DurationMs, ResultRowCount, IsSuccess, ErrorMessage)
         VALUES
-            (NEWID(), 'mali_staging', @ReportMaasId, 'MALI_STG', '{"ay": 12, "yil": 2024}', DATEADD(MINUTE, -30, GETDATE()), 2100, 156, 1, NULL);
+            (NEWID(), 'mali_staging', @ReportMaasId, 'MALI_STG', '{"ay": 12, "yil": 2024}', DATEADD(MINUTE, -30, GETUTCDATE()), 2100, 156, 1, NULL);
     END
 
     IF @ReportGenelId IS NOT NULL
@@ -100,7 +100,7 @@ BEGIN
         INSERT INTO [dbo].[ReportRunLog]
             (RunId, Username, ReportId, DataSourceKey, ParamsJson, RunAt, DurationMs, ResultRowCount, IsSuccess, ErrorMessage)
         VALUES
-            (NEWID(), 'admin_staging', @ReportGenelId, 'MAIN_STG', '{}', DATEADD(MINUTE, -15, GETDATE()), 750, 8, 1, NULL);
+            (NEWID(), 'admin_staging', @ReportGenelId, 'MAIN_STG', '{}', DATEADD(MINUTE, -15, GETUTCDATE()), 750, 8, 1, NULL);
     END
 
     IF @ReportDepartmanId IS NOT NULL
@@ -108,7 +108,7 @@ BEGIN
         INSERT INTO [dbo].[ReportRunLog]
             (RunId, Username, ReportId, DataSourceKey, ParamsJson, RunAt, DurationMs, ResultRowCount, IsSuccess, ErrorMessage)
         VALUES
-            (NEWID(), 'test_staging', @ReportDepartmanId, 'IK_STG', '{"departman_id": 1}', DATEADD(MINUTE, -5, GETDATE()), 0, 0, 0, 'Stored procedure not found: sp_DepartmanRaporu_Staging');
+            (NEWID(), 'test_staging', @ReportDepartmanId, 'IK_STG', '{"departman_id": 1}', DATEADD(MINUTE, -5, GETUTCDATE()), 0, 0, 0, 'Stored procedure not found: sp_DepartmanRaporu_Staging');
     END
 END
 GO

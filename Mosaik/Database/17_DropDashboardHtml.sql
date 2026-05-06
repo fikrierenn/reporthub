@@ -6,7 +6,7 @@
 -- Faz B'de (migration 16) orphan sayisi PRINT ile raporlanmisti, burada ayni
 -- check RAISERROR ile ile drop'u engeller. Idempotent: kolon yoksa sessizce atlanir.
 
-USE [PortalHUB];
+USE [Mosaik];
 GO
 
 -- 1) Orphan check — kolon var iken calisir.

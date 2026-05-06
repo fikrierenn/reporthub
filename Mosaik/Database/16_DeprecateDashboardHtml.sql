@@ -7,7 +7,7 @@
 --
 -- ADR: docs/ADR/005-dashboard-architecture.md (TODO yazim)
 
-USE [PortalHUB];
+USE [Mosaik];
 GO
 
 -- Orphan check: HtmlOnly dashboard raporlari (HTML var ama ConfigJson yok).

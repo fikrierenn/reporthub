@@ -1,6 +1,6 @@
--- BKM Report Panel - Tables (PortalHUB)
+-- BKM Report Panel - Tables (Mosaik)
 
-USE [PortalHUB];
+USE [Mosaik];
 GO
 
 SET ANSI_NULLS ON;

@@ -16,7 +16,7 @@
 -- Plan: plans/07-yetki-filter-revizyon.md (4 Mayis 2026 onayli)
 -- ROLLBACK: Database/20_AddFilterDefinition_rollback.sql (DROP TABLE FilterDefinition + '*' kayit cleanup).
 
-USE [PortalHUB];
+USE [Mosaik];
 GO
 
 -- 1. FilterDefinition tablosu

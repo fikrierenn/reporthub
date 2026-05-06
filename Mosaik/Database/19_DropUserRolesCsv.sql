@@ -9,7 +9,7 @@
 -- ROLLBACK: Kolonu yeniden olusturmak mumkun ama icindeki veri kaybolur;
 -- restore icin backup gerekli. Calistirma oncesi DB backup zorunlu.
 
-USE [PortalHUB];
+USE [Mosaik];
 GO
 
 IF EXISTS (

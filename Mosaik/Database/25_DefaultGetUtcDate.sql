@@ -9,7 +9,7 @@
 -- Idempotency: ALTER TABLE DROP CONSTRAINT yoksa hata vermez (IF EXISTS).
 -- ROLLBACK: tersini çalıştırarak GETDATE'e geri dönülebilir.
 
-USE [PortalHUB];
+USE [Mosaik];
 GO
 
 -- Helper: DROP DEFAULT (named) + ADD DEFAULT (UTC) pattern.

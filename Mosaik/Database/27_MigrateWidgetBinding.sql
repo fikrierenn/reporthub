@@ -17,7 +17,7 @@
 --   WHERE clause `result` IS NULL AND `resultSet` IS NOT NULL — migrate edilmiş
 --   widget'lar atlanır. Re-run güvenli.
 
-USE [PortalHUB];
+USE [Mosaik];
 GO
 
 SET NOCOUNT ON;

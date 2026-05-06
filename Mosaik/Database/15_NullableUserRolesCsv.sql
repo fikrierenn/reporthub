@@ -8,7 +8,7 @@
 -- Faz C (ileride) kolonu tamamen DROP eder; o zamana kadar legacy okuma yollari
 -- (audit history vb.) icin kolon DB'de durur ama NULL olabilir.
 
-USE [PortalHUB];
+USE [Mosaik];
 GO
 
 -- Guvenlik kontrolu: herkesin UserRole junction'da satiri var mi?

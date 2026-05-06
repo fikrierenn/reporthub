@@ -8,7 +8,7 @@
 -- Onceki: 21_AddSubeCanonical.sql (geri saliniyor)
 -- ROLLBACK: Migration 21 tekrar calistir (Sube + SubeMapping yeniden kurulur).
 
-USE [PortalHUB];
+USE [Mosaik];
 GO
 
 -- 1. SubeMapping DROP (FK once)

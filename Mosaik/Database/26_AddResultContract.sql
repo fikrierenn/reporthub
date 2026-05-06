@@ -9,7 +9,7 @@
 -- Plan: TODO M-10 Faz 5; ADR-007.
 -- Idempotent: resultContract zaten varsa atla (WHERE JSON_QUERY ... IS NULL).
 
-USE [PortalHUB];
+USE [Mosaik];
 GO
 
 -- 1. PDKS sp_PdksPano (RS0..RS6)

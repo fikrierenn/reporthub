@@ -4,7 +4,7 @@
 --
 -- Plan: plans/07-yetki-filter-revizyon.md (5 Mayıs ek karar)
 
-USE [PortalHUB];
+USE [Mosaik];
 GO
 
 -- 1. FilterDefinition rename

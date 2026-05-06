@@ -9,7 +9,7 @@
 -- NOT: 6 Mayıs sabahı kod refactor (Models/Context/Service/ViewModel/View/Controller) ile
 --      birlikte çalıştırılacak. Sırayla: önce SQL, sonra kod build + test + commit.
 
-USE [PortalHUB];
+USE [Mosaik];
 GO
 
 -- 1. ReportCategoryLinks → ReportGroupLinks (junction; FK'ler önce, parent sonra)
