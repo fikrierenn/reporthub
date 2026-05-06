@@ -1,6 +1,6 @@
 ---
 paths:
-  - "ReportPanel/wwwroot/assets/js/**/*.js"
+  - "Mosaik/wwwroot/assets/js/**/*.js"
 ---
 
 # JavaScript Konvansiyonları

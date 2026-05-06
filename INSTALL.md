@@ -20,7 +20,7 @@ Bu adim, uygulamanin calisabilir dosyalarini tek klasore toplar.
 
 Yerel makinede:
 ```
-cd D:\Dev\reporthub\ReportPanel
+cd D:\Dev\reporthub\Mosaik
 dotnet publish -c Release -o C:\Deploy\ReportHub
 ```
 
@@ -65,7 +65,7 @@ nssm install ReportHub
 
 NSSM penceresinde:
 - Path: `C:\Program Files\dotnet\dotnet.exe`
-- Arguments: `C:\Apps\ReportHub\ReportPanel.dll --urls http://0.0.0.0:5197`
+- Arguments: `C:\Apps\ReportHub\Mosaik.dll --urls http://0.0.0.0:5197`
 - Startup directory: `C:\Apps\ReportHub`
 
 Servisi baslatmak icin:
@@ -95,7 +95,7 @@ http://SUNUCU_IP:5197
 ## 9) Guncelleme / deploy adimlari
 1) Yerelde publish alin:
 ```
-cd D:\Dev\reporthub\ReportPanel
+cd D:\Dev\reporthub\Mosaik
 dotnet publish -c Release -o C:\Deploy\ReportHub
 ```
 2) `C:\Deploy\ReportHub` icerigini sunucudaki `C:\Apps\ReportHub` klasorune kopyalayin (ustune yazabilirsiniz).
@@ -104,7 +104,7 @@ dotnet publish -c Release -o C:\Deploy\ReportHub
 nssm restart ReportHub
 ```
 4) Yeni bir veritabani degisikligi varsa ilgili SQL scriptini calistirin.
-   - Favoriler tablosu icin: `ReportPanel/Database/06_CreateReportFavorites.sql`
+   - Favoriler tablosu icin: `Mosaik/Database/06_CreateReportFavorites.sql`
 
 ## 10) IP ile erisim ornegi
 Eger domain/DNS tanimlamadan dogrudan IP ile baglanmak istersen:

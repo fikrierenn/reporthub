@@ -2,7 +2,7 @@
 
 - **Durum:** Kabul edildi (24 Nisan 2026)
 - **Etkilenen:** `DashboardConfig` modeli, `DashboardRenderer`, `dashboard-builder.js` (SİLİNECEK, 6-7 modüle bölünecek), `EditReport.cshtml` + `CreateReport.cshtml` + `Reports/Run.cshtml` (split-pane + preview birleşimi), `ReportManagementService`, `DashboardConfigValidator`, migration 18, PDKS + Satış seed'leri, ADR-007 resolver.
-- **İlgili TODO:** M-11 (13 faz, ~60h). Plan dosyası: `C:/Users/fikri.eren/.claude/plans/imdi-planlama-yap-bu-optimized-hippo.md`. Mockup: `ReportPanel/wwwroot/mockups/dashboard-builder-v3.html`.
+- **İlgili TODO:** M-11 (13 faz, ~60h). Plan dosyası: `C:/Users/fikri.eren/.claude/plans/imdi-planlama-yap-bu-optimized-hippo.md`. Mockup: `Mosaik/wwwroot/mockups/dashboard-builder-v3.html`.
 - **İlgili ADR:** ADR-005 (config-driven), ADR-007 (named result contract — genişletiliyor), ADR-009 (rapor/dashboard tip birleşimi — ayrı doküman, aynı PR set'inde).
 
 ## Bağlam

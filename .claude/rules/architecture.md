@@ -5,7 +5,7 @@ _Kapsam: Projenin genel mimarisi, karar kayıtları (ADR'lere dönüşene kadar 
 ## Veri Erişim
 
 - **Rapor/dashboard verisi** → SQL Server **stored procedure**. `CommandType.StoredProcedure` + `SqlParameter` zorunlu. String concat YOK.
-- **Metadata CRUD** (User, Role, ReportCatalog, AuditLog, Category, Favorite, UserDataFilter) → **EF Core 10**, `ReportPanelContext`.
+- **Metadata CRUD** (User, Role, ReportCatalog, AuditLog, Category, Favorite, UserDataFilter) → **EF Core 10**, `MosaikContext`.
 - **Dapper yok**, eklenmeyecek (tek geliştirici için gereksiz katman).
 - **SP execution helper:** `ReportsController.ExecuteStoredProcedureMultiResultSets` — ileride `Services/IStoredProcedureExecutor.cs`'e taşınacak (TODO M-01 service extraction ile birlikte).
 

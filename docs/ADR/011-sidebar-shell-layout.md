@@ -17,8 +17,8 @@ Kullanıcı verbatim:
 > "mockup renkleri değil tasarım bütünlüğü de uygulanmalı"
 
 İki onaylı mockup hazır:
-- [`app-shell-v1.html`](../../ReportPanel/wwwroot/mockups/app-shell-v1.html) — Genel Bakış (sidebar + ana içerik pattern)
-- [`app-shell-builder-v1.html`](../../ReportPanel/wwwroot/mockups/app-shell-builder-v1.html) — Builder + sidebar shell birleşimi
+- [`app-shell-v1.html`](../../Mosaik/wwwroot/mockups/app-shell-v1.html) — Genel Bakış (sidebar + ana içerik pattern)
+- [`app-shell-builder-v1.html`](../../Mosaik/wwwroot/mockups/app-shell-builder-v1.html) — Builder + sidebar shell birleşimi
 
 Plan 02 A patikası: **Plan 02 önce** (M-11 builder finalize, alt-1+2+3a tamam) → **Plan 03 sonra** (project-wide harmonization).
 
@@ -78,8 +78,8 @@ Plan 02 A patikası: **Plan 02 önce** (M-11 builder finalize, alt-1+2+3a tamam)
 ## Uygulama
 
 - [x] [Plan 03](../../plans/03-project-wide-design-system-harmonization.md) yazıldı (commit `5f912c3`)
-- [x] [Mockup app-shell-v1.html](../../ReportPanel/wwwroot/mockups/app-shell-v1.html) onaylandı
-- [x] [Mockup app-shell-builder-v1.html](../../ReportPanel/wwwroot/mockups/app-shell-builder-v1.html) onaylandı
+- [x] [Mockup app-shell-v1.html](../../Mosaik/wwwroot/mockups/app-shell-v1.html) onaylandı
+- [x] [Mockup app-shell-builder-v1.html](../../Mosaik/wwwroot/mockups/app-shell-builder-v1.html) onaylandı
 - [x] Bu ADR yazıldı
 - [ ] Faz A skeleton (`_AppLayout` rewrite + app-shell.css/.js + style.css extend)
 - [ ] Faz B P0 (Dashboard/Reports/EditReport)

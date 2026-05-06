@@ -17,21 +17,21 @@ ReportHub, rol tabanli erisim kontrolu, merkezi audit log ve admin paneli uzerin
 - Razor Views
 
 ## Proje yapisi
-- `ReportPanel/` - Ana uygulama.
-- `ReportPanel/Controllers` - Auth, admin, reports, profile, logs, dashboard.
-- `ReportPanel/Views` - Razor arayuzleri.
-- `ReportPanel/Models` - EF Core entity ve DbContext.
-- `ReportPanel/Services` - Audit log ve sifreleme servisleri.
-- `ReportPanel/Database` - Schema ve seed scriptleri.
-- `ReportPanel.Tests/` - Otomatik testler.
+- `Mosaik/` - Ana uygulama.
+- `Mosaik/Controllers` - Auth, admin, reports, profile, logs, dashboard.
+- `Mosaik/Views` - Razor arayuzleri.
+- `Mosaik/Models` - EF Core entity ve DbContext.
+- `Mosaik/Services` - Audit log ve sifreleme servisleri.
+- `Mosaik/Database` - Schema ve seed scriptleri.
+- `Mosaik.Tests/` - Otomatik testler.
 
 ## Kurulum (lokal)
-1) `ReportPanel/appsettings.json` icindeki connection string'i kendi ortamina gore guncelle.
-2) `ReportPanel/Database` altindaki scriptlerle veritabanini olustur.
+1) `Mosaik/appsettings.json` icindeki connection string'i kendi ortamina gore guncelle.
+2) `Mosaik/Database` altindaki scriptlerle veritabanini olustur.
 3) Uygulamayi calistir:
 
 ```
-cd ReportPanel
+cd Mosaik
 dotnet run
 ```
 
@@ -45,7 +45,7 @@ Bu projede ortamlar ayridir. Her ortam kendi connection string'ini kullanir:
 Amac: Herkesin ayni veritabanini kullanmasi degil, ortam bazli ayrim yapmaktir.
 
 ## Sistemi ayaga kaldirma (prod/staging yaklasimi)
-1) SQL Server hazirla ve schema scriptlerini uygula (`ReportPanel/Database`).
+1) SQL Server hazirla ve schema scriptlerini uygula (`Mosaik/Database`).
 2) Uygulama icin connection string ve ortam ayarlarini belirle.
 3) UygulamayI calistir (IIS, Windows Service ya da container).
 4) Uygulama calistiktan sonra admin kullanici ile giris yap.

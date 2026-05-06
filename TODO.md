@@ -175,7 +175,7 @@ Bu liste asagidakilerin sentezidir:
 10. ✅ **dashboard-builder.js: spPreviewReady event listener + kolon datalist** — commit `b3ae747`. `document.addEventListener('spPreviewReady')`, populateColumnDatalist, attachListAttribute. Browser dogrulandi: 7 result set -> 51 distinct kolon.
 11. ✅ **SP Onizle admin-override panel** — F-02 tamamlandi, commit `816c8c2`. ProcParams short-name destegi, SpPreview paramsJson override, typed inputs (date/number/text/checkbox).
 12. ✅ **M-02 devam · ex.Message sanitize** — commit `a047957` + `b6ff43a`. Oturum 4'te yeniden tarama: AuthController/Reports/Profile/DataSourceService'de user-facing leak YOK. `async void`, `new HttpClient()` yok. Kalan `.Message` kullanimlari audit log alanlarinda (ErrorMessage, LogRun param) — amacli.
-13. ✅ **M-03 Faz B · User.Roles nullable + [Obsolete]** — commit `bf922ae`. `Database/15_NullableUserRolesCsv.sql` (idempotent, UserRole orphan check + ALTER NULL); [User.cs:31](ReportPanel/Models/User.cs:31) `string?` + `[Obsolete]`; [ReportPanelContext.cs:94-97](ReportPanel/Models/ReportPanelContext.cs:94) pragma; [UserManagementService.cs:54](ReportPanel/Services/UserManagementService.cs:54) yeni create'te Roles yazilmaz. Faz C ADR-003'e gore "cok sonra" — Faz 2 madde 25'te bekliyor.
+13. ✅ **M-03 Faz B · User.Roles nullable + [Obsolete]** — commit `bf922ae`. `Database/15_NullableUserRolesCsv.sql` (idempotent, UserRole orphan check + ALTER NULL); [User.cs:31](Mosaik/Models/User.cs:31) `string?` + `[Obsolete]`; [MosaikContext.cs:94-97](Mosaik/Models/MosaikContext.cs:94) pragma; [UserManagementService.cs:54](Mosaik/Services/UserManagementService.cs:54) yeni create'te Roles yazilmaz. Faz C ADR-003'e gore "cok sonra" — Faz 2 madde 25'te bekliyor.
 
 #### FAZ 2 — BU AY (4 hafta, orta oncelik)
 14. ✅ **M-01 · AdminController service extraction** — 5 adimda tamamlandi:
@@ -211,7 +211,7 @@ Bu liste asagidakilerin sentezidir:
     - **Faz 5** (~2h) · Migration 18 — PDKS (7 RS) + Satis (7 RS) ConfigJson rewrite. **Idempotent**: `resultContract` yoksa uret, varsa atla. `Explore` agent ile her resultSet icin camelCase isim onerisi.
     - **Faz 6** (~1h) · Legacy `resultSet: N` binding deprecate + renderer fallback kaldir (ayri PR, tum configler migrate edildikten sonra).
 
-29.5. **M-11 · Dashboard Builder UX Redesign + Chart Expansion** (13 faz, ~60h toplam / 1.5-2 hafta solo) — Apache Superset'ten esinlenen modern admin builder. Plan dosyasi: `C:/Users/fikri.eren/.claude/plans/imdi-planlama-yap-bu-optimized-hippo.md`. Mockup: `ReportPanel/wwwroot/mockups/dashboard-builder-v3.html` (Gridstack + Chart.js canli, BKM renkleri tasarim referansi — implementasyon `_AppLayout` + `style.css` custom class'lari ile ayri port edilir). ADR-008 + ADR-009 kabul edildi (24 Nisan). Branch: `feature/m-11-dashboard-builder-redesign`.
+29.5. **M-11 · Dashboard Builder UX Redesign + Chart Expansion** (13 faz, ~60h toplam / 1.5-2 hafta solo) — Apache Superset'ten esinlenen modern admin builder. Plan dosyasi: `C:/Users/fikri.eren/.claude/plans/imdi-planlama-yap-bu-optimized-hippo.md`. Mockup: `Mosaik/wwwroot/mockups/dashboard-builder-v3.html` (Gridstack + Chart.js canli, BKM renkleri tasarim referansi — implementasyon `_AppLayout` + `style.css` custom class'lari ile ayri port edilir). ADR-008 + ADR-009 kabul edildi (24 Nisan). Branch: `feature/m-11-dashboard-builder-redesign`.
 
     **Guncellemeler (24 Nisan, ADR-008/009 sonrasi):**
     - **Gridstack.js kabul** — builder-only CDN, runtime (Reports/Run) CSS-grid inline-style. Onceki "Gridstack reddet" karari tersine cevrildi.
@@ -289,7 +289,7 @@ Bu liste asagidakilerin sentezidir:
 
 ### YENI PROJE ADI ARANIYOR (28 Nisan 2026)
 Kullanici 28 Nisan 2026 oturum 4: "projeye reporthub demeyelim bir ara degistirelim isim bulalim". 
-Mevcut iceride brand: "ReportHub" (geçici), kod adi "ReportPanel" (klasor + namespace). 
+Mevcut iceride brand: "ReportHub" (geçici), kod adi "Mosaik" (klasor + namespace). 
 Sidebar + AuthLayout'ta "ReportHub" gectigi yerler "BKM Kitap" + "Rapor Paneli" olarak guncelendi 
 (R3.2, 28 Nisan), ama bu da yer tutucu. Yeni isim adaylari + brand-mark logosu (mevcut bkm-logo.svg 
 disinda alternatif logo asetleri) icin ayri brainstorm gerekli. Plan 06 vNext sirket ici portal 
@@ -507,9 +507,9 @@ END
 
 #### YUKSEK risk
 - [ ] **User.Roles CSV + UserRole tablosu ikili sistem**: User modelinde `public string Roles` hala var, UserRole normalize tablosu da var. Admin CreateUser'da User.Roles yaziliyor AMA UserRole eklenmeyebiliyor. DashboardController CSV parse ederken ReportsController UserRole join yapiyor. **Coz:** User.Roles field'ini kaldir, tum role kontrolu UserRole uzerinden. Migration ile CSV'yi normalize et.
-  - ReportPanel/Models/User.cs:27
-  - ReportPanel/Controllers/DashboardController.cs:68-82 (CSV parse)
-  - ReportPanel/Controllers/ReportsController.cs:73-75 (normalize)
+  - Mosaik/Models/User.cs:27
+  - Mosaik/Controllers/DashboardController.cs:68-82 (CSV parse)
+  - Mosaik/Controllers/ReportsController.cs:73-75 (normalize)
 - [x] ~~**DashboardHtml vs DashboardConfigJson dual storage**~~ → ✅ M-05 3 faz kapandi (Faz C commit `0f73478`, migration 17, ADR-005). DashboardConfigJson tek source-of-truth.
   - ReportsController.cs:238-249 (iki render path)
 - [ ] **Data access stratejisi belirsiz**: EF Core var, Dapper hic kullanilmamis (Program.cs'de register yok) ama SP'ler var (sp_PdksPano.sql, sp_SatisPano.sql). SP'ler ADO.NET ile mi, EF FromSqlRaw ile mi cagriliyor? **Coz:** Tek strateji sec - ya EF Core + SP'leri repository'ye al, ya Dapper ekle. Dokumante et.
@@ -526,7 +526,7 @@ END
 - [ ] **Naming karisik**: Tablo/kolonlar Ingilizce, UI Turkce. sp_PdksPano Turkce param (`@Tarih`), sp_SatisPano Ingilizce. **Coz:** Kural netle: code Ingilizce, UI Turkce, SP'ler tutarli olsun.
 - [ ] **Database scriptleri karisik**: 05_DropReportRunLog destructive, 12/14 seed, diger schema — hepsi ayni klasorde numaralanmis. **Coz:** `Database/Schema/`, `Database/Seed/`, `Database/Migrations/`, `Database/StoredProcedures/` alt klasorleri.
 - [ ] **Test coverage dusuk**: Sadece PasswordHasher + AuditLog test'leri var. **Coz:** ReportsController.Run, AdminController.CreateUser, DashboardRenderer ve kritik business logic icin integration + unit test ekle.
-- [ ] **ReportPanel/Views/Auth/AGENT.md projeye uymuyor**: "MVC yok, Razor Pages + Dapper" manifestosu, oysa proje MVC + EF Core. **Coz:** Dosyayi sil veya "hedef mimari" olarak dokumante et ve migration plani yaz.
+- [ ] **Mosaik/Views/Auth/AGENT.md projeye uymuyor**: "MVC yok, Razor Pages + Dapper" manifestosu, oysa proje MVC + EF Core. **Coz:** Dosyayi sil veya "hedef mimari" olarak dokumante et ve migration plani yaz.
 - [ ] **JavaScript bundle/build yok**: Tum JS ayri dosyalar, runtime'da yukleniyor, minify yok. **Coz:** Kucuk proje icin abartmaya gerek yok ama esbuild/vite ile minify + bundle production icin.
 
 ---
@@ -605,7 +605,7 @@ END
 - [ ] **Builder submit validation**: Bos title, negatif rs, eksik column -> submit engelle.
 - [ ] **Mobile responsive grid**: DashboardRenderer.cs:80 `grid-cols-4` sabit; `grid-cols-1 sm:grid-cols-2 lg:grid-cols-4`.
 - [ ] **Dashboard Excel export davranisi**: Su an dashboard raporda ne oluyor netlestir; export butonunu gizle ya da multi-sheet destekle.
-- [ ] **Unit test eksikligi**: ReportPanel.Tests'te DashboardRenderer hic test edilmemis. Smoke + XSS payload + invalid RS + JSON round-trip testleri.
+- [ ] **Unit test eksikligi**: Mosaik.Tests'te DashboardRenderer hic test edilmemis. Smoke + XSS payload + invalid RS + JSON round-trip testleri.
 
 **P1 - Performans:**
 - [ ] **Inline RS boyut limiti**: 10K satir -> 3MB HTML. Ilk N satiri embed et + uyari, ya da AJAX lazy-load endpoint.

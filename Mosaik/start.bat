@@ -1,0 +1,6 @@
+@echo off
+echo ReportPanel durduruluyor...
+taskkill /f /im ReportPanel.exe 2>nul
+timeout /t 1 /nobreak >nul
+echo Baslatiliyor...
+dotnet run

@@ -65,7 +65,7 @@ Araç: `commit-splitter` subagent (TODO FAZ 1 madde 5).
 
 ## AGENT.md Yanıltıcı
 
-`ReportPanel/Views/Auth/AGENT.md` içinde "Razor Pages + Dapper" manifesto var — proje MVC + EF Core. Gelecek Claude oturumları yanlış mimari varsayar.
+`Mosaik/Views/Auth/AGENT.md` içinde "Razor Pages + Dapper" manifesto var — proje MVC + EF Core. Gelecek Claude oturumları yanlış mimari varsayar.
 
 **Çözüm:** Dosyayı sil veya başına `> ⚠️ DEPRECATED — reference only, project is MVC + EF Core` ekle. TODO F-04.
 

@@ -99,7 +99,7 @@ D:/Dev/reporthub/
 │   │   ├── security-principles.md       # XSS, SQL injection, audit log (no paths)
 │   │   ├── turkish-ui.md                # Türkçe karakterler, metin kuralları (no paths)
 │   │   ├── commit-discipline.md         # Git/commit stratejisi (no paths)
-│   │   ├── sql-conventions.md           # paths: ReportPanel/Database/**/*.sql
+│   │   ├── sql-conventions.md           # paths: Mosaik/Database/**/*.sql
 │   │   ├── razor-conventions.md         # paths: **/*.cshtml
 │   │   ├── js-conventions.md            # paths: wwwroot/assets/js/**
 │   │   └── csharp-conventions.md        # paths: **/*.cs

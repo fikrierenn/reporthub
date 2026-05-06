@@ -36,7 +36,7 @@ Dashboard modülü iki ayrı yazım yoluyla doğdu:
 ### Faz B — Legacy retirement (commit `a2feb5d`, 22 Nisan 2026)
 
 - `Models/ReportCatalog.DashboardHtml` → `[Obsolete]` + nullable XML doc.
-- `Models/ReportPanelContext` → `#pragma warning disable CS0618` + `entity.Property(e => e.DashboardHtml)` map'i korundu.
+- `Models/MosaikContext` → `#pragma warning disable CS0618` + `entity.Property(e => e.DashboardHtml)` map'i korundu.
 - `Services/ReportManagementService.ReportFormInput`'tan `DashboardHtml` parametresi kaldırıldı. Create/Update artık yalnızca `DashboardConfigJson` yazar.
 - `Controllers/AdminController.BuildReportFormInput`'ta `DashboardHtml` okuma kaldırıldı.
 - `Controllers/ReportsController.Run`: legacy fallback path korundu **ama** her tetiklendiğinde `dashboard_html_legacy_render` audit log event'i yazılıyor. Amaç: Faz C öncesi "gerçek kullanım var mı?" sorusunu ölçülebilir kılmak.
@@ -61,7 +61,7 @@ Faz C aksiyonları:
 
 - `Database/17_DropDashboardHtml.sql`: idempotent DROP COLUMN. Orphan check Güvenlik ağı olarak önce çalışır, >0 ise RAISERROR ile abort.
 - `Models/ReportCatalog`: `DashboardHtml` property silindi.
-- `Models/ReportPanelContext`: pragma + property map satırları silindi.
+- `Models/MosaikContext`: pragma + property map satırları silindi.
 - `Controllers/ReportsController.Run`: legacy fallback branch silindi. Dashboard raporu `DashboardConfigJson` olmadan çalıştırılırsa `dashboard_config_missing` audit event'i yazılır ve boş config ile render edilir (invalid JSON ile aynı davranış).
 - `Controllers/ReportsController.RenderDashboardTemplate` method silindi.
 - `Views/Admin/{Create,Edit}Report.cshtml`: wrapper id `dashboardHtmlSection` → `dashboardConfigSection`. M-05 yorum satırları temizlendi.

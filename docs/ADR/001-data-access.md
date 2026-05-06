@@ -1,14 +1,14 @@
 # ADR-001 · Veri erişimi: SP rapor/dashboard, EF Core metadata (hibrit)
 
 - **Durum:** Kabul edildi (4 Mayıs 2026, kayıt; pratik 2025'ten beri uygulanıyor)
-- **Etkilenen:** `ReportsController` (SP yürütme), `DashboardRenderer`, tüm `*ManagementService`'ler (EF), `ReportPanelContext`, `Database/sp_*.sql`
+- **Etkilenen:** `ReportsController` (SP yürütme), `DashboardRenderer`, tüm `*ManagementService`'ler (EF), `MosaikContext`, `Database/sp_*.sql`
 - **İlgili TODO:** TODO.md "SP MIMARISI TARTISMASI" özeti (21 Nisan 2026 gecesi tartışıldı, karar dosyaya geçirilmedi — bu ADR o eksiği kapatır)
 
 ## Bağlam
 
 Erken aşamada iki veri-erişim aracı yan yana büyüdü:
 
-1. **EF Core 10** — kullanıcı/rol/rapor metadata, kategori, favori, audit log, user data filter (`ReportPanelContext`).
+1. **EF Core 10** — kullanıcı/rol/rapor metadata, kategori, favori, audit log, user data filter (`MosaikContext`).
 2. **Stored Procedure (ADO.NET, multi-result-set)** — rapor verisi ve dashboard kaynakları (`sp_PdksPano`, `sp_SatisPano`). `ReportsController.ExecuteStoredProcedureMultiResultSets` üzerinden `SqlCommand` + `SqlDataReader` ile ham `Dictionary<string, object>` listelerine okunur.
 
 İki yıllık çalışma sırasında "her şey EF'e mi, her şey SP'ye mi, Dapper ekleyelim mi?" soruları periyodik olarak gündeme geldi (özellikle 21 Nisan 2026 gecesi: "Her şeyi SP yapmaktan vaz mı geçsem?", "monolitik SP'leri parçalayalım mı?"). Karar konuşulmuş ama hiçbir resmî yere yazılmamıştı; yeni gelen kişi (veya 6 ay sonra Claude) bağlamı yeniden inşa etmek zorunda kalıyor.

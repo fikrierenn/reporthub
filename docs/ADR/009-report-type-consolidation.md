@@ -1,7 +1,7 @@
 # ADR-009 · Report/Dashboard tip ayrımını kaldır — tek render yolu
 
 - **Durum:** Kabul edildi (24 Nisan 2026)
-- **Etkilenen:** `ReportCatalog.ReportType` kolonu (SİLİNECEK), `ReportManagementService` (NormalizeReportType metodu + 2 dallanma), `ReportsController.Run` (:146, :216), `ReportManagementService.cs:41,92,107,111`, `BuildReportFormViewModel.ReportType`, `EditReport.cshtml` + `CreateReport.cshtml` (tip dropdown'u + toggleReportType JS), `Reports/Run.cshtml` (tablo render path'i SİLİNECEK), `ReportPanelContext.OnModelCreating` (fluent config), `AdminController.cs:1213`.
+- **Etkilenen:** `ReportCatalog.ReportType` kolonu (SİLİNECEK), `ReportManagementService` (NormalizeReportType metodu + 2 dallanma), `ReportsController.Run` (:146, :216), `ReportManagementService.cs:41,92,107,111`, `BuildReportFormViewModel.ReportType`, `EditReport.cshtml` + `CreateReport.cshtml` (tip dropdown'u + toggleReportType JS), `Reports/Run.cshtml` (tablo render path'i SİLİNECEK), `MosaikContext.OnModelCreating` (fluent config), `AdminController.cs:1213`.
 - **İlgili TODO:** M-11 Faz F-1 + F-1.5 (~7 saat). Plan: `C:/Users/fikri.eren/.claude/plans/imdi-planlama-yap-bu-optimized-hippo.md`.
 - **İlgili ADR:** ADR-005 (config-driven dashboard), ADR-007 (named result contract), ADR-008 (dashboard builder v2 — bu karar onun F-1.5 fazıdır).
 
@@ -79,7 +79,7 @@
 - `ReportManagementService.cs:41,92,107,111` dallanmalar temizle — `DashboardConfigJson` her zaman required
 - `ReportsController.cs:146,216` `isDashboard` dallanması kaldır, her render `DashboardRenderer.Render()`
 - `ReportCatalog.ReportType` property `[Obsolete("M-11 F-1.5, ADR-009")]` işaretle (ama hâlâ okunur/yazılır — migration 19'a kadar)
-- `ReportPanelContext.OnModelCreating` ReportType config'i kaldır
+- `MosaikContext.OnModelCreating` ReportType config'i kaldır
 - `BuildReportFormViewModel.ReportType` — sabit `"dashboard"` döndür veya sil
 - `AdminController.cs:1213` `Request.Form["ReportType"]` kaldır
 
@@ -98,7 +98,7 @@
   END
   ```
 - `ReportCatalog.ReportType` C# property sil ([Obsolete] fazından sonra)
-- `ReportPanel.Tests/DashboardMigrationTests.cs` idempotency + v1→v2 + table→dashboard auto-convert testleri
+- `Mosaik.Tests/DashboardMigrationTests.cs` idempotency + v1→v2 + table→dashboard auto-convert testleri
 - Smoke: PDKS + Satış + varsayılan tablo raporları `/Reports/Run` erişimi test edilir (screenshot)
 
 ### Builder preview = Reports/Run (ADR-008 "tek renderer" kararının yansıması)

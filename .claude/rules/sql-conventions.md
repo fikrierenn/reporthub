@@ -1,6 +1,6 @@
 ---
 paths:
-  - "ReportPanel/Database/**/*.sql"
+  - "Mosaik/Database/**/*.sql"
 ---
 
 # SQL + Stored Procedure Konvansiyonları

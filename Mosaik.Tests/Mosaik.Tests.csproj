@@ -24,7 +24,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\ReportPanel\Mosaik.csproj" />
+    <ProjectReference Include="..\Mosaik\Mosaik.csproj" />
   </ItemGroup>
 
 </Project>

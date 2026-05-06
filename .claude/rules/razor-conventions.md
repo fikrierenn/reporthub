@@ -1,13 +1,13 @@
 ---
 paths:
-  - "ReportPanel/Views/**/*.cshtml"
+  - "Mosaik/Views/**/*.cshtml"
 ---
 
 # Razor View Konvansiyonları
 
 ## View Yapısı
 
-1. **Model:** `@model ReportPanel.ViewModels.XyzViewModel` — Entity direkt kullanma.
+1. **Model:** `@model Mosaik.ViewModels.XyzViewModel` — Entity direkt kullanma.
 2. **Layout:** `Layout = "_AppLayout";` (unutma).
 3. **ViewData / ViewBag:** Minimum. Mümkünse ViewModel property'si kullan.
 

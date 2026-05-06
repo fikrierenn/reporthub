@@ -41,7 +41,7 @@ Detay: [`.claude/rules/session-protocol.md`](.claude/rules/session-protocol.md).
 **Mosaik** — modüler şirket içi portal. Şu an aktif modül: rapor + dashboard (SQL Server stored procedure'ları üzerinde çalışan). vNext modüller (TODO.md:298): tamim/sirküler, duyurular, departman dizini, doküman paylaşımı, mesajlaşma, form/anket, SOP, takvim, KPI/OKR, onay akışları. Brand metaforu: her modül bir taş, birlikte mozaiği oluşturur.
 
 **Canonical kimlik (sabit):** `Mosaik` namespace + `Mosaik.csproj` + `Mosaik.sln`.
-**Repo klasörü:** `D:\Dev\reporthub` (tarihsel, kod-içi rebrand kapsam dışı bırakıldı; iç klasörler `ReportPanel/` + `ReportPanel.Tests/` adlarında kalır).
+**Repo klasörü:** `D:\Dev\reporthub` (tarihsel, kod-içi rebrand kapsam dışı bırakıldı; iç klasörler `Mosaik/` + `Mosaik.Tests/` adlarında kalır).
 **Brand görünümü (parametric):** UI marka adı/logo/renk DB-driven (Plan 11 Faz 3 BrandSettings — bekliyor).
 **Modüller (switchable):** Sidebar'da hangi modüller görünür, DB-driven (Plan 11 Faz 4 Modules — bekliyor).
 
@@ -53,16 +53,16 @@ Detay: [`.claude/rules/session-protocol.md`](.claude/rules/session-protocol.md).
 - **Tailwind CSS** (CDN, utility-first) + `wwwroot/assets/css/style.css` custom sınıflar (`btn-brand`, `form-input-brand`).
 - **Chart.js 4** + **Font Awesome 6** CDN (dashboard render).
 - **Frontend JS:** Vanilla, IIFE pattern, `wwwroot/assets/js/`. jQuery yok.
-- **Testler:** xUnit (`ReportPanel.Tests/Mosaik.Tests.csproj`). 246 test geçiyor.
+- **Testler:** xUnit (`Mosaik.Tests/Mosaik.Tests.csproj`). 246 test geçiyor.
 
 ### Ana klasörler
-- `ReportPanel/Controllers/` — `Admin`, `Auth`, `Reports`, `Dashboard`, `Profile`, `Home`, `Test`, `Logs`
-- `ReportPanel/Models/` — EF entities
-- `ReportPanel/ViewModels/` — view-model wrapper'ları
-- `ReportPanel/Views/` — Razor views, `_AppLayout.cshtml` ana layout
-- `ReportPanel/Services/` — `PasswordHasher`, `AuditLogService`, `DashboardRenderer`
-- `ReportPanel/Database/` — SQL migration + seed + SP scriptleri (01_ → 27_)
-- `ReportPanel/wwwroot/assets/{js,css}/` — static assets
+- `Mosaik/Controllers/` — `Admin`, `Auth`, `Reports`, `Dashboard`, `Profile`, `Home`, `Test`, `Logs`
+- `Mosaik/Models/` — EF entities
+- `Mosaik/ViewModels/` — view-model wrapper'ları
+- `Mosaik/Views/` — Razor views, `_AppLayout.cshtml` ana layout
+- `Mosaik/Services/` — `PasswordHasher`, `AuditLogService`, `DashboardRenderer`
+- `Mosaik/Database/` — SQL migration + seed + SP scriptleri (01_ → 27_)
+- `Mosaik/wwwroot/assets/{js,css}/` — static assets
 
 ---
 
@@ -127,10 +127,10 @@ Karar kayıtları: [`docs/ADR/`](docs/ADR/) (yazılması bekleniyor — ADR-001 
 ### Build + run + test
 ```bash
 # Build
-cd D:/Dev/reporthub/ReportPanel && dotnet build --nologo
+cd D:/Dev/reporthub/Mosaik && dotnet build --nologo
 
 # Run (dev)
-cd D:/Dev/reporthub/ReportPanel && dotnet run
+cd D:/Dev/reporthub/Mosaik && dotnet run
 # URL: http://localhost:5197
 
 # Test
@@ -160,16 +160,16 @@ cd D:/Dev/reporthub && dotnet test
 
 | Amaç | Dosya |
 |---|---|
-| Rapor çalıştırma logic | `ReportPanel/Controllers/ReportsController.cs` |
-| Admin user CRUD | `ReportPanel/Controllers/AdminController.cs:937-1183` |
-| Dashboard render motoru | `ReportPanel/Services/DashboardRenderer.cs` |
-| Dashboard builder JS | `ReportPanel/wwwroot/assets/js/dashboard-builder.js` |
-| User data filter enjeksiyon | `ReportPanel/Controllers/ReportsController.cs:875` |
-| SP önizleme endpoint | `ReportPanel/Controllers/AdminController.cs` → `SpList`, `SpPreview` |
-| User modeli | `ReportPanel/Models/User.cs` |
-| DB context | `ReportPanel/Models/ReportPanelContext.cs` |
-| Audit log servisi | `ReportPanel/Services/AuditLogService.cs` |
-| Şifreleme | `ReportPanel/Services/PasswordHasher.cs` |
-| Ana layout | `ReportPanel/Views/Shared/_AppLayout.cshtml` |
-| Uygulama başlatma | `ReportPanel/Program.cs` |
-| Proje hedef framework | `ReportPanel/ReportPanel.csproj` |
+| Rapor çalıştırma logic | `Mosaik/Controllers/ReportsController.cs` |
+| Admin user CRUD | `Mosaik/Controllers/AdminController.cs:937-1183` |
+| Dashboard render motoru | `Mosaik/Services/DashboardRenderer.cs` |
+| Dashboard builder JS | `Mosaik/wwwroot/assets/js/dashboard-builder.js` |
+| User data filter enjeksiyon | `Mosaik/Controllers/ReportsController.cs:875` |
+| SP önizleme endpoint | `Mosaik/Controllers/AdminController.cs` → `SpList`, `SpPreview` |
+| User modeli | `Mosaik/Models/User.cs` |
+| DB context | `Mosaik/Models/MosaikContext.cs` |
+| Audit log servisi | `Mosaik/Services/AuditLogService.cs` |
+| Şifreleme | `Mosaik/Services/PasswordHasher.cs` |
+| Ana layout | `Mosaik/Views/Shared/_AppLayout.cshtml` |
+| Uygulama başlatma | `Mosaik/Program.cs` |
+| Proje hedef framework | `Mosaik/Mosaik.csproj` |

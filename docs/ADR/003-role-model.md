@@ -51,7 +51,7 @@ Bu iki yapı yan yana yaşamaya başladı:
 
 - `Database/19_DropUserRolesCsv.sql` (idempotent, default constraint handler dahil): `ALTER TABLE Users DROP COLUMN Roles;` çalıştırıldı.
 - `Models/User.Roles` field + `[Obsolete]` attribute + summary comment silindi.
-- `ReportPanelContext` `entity.Property(e => e.Roles).HasMaxLength(200)` mapping ve `#pragma warning disable CS0618` blokları temizlendi.
+- `MosaikContext` `entity.Property(e => e.Roles).HasMaxLength(200)` mapping ve `#pragma warning disable CS0618` blokları temizlendi.
 - `UserManagementService.cs` create entity init etrafındaki pragma disable/restore satırları silindi.
 - Build temiz, 217 test yeşil. Kod tarafında `user.Roles` referansı kalmadı.
 

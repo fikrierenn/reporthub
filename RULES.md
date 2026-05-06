@@ -19,7 +19,7 @@ Butun degisiklikler bu kurallara uygun yapilmalidir.
 - Controller'lari ince tutun; buyuyen mantigi servislere alin.
 
 ## Veritabani
-- Tum sema degisiklikleri `ReportPanel/Database` altinda SQL script ile gelmelidir.
+- Tum sema degisiklikleri `Mosaik/Database` altinda SQL script ile gelmelidir.
 - Sifreleri duz metin saklamayin; yalnizca PBKDF2 hash kullanin.
 - Mümkünse seed data icinde gercek baglanti bilgisi kullanmayin.
 - SQL her zaman parametreli olsun; string birlestirmeden kacinin.

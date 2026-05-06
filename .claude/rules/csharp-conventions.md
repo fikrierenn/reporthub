@@ -1,7 +1,7 @@
 ---
 paths:
-  - "ReportPanel/**/*.cs"
-  - "ReportPanel.Tests/**/*.cs"
+  - "Mosaik/**/*.cs"
+  - "Mosaik.Tests/**/*.cs"
 ---
 
 # C# Konvansiyonları
