@@ -27,8 +27,11 @@ GO
 
 -- =========================================================================
 -- 2. Satış Pano — yoksa ekle (config + ReportAllowedRoles)
---    NOT: ProcName schema (`bkm.` vs `dbo.`) DataSource'a (DER) bağlı; mevcut
---    DB'de hangisi varsa o korunur. Yeni install'da `bkm.sp_SatisPano` standardı.
+--    NOT: ProcName schema remote DB'ye göre değişir.
+--      PDKS DataSource (BKM DB):       `dbo.sp_PdksPano`
+--      DER  DataSource (DerinSISBkm):  `bkm.sp_SatisPano`
+--    Aşağıdaki INSERT default'u DER için bkm.sp_SatisPano. Mevcut yanlış kayıt
+--    varsa ayrıca düzeltme UPDATE'i (4. blok) çalışır.
 -- =========================================================================
 IF NOT EXISTS (SELECT 1 FROM dbo.ReportCatalog WHERE ProcName LIKE N'%sp_SatisPano')
 BEGIN
@@ -52,6 +55,20 @@ GO
 -- 3. Satış Pano ReportAllowedRoles — admin + muhasebe (varsa atla)
 --    ReportId dinamik: ProcName üzerinden bulunur (idempotent).
 --    Role.Name eşleşmesi yapılır (RoleId hardcode etme — install ortamında değişebilir).
+-- =========================================================================
+-- =========================================================================
+-- 4. ProcName schema düzeltmesi — yanlış schema ile yatmış kayıtları onar
+--    (önceki seed sürümü `dbo.sp_SatisPano` yazıyordu, gerçek SP `bkm.` schema'da)
+-- =========================================================================
+UPDATE dbo.ReportCatalog SET ProcName = N'dbo.sp_PdksPano'
+WHERE ProcName = N'bkm.sp_PdksPano';
+
+UPDATE dbo.ReportCatalog SET ProcName = N'bkm.sp_SatisPano'
+WHERE ProcName = N'dbo.sp_SatisPano';
+GO
+
+-- =========================================================================
+-- 5. Satış Pano ReportAllowedRoles
 -- =========================================================================
 DECLARE @SatisPanoId INT = (SELECT TOP 1 ReportId FROM dbo.ReportCatalog WHERE ProcName LIKE N'%sp_SatisPano');
 IF @SatisPanoId IS NOT NULL
