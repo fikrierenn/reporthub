@@ -20,20 +20,8 @@ BEGIN
 END
 GO
 
--- Mosaik veritabanını oluştur
-CREATE DATABASE Mosaik
-ON
-( NAME = 'Mosaik_Data',
-  FILENAME = 'C:\Database\Mosaik.mdf',
-  SIZE = 100MB,
-  MAXSIZE = 1GB,
-  FILEGROWTH = 10MB )
-LOG ON
-( NAME = 'Mosaik_Log',
-  FILENAME = 'C:\Database\Mosaik.ldf',
-  SIZE = 10MB,
-  MAXSIZE = 100MB,
-  FILEGROWTH = 5MB );
+-- Mosaik veritabanını oluştur (SQL Server default data/log path kullanır)
+CREATE DATABASE Mosaik;
 GO
 
 -- Mosaik veritabanını kullan

@@ -14,8 +14,39 @@
 --
 -- DİKKAT: PortalHUB'daki tüm data SİLİNECEK. Dev/staging için. Prod için kullanma.
 
-:setvar __MosaikScriptDir "."
+:setvar __MosaikScriptDir "D:\Dev\reporthub\Mosaik\Database"
 
+-- ====================================================
+-- 0. Master cleanup (önceki başarısız reset master DB'ye kirlilik bıraktı)
+-- ====================================================
+USE master;
+GO
+
+-- FK bağımlı tablolar önce
+IF OBJECT_ID('master.dbo.UserDataFilters', 'U') IS NOT NULL DROP TABLE master.dbo.UserDataFilters;
+IF OBJECT_ID('master.dbo.ReportFavorites', 'U') IS NOT NULL DROP TABLE master.dbo.ReportFavorites;
+IF OBJECT_ID('master.dbo.ReportAllowedRoles', 'U') IS NOT NULL DROP TABLE master.dbo.ReportAllowedRoles;
+IF OBJECT_ID('master.dbo.ReportGroupLinks', 'U') IS NOT NULL DROP TABLE master.dbo.ReportGroupLinks;
+IF OBJECT_ID('master.dbo.ReportCategoryLinks', 'U') IS NOT NULL DROP TABLE master.dbo.ReportCategoryLinks;
+IF OBJECT_ID('master.dbo.ReportGroups', 'U') IS NOT NULL DROP TABLE master.dbo.ReportGroups;
+IF OBJECT_ID('master.dbo.ReportCategories', 'U') IS NOT NULL DROP TABLE master.dbo.ReportCategories;
+IF OBJECT_ID('master.dbo.UserRoles', 'U') IS NOT NULL DROP TABLE master.dbo.UserRoles;
+IF OBJECT_ID('master.dbo.AuditLog', 'U') IS NOT NULL DROP TABLE master.dbo.AuditLog;
+IF OBJECT_ID('master.dbo.ReportCatalog', 'U') IS NOT NULL DROP TABLE master.dbo.ReportCatalog;
+IF OBJECT_ID('master.dbo.FilterDefinition', 'U') IS NOT NULL DROP TABLE master.dbo.FilterDefinition;
+IF OBJECT_ID('master.dbo.SubeMapping', 'U') IS NOT NULL DROP TABLE master.dbo.SubeMapping;
+IF OBJECT_ID('master.dbo.Sube', 'U') IS NOT NULL DROP TABLE master.dbo.Sube;
+IF OBJECT_ID('master.dbo.Users', 'U') IS NOT NULL DROP TABLE master.dbo.Users;
+IF OBJECT_ID('master.dbo.Roles', 'U') IS NOT NULL DROP TABLE master.dbo.Roles;
+IF OBJECT_ID('master.dbo.DataSources', 'U') IS NOT NULL DROP TABLE master.dbo.DataSources;
+IF OBJECT_ID('master.dbo.ReportRunLog', 'U') IS NOT NULL DROP TABLE master.dbo.ReportRunLog;
+
+PRINT 'Master cleanup OK';
+GO
+
+-- ====================================================
+-- Migration zinciri
+-- ====================================================
 :r $(__MosaikScriptDir)\01_CreateDatabase.sql
 :r $(__MosaikScriptDir)\02_CreateTables.sql
 :r $(__MosaikScriptDir)\03_SeedData.sql
@@ -43,8 +74,9 @@
 :r $(__MosaikScriptDir)\25_DefaultGetUtcDate.sql
 :r $(__MosaikScriptDir)\26_AddResultContract.sql
 :r $(__MosaikScriptDir)\27_MigrateWidgetBinding.sql
-:r $(__MosaikScriptDir)\sp_PdksPano.sql
-:r $(__MosaikScriptDir)\sp_SatisPano.sql
+
+-- NOT: sp_PdksPano (PDKS linked server) ve sp_SatisPano (DerinSISBkm)
+-- external DB'lerde duruyor, Mosaik'e deploy edilmez. Kapsam dışı.
 
 PRINT '';
 PRINT '====================================================';
