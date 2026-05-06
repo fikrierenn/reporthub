@@ -1,0 +1,45 @@
+@{
+    var act = ViewContext.RouteData.Values["action"]?.ToString() ?? "";
+    var tab = Context.Request.Query["tab"].FirstOrDefault() ?? "";
+    if (string.IsNullOrEmpty(tab) && act.Equals("Index", StringComparison.OrdinalIgnoreCase))
+        tab = "datasources";
+
+    string NavActive(string key) =>
+        act.Equals(key, StringComparison.OrdinalIgnoreCase) ||
+        (act.Equals("Index", StringComparison.OrdinalIgnoreCase) && tab == key)
+            ? "active" : "";
+}
+<nav class="subnav" aria-label="Yönetim alt-navigasyonu">
+    <a href="/Admin?tab=datasources" class="@NavActive("datasources")">
+        <i class="fas fa-database"></i>
+        <span>Veri Kaynakları</span>
+    </a>
+    <a href="/Admin?tab=reports" class="@NavActive("reports")">
+        <i class="fas fa-file-lines"></i>
+        <span>Rapor Kataloğu</span>
+    </a>
+    <a href="/Admin?tab=users" class="@NavActive("users")">
+        <i class="fas fa-users"></i>
+        <span>Kullanıcılar</span>
+    </a>
+    <a href="/Admin?tab=roles" class="@NavActive("roles")">
+        <i class="fas fa-shield-halved"></i>
+        <span>Roller</span>
+    </a>
+    <a href="/Admin?tab=groups" class="@NavActive("groups")">
+        <i class="fas fa-folder-tree"></i>
+        <span>Gruplar</span>
+    </a>
+    <a href="/Admin?tab=filters" class="@NavActive("filters")">
+        <i class="fas fa-filter"></i>
+        <span>Filtreler</span>
+    </a>
+    <a href="/Admin/BrandSettings" class="@NavActive("BrandSettings")">
+        <i class="fas fa-palette"></i>
+        <span>Marka</span>
+    </a>
+    <a href="/Admin/Modules" class="@NavActive("Modules")">
+        <i class="fas fa-puzzle-piece"></i>
+        <span>Modüller</span>
+    </a>
+</nav>

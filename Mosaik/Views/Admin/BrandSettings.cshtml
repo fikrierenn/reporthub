@@ -4,73 +4,109 @@
     Layout = "_AppLayout";
 }
 
-<div class="page-header">
-    <div>
-        <h1 class="page-title">Marka Ayarları</h1>
-        <p class="page-subtitle">Site adı, logo ve renk yapılandırması</p>
+@section Breadcrumb {
+    <div class="crumbs">
+        <a href="/Dashboard">Ana Sayfa</a>
+        <span class="sep">/</span>
+        <a href="/Admin">Yönetim</a>
+        <span class="sep">/</span>
+        <span class="current">Marka Ayarları</span>
     </div>
+}
+
+@section TopActions {
+    <a href="/Admin" class="btn">
+        <i class="fas fa-xmark" style="font-size:10px;"></i>
+        İptal
+    </a>
+}
+
+<div class="hero">
+    <h1>Yönetim Paneli</h1>
+    <div class="sub"><span>Marka, modül ve sistem yapılandırması</span></div>
 </div>
+
+@await Html.PartialAsync("_AdminSubnav")
 
 @if (TempData["Message"] != null)
 {
-    <div class="@(TempData["MessageType"]?.ToString() == "success" ? "bg-green-100 border-green-400 text-green-700" : "bg-red-100 border-red-400 text-red-700") px-4 py-3 rounded border mb-4">
+    var isSuccess = TempData["MessageType"]?.ToString() == "success";
+    <div role="alert" style="margin-bottom:18px; padding:12px 16px; border-radius:10px; font-size:13px;
+        background:@(isSuccess ? "rgba(16,185,129,0.10)" : "rgba(220,38,38,0.10)");
+        border:1px solid @(isSuccess ? "rgba(16,185,129,0.25)" : "rgba(220,38,38,0.25)");
+        color:@(isSuccess ? "#065f46" : "var(--accent-ink)");">
+        <i class="fas @(isSuccess ? "fa-check-circle" : "fa-exclamation-circle")" style="margin-right:8px;"></i>
         @TempData["Message"]
     </div>
 }
 
-@using (Html.BeginForm("BrandSettings", "Admin", FormMethod.Post, new { enctype = "multipart/form-data", @class = "form-card max-w-2xl" }))
+@using (Html.BeginForm("BrandSettings", "Admin", FormMethod.Post, new { enctype = "multipart/form-data" }))
 {
     @Html.AntiForgeryToken()
 
-    <div class="form-group">
-        <label class="form-label">Site Adı <span class="text-red-500">*</span></label>
-        <input type="text" name="SiteTitle" value="@Model.SiteTitle" class="form-input-brand" required maxlength="100" />
-    </div>
-
-    <div class="form-group">
-        <label class="form-label">Slogan</label>
-        <input type="text" name="Slogan" value="@Model.Slogan" class="form-input-brand" maxlength="200" placeholder="Opsiyonel" />
-    </div>
-
-    <div class="form-group">
-        <label class="form-label">Logo</label>
-        @if (!string.IsNullOrEmpty(Model.LogoPath))
-        {
-            <div class="mb-2">
-                <img src="@Model.LogoPath" alt="Mevcut logo" style="max-height:48px;" />
-                <span class="text-xs text-gray-500 ml-2">Mevcut logo</span>
-            </div>
-        }
-        <input type="file" name="logoFile" accept=".png,.jpg,.jpeg,.svg,.webp" class="form-input-brand" />
-        <p class="text-xs text-gray-500 mt-1">PNG, JPG, SVG veya WebP. Yeni dosya yüklenirse mevcut logo değiştirilir.</p>
-    </div>
-
-    <div class="form-group">
-        <label class="form-label">Birincil Renk</label>
-        <div class="flex items-center gap-3">
-            <input type="color" name="PrimaryColor" value="@Model.PrimaryColor" style="width:48px;height:36px;border:none;cursor:pointer;" />
-            <input type="text" id="colorHex" value="@Model.PrimaryColor" maxlength="7"
-                   class="form-input-brand w-32"
-                   oninput="document.querySelector('input[type=color]').value=this.value"
-                   onchange="this.form.querySelector('input[type=color]').value=this.value" />
+    <div style="background:var(--paper); border:1px solid var(--line); border-radius:10px; overflow:hidden; max-width:640px; margin-bottom:18px;">
+        <div style="padding:14px 18px; border-bottom:1px solid var(--line);">
+            <h2 style="font-size:13px; font-weight:600; color:var(--ink-1); margin:0;">
+                <i class="fas fa-palette" style="margin-right:6px; color:var(--ink-3);"></i>
+                Marka Bilgileri
+            </h2>
+            <div style="font-size:12px; color:var(--ink-3); margin-top:2px;">Site adı, logo ve renk yapılandırması</div>
         </div>
-        <p class="text-xs text-gray-500 mt-1">Hex renk kodu (#rrggbb). Sidebar ve butonlarda kullanılır.</p>
-    </div>
 
-    <div class="form-actions">
-        <button type="submit" class="btn-brand">
-            <i class="fas fa-save mr-1"></i> Kaydet
-        </button>
-        <a href="/Admin" class="btn-brand-outline ml-2">İptal</a>
+        <div style="padding:20px;">
+            <div class="field">
+                <label class="lab">Site Adı <span style="color:var(--accent);">*</span></label>
+                <input type="text" name="SiteTitle" value="@Model.SiteTitle" class="inp" required maxlength="100" placeholder="örn: Mosaik" />
+            </div>
+
+            <div class="field">
+                <label class="lab">Slogan</label>
+                <input type="text" name="Slogan" value="@Model.Slogan" class="inp" maxlength="200" placeholder="Opsiyonel" />
+            </div>
+
+            <div class="field">
+                <label class="lab">Logo</label>
+                @if (!string.IsNullOrEmpty(Model.LogoPath))
+                {
+                    <div style="margin-bottom:8px; display:flex; align-items:center; gap:10px;">
+                        <img src="@Model.LogoPath" alt="Mevcut logo" style="max-height:40px; border:1px solid var(--line); border-radius:6px; padding:4px;" />
+                        <span style="font-size:12px; color:var(--ink-3);">Mevcut logo</span>
+                    </div>
+                }
+                <input type="file" name="logoFile" accept=".png,.jpg,.jpeg,.svg,.webp" class="inp" style="height:auto; padding:6px 12px;" />
+                <div style="font-size:11px; color:var(--ink-4); margin-top:4px;">PNG, JPG, SVG veya WebP. Yeni dosya yüklenirse mevcut değiştirilir.</div>
+            </div>
+
+            <div class="field" style="margin-bottom:0;">
+                <label class="lab">Birincil Renk</label>
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <input type="color" name="PrimaryColor" value="@Model.PrimaryColor" id="colorPicker"
+                           style="width:40px; height:34px; border:1px solid var(--line); border-radius:7px; cursor:pointer; padding:2px;" />
+                    <input type="text" id="colorHex" value="@Model.PrimaryColor" maxlength="7"
+                           class="inp" style="width:110px;"
+                           placeholder="#dc2626" />
+                </div>
+                <div style="font-size:11px; color:var(--ink-4); margin-top:4px;">Hex renk kodu (#rrggbb). Sidebar ve butonlarda kullanılır.</div>
+            </div>
+        </div>
+
+        <div style="padding:14px 18px; border-top:1px solid var(--line); display:flex; align-items:center; gap:8px;">
+            <button type="submit" class="btn primary">
+                <i class="fas fa-save"></i>
+                Kaydet
+            </button>
+            <a href="/Admin" class="btn">İptal</a>
+        </div>
     </div>
 }
 
 @section Scripts {
     <script>
     (() => {
-        const colorInput = document.querySelector('input[type=color]');
-        const hexInput = document.getElementById('colorHex');
-        colorInput?.addEventListener('input', () => { hexInput.value = colorInput.value; });
+        const picker = document.getElementById('colorPicker');
+        const hex    = document.getElementById('colorHex');
+        picker?.addEventListener('input', () => { hex.value = picker.value; });
+        hex?.addEventListener('input',   () => { if (/^#[0-9a-fA-F]{6}$/.test(hex.value)) picker.value = hex.value; });
     })();
     </script>
 }
