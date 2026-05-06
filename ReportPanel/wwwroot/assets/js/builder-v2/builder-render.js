@@ -154,10 +154,33 @@
                     '</svg>';
             },
 
-            widgetInnerHtml(comp) {
+            // F09.D: Designer ↔ Run görsel parite — V2 palet (server ColorMap genişlemesinden bağımsız)
+            kpiColorClass(color) {
+                var palette = {
+                    red:    { bg: 'bg-red-600',     text: 'text-red-600' },
+                    blue:   { bg: 'bg-blue-600',    text: 'text-blue-600' },
+                    green:  { bg: 'bg-emerald-600', text: 'text-emerald-600' },
+                    amber:  { bg: 'bg-amber-500',   text: 'text-amber-600' },
+                    violet: { bg: 'bg-violet-600',  text: 'text-violet-600' },
+                    rose:   { bg: 'bg-rose-500',    text: 'text-rose-600' },
+                    slate:  { bg: 'bg-slate-600',   text: 'text-slate-600' }
+                };
+                return palette[color] || palette.blue;
+            },
+
+            // V2 paleti chart hex — Chart.js renderer için
+            chartColorHex(color) {
+                var palette = {
+                    red: '#dc2626', blue: '#2563eb', green: '#059669',
+                    amber: '#f59e0b', violet: '#7c3aed', rose: '#e11d48', slate: '#475569'
+                };
+                return palette[color] || palette.blue;
+            },
+
+            // F09.2: Edit-only overlay — preview mode'da CSS ile gizlenir (.builder-v2.preview-mode .w-edit-overlay)
+            renderEditOverlay(comp) {
                 var typeLabel = this.typeLabel(comp.type);
                 var typeChipClass = 'type-' + comp.type;
-                // result-pill: hem RS adı hem bağlı kolon (örn: "Veri Seti 6 · Bolum")
                 var resultPillContent = '';
                 if (comp.result || comp.column) {
                     var rsLabel = comp.result || '';
@@ -175,31 +198,150 @@
                     ? '<span class="result-pill" title="Bağlı veri kaynağı">' + resultPillContent + '</span>'
                     : '<span class="result-pill" style="background:var(--canvas); color:var(--ink-4); border-style:dashed;" title="Henüz bağlı değil">bağlanmadı</span>';
 
-                var html = '<div class="w-head">' +
+                return '<div class="w-edit-overlay"><div class="w-head">' +
                     '<span class="type-chip ' + typeChipClass + '">' + typeLabel + '</span>' +
                     '<span class="title">' + this.esc(comp.title || ('Yeni ' + typeLabel)) + '</span>' +
                     resultPill +
                     '<div class="w-actions">' +
                     '<button type="button" data-act="dup" title="Kopyala"><i class="fas fa-copy"></i></button>' +
                     '<button type="button" class="danger" data-act="del" title="Sil"><i class="fas fa-trash"></i></button>' +
-                    '</div></div>';
+                    '</div></div></div>';
+            },
 
+            // F09.1: KPI brand kart — server KpiRenderer paritesi (basic/delta/sparkline/progress)
+            renderKpiCard(comp, rs, isPreview) {
+                var variant = comp.variant || 'basic';
+                if (variant === 'delta') return this.renderKpiDelta(comp, rs, isPreview);
+                if (variant === 'sparkline') return this.renderKpiSparkline(comp, rs, isPreview);
+                if (variant === 'progress') return this.renderKpiProgress(comp, rs, isPreview);
+                return this.renderKpiBasic(comp, rs, isPreview);
+            },
+
+            renderKpiBasic(comp, rs, isPreview) {
+                var c = this.kpiColorClass(comp.color);
+                var val = (isPreview && rs) ? this.computeKpiValue(rs, comp) : '—';
+                var icon = comp.icon ? this.esc(comp.icon) : 'fas fa-chart-bar';
+                return '<div class="bg-white rounded-xl border border-gray-200 shadow-sm p-5 h-full flex flex-col">' +
+                    '<div class="flex items-center justify-between mb-3">' +
+                    '<h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wide">' + this.esc(comp.title || 'KPI') + '</h3>' +
+                    '<div class="w-9 h-9 ' + c.bg + ' rounded-lg flex items-center justify-center">' +
+                    '<i class="' + icon + ' text-white text-sm"></i>' +
+                    '</div></div>' +
+                    '<div class="text-3xl font-bold ' + c.text + '">' + this.esc(val) + '</div>' +
+                    (comp.subtitle ? '<div class="text-xs text-gray-400 mt-1">' + this.esc(comp.subtitle) + '</div>' : '') +
+                    '</div>';
+            },
+
+            renderKpiDelta(comp, rs, isPreview) {
+                var c = this.kpiColorClass(comp.color);
+                var val = (isPreview && rs) ? this.computeKpiValue(rs, comp) : '—';
+                var icon = comp.icon ? this.esc(comp.icon) : 'fas fa-arrow-trend-up';
+                var compareLabel = (comp.delta && comp.delta.compareLabel) || 'vs önceki';
+                var deltaHtml = '<div class="text-xs font-semibold text-slate-400">—</div>';
+                if (isPreview && rs && comp.delta && comp.delta.compareColumn) {
+                    var aRaw = this.computeKpiValue(rs, comp);
+                    var bRaw = this.computeAggFromCol(rs, comp.delta.compareColumn, comp.agg || 'first');
+                    var a = parseFloat(aRaw), b = parseFloat(bRaw);
+                    if (!isNaN(a) && !isNaN(b) && b !== 0) {
+                        var pct = ((a - b) / Math.abs(b)) * 100;
+                        var up = pct >= 0;
+                        var arrow = up ? '↑' : '↓';
+                        var clr = up ? 'text-emerald-600' : 'text-red-600';
+                        deltaHtml = '<div class="text-xs font-semibold ' + clr + '">' + arrow + ' ' + Math.abs(pct).toFixed(1).replace('.', ',') + '%</div>';
+                    }
+                }
+                return '<div class="bg-white rounded-xl border border-gray-200 shadow-sm p-5 h-full flex flex-col">' +
+                    '<div class="flex items-center justify-between mb-3">' +
+                    '<h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wide">' + this.esc(comp.title || 'KPI') + '</h3>' +
+                    '<div class="w-9 h-9 ' + c.bg + ' rounded-lg flex items-center justify-center">' +
+                    '<i class="' + icon + ' text-white text-sm"></i>' +
+                    '</div></div>' +
+                    '<div class="flex items-baseline gap-2">' +
+                    '<div class="text-3xl font-bold ' + c.text + '">' + this.esc(val) + '</div>' +
+                    deltaHtml +
+                    '</div>' +
+                    '<div class="text-xs text-gray-400 mt-1">' + this.esc(compareLabel) + '</div>' +
+                    '</div>';
+            },
+
+            renderKpiSparkline(comp, rs, isPreview) {
+                var c = this.kpiColorClass(comp.color);
+                var val = (isPreview && rs) ? this.computeKpiValue(rs, comp) : '—';
+                var icon = comp.icon ? this.esc(comp.icon) : 'fas fa-chart-line';
+                var hex = this.chartColorHex(comp.color);
+                var sparkSvg = '<svg width="80" height="26" viewBox="0 0 80 26"></svg>';
+                if (isPreview && rs && comp.trend && comp.trend.valueColumn) {
+                    var pts = (rs.rows || []).map(function (r) { return parseFloat(r[comp.trend.valueColumn]) || 0; });
+                    if (pts.length >= 2) {
+                        var min = Math.min.apply(null, pts), max = Math.max.apply(null, pts);
+                        var range = (max - min) || 1, w = 80, h = 26, step = w / (pts.length - 1);
+                        var coords = pts.map(function (v, i) { return [(i * step).toFixed(1), (h - ((v - min) / range) * (h - 4) - 2).toFixed(1)]; });
+                        var lineD = 'M' + coords.map(function (a) { return a[0] + ',' + a[1]; }).join(' L');
+                        var fillD = lineD + ' L' + w + ',' + h + ' L0,' + h + ' Z';
+                        sparkSvg = '<svg width="80" height="26" viewBox="0 0 80 26">' +
+                            '<path d="' + fillD + '" fill="' + hex + '22" stroke="none"/>' +
+                            '<path d="' + lineD + '" fill="none" stroke="' + hex + '" stroke-width="1.5"/></svg>';
+                    }
+                }
+                return '<div class="bg-white rounded-xl border border-gray-200 shadow-sm p-5 h-full flex flex-col">' +
+                    '<div class="flex items-center justify-between mb-3">' +
+                    '<h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wide">' + this.esc(comp.title || 'KPI') + '</h3>' +
+                    '<div class="w-9 h-9 ' + c.bg + ' rounded-lg flex items-center justify-center">' +
+                    '<i class="' + icon + ' text-white text-sm"></i>' +
+                    '</div></div>' +
+                    '<div class="flex items-end justify-between gap-3">' +
+                    '<div class="text-3xl font-bold ' + c.text + '">' + this.esc(val) + '</div>' +
+                    sparkSvg +
+                    '</div>' +
+                    (comp.subtitle ? '<div class="text-xs text-gray-400 mt-1">' + this.esc(comp.subtitle) + '</div>' : '') +
+                    '</div>';
+            },
+
+            renderKpiProgress(comp, rs, isPreview) {
+                var c = this.kpiColorClass(comp.color);
+                var val = (isPreview && rs) ? this.computeKpiValue(rs, comp) : '—';
+                var icon = comp.icon ? this.esc(comp.icon) : 'fas fa-battery-half';
+                var hex = this.chartColorHex(comp.color);
+                var pctText = '—', pctWidth = '0%', targetText = 'hedef yok';
+                if (isPreview && rs && comp.progress) {
+                    var nVal = parseFloat(val);
+                    var target = comp.progress.targetValue != null
+                        ? parseFloat(comp.progress.targetValue)
+                        : (comp.progress.targetColumn ? parseFloat(this.computeAggFromCol(rs, comp.progress.targetColumn, 'first')) : NaN);
+                    if (!isNaN(nVal) && !isNaN(target) && target !== 0) {
+                        var pct = Math.max(0, Math.min(100, (nVal / target) * 100));
+                        pctText = pct.toFixed(0) + '%';
+                        pctWidth = pct.toFixed(1) + '%';
+                        targetText = this.formatNum(nVal) + ' / ' + this.formatNum(target);
+                    }
+                }
+                return '<div class="bg-white rounded-xl border border-gray-200 shadow-sm p-5 h-full flex flex-col">' +
+                    '<div class="flex items-center justify-between mb-3">' +
+                    '<h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wide">' + this.esc(comp.title || 'KPI') + '</h3>' +
+                    '<div class="w-9 h-9 ' + c.bg + ' rounded-lg flex items-center justify-center">' +
+                    '<i class="' + icon + ' text-white text-sm"></i>' +
+                    '</div></div>' +
+                    '<div class="flex items-baseline justify-between">' +
+                    '<div class="text-3xl font-bold ' + c.text + '">' + pctText + '</div>' +
+                    '<div class="text-xs text-gray-500">' + targetText + '</div>' +
+                    '</div>' +
+                    '<div class="w-full h-1.5 bg-gray-200 rounded-full mt-2 overflow-hidden">' +
+                    '<div class="h-full rounded-full" style="width:' + pctWidth + '; background:' + hex + ';"></div>' +
+                    '</div>' +
+                    (comp.subtitle ? '<div class="text-xs text-gray-400 mt-1">' + this.esc(comp.subtitle) + '</div>' : '') +
+                    '</div>';
+            },
+
+            widgetInnerHtml(comp) {
                 var rs = this.findResultSetForComp(comp);
                 var isPreview = this.mode === 'preview';
+                var html = this.renderEditOverlay(comp);
                 var boundChip = comp.column
                     ? '<div class="bound-chip" title="Bağlı veri kaynağı"><i class="fas fa-link" style="font-size:9px;"></i> ' + this.esc(comp.column) + '</div>'
                     : (isPreview ? '' : '<div class="bound-chip" style="background:var(--canvas); color:var(--ink-4); border-color:var(--line); border-style:dashed;" title="Henüz bağlı değil"><i class="fas fa-link-slash" style="font-size:9px;"></i> bağlanmadı</div>');
 
                 if (comp.type === 'kpi') {
-                    var val = isPreview && rs ? this.computeKpiValue(rs, comp) : '—';
-                    var subtitle = comp.subtitle || (isPreview && rs ? '' : 'veri bekleniyor');
-                    var iconHtml = comp.icon ? '<i class="fas ' + this.esc(comp.icon) + '" style="color:var(--accent); font-size:14px; margin-right:6px;"></i>' : '';
-                    html += '<div class="w-body">' +
-                        '<div class="kpi-label">' + iconHtml + this.esc(comp.title || 'KPI') + '</div>' +
-                        '<div class="kpi-value">' + this.esc(val) + '</div>' +
-                        '<div class="kpi-sub"><span class="kpi-desc">' + this.esc(subtitle) + '</span></div>' +
-                        boundChip +
-                        '</div>';
+                    html += '<div class="w-content">' + this.renderKpiCard(comp, rs, isPreview) + '</div>';
                 } else if (comp.type === 'chart') {
                     if (isPreview && rs && rs.rows && rs.rows.length > 0) {
                         html += '<div class="w-body" style="padding:8px 12px;">' +

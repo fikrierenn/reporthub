@@ -50,6 +50,18 @@ body.builder-v2-page .builder-v2.preview-mode .grid-stack-item .w-actions { disp
 body.builder-v2-page .builder-v2.preview-mode .drawer { opacity: .55; pointer-events: none; }
 body.builder-v2-page .builder-v2.preview-mode .param-bar { background: var(--paper); }
 
+/* F09: Designer ↔ Run görsel parite — edit overlay (type-chip + w-head + w-actions) */
+body.builder-v2-page .builder-v2 .grid-stack-item-content { position: relative; }
+body.builder-v2-page .builder-v2 .w-edit-overlay {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    z-index: 5;
+    pointer-events: none;
+}
+body.builder-v2-page .builder-v2 .w-edit-overlay .w-head { pointer-events: auto; }
+body.builder-v2-page .builder-v2.preview-mode .w-edit-overlay { display: none; }
+body.builder-v2-page .builder-v2 .w-content { height: 100%; }
+
 /* ============ BUILDER SHELL (3-pane, responsive) ============ */
 .builder-v2 {
     flex: 1;
