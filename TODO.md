@@ -71,7 +71,7 @@ Bu liste 5 plan dosyasi (`plans/02-06`) + asagidaki FAZ 1-3 + son 5 journal'in y
 - [x] **Plan 04 arsivle** ✅ `plans/archive/04-m11-v2-builder-ux-redesign.md`
 - [x] **Plan 06.B arsivle** ✅ `plans/archive/06-m11-v2-edit-parity.md`
 - [x] **Plan 03 arsivle** ✅ `plans/archive/03-*.md` (2 dosya: dashboardv2-standalone + design-system-harmonization)
-- [ ] **M-13 sub-nav unchecked'lar isaretle** — commit'leri var (`7bc8cb0` `831319b` `9ba3c61` `fc55063` `4ada9e6` `4d2f5d2` `c8ce59f`), [x] yap (asagidaki Plan 03 cizelgesi satir 279-317)
+- [x] **M-13 sub-nav unchecked'lar isaretle** ✅ — commit'ler `7bc8cb0`..`c8ce59f` mevcut, Plan 03 bölümü ✅ KAPANDI olarak işaretli (satır 333+)
 - [ ] **NotebookLM re-login** — kullanici terminalde: `D:/Dev/reporthub/.venv/notebooklm/Scripts/notebooklm.exe login`
 
 #### Küçük işler (~1h)
