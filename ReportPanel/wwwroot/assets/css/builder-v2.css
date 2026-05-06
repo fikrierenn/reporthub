@@ -47,7 +47,10 @@ body.builder-v2-page .builder-v2.preview-mode .canvas {
     background: var(--canvas);
 }
 body.builder-v2-page .builder-v2.preview-mode .grid-stack-item .w-actions { display: none; }
-body.builder-v2-page .builder-v2.preview-mode .drawer { opacity: .55; pointer-events: none; }
+/* F09 fix: Preview mode'da drawer tamamen gizlenir (Run sayfası paritesi — drawer yok),
+   canvas full-width alır. Düzenle moduna dönünce drawer geri gelir. */
+body.builder-v2-page .builder-v2.preview-mode { grid-template-columns: 1fr; }
+body.builder-v2-page .builder-v2.preview-mode .drawer { display: none; }
 body.builder-v2-page .builder-v2.preview-mode .param-bar { background: var(--paper); }
 
 /* F09: Designer ↔ Run görsel parite — edit overlay (type-chip + w-head + w-actions) */
