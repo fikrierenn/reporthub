@@ -75,6 +75,12 @@
         <span class="txt">JSON</span>
     </button>
 
+    <a :href="reportMeta.editClassicUrl" class="btn"
+       title="Plain table rapor için klasik tek-sayfa form (Title + DataSource + ProcName + ParamSchema)">
+        <i class="fas fa-arrow-up-right-from-square text-[10px]"></i>
+        Klasik Form
+    </a>
+
     <button type="submit" form="@Model" class="btn primary" @@click="$store.builder.dirty = false">
         <i class="fas fa-check text-[10px]"></i>
         Kaydet
