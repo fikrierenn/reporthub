@@ -1,0 +1,76 @@
+@model Mosaik.Models.BrandSettings
+@{
+    ViewData["Title"] = "Marka Ayarları";
+    Layout = "_AppLayout";
+}
+
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Marka Ayarları</h1>
+        <p class="page-subtitle">Site adı, logo ve renk yapılandırması</p>
+    </div>
+</div>
+
+@if (TempData["Message"] != null)
+{
+    <div class="@(TempData["MessageType"]?.ToString() == "success" ? "bg-green-100 border-green-400 text-green-700" : "bg-red-100 border-red-400 text-red-700") px-4 py-3 rounded border mb-4">
+        @TempData["Message"]
+    </div>
+}
+
+@using (Html.BeginForm("BrandSettings", "Admin", FormMethod.Post, new { enctype = "multipart/form-data", @class = "form-card max-w-2xl" }))
+{
+    @Html.AntiForgeryToken()
+
+    <div class="form-group">
+        <label class="form-label">Site Adı <span class="text-red-500">*</span></label>
+        <input type="text" name="SiteTitle" value="@Model.SiteTitle" class="form-input-brand" required maxlength="100" />
+    </div>
+
+    <div class="form-group">
+        <label class="form-label">Slogan</label>
+        <input type="text" name="Slogan" value="@Model.Slogan" class="form-input-brand" maxlength="200" placeholder="Opsiyonel" />
+    </div>
+
+    <div class="form-group">
+        <label class="form-label">Logo</label>
+        @if (!string.IsNullOrEmpty(Model.LogoPath))
+        {
+            <div class="mb-2">
+                <img src="@Model.LogoPath" alt="Mevcut logo" style="max-height:48px;" />
+                <span class="text-xs text-gray-500 ml-2">Mevcut logo</span>
+            </div>
+        }
+        <input type="file" name="logoFile" accept=".png,.jpg,.jpeg,.svg,.webp" class="form-input-brand" />
+        <p class="text-xs text-gray-500 mt-1">PNG, JPG, SVG veya WebP. Yeni dosya yüklenirse mevcut logo değiştirilir.</p>
+    </div>
+
+    <div class="form-group">
+        <label class="form-label">Birincil Renk</label>
+        <div class="flex items-center gap-3">
+            <input type="color" name="PrimaryColor" value="@Model.PrimaryColor" style="width:48px;height:36px;border:none;cursor:pointer;" />
+            <input type="text" id="colorHex" value="@Model.PrimaryColor" maxlength="7"
+                   class="form-input-brand w-32"
+                   oninput="document.querySelector('input[type=color]').value=this.value"
+                   onchange="this.form.querySelector('input[type=color]').value=this.value" />
+        </div>
+        <p class="text-xs text-gray-500 mt-1">Hex renk kodu (#rrggbb). Sidebar ve butonlarda kullanılır.</p>
+    </div>
+
+    <div class="form-actions">
+        <button type="submit" class="btn-brand">
+            <i class="fas fa-save mr-1"></i> Kaydet
+        </button>
+        <a href="/Admin" class="btn-brand-outline ml-2">İptal</a>
+    </div>
+}
+
+@section Scripts {
+    <script>
+    (() => {
+        const colorInput = document.querySelector('input[type=color]');
+        const hexInput = document.getElementById('colorHex');
+        colorInput?.addEventListener('input', () => { hexInput.value = colorInput.value; });
+    })();
+    </script>
+}

@@ -21,6 +21,8 @@ namespace Mosaik.Models
         public DbSet<ReportAllowedRole> ReportAllowedRoles { get; set; }
         public DbSet<UserDataFilter> UserDataFilters { get; set; }
         public DbSet<FilterDefinition> FilterDefinitions { get; set; }
+        public DbSet<BrandSettings> BrandSettings { get; set; }
+        public DbSet<AppModule> AppModules { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -229,6 +231,26 @@ namespace Mosaik.Models
                     .WithMany()
                     .HasForeignKey(e => e.DataSourceKey)
                     .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            // BrandSettings — tek satır (Id=1), singleton config
+            modelBuilder.Entity<BrandSettings>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.SiteTitle).HasMaxLength(100).IsRequired();
+                entity.Property(e => e.Slogan).HasMaxLength(200);
+                entity.Property(e => e.LogoPath).HasMaxLength(500);
+                entity.Property(e => e.PrimaryColor).HasMaxLength(7).IsRequired();
+                entity.Property(e => e.UpdatedAt).HasDefaultValueSql("GETUTCDATE()");
+            });
+
+            // AppModules — sidebar modül listesi, IsEnabled toggle
+            modelBuilder.Entity<AppModule>(entity =>
+            {
+                entity.HasKey(e => e.ModuleId);
+                entity.Property(e => e.ModuleKey).HasMaxLength(50).IsRequired();
+                entity.Property(e => e.DisplayName).HasMaxLength(100).IsRequired();
+                entity.HasIndex(e => e.ModuleKey).IsUnique();
             });
 
             base.OnModelCreating(modelBuilder);

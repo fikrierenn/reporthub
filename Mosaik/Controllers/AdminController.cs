@@ -37,6 +37,8 @@ namespace Mosaik.Controllers
         private readonly SpExplorerService _spExplorer;
         private readonly FilterOptionsService _filterOptions;
         private readonly FilterDefinitionService _filterDefService;
+        private readonly IBrandService _brandService;
+        private readonly IModuleService _moduleService;
 
         public AdminController(
             MosaikContext context,
@@ -50,7 +52,9 @@ namespace Mosaik.Controllers
             UserManagementService userService,
             SpExplorerService spExplorer,
             FilterOptionsService filterOptions,
-            FilterDefinitionService filterDefService)
+            FilterDefinitionService filterDefService,
+            IBrandService brandService,
+            IModuleService moduleService)
         {
             _context = context;
             _auditLog = auditLog;
@@ -64,6 +68,8 @@ namespace Mosaik.Controllers
             _spExplorer = spExplorer;
             _filterDefService = filterDefService;
             _filterOptions = filterOptions;
+            _brandService = brandService;
+            _moduleService = moduleService;
         }
 
         [HttpGet]

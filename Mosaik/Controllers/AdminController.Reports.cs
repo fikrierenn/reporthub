@@ -171,10 +171,10 @@ namespace Mosaik.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Route("Admin/EditReport/{id}")]
-        public async Task<IActionResult> EditReport(ReportCatalog report)
+        public async Task<IActionResult> EditReport(int id, ReportCatalog report)
         {
             var input = BuildReportFormInput();
-            var result = await _reportService.UpdateAsync(report.ReportId, input);
+            var result = await _reportService.UpdateAsync(id, input);
             if (result.Success)
             {
                 TempData["Message"] = result.Message;
@@ -182,6 +182,7 @@ namespace Mosaik.Controllers
                 return RedirectToAction("Index", new { tab = "reports" });
             }
 
+            report.ReportId = id;
             return View(await BuildReportFormViewModel(report, input, result.Message));
         }
 

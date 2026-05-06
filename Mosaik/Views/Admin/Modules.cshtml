@@ -1,0 +1,51 @@
+@model List<Mosaik.Models.AppModule>
+@{
+    ViewData["Title"] = "Modüller";
+    Layout = "_AppLayout";
+}
+
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Modüller</h1>
+        <p class="page-subtitle">Hangi modüllerin sidebar'da görüneceğini yönetin</p>
+    </div>
+</div>
+
+@if (TempData["Message"] != null)
+{
+    <div class="@(TempData["MessageType"]?.ToString() == "success" ? "bg-green-100 border-green-400 text-green-700" : "bg-red-100 border-red-400 text-red-700") px-4 py-3 rounded border mb-4">
+        @TempData["Message"]
+    </div>
+}
+
+@using (Html.BeginForm("Modules", "Admin", FormMethod.Post, new { @class = "form-card max-w-xl" }))
+{
+    @Html.AntiForgeryToken()
+
+    <div class="space-y-3 mb-6">
+        @foreach (var module in Model)
+        {
+            <label class="flex items-center gap-3 p-3 rounded-lg border border-gray-200 cursor-pointer hover:bg-gray-50">
+                <input type="checkbox" name="enabledIds" value="@module.ModuleId"
+                       @(module.IsEnabled ? "checked" : "")
+                       class="w-4 h-4 accent-[#6366f1]" />
+                <div>
+                    <div class="font-medium text-sm">@module.DisplayName</div>
+                    <div class="text-xs text-gray-500">@module.ModuleKey</div>
+                </div>
+            </label>
+        }
+    </div>
+
+    @if (!Model.Any())
+    {
+        <p class="text-gray-500 text-sm mb-4">Henüz modül tanımlanmamış. Migration 29 çalıştırıldı mı?</p>
+    }
+
+    <div class="form-actions">
+        <button type="submit" class="btn-brand">
+            <i class="fas fa-save mr-1"></i> Kaydet
+        </button>
+        <a href="/Admin" class="btn-brand-outline ml-2">İptal</a>
+    </div>
+}

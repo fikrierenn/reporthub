@@ -26,6 +26,8 @@ builder.Services.AddScoped<Mosaik.Services.FilterDefinitionService>();
 builder.Services.AddScoped<Mosaik.Services.ExcelExportService>();
 builder.Services.AddScoped<Mosaik.Services.UserDataFilterInjector>();
 builder.Services.AddScoped<Mosaik.Services.StoredProcedureExecutor>();
+builder.Services.AddSingleton<Mosaik.Services.IBrandService, Mosaik.Services.BrandSettingsService>();
+builder.Services.AddSingleton<Mosaik.Services.IModuleService, Mosaik.Services.ModuleService>();
 
 // Add Entity Framework
 builder.Services.AddDbContext<MosaikContext>(options =>

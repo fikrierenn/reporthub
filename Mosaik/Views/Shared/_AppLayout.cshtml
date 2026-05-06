@@ -1,5 +1,9 @@
 @using System.Security.Claims
+@inject Mosaik.Services.IBrandService BrandService
+@inject Mosaik.Services.IModuleService ModuleService
 @{
+    var brand = await BrandService.GetAsync();
+    var enabledModules = await ModuleService.GetEnabledAsync();
     var isAuthenticated = User?.Identity?.IsAuthenticated ?? false;
     var userName = isAuthenticated ? User?.Identity?.Name ?? "" : "";
     var fullName = isAuthenticated
@@ -31,7 +35,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="color-scheme" content="light">
-    <title>@ViewData["Title"]</title>
+    <title>@ViewData["Title"] — @brand.SiteTitle</title>
 
     @* M-13 Plan 03 Faz A: Inter+JetBrains Mono proje-wide font + Tailwind CDN + Font Awesome + style.css + app-shell.css *@
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -67,8 +71,15 @@
         <div class="side-head">
             @* M-13 UI fix (28 Nisan 2026): Sidebar logo PNG. Expanded'de tam logo,
                collapsed'de küçük kitap SVG (60px wide içinde tam logo sığmaz). *@
-            <a href="/Dashboard" class="brand-link" title="BKM Kitap Rapor Paneli">
-                <img src="~/assets/img/logo.png" alt="BKM Kitap" class="brand-logo-full" />
+            <a href="/Dashboard" class="brand-link" title="@brand.SiteTitle">
+                @if (!string.IsNullOrEmpty(brand.LogoPath))
+                {
+                    <img src="@brand.LogoPath" alt="@brand.SiteTitle" class="brand-logo-full" />
+                }
+                else
+                {
+                    <span class="brand-logo-full" style="font-weight:700;font-size:1.1rem;letter-spacing:-.02em;color:var(--accent);">@brand.SiteTitle</span>
+                }
                 <svg class="brand-logo-mini" width="22" height="20" viewBox="0 0 32 22" fill="none">
                     <rect x="0" y="0" width="14" height="20" fill="#dc2626" rx="1"/>
                     <rect x="2" y="2" width="10" height="16" fill="#fff" rx="0.5"/>
@@ -98,12 +109,27 @@
                             <span class="label">Genel Bakış</span>
                         </a>
                     </li>
-                    <li>
-                        <a href="/Reports" class="@(IsActive("Reports") ? "active" : "")">
-                            <span class="icon"><i class="fas fa-chart-column"></i></span>
-                            <span class="label">Raporlar</span>
-                        </a>
-                    </li>
+                    @foreach (var module in enabledModules)
+                    {
+                        @if (module.ModuleKey == "reports")
+                        {
+                            <li>
+                                <a href="/Reports" class="@(IsActive("Reports") ? "active" : "")">
+                                    <span class="icon"><i class="fas fa-chart-column"></i></span>
+                                    <span class="label">@module.DisplayName</span>
+                                </a>
+                            </li>
+                        }
+                        else if (module.ModuleKey == "dashboards")
+                        {
+                            <li>
+                                <a href="/Dashboard" class="@(IsActive("Dashboard") ? "active" : "")">
+                                    <span class="icon"><i class="fas fa-gauge"></i></span>
+                                    <span class="label">@module.DisplayName</span>
+                                </a>
+                            </li>
+                        }
+                    }
                 </ul>
 
                 @if (isAdminUser)
