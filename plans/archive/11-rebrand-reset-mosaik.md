@@ -2,7 +2,17 @@
 
 **Tarih:** 2026-05-07
 **Yazan:** Fikri / Claude
-**Durum:** `Uygulamada`
+**Durum:** `Tamamlandı (kısmi)` — Faz 1+2+5+6+7+8 ✅ / Faz 3+4 (Brand+Module parametric) Plan 12'ye ertelendi
+
+**Closure notu (7 May 2026):** Mosaik kod kimliği canonical (`Mosaik.*` namespace + csproj + sln + iç klasör) tamam. PortalHUB → Mosaik DB reset + 26 migration replay + UTC seed. Connection string `appsettings.Development.json` Mosaik. Browser smoke: login admin/123456 ✅, Reports listesi ✅, Run sayfası ✅ (junction sync sonrası ReportAllowedRoles eklendi). Eski PortalHUB içeriği klasördeki `.mdf` dosyasından kısmi kurtarıldı (DataSources + 2 rapor). Manuel eklenmiş gerçek IK raporları kayıp (admin GUI'de yazıldığı için git'e yansımamış). Plan 12'ye 5 ek madde: Brand+Module parametric infrastructure + V2 builder save bug + plain table form fallback + Reports/Run route fix + admin GUI sayfaları.
+
+**Commit zinciri:**
+- `7588fe4` Plan 10/11 taslak
+- `72002ae` Canonical rebrand csproj/sln/namespace
+- `5fbc2c5` İç klasör + doc path
+- `70c8429` Migration scripts Mosaik + seed UTC
+- `e54559b` 00_DevReset master script
+- `418b268` Reset düzeltmeler (default path + master cleanup + SP skip)
 
 ---
 

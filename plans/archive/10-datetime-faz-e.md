@@ -2,7 +2,9 @@
 
 **Tarih:** 2026-05-07
 **Yazan:** Fikri / Claude
-**Durum:** `Taslak`
+**Durum:** `İptal — superseded by Plan 11`
+
+**Not (7 May 2026):** Plan 10 onay almadı. Dev ortamı + sıfırlanabilir data → karmaşık veri shift gereksiz, reset baseline çözer. Plan 11 (Mosaik Foundation + DB reset + UTC seed) bu plan'ın hedefini ek brand/module foundation ile birlikte kapsadı. Plan 10 referans olarak archive.
 
 ---
 
