@@ -129,6 +129,7 @@ Bu liste 5 plan dosyasi (`plans/02-06`) + asagidaki FAZ 1-3 + son 5 journal'in y
     - **Reports/Run route fix** — `/Reports/Run/{id}` route attribute eksik (mevcut sadece `?reportId=` query string)
 - [ ] **Plan 13+ · vNext modüller** (Documents, Announcements, Calendar, Forms, Messages, Approvals — modül-modül ekleme, Plan 12 module infrastructure üzerine)
 - [ ] **Plan 14 · Install/Deploy script** — master kurulum (DB CREATE + migration + seed + brand + admin user prompt). Plan 11 öğretisi: rapor metadata dump (ReportCatalog SQL backup) install kapsamına dahil olmalı (manuel admin GUI'den eklenenler kayıp gitmesin)
+- [ ] **context-mode esinlenmesi · 2 hook** — (1) `PreCompact` hook: `/compact` öncesi aktif TODO + son commitler otomatik journal'a append. (2) `PostToolUse` output-size uyarısı: MCP tool çıktısı >50 satırı geçince `⚠️ Büyük çıktı` logla. Bağımlılık sıfır, sadece shell script. Kaynak: https://github.com/mksglu/context-mode
 - [ ] **User P1 · Phone/Dept/Position alanlari** (FAZ 2 madde 24)
 - [ ] **User P1 · Admin liste arama+filtre+son giris** (FAZ 2 madde 23)
 - [ ] **ReportCatalog.AllowedRoles CSV deprecate** (FAZ 2 madde 26)

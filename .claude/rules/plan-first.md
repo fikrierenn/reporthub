@@ -45,6 +45,15 @@ cp plans/feature-template.md plans/NN-<slug>.md
 
 Doldur: Problem, Scope, Alternatifler (en az 2 reddedilen), Riskler, Done criteria, Rollback, Adımlar.
 
+**Alternatif değerlendirirken 5 lens (her biri için 1 cümle yeterli):**
+- 🔴 **Contrarian:** Bu planın fatal flaw'u ne? Nerede yanılıyoruz?
+- 🔵 **First Principles:** Yanlış soruyu mu soruyoruz? Gerçek problem ne?
+- 🟢 **Expansionist:** Daha büyük fırsat kaçırılıyor mu? Scope çok dar mı?
+- ⚪ **Outsider:** Koda yabancı biri baksaydı ne garip bulurdu?
+- 🟡 **Executor:** İlk somut adım ne? Pazartesi sabahı ne yapılır?
+
+Tüm beşi tek cümleyle plan "Alternatifler" bölümüne girer. Council detayı istiyorsan: `/council-this`.
+
 ### 3. Onay
 Kullanıcıya göster, geri bildirim al, düzeltme yap. **Onay olmadan implement etme.**
 
