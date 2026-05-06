@@ -134,16 +134,58 @@ Kurallar:
 - feedback/project icin **Why:** ve **How to apply:** satirlari ekle
 - Kaydedecek anlamli sey yoksa bu adimi atla
 
-### Adim 7 — NotebookLM Brain'e Push (opsiyonel)
+### Adim 7 — Obsidian Brain Vault'a Push (ZORUNLU)
+
+Brain vault `D:/Dev/brain` — cross-project Karpathy LLM Wiki. ReportHub journal'i + onemli kararlari brain'e de yansit. Memory referansi: `reference_brain_obsidian.md`.
+
+**A) `log.md`'ye one-liner append (her oturumda zorunlu):**
+
+```bash
+BRAIN="D:/Dev/brain"
+DATE=$(date +%Y-%m-%d)
+# Ornek: "- 2026-05-06 [reporthub] Plan 12 commit-split: Brand+Modules sistemi 2 commit'te kapandi (f4f8748, 15a3164)."
+echo "- $DATE [reporthub] <bir cumle ozet>" >> "$BRAIN/log.md"
+```
+
+**B) Synthesis dosyasi (sadece onemli oturumlarda — Tier 3 kapanis, mimari karar, pattern, lesson):**
+
+`D:/Dev/brain/synthesis/YYYY-MM-DD-reporthub-<slug>.md` olustur. Sablon:
+
+```markdown
+---
+date: YYYY-MM-DD
+project: reporthub
+tags: [<plan-NN>, <konu>]
+---
+
+# <Baslik>
+
+## Ne yapildi (1-2 cumle)
+
+## Neden (karar gerekcesi)
+
+## Cross-link
+- Plan: `D:/Dev/reporthub/plans/NN-*.md`
+- Journal: `D:/Dev/reporthub/docs/journal/YYYY-MM-DD.md`
+- Entity/concept: `[[entities/projects/reporthub]]`
+
+## Lesson (varsa pattern/anti-pattern)
+```
+
+**C) Brain'i COMMIT ETME** — `D:/Dev/brain/.git/` ayri repo, kullanici review eder. Yazilan `log.md` + varsa `synthesis/*.md` staged birak. `git add` / `git commit` brain icinde calistirma.
+
+**Atlanma kosulu:** Vault yoksa (`D:/Dev/brain/CLAUDE.md` mevcut degil) sessizce atla — kullaniciya bildir.
+
+### Adim 7.5 — NotebookLM Brain'e Push (opsiyonel)
 
 NotebookLM CLI kuruluysa oturum ozetini AI Brain notebook'una ekle:
 
-1. Memory'de `reference_brain_notebook.md` var mi kontrol et (notebook ID)
+1. Memory'de `reference_brain_notebook.md` var mi kontrol et (notebook ID: `f2407372`)
 2. ID yoksa: `notebooklm list --json` ile "AI Brain" notebook ara; bulunamazsa kullaniciya sor
 3. Ozet dosyasini olustur: `$TEMP/session-summary-YYYY-MM-DD.md` (journal iceriginin kisa versiyonu)
 4. Push et: `notebooklm source add "$TEMP/session-summary-YYYY-MM-DD.md" --notebook <ID>`
 
-**Auth basarisizsa veya CLI kurulu degilse:** Bu adimi sessizce atla, kullaniciya bilgi ver. Memory'ler ve journal zaten kaydedildi.
+**Auth basarisizsa veya CLI kurulu degilse:** Bu adimi sessizce atla, kullaniciya bilgi ver. Memory'ler, journal ve Obsidian Brain zaten kaydedildi.
 
 ### Adim 8 — Ozet Goster
 Kullaniciya 5-10 satirlik kisa ozet:
@@ -154,7 +196,8 @@ Oturum kaydedildi: docs/journal/2026-04-22.md
 - Commit: abc1234 docs(journal): 2026-04-22 handoff
 - Uncommitted: N dosya (15 esigin altinda, iyi)
 - Memory: 2 kaydedildi, 1 guncellendi
-- Brain: push edildi / atlanildi (CLI yok)
+- Obsidian Brain: log.md'ye satir eklendi (+ synthesis varsa)
+- NotebookLM: push edildi / atlanildi (CLI yok / auth expired)
 - Yarina baslangic: <ilk adim>
 ```
 
