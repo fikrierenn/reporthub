@@ -75,10 +75,12 @@ body.builder-v2-page .builder-v2 .w-content {
     width: 100%;
     overflow: hidden;
     display: flex;
+    min-width: 0;  /* flex item taşmasın — scrollbar parent'a sığsın */
 }
 body.builder-v2-page .builder-v2 .w-content > div {
     flex: 1;
     min-height: 0;
+    min-width: 0;  /* flex default min-width:auto, table genişliği taşıyor */
     width: 100%;
 }
 body.builder-v2-page .builder-v2 .w-content h3 {
