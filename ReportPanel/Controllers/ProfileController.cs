@@ -115,7 +115,7 @@ namespace ReportPanel.Controllers
 
             user.FullName = model.FullName.Trim();
             user.Email = string.IsNullOrWhiteSpace(model.Email) ? null : model.Email.Trim();
-            user.UpdatedAt = DateTime.Now;
+            user.UpdatedAt = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
 

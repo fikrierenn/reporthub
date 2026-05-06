@@ -32,7 +32,7 @@ namespace ReportPanel.Controllers
                 model.ReportCount = await _context.ReportCatalog.CountAsync();
                 model.LogCount = await _context.AuditLogs.CountAsync();
 
-                model.DataSources = await _context.DataSources.ToListAsync();
+                model.DataSources = await _context.DataSources.AsNoTracking().ToListAsync();
 
                 return View(model);
             }

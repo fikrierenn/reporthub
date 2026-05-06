@@ -51,7 +51,6 @@ namespace ReportPanel.Services
                 return AdminOperationResult.Fail("Bu kullanici adi zaten mevcut.");
 
             var now = DateTime.UtcNow;
-#pragma warning disable CS0618 // User.Roles [Obsolete], nullable default
             var entity = new User
             {
                 Username = username,
@@ -65,7 +64,6 @@ namespace ReportPanel.Services
                 CreatedAt = now,
                 UpdatedAt = now
             };
-#pragma warning restore CS0618
 
             _context.Users.Add(entity);
             await _context.SaveChangesAsync();

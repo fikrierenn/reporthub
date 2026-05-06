@@ -37,7 +37,7 @@ public class DashboardRendererTests
     [Fact]
     public void Render_component_title_is_html_encoded()
     {
-        var comp = new DashboardComponent { Type = "kpi", Title = "<img src=x onerror=alert(1)>" };
+        var comp = new DashboardComponent { Type = "kpi", Title = "<img src=x onerror=alert(1)>", Result = "rs0" };
         var cfg = ConfigWithTab("Genel", comp);
         var html = DashboardRenderer.Render(cfg, EmptyRs());
 
@@ -50,7 +50,7 @@ public class DashboardRendererTests
     [Fact]
     public void Render_component_subtitle_is_html_encoded()
     {
-        var comp = new DashboardComponent { Type = "kpi", Title = "t", Subtitle = "<script>x</script>" };
+        var comp = new DashboardComponent { Type = "kpi", Title = "t", Subtitle = "<script>x</script>", Result = "rs0" };
         var cfg = ConfigWithTab("Genel", comp);
         var html = DashboardRenderer.Render(cfg, EmptyRs());
 
@@ -62,7 +62,7 @@ public class DashboardRendererTests
     public void Render_component_icon_is_html_encoded()
     {
         // Icon is used inside a class attribute — breaking out via `'` must not succeed.
-        var comp = new DashboardComponent { Type = "kpi", Title = "t", Icon = "' onclick='alert(1)" };
+        var comp = new DashboardComponent { Type = "kpi", Title = "t", Icon = "' onclick='alert(1)", Result = "rs0" };
         var cfg = ConfigWithTab("Genel", comp);
         var html = DashboardRenderer.Render(cfg, EmptyRs());
 
@@ -138,5 +138,213 @@ public class DashboardRendererTests
     {
         var html = DashboardRenderer.Render(ConfigWithTab("x"), EmptyRs());
         Assert.Contains("window.__RS = [", html);
+    }
+
+    // ---- ADR-007 resolver ----
+
+    [Fact]
+    public void ResolveResultSet_resolves_name_to_contract_entry()
+    {
+        var cfg = new DashboardConfig
+        {
+            ResultContract = new()
+            {
+                ["chart"] = new() { ResultSet = 2 }
+            }
+        };
+        var comp = new DashboardComponent { Result = "chart" };
+        Assert.Equal(2, cfg.ResolveResultSet(comp, resultSetCount: 3));
+    }
+
+    [Fact]
+    public void ResolveResultSet_returns_null_for_unknown_name()
+    {
+        var cfg = new DashboardConfig { ResultContract = new() };
+        var comp = new DashboardComponent { Result = "ghost" };
+        Assert.Null(cfg.ResolveResultSet(comp, resultSetCount: 3));
+    }
+
+    [Fact]
+    public void ResolveResultSet_returns_null_for_out_of_bounds_contract_index()
+    {
+        var cfg = new DashboardConfig
+        {
+            ResultContract = new()
+            {
+                ["chart"] = new() { ResultSet = 5 }
+            }
+        };
+        var comp = new DashboardComponent { Result = "chart" };
+        Assert.Null(cfg.ResolveResultSet(comp, resultSetCount: 3));
+    }
+
+    // V2 builder default: yeni widget'lar `result: "rs0"` ile gelir, contract entry yokken regex fallback ile resolve eder.
+    [Fact]
+    public void ResolveResultSet_rsN_pattern_resolves_to_int_index()
+    {
+        var cfg = new DashboardConfig();
+        var comp = new DashboardComponent { Result = "rs1" };
+        Assert.Equal(1, cfg.ResolveResultSet(comp, resultSetCount: 3));
+    }
+
+    [Fact]
+    public void ResolveResultSet_returns_null_for_out_of_bounds_rsN_pattern()
+    {
+        var cfg = new DashboardConfig();
+        var comp = new DashboardComponent { Result = "rs10" };
+        Assert.Null(cfg.ResolveResultSet(comp, resultSetCount: 3));
+    }
+
+    [Fact]
+    public void ResolveResultSet_returns_null_when_no_binding_at_all()
+    {
+        var cfg = new DashboardConfig();
+        var comp = new DashboardComponent { Type = "kpi" };
+        Assert.Null(cfg.ResolveResultSet(comp, resultSetCount: 3));
+    }
+
+    [Fact]
+    public void Render_unknown_binding_emits_missing_placeholder_not_widget()
+    {
+        var comp = new DashboardComponent { Type = "kpi", Title = "Toplam", Result = "nonexistent" };
+        var cfg = new DashboardConfig
+        {
+            ResultContract = new(),
+            Tabs = new() { new DashboardTab { Title = "T", Components = { comp } } }
+        };
+        var html = DashboardRenderer.Render(cfg, EmptyRs());
+
+        Assert.Contains("Veri bağlantısı çözümlenemedi", html);
+        Assert.Contains("nonexistent", html); // debug: binding info visible
+    }
+
+    [Fact]
+    public void Render_unknown_widget_type_emits_removed_placeholder()
+    {
+        var comp = new DashboardComponent { Type = "futureWidget", Id = "w_future_abc123", Result = "rs0" };
+        var cfg = new DashboardConfig
+        {
+            Tabs = new() { new DashboardTab { Title = "T", Components = { comp } } }
+        };
+        var html = DashboardRenderer.Render(cfg, EmptyRs());
+
+        Assert.Contains("Bilinmeyen bileşen tipi", html);
+        Assert.Contains("futureWidget", html);
+        Assert.Contains("w_future_abc123", html);
+    }
+
+    [Fact]
+    public void Render_emits_required_missing_banner_when_required_result_empty()
+    {
+        var cfg = new DashboardConfig
+        {
+            ResultContract = new()
+            {
+                ["summary"] = new() { ResultSet = 0, Required = true }
+            },
+            Tabs = new() { new DashboardTab { Title = "T" } }
+        };
+        var html = DashboardRenderer.Render(cfg, EmptyRs()); // EmptyRs: rs[0] = 0 rows
+
+        Assert.Contains("Eksik zorunlu veri", html);
+        Assert.Contains("summary", html);
+    }
+
+    // ============================================================
+    // Plan 05.B — Tablo widget kolon-bazlı formula enrichment
+    // ============================================================
+
+    private static DashboardComponent TableComp(int rs, List<TableColumnDef> cols)
+        => new() { Type = "table", Title = "T", Result = $"rs{rs}", Columns = cols };
+
+    [Fact]
+    public void TableFormula_enriches_rows_with_arithmetic_result()
+    {
+        var comp = TableComp(0, new()
+        {
+            new TableColumnDef { Key = "satis", Label = "Satış" },
+            new TableColumnDef { Key = "maliyet", Label = "Maliyet" },
+            new TableColumnDef { Key = "kar", Label = "Kar", Formula = "satis - maliyet" }
+        });
+        var cfg = ConfigWithTab("T", comp);
+        var rs = new List<List<Dictionary<string, object>>>
+        {
+            new()
+            {
+                new Dictionary<string, object> { ["satis"] = 150m, ["maliyet"] = 100m },
+                new Dictionary<string, object> { ["satis"] = 80m,  ["maliyet"] = 30m }
+            }
+        };
+
+        DashboardRenderer.Render(cfg, rs);
+
+        Assert.Equal(50m, rs[0][0]["kar"]);
+        Assert.Equal(50m, rs[0][1]["kar"]);
+    }
+
+    [Fact]
+    public void TableFormula_iif_label_added_to_each_row()
+    {
+        var comp = TableComp(0, new()
+        {
+            new TableColumnDef { Key = "adet", Label = "Adet" },
+            new TableColumnDef { Key = "kategori", Label = "Kategori",
+                                 Formula = "IIF(adet > 100, 'Buyuk', 'Kucuk')" }
+        });
+        var cfg = ConfigWithTab("T", comp);
+        var rs = new List<List<Dictionary<string, object>>>
+        {
+            new()
+            {
+                new Dictionary<string, object> { ["adet"] = 250m },
+                new Dictionary<string, object> { ["adet"] = 50m }
+            }
+        };
+
+        DashboardRenderer.Render(cfg, rs);
+
+        Assert.Equal("Buyuk", rs[0][0]["kategori"]);
+        Assert.Equal("Kucuk", rs[0][1]["kategori"]);
+    }
+
+    [Fact]
+    public void TableFormula_unknown_column_yields_dbnull_not_throw()
+    {
+        // Plan 05: satır-bazlı eval hatası dashboard'u çöktürmez, cell DBNull.
+        var comp = TableComp(0, new()
+        {
+            new TableColumnDef { Key = "x", Formula = "yokKolon * 2" }
+        });
+        var cfg = ConfigWithTab("T", comp);
+        var rs = new List<List<Dictionary<string, object>>>
+        {
+            new() { new Dictionary<string, object> { ["adet"] = 5m } }
+        };
+
+        var ex = Record.Exception(() => DashboardRenderer.Render(cfg, rs));
+
+        Assert.Null(ex);
+        Assert.Equal(System.DBNull.Value, rs[0][0]["x"]);
+    }
+
+    [Fact]
+    public void TableFormula_only_target_widget_resultset_is_enriched()
+    {
+        // Tablo widget RS=0'a bağlı; RS=1 dokunmaz.
+        var comp = TableComp(0, new()
+        {
+            new TableColumnDef { Key = "etiket", Formula = "'X'" }
+        });
+        var cfg = ConfigWithTab("T", comp);
+        var rs = new List<List<Dictionary<string, object>>>
+        {
+            new() { new Dictionary<string, object> { ["a"] = 1m } },
+            new() { new Dictionary<string, object> { ["a"] = 2m } }
+        };
+
+        DashboardRenderer.Render(cfg, rs);
+
+        Assert.Equal("X", rs[0][0]["etiket"]);
+        Assert.False(rs[1][0].ContainsKey("etiket"));
     }
 }

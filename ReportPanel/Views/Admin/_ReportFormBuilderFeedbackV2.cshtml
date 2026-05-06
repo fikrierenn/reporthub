@@ -1,0 +1,71 @@
+@*
+    V2 builder F-9 feedback layer:
+      - Validation banner (drawer üstünde sabit)
+      - Toast container (sağ alt köşe, fixed)
+
+    Builder root x-data="builderV2" component'i içinde render edilir; banner/toast state
+    feedbackMixin'den (builder-feedback.js) gelir. Topbar butonları custom event
+    ('builder-validate', 'builder-undo') dispatch eder, burada listener var.
+*@
+
+@* Custom event köprüleri — topbar partial'daki butonlar dispatch ediyor, parent (builderV2) scope'unda yakalıyor.
+   Bu wrapper bir x-data oluşturmaz; parent component'in scope'unda yaşar, runValidation/restoreSnapshot oradan gelir. *@
+<div @@builder-validate.window="runValidation()"
+     @@builder-undo.window="restoreSnapshot()"
+     style="display:none;"></div>
+
+@* Validation banner — errors (kırmızı) + warnings (sarı) *@
+<div x-show="validationBanner.visible" x-cloak
+     class="mt-2 mb-2 rounded-lg border px-4 py-3"
+     :class="validationBanner.errors && validationBanner.errors.length > 0
+              ? 'bg-red-50 border-red-300 text-red-800'
+              : 'bg-amber-50 border-amber-300 text-amber-800'">
+    <div class="flex items-start justify-between gap-3">
+        <div class="flex-1">
+            <div class="flex items-center gap-2 font-semibold text-sm">
+                <i class="fas fa-circle-exclamation"></i>
+                <span x-text="(validationBanner.errors && validationBanner.errors.length > 0)
+                              ? (validationBanner.errors.length + ' hata')
+                              : (validationBanner.warnings.length + ' uyarı')"></span>
+            </div>
+            <ul class="mt-2 ml-6 list-disc text-xs space-y-1">
+                <template x-for="e in validationBanner.errors" :key="e">
+                    <li x-text="e" class="text-red-700"></li>
+                </template>
+                <template x-for="w in validationBanner.warnings" :key="w">
+                    <li x-text="w" class="text-amber-700"></li>
+                </template>
+            </ul>
+        </div>
+        <button type="button" @@click="dismissValidationBanner()"
+                class="text-xs hover:underline shrink-0" title="Banner'ı kapat">
+            <i class="fas fa-xmark"></i>
+        </button>
+    </div>
+</div>
+
+@* Toast container — sağ alt, fixed, 3sn auto-dismiss *@
+<div class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 pointer-events-none" style="max-width: 360px;">
+    <template x-for="t in toasts" :key="t.id">
+        <div class="pointer-events-auto rounded-lg shadow-lg px-4 py-3 text-sm border flex items-start gap-3 animate-fade-in"
+             :class="{
+                 'bg-green-50 border-green-300 text-green-800': t.type === 'success',
+                 'bg-red-50 border-red-300 text-red-800': t.type === 'error',
+                 'bg-amber-50 border-amber-300 text-amber-800': t.type === 'warn',
+                 'bg-slate-50 border-slate-300 text-slate-800': t.type === 'info'
+             }">
+            <i class="mt-0.5 text-base"
+               :class="{
+                   'fas fa-circle-check': t.type === 'success',
+                   'fas fa-circle-xmark': t.type === 'error',
+                   'fas fa-circle-exclamation': t.type === 'warn',
+                   'fas fa-circle-info': t.type === 'info'
+               }"></i>
+            <span x-text="t.msg" class="flex-1"></span>
+            <button type="button" @@click="dismissToast(t.id)"
+                    class="text-xs opacity-60 hover:opacity-100" title="Kapat">
+                <i class="fas fa-xmark"></i>
+            </button>
+        </div>
+    </template>
+</div>

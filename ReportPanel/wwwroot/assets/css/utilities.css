@@ -1,0 +1,44 @@
+/**
+ * Utilities — accessibility + responsive media query'ler.
+ * ui-ux-pro-max audit (M-13 Plan 03 Faz F) önerilerinden eklendi.
+ */
+
+/* Touch target — mobile 44x44 minimum (Apple HIG / Material 48dp).
+   Desktop'ta 34px mouse precision için kabul. */
+@media (max-width: 768px) {
+    .btn,
+    .inp,
+    .opt-card {
+        min-height: 44px;
+    }
+    .btn { padding: 0 14px; }
+}
+
+/* Alpine.js x-cloak — directive'ler bind olmadan önce flicker önler.
+   x-cloak attribute'lu element'ler Alpine init tamamlanana kadar gizli kalır. */
+[x-cloak] { display: none !important; }
+
+/* Chrome/Edge autofill sarı arka plan override — brand'a uyumsuz görünüyordu.
+   Box-shadow trick: autofill style yerine paper bg + ink-1 text color. */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 1000px var(--paper) inset !important;
+    -webkit-text-fill-color: var(--ink-1) !important;
+    transition: background-color 5000s ease-in-out 0s;
+    caret-color: var(--ink-1);
+}
+
+/* Reduced motion — kullanıcı OS-level "azalt animasyon" tercih ettiyse
+   tüm transition + animation'ları sıfırla. */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}

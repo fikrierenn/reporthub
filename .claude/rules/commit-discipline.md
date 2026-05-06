@@ -109,3 +109,21 @@ Bu komutlar gerekirse **açık onay** al: "Bu komutu çalıştırmam emin misin?
 - **post-commit (journal güncelleme):** `docs/journal/YYYY-MM-DD.md`'ye commit özeti.
 
 Bunlar `.claude/hooks/` altında, `.claude/settings.json`'da kayıtlı.
+
+## Plan-First Referansı (ADR-010)
+
+**Tier 3 commit'lerde plan referansı zorunlu:**
+
+```
+feat(m-11): F-7 dashboard builder split-pane Razor (plan: 02)
+```
+
+Tier 1 ve Tier 2 commit'lerde plan referansı gereksiz.
+
+Tier tespiti için: `.claude/rules/plan-first.md` Tier sinyalleri (3+ klasör, schema/security/UX, harici dep, kullanıcı-görünür).
+
+Plan yoksa ama Tier 3 sinyali varsa:
+- Kullanıcıya sor (mini-plan veya bypass)
+- BYPASS: commit message'a `(plan: BYPASS-<tarih>)` + retro plan `plans/archive/`'a
+
+Detay: `.claude/rules/plan-first.md`, `plans/README.md`, `docs/ADR/010-plan-first-tier-system.md`.

@@ -1,0 +1,105 @@
+@model ReportPanel.ViewModels.DashboardViewModel
+@{
+    int maxRun = Model.TopRunReports.Count > 0 ? Model.TopRunReports.Max(t => t.Count) : 1;
+
+    string BuildHourlyPath(List<ReportPanel.ViewModels.HourlyTrendItem> trend, bool closeArea)
+    {
+        if (trend == null || trend.Count == 0) return "";
+        var max = Math.Max(1, trend.Max(t => t.Count));
+        var n = trend.Count;
+        var sb = new System.Text.StringBuilder();
+        for (int i = 0; i < n; i++)
+        {
+            var x = (n == 1) ? 240 : (int)Math.Round(i * (480.0 / (n - 1)));
+            var y = 110 - (int)Math.Round((trend[i].Count / (double)max) * 92.0);
+            if (i == 0) sb.Append($"M{x},{y}");
+            else sb.Append($" L{x},{y}");
+        }
+        if (closeArea) sb.Append(" L480,140 L0,140 Z");
+        return sb.ToString();
+    }
+
+    var hourlyPath = BuildHourlyPath(Model.HourlyTrend, false);
+    var hourlyArea = BuildHourlyPath(Model.HourlyTrend, true);
+    var hourlyTotal = Model.HourlyTrend.Sum(h => h.Count);
+    var lastPoint = Model.HourlyTrend.LastOrDefault();
+    var lastPointHasData = lastPoint != null && lastPoint.Count > 0;
+    var lastX = 480;
+    var hourlyMax = Model.HourlyTrend.Count > 0 ? Math.Max(1, Model.HourlyTrend.Max(t => t.Count)) : 1;
+    var lastY = lastPoint != null ? 110 - (int)Math.Round((lastPoint.Count / (double)hourlyMax) * 92.0) : 110;
+}
+
+<div class="grid-2">
+    <div class="mini-chart">
+        <div class="head">
+            <div>
+                <h3>Saatlik Çalıştırma Trendi</h3>
+                <div style="font-size:12px; color:var(--ink-3); margin-top:2px;">Son 24 saat · tüm raporlar</div>
+            </div>
+            <div style="text-align:right;">
+                <div style="font-size:22px; font-weight:700; color:var(--ink-0); line-height:1; letter-spacing:-.02em; font-variant-numeric:tabular-nums;">@Model.TodayRunCount</div>
+                <div style="font-size:11.5px; color:var(--ok); font-weight:600;">bugün toplam</div>
+            </div>
+        </div>
+        <svg width="100%" height="140" viewBox="0 0 480 140" preserveAspectRatio="none">
+            <defs>
+                <linearGradient id="dashAreaGrad" x1="0" x2="0" y1="0" y2="1">
+                    <stop offset="0%" stop-color="#dc2626" stop-opacity=".22"/>
+                    <stop offset="100%" stop-color="#dc2626" stop-opacity="0"/>
+                </linearGradient>
+            </defs>
+            <line x1="0" y1="35" x2="480" y2="35" stroke="#f3f4f6"/>
+            <line x1="0" y1="70" x2="480" y2="70" stroke="#f3f4f6"/>
+            <line x1="0" y1="105" x2="480" y2="105" stroke="#f3f4f6"/>
+            @if (hourlyTotal > 0)
+            {
+                <path d="@hourlyArea" fill="url(#dashAreaGrad)" />
+                <path d="@hourlyPath" fill="none" stroke="#dc2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                @if (lastPointHasData)
+                {
+                    <circle cx="@lastX" cy="@lastY" r="3.5" fill="#dc2626"/>
+                }
+            }
+            else
+            {
+                @Html.Raw("<text x='240' y='75' text-anchor='middle' font-family='Inter' font-size='11' fill='#9ca3af'>son 24 saatte rapor çalıştırma yok</text>")
+            }
+            <text x="0" y="135" font-family="JetBrains Mono" font-size="9.5" fill="#9ca3af">@(Model.HourlyTrend.FirstOrDefault()?.Hour.ToLocalTime().ToString("HH:mm") ?? "")</text>
+            <text x="120" y="135" font-family="JetBrains Mono" font-size="9.5" fill="#9ca3af">@(Model.HourlyTrend.Count > 6 ? Model.HourlyTrend[6].Hour.ToLocalTime().ToString("HH:mm") : "")</text>
+            <text x="240" y="135" font-family="JetBrains Mono" font-size="9.5" fill="#9ca3af">@(Model.HourlyTrend.Count > 12 ? Model.HourlyTrend[12].Hour.ToLocalTime().ToString("HH:mm") : "")</text>
+            <text x="360" y="135" font-family="JetBrains Mono" font-size="9.5" fill="#9ca3af">@(Model.HourlyTrend.Count > 18 ? Model.HourlyTrend[18].Hour.ToLocalTime().ToString("HH:mm") : "")</text>
+            <text x="448" y="135" font-family="JetBrains Mono" font-size="9.5" fill="#9ca3af">şimdi</text>
+        </svg>
+    </div>
+
+    <div class="mini-chart">
+        <div class="head">
+            <h3>En Çok Çalıştırılan</h3>
+        </div>
+        @if (!Model.TopRunReports.Any())
+        {
+            <div style="font-size:12px; color:var(--ink-4); padding:16px 0; text-align:center;">
+                <i class="fas fa-chart-line opacity-40 text-2xl mb-2 block"></i>
+                Son 30 günde çalıştırma yok
+            </div>
+        }
+        else
+        {
+            <ul style="list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:10px;">
+                @for (int i = 0; i < Model.TopRunReports.Count; i++)
+                {
+                    var item = Model.TopRunReports[i];
+                    var pct = (int)Math.Round((double)item.Count / maxRun * 100);
+                    <li style="display:flex; align-items:center; gap:10px;">
+                        <span class="mono" style="font-size:10.5px; color:var(--ink-4); width:22px;">#@(i + 1)</span>
+                        <span style="flex:1; min-width:0; font-size:12.5px; color:var(--ink-1); font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">@item.Title</span>
+                        <span class="mono" style="font-size:11px; color:var(--ink-3);">@item.Count</span>
+                        <div style="width:60px; height:6px; background:var(--line-2); border-radius:3px; overflow:hidden;">
+                            <div style="width:@pct%; height:100%; background:var(--accent);"></div>
+                        </div>
+                    </li>
+                }
+            </ul>
+        }
+    </div>
+</div>

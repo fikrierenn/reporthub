@@ -1,0 +1,56 @@
+/**
+ * Legacy stil sınıfları — Plan 03 öncesinden kalan, hâlâ aktif kullanılan az sayıda.
+ *
+ * Bu dosyada SADECE proje view'larında grep ile bulunan, gerçekten kullanılan class'lar var.
+ * Kullanılmayan ~14 legacy class (btn-brand/card-brand/form-input-brand/alert-brand/sidebar-brand
+ * vb.) M-13 Plan 03 R2 (28 Nisan 2026) ile silindi. Yeni kod yazarken yerine modern pattern
+ * (.btn / .field / .lab / .inp / paper inline / .qcard / .kpi-card / .dt) kullan — bunlar
+ * components.css'te tanımlı.
+ */
+
+/* === Kullanılan: shadow-brand ailesi (component'larda inline shadow yerine) === */
+.shadow-brand    { box-shadow: var(--shadow); }
+.shadow-brand-md { box-shadow: var(--shadow-md); }
+.shadow-brand-lg { box-shadow: var(--shadow-lg); }
+
+/* === Reports/Run body class view modes === */
+/* AppLayout main genişliği + iframe full-screen toggle. Run.cshtml ViewData["BodyClass"] üzerinden gelir. */
+
+body.wide-view main {
+    max-width: none !important;
+    padding-left: 2rem;
+    padding-right: 2rem;
+}
+
+body.full-screen header,
+body.full-screen footer {
+    display: none;
+}
+
+body.full-screen main {
+    padding: 0;
+    max-width: none;
+}
+
+body.table-focus main {
+    max-width: none;
+    padding: 1rem 2rem;
+}
+
+body.table-focus #resultsTableWrap {
+    max-height: calc(100vh - 200px);
+    overflow-y: auto;
+}
+
+body.table-focus #reportFormCard {
+    position: sticky;
+    top: 1rem;
+    z-index: 10;
+    background: var(--paper);
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 1rem;
+}
+
+body.wide-view #resultsTableWrap .result-table {
+    font-size: 0.9rem;
+}

@@ -118,7 +118,34 @@ docs(journal): YYYY-MM-DD handoff
 Co-Authored-By: <agent> <...>
 ```
 
-### Adim 6 — Ozet Goster
+### Adim 6 — Memory Kaydet
+
+Oturum boyunca ortaya cikan bilgileri auto-memory'ye yaz/guncelle:
+
+- **feedback** — duzeltilen veya onaylanan yaklasimlar
+- **project** — devam eden is, hedefler, tarihler
+- **user** — kullanicinin rolu, tercihleri hakkinda yeni bilgi
+- **reference** — referans verilen harici kaynaklar, araclar
+
+Kurallar:
+- Mevcut memory'yi tekrarlama — guncelle
+- Koddan veya git history'den cikarilabileni kaydetme
+- Goreli tarihleri mutlak tarihe cevir (orn. "yarin" → "2026-05-02")
+- feedback/project icin **Why:** ve **How to apply:** satirlari ekle
+- Kaydedecek anlamli sey yoksa bu adimi atla
+
+### Adim 7 — NotebookLM Brain'e Push (opsiyonel)
+
+NotebookLM CLI kuruluysa oturum ozetini AI Brain notebook'una ekle:
+
+1. Memory'de `reference_brain_notebook.md` var mi kontrol et (notebook ID)
+2. ID yoksa: `notebooklm list --json` ile "AI Brain" notebook ara; bulunamazsa kullaniciya sor
+3. Ozet dosyasini olustur: `$TEMP/session-summary-YYYY-MM-DD.md` (journal iceriginin kisa versiyonu)
+4. Push et: `notebooklm source add "$TEMP/session-summary-YYYY-MM-DD.md" --notebook <ID>`
+
+**Auth basarisizsa veya CLI kurulu degilse:** Bu adimi sessizce atla, kullaniciya bilgi ver. Memory'ler ve journal zaten kaydedildi.
+
+### Adim 8 — Ozet Goster
 Kullaniciya 5-10 satirlik kisa ozet:
 ```
 Oturum kaydedildi: docs/journal/2026-04-22.md
@@ -126,6 +153,8 @@ Oturum kaydedildi: docs/journal/2026-04-22.md
 - Yarim kalan: 2 madde
 - Commit: abc1234 docs(journal): 2026-04-22 handoff
 - Uncommitted: N dosya (15 esigin altinda, iyi)
+- Memory: 2 kaydedildi, 1 guncellendi
+- Brain: push edildi / atlanildi (CLI yok)
 - Yarina baslangic: <ilk adim>
 ```
 

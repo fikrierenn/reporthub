@@ -1,0 +1,20 @@
+@*
+    Sayfa altı kısa kbd shortcut + opsiyonel sayfa-spesifik metin (örn. kayıt sayısı).
+    Kullanım: @await Html.PartialAsync("_FooterHint", (string?)"12 rapor")
+              @await Html.PartialAsync("_FooterHint", (string?)null)   (sadece kbd hintler)
+    NOT: Cast zorunlu — yoksa Razor partial'a parent view model'ini gecirir, type mismatch atar.
+*@
+@model string?
+
+<div class="footer-hint">
+    <span class="kbd">⌘B</span> sidebar daralt
+    <span style="margin:0 8px;">·</span>
+    <span class="kbd">⌘K</span> hızlı arama
+    @if (!string.IsNullOrWhiteSpace(Model))
+    {
+        <span style="margin:0 8px;">·</span>
+        <span class="mono">@Model</span>
+    }
+    <span style="margin:0 8px;">·</span>
+    ReportHub · BKM Kitap
+</div>

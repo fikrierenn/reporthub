@@ -1,72 +1,97 @@
 @model ReportPanel.ViewModels.AdminReportFormViewModel
 @{
     Layout = "_AppLayout";
-    ViewData["Title"] = $"Duzenle: {Model.Report.Title} - BKM Rapor Paneli";
+    ViewData["Title"] = $"Düzenle: {Model.Report.Title} - BKM Rapor Paneli";
+    ViewData["PageTitle"] = "Rapor Düzenle";
     var dataSources = Model.DataSources ?? new List<ReportPanel.Models.DataSource>();
     var availableRoles = Model.AvailableRoles ?? new List<ReportPanel.Models.Role>();
     var selectedRoleIds = Model.SelectedRoleIds ?? new HashSet<int>();
-    var availableCategories = Model.AvailableCategories ?? new List<ReportPanel.Models.ReportCategory>();
-    var selectedCategoryIds = Model.SelectedCategoryIds ?? new HashSet<int>();
-    var isDashboard = Model.Report.ReportType == "dashboard";
+    var availableGroups = Model.AvailableGroups ?? new List<ReportPanel.Models.ReportGroup>();
+    var selectedGroupIds = Model.SelectedGroupIds ?? new HashSet<int>();
 }
 
-<div class="mb-6 flex items-center justify-between">
-    <div>
-        <h1 class="text-3xl font-bold text-gray-900">Rapor Duzenle</h1>
-        <p class="text-sm text-gray-500">ID: @Model.Report.ReportId - @Model.Report.Title</p>
+@section Head {
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gridstack@@10.3.1/dist/gridstack.min.css" crossorigin="anonymous" />
+    <script defer src="https://cdn.jsdelivr.net/npm/gridstack@@10.3.1/dist/gridstack-all.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="~/assets/css/dashboard-builder.css" asp-append-version="true" />
+}
+
+@section Breadcrumb {
+    <div class="crumbs">
+        <a href="/Dashboard">BKM Kitap</a>
+        <span class="sep">/</span>
+        <a href="/Admin">Yönetim</a>
+        <span class="sep">/</span>
+        <a href="/Admin?tab=reports">Raporlar</a>
+        <span class="sep">/</span>
+        <span class="current">@Model.Report.Title</span>
     </div>
-    <a href="/Admin?tab=reports" class="btn-brand-outline flex items-center px-4 py-2 text-sm font-medium rounded-lg">
-        <i class="fas fa-times mr-2"></i>İptal
-    </a>
+}
+
+@* M-13 Plan 03 Faz D: Builder topbar consolidation — eski "builder-topbar" Razor blok SİLİNDİ.
+   Mode segmented + dirty chip + Önizle/Geri Al/JSON/Kaydet butonları _AppLayout topbar slot'una taşındı. *@
+@section TopActions {
+    @await Html.PartialAsync("_ReportFormBuilderTopActions", "reportEditForm")
+}
+
+<div class="hero">
+    <h1>Rapor Düzenle</h1>
+    <div class="sub">
+        <span class="pill"><span class="mono">#@Model.Report.ReportId</span></span>
+        <span>@Model.Report.Title</span>
+        <span class="pill" style="@(Model.Report.IsActive ? "" : "background:rgba(220,38,38,0.06); border-color:rgba(220,38,38,0.2);")">
+            <span class="dot" style="background:@(Model.Report.IsActive ? "var(--ok)" : "var(--danger)");"></span>
+            @(Model.Report.IsActive ? "Aktif" : "Pasif")
+        </span>
+    </div>
 </div>
 
-<div class="bg-white rounded-2xl shadow-brand border border-gray-100 overflow-hidden">
-    <div class="bg-gradient-to-r from-blue-50 to-indigo-50 px-8 py-6 border-b border-gray-100">
-        <div class="flex items-center space-x-4">
-            <div class="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center shadow-lg">
-                <i class="fas fa-edit text-white text-2xl"></i>
-            </div>
-            <div>
-                <h2 class="text-2xl font-bold text-gray-900">Rapor Guncelle</h2>
-                <p class="text-gray-600">Mevcut rapor ayarlarını düzenleyin</p>
-            </div>
-        </div>
+@if (!string.IsNullOrWhiteSpace(Model.Message))
+{
+    var isError = Model.MessageType == "error";
+    <div role="alert" style="margin-bottom:18px; padding:12px 16px; border-radius:10px; font-size:13px;
+                background: @(isError ? "rgba(220,38,38,0.10)" : "rgba(16,185,129,0.10)");
+                border: 1px solid @(isError ? "rgba(220,38,38,0.25)" : "rgba(16,185,129,0.25)");
+                color: @(isError ? "var(--accent-ink)" : "#065f46");">
+        <i class="fas @(isError ? "fa-circle-exclamation" : "fa-circle-check")" style="margin-right:8px;"></i>
+        @Model.Message
     </div>
+}
 
-    <div class="p-8">
-        @using (Html.BeginForm("EditReport", "Admin", new { id = Model.Report.ReportId }, FormMethod.Post, true, new { @class = "space-y-8" }))
-        {
-            @Html.AntiForgeryToken()
+@* Plan 04 F2.1: Alpine $store.builder.dirty form-level @input listener.
+   Parent div'de @input → herhangi bir input değişikliğinde dirty chip topbar'da görünür +
+   beforeunload uyarısı aktif. Razor `:` attribute'lara izin vermediği için form yerine wrapper div. *@
+<div x-data @@input="$store.builder.dirty = true">
+@using (Html.BeginForm("EditReport", "Admin", new { id = Model.Report.ReportId }, FormMethod.Post, true, new { id = "reportEditForm" }))
+{
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="ReportId" value="@Model.Report.ReportId" />
 
-            <input type="hidden" name="ReportId" value="@Model.Report.ReportId">
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-3">
-                        <i class="fas fa-hashtag mr-2 text-blue-600"></i>Rapor ID
-                    </label>
-                    <input type="text" value="@Model.Report.ReportId" disabled
-                           class="w-full px-4 py-4 border border-gray-300 rounded-xl bg-gray-100 text-lg font-medium text-gray-600">
-                    <p class="text-xs text-gray-500 mt-2">ID degistirilemez</p>
+    @* ===== 1. Genel Bilgiler ===== *@
+    <div style="background:var(--paper); border:1px solid var(--line); border-radius:10px; overflow:hidden; margin-bottom:14px;">
+        <div style="padding:14px 18px; border-bottom:1px solid var(--line);">
+            <h2 style="font-size:13px; font-weight:600; color:var(--ink-1); margin:0;">
+                <i class="fas fa-file-lines" style="margin-right:6px; color:var(--ink-3);"></i>
+                Genel Bilgiler
+            </h2>
+        </div>
+        <div style="padding:20px;">
+            <div style="display:grid; grid-template-columns:1fr 2fr; gap:14px; margin-bottom:14px;">
+                <div class="field" style="margin-bottom:0;">
+                    <label class="lab">Rapor ID</label>
+                    <input type="text" value="@Model.Report.ReportId" disabled class="inp"
+                           style="background:var(--canvas); color:var(--ink-3); cursor:not-allowed; font-family:'JetBrains Mono', monospace;" />
                 </div>
-
-                <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-3">
-                        <i class="fas fa-file-alt mr-2 text-blue-600"></i>Rapor Adi *
-                    </label>
-                    <input type="text" name="Title" value="@Model.Report.Title" required
-                           class="w-full px-4 py-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-600 focus:border-blue-600 text-lg font-medium"
-                           placeholder="Orn: Satis Raporu">
+                <div class="field" style="margin-bottom:0;">
+                    <label class="lab">Rapor Adı <span style="color:var(--accent);">*</span></label>
+                    <input type="text" name="Title" value="@Model.Report.Title" required class="inp" placeholder="örn: Satış Raporu" />
                 </div>
             </div>
 
-            <div>
-                <label class="block text-sm font-semibold text-gray-700 mb-3">
-                    <i class="fas fa-database mr-2 text-blue-600"></i>Veri Kaynagi *
-                </label>
-                <select name="DataSourceKey" required
-                        class="w-full px-4 py-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-600 focus:border-blue-600 text-lg">
-                    <option value="">Veri kaynagini seciniz...</option>
+            <div class="field" style="margin-bottom:14px;">
+                <label class="lab">Veri Kaynağı <span style="color:var(--accent);">*</span></label>
+                <select name="DataSourceKey" required class="inp">
+                    <option value="">Veri kaynağını seçiniz...</option>
                     @foreach (var ds in dataSources)
                     {
                         <option value="@ds.DataSourceKey" selected="@(ds.DataSourceKey == Model.Report.DataSourceKey)">
@@ -76,272 +101,198 @@
                 </select>
             </div>
 
-            <div>
-                <label class="block text-sm font-semibold text-gray-700 mb-3">
-                    <i class="fas fa-align-left mr-2 text-blue-600"></i>Aciklama
-                </label>
-                <textarea name="Description" rows="4"
-                          class="w-full px-4 py-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-600 focus:border-blue-600 text-lg"
-                          placeholder="Rapor hakkinda aciklama yazin...">@Model.Report.Description</textarea>
+            <div class="field" style="margin-bottom:14px;">
+                <label class="lab">Açıklama</label>
+                <textarea name="Description" rows="3" class="inp" style="height:auto; padding:10px 12px; resize:vertical;"
+                          placeholder="Rapor hakkında açıklama yazın...">@Model.Report.Description</textarea>
             </div>
 
-            <div>
-                <label class="block text-sm font-semibold text-gray-700 mb-3">
-                    <i class="fas fa-folder-open mr-2 text-blue-600"></i>Kategoriler
-                </label>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    @if (!availableCategories.Any())
+            <div class="field" style="margin-bottom:0;">
+                <label class="lab">Gruplar</label>
+                <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(160px, 1fr)); gap:6px; padding:8px 10px; background:var(--canvas); border:1px solid var(--line); border-radius:8px;">
+                    @if (!availableGroups.Any())
                     {
-                        <div class="text-sm text-red-600">Kategori listesi tanimli degil.</div>
+                        <div style="font-size:12px; color:var(--accent-ink);">Grup listesi tanımlı değil.</div>
                     }
                     else
                     {
-                        foreach (var category in availableCategories)
+                        foreach (var group in availableGroups)
                         {
-                            var isChecked = selectedCategoryIds.Contains(category.CategoryId);
-                            <label class="flex items-center gap-2 text-sm text-gray-700">
-                                <input type="checkbox" name="SelectedCategories" value="@category.CategoryId" @(isChecked ? "checked" : "")
-                                       class="h-4 w-4 text-blue-600 border-gray-300 rounded">
-                                <span>@category.Name</span>
+                            var isChecked = selectedGroupIds.Contains(group.GroupId);
+                            <label style="display:flex; align-items:center; gap:6px; font-size:12px; color:var(--ink-2); cursor:pointer;">
+                                <input type="checkbox" name="SelectedGroups" value="@group.GroupId" @(isChecked ? "checked" : "")
+                                       style="width:14px; height:14px; accent-color:var(--accent);" />
+                                <span>@group.Name</span>
                             </label>
                         }
                     }
                 </div>
-                <p class="text-xs text-gray-500 mt-2">Birden fazla kategori secilebilir.</p>
+                <p style="margin:6px 0 0; font-size:11px; color:var(--ink-3);">Birden fazla kategori seçilebilir.</p>
             </div>
+        </div>
+    </div>
 
-            <div class="bg-indigo-50 rounded-2xl border border-indigo-200 p-6">
-                <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center">
-                    <i class="fas fa-layer-group mr-3 text-indigo-600"></i> Rapor Tipi
-                </h3>
-                <div class="flex items-center gap-6">
-                    <label class="flex items-center gap-3 cursor-pointer px-4 py-3 rounded-xl border-2 transition-all"
-                           id="radioLabelTable"
-                           style="border-color: @(isDashboard ? "#e5e7eb" : "#3b82f6"); background: @(isDashboard ? "transparent" : "#eff6ff");">
-                        <input type="radio" name="ReportType" value="table" @(!isDashboard ? "checked" : "")
-                               class="h-5 w-5 text-blue-600" onchange="toggleReportType('table')">
-                        <div>
-                            <div class="font-semibold text-gray-900"><i class="fas fa-table mr-1 text-blue-600"></i> Tablo</div>
-                            <div class="text-xs text-gray-500">SP sonucu HTML tablo olarak gosterilir</div>
-                        </div>
-                    </label>
-                    <label class="flex items-center gap-3 cursor-pointer px-4 py-3 rounded-xl border-2 transition-all"
-                           id="radioLabelDashboard"
-                           style="border-color: @(isDashboard ? "#a855f7" : "#e5e7eb"); background: @(isDashboard ? "#faf5ff" : "transparent");">
-                        <input type="radio" name="ReportType" value="dashboard" @(isDashboard ? "checked" : "")
-                               class="h-5 w-5 text-purple-600" onchange="toggleReportType('dashboard')">
-                        <div>
-                            <div class="font-semibold text-gray-900"><i class="fas fa-chart-pie mr-1 text-purple-600"></i> Dashboard</div>
-                            <div class="text-xs text-gray-500">Ozel HTML sablon ile zengin gorunum</div>
-                        </div>
-                    </label>
-                </div>
-            </div>
-
-            <div class="bg-gray-50 rounded-2xl border border-gray-200 p-6">
-                <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center">
-                    <i class="fas fa-cogs mr-3 text-blue-600"></i> Teknik Ayarlar
-                </h3>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-3">
-                            <i class="fas fa-code mr-2 text-blue-600"></i>Prosedur Adi *
-                        </label>
-                        <div class="flex gap-2">
-                            <input type="text" name="ProcName" id="ProcName" value="@Model.Report.ProcName" required list="spList"
-                                   class="flex-1 px-4 py-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-600 focus:border-blue-600 text-lg font-mono"
-                                   placeholder="sp_SatisRaporu veya listeden secin">
-                            <datalist id="spList"></datalist>
-                            <button type="button" id="spPreviewBtn" title="SP'yi calistir ve donen kolonlari/veriyi gor"
-                                    class="px-4 py-4 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-sm font-semibold whitespace-nowrap transition-colors">
-                                <i class="fas fa-play mr-1"></i> SP Onizle
-                            </button>
-                        </div>
-                        <p class="text-xs text-gray-500 mt-2">Data source secildiginde buradaki liste otomatik dolar. Onizle ile SP'yi test calistirip kolonlari gorebilirsin.</p>
-                        <div id="spPreviewPanel" class="mt-4 hidden"></div>
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-3">
-                            <i class="fas fa-users mr-2 text-blue-600"></i>Izinli Roller
-                        </label>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            @if (!availableRoles.Any())
-                            {
-                                <div class="text-sm text-red-600">Rol listesi tanimli degil.</div>
-                            }
-                            else
-                            {
-                                foreach (var role in availableRoles)
-                                {
-                                    var isChecked = selectedRoleIds.Contains(role.RoleId);
-                                    <label class="flex items-center gap-2 text-sm text-gray-700">
-                                        <input type="checkbox" name="SelectedRoles" value="@role.RoleId" @(isChecked ? "checked" : "")
-                                               class="h-4 w-4 text-blue-600 border-gray-300 rounded">
-                                        <span>@role.Name</span>
-                                    </label>
-                                }
-                            }
-                        </div>
-                        <p class="text-xs text-gray-500 mt-2">Birden fazla rol secilebilir.</p>
-                    </div>
-                </div>
-
-                <div class="mt-6">
-                    <label class="block text-sm font-semibold text-gray-700 mb-3">
-                        <i class="fas fa-sliders-h mr-2 text-blue-600"></i>ParamSchemaJson
-                    </label>
-                    @Html.TextArea("ParamSchemaJson", Model.Report.ParamSchemaJson, new
-                    {
-                        id = "ParamSchemaJson",
-                        rows = "4",
-                        @class = "w-full px-4 py-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-600 focus:border-blue-600 text-sm font-mono",
-                        placeholder = "{\"fields\":[{\"name\":\"StartDate\",\"label\":\"Başlangıç Tarihi\",\"type\":\"date\",\"required\":true}]}"
-                    })
-                    <p class="text-xs text-gray-500 mt-2">JSON formatinda parametre tanimi.</p>
-                </div>
-            </div>
-
-            <div class="bg-white rounded-2xl border border-gray-200 p-6">
-                <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center">
-                    <i class="fas fa-list mr-3 text-blue-600"></i> Parametre Olusturucu
-                </h3>
-
-                <div class="grid grid-cols-1 md:grid-cols-7 gap-4 items-end">
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-2">Ad</label>
-                        <input type="text" id="paramName" class="w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="StartDate">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-2">Etiket</label>
-                        <input type="text" id="paramLabel" class="w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="Başlangıç Tarihi">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-2">Placeholder</label>
-                        <input type="text" id="paramPlaceholder" class="w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="gg.aa.yyyy">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-2">Tip</label>
-                        <select id="paramType" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
-                            <option value="text">text</option>
-                            <option value="number">number</option>
-                            <option value="decimal">decimal</option>
-                            <option value="date">date</option>
-                            <option value="checkbox">checkbox</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-2">Varsayilan</label>
-                        <input type="text" id="paramDefault" class="w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="today">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-2">Yardim</label>
-                        <input type="text" id="paramHelp" class="w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="Zorunlu alan">
-                    </div>
-                    <div class="flex items-center gap-3">
-                        <label class="flex items-center gap-2 text-sm font-semibold text-gray-700">
-                            <input type="checkbox" id="paramRequired" class="h-4 w-4 text-blue-600 border-gray-300 rounded">
-                            Zorunlu
-                        </label>
-                        <button type="button" id="addParamBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-semibold">
-                            Ekle
+    @* ===== 2. Teknik Ayarlar ===== *@
+    <div style="background:var(--paper); border:1px solid var(--line); border-radius:10px; overflow:hidden; margin-bottom:14px;">
+        <div style="padding:14px 18px; border-bottom:1px solid var(--line);">
+            <h2 style="font-size:13px; font-weight:600; color:var(--ink-1); margin:0;">
+                <i class="fas fa-gear" style="margin-right:6px; color:var(--ink-3);"></i>
+                Teknik Ayarlar
+            </h2>
+        </div>
+        <div style="padding:20px;">
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:14px;">
+                <div class="field" style="margin-bottom:0;">
+                    <label class="lab">Prosedür Adı <span style="color:var(--accent);">*</span></label>
+                    <div style="display:flex; gap:6px;">
+                        <input type="text" name="ProcName" id="ProcName" value="@Model.Report.ProcName" required list="spList"
+                               class="inp" style="font-family:'JetBrains Mono', monospace;" placeholder="sp_SatisRaporu veya listeden seçin" />
+                        <datalist id="spList"></datalist>
+                        <button type="button" id="spPreviewBtn" class="btn" style="flex-shrink:0;" title="SP'yi çalıştır ve dönen kolonları/veriyi gör">
+                            <i class="fas fa-play text-[10px]"></i>
+                            SP Önizle
                         </button>
                     </div>
-                    <div class="flex items-center">
-                        <button type="button" id="loadParamsBtn" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-semibold">
-                            SP Parametrelerini Getir
-                        </button>
+                    <p style="margin:6px 0 0; font-size:11px; color:var(--ink-3);">Veri kaynağı seçildiğinde liste otomatik dolar.</p>
+                    <div id="spPreviewPanel" class="hidden" style="margin-top:14px;"></div>
+                </div>
+
+                <div class="field" style="margin-bottom:0;">
+                    <label class="lab">İzinli Roller</label>
+                    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(140px, 1fr)); gap:6px; padding:8px 10px; background:var(--canvas); border:1px solid var(--line); border-radius:8px;">
+                        @if (!availableRoles.Any())
+                        {
+                            <div style="font-size:12px; color:var(--accent-ink);">Rol listesi tanımlı değil.</div>
+                        }
+                        else
+                        {
+                            foreach (var role in availableRoles)
+                            {
+                                var isChecked = selectedRoleIds.Contains(role.RoleId);
+                                <label style="display:flex; align-items:center; gap:6px; font-size:12px; color:var(--ink-2); cursor:pointer;">
+                                    <input type="checkbox" name="SelectedRoles" value="@role.RoleId" @(isChecked ? "checked" : "")
+                                           style="width:14px; height:14px; accent-color:var(--accent);" />
+                                    <span>@role.Name</span>
+                                </label>
+                            }
+                        }
                     </div>
                 </div>
-
-                <div class="mt-6">
-                    <div class="text-sm text-gray-600 mb-2">Parametreler</div>
-                    <div id="paramList" class="space-y-2"></div>
-                </div>
             </div>
 
-            <div id="dashboardHtmlSection" style="display:@(isDashboard ? "block" : "none");">
-                <!-- Mode toggle -->
-                <div class="flex gap-2 mb-4">
-                    <button type="button" id="modeBuilderBtn" class="px-4 py-2 text-sm font-semibold rounded-lg bg-blue-100 text-blue-700 border border-blue-300" onclick="switchDashMode('builder')">
-                        <i class="fas fa-th-large mr-1"></i> Yapilandirici
-                    </button>
-                    <button type="button" id="modeHtmlBtn" class="px-4 py-2 text-sm font-semibold rounded-lg bg-gray-50 text-gray-600 border border-gray-200" onclick="switchDashMode('html')">
-                        <i class="fas fa-code mr-1"></i> Gelismis (HTML)
-                    </button>
-                </div>
-
-                <!-- Builder mode -->
-                <div id="dashModeBuilder" class="bg-white rounded-2xl border border-gray-200 p-6">
-                    <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center">
-                        <i class="fas fa-th-large mr-3 text-purple-600"></i> Dashboard Olusturucu
-                    </h3>
-                    <textarea name="DashboardConfigJson" id="DashboardConfigJson" class="hidden">@Model.Report.DashboardConfigJson</textarea>
-                    <div id="dashboardBuilder"></div>
-                </div>
-
-                <!-- HTML mode -->
-                <div id="dashModeHtml" class="bg-gray-900 rounded-2xl border border-gray-700 p-6" style="display:none;">
-                    <h3 class="text-lg font-bold text-white mb-4 flex items-center">
-                        <i class="fas fa-code mr-3 text-purple-400"></i> Dashboard HTML Sablonu
-                    </h3>
-                    <div class="bg-gray-800 rounded-xl p-4 mb-4 text-sm text-gray-300">
-                        <p><i class="fas fa-info-circle text-blue-400 mr-1"></i> Yapilandirici yerine ozel HTML sablonu kullanmak istiyorsaniz buraya yazin. <code class="text-green-400">RESULT_0</code>, <code class="text-green-400">RESULT_1</code> degiskenleri otomatik enjekte edilir.</p>
-                    </div>
-                    <textarea name="DashboardHtml" id="DashboardHtml" rows="16"
-                              class="w-full px-4 py-4 bg-gray-950 text-green-400 border border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-sm font-mono leading-relaxed"
-                              placeholder="<!DOCTYPE html>...">@Model.Report.DashboardHtml</textarea>
-                </div>
+            <div class="field" style="margin-bottom:0;">
+                <label class="lab">ParamSchemaJson</label>
+                @Html.TextArea("ParamSchemaJson", Model.Report.ParamSchemaJson, new
+                {
+                    id = "ParamSchemaJson",
+                    rows = "3",
+                    @class = "inp",
+                    style = "height:auto; padding:10px 12px; font-family:'JetBrains Mono', monospace; font-size:12px; resize:vertical;",
+                    placeholder = "{\"fields\":[{\"name\":\"StartDate\",\"label\":\"Başlangıç Tarihi\",\"type\":\"date\",\"required\":true}]}"
+                })
+                <p style="margin:6px 0 0; font-size:11px; color:var(--ink-3);">JSON formatında parametre tanımı.</p>
             </div>
+        </div>
+    </div>
 
-            <div class="flex items-center space-x-3">
-                <input type="checkbox" name="IsActive" value="true" @(Model.Report.IsActive ? "checked" : "")
-                       class="w-5 h-5 text-blue-600 focus:ring-blue-600 border-gray-300 rounded">
-                <label class="text-lg font-medium text-gray-700">Raporu aktif olarak isaretle</label>
-            </div>
-
-            <div class="flex items-center justify-between pt-6 border-t border-gray-200">
-                <a href="/Admin?tab=reports" class="btn-brand-outline flex items-center px-6 py-3 text-lg font-medium rounded-xl">
-                    <i class="fas fa-arrow-left mr-2"></i>Geri Don
-                </a>
-
-                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white flex items-center px-8 py-3 text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105">
-                    <i class="fas fa-save mr-3"></i>Degisiklikleri Kaydet
+    @* ===== 3. Parametre Oluşturucu ===== *@
+    <div style="background:var(--paper); border:1px solid var(--line); border-radius:10px; overflow:hidden; margin-bottom:14px;">
+        <div style="padding:14px 18px; border-bottom:1px solid var(--line);">
+            <h2 style="font-size:13px; font-weight:600; color:var(--ink-1); margin:0;">
+                <i class="fas fa-list-ul" style="margin-right:6px; color:var(--ink-3);"></i>
+                Parametre Oluşturucu
+            </h2>
+        </div>
+        <div style="padding:20px;">
+            <div style="display:grid; grid-template-columns:repeat(7, 1fr) auto auto; gap:8px; align-items:end;">
+                <div class="field" style="margin-bottom:0;">
+                    <label class="lab">Ad</label>
+                    <input type="text" id="paramName" class="inp" placeholder="StartDate" />
+                </div>
+                <div class="field" style="margin-bottom:0;">
+                    <label class="lab">Etiket</label>
+                    <input type="text" id="paramLabel" class="inp" placeholder="Başlangıç Tarihi" />
+                </div>
+                <div class="field" style="margin-bottom:0;">
+                    <label class="lab">Placeholder</label>
+                    <input type="text" id="paramPlaceholder" class="inp" placeholder="gg.aa.yyyy" />
+                </div>
+                <div class="field" style="margin-bottom:0;">
+                    <label class="lab">Tip</label>
+                    <select id="paramType" class="inp">
+                        <option value="text">text</option>
+                        <option value="number">number</option>
+                        <option value="decimal">decimal</option>
+                        <option value="date">date</option>
+                        <option value="checkbox">checkbox</option>
+                    </select>
+                </div>
+                <div class="field" style="margin-bottom:0;">
+                    <label class="lab">Varsayılan</label>
+                    <input type="text" id="paramDefault" class="inp" placeholder="today" />
+                </div>
+                <div class="field" style="margin-bottom:0;">
+                    <label class="lab">Yardım</label>
+                    <input type="text" id="paramHelp" class="inp" placeholder="Zorunlu alan" />
+                </div>
+                <div style="display:flex; align-items:center; gap:6px; height:34px;">
+                    <input type="checkbox" id="paramRequired" style="width:14px; height:14px; accent-color:var(--accent);" />
+                    <label for="paramRequired" class="lab" style="margin:0;">Zorunlu</label>
+                </div>
+                <button type="button" id="addParamBtn" class="btn primary" style="height:34px;">
+                    <i class="fas fa-plus text-[10px]"></i>
+                    Ekle
+                </button>
+                <button type="button" id="loadParamsBtn" class="btn" style="height:34px;">
+                    <i class="fas fa-download text-[10px]"></i>
+                    SP'den Getir
                 </button>
             </div>
-        }
+
+            <div style="margin-top:14px;">
+                <div style="font-size:12px; color:var(--ink-3); margin-bottom:8px;">Parametreler</div>
+                <div id="paramList" style="display:flex; flex-direction:column; gap:6px;"></div>
+            </div>
+        </div>
     </div>
+
+    @* ===== 4. Dashboard Oluşturucu ===== *@
+    <div id="dashboardConfigSection" style="background:var(--paper); border:1px solid var(--line); border-radius:10px; overflow:hidden; margin-bottom:14px;">
+        <div style="padding:14px 18px; border-bottom:1px solid var(--line);">
+            <h2 style="font-size:13px; font-weight:600; color:var(--ink-1); margin:0;">
+                <i class="fas fa-table-cells-large" style="margin-right:6px; color:var(--ink-3);"></i>
+                Dashboard Oluşturucu
+            </h2>
+            <div style="font-size:12px; color:var(--ink-3); margin-top:2px;">Widget'ları ekle, düzenle, kaydet</div>
+        </div>
+        <textarea name="DashboardConfigJson" id="DashboardConfigJson" class="hidden">@Model.Report.DashboardConfigJson</textarea>
+        <div id="dashboardBuilder" style="padding:20px;"></div>
+    </div>
+
+    @* ===== 5. Aktif + footer (Kaydet topbar'da, alt 'Geri Dön' kalır) ===== *@
+    <div style="background:var(--paper); border:1px solid var(--line); border-radius:10px; padding:14px 20px; margin-bottom:14px; display:flex; align-items:center; gap:10px;">
+        <input type="checkbox" name="IsActive" value="true" id="reportActive" @(Model.Report.IsActive ? "checked" : "")
+               style="width:16px; height:16px; accent-color:var(--accent);" />
+        <label for="reportActive" class="lab" style="margin:0;">Raporu aktif olarak işaretle</label>
+    </div>
+
+    <div style="display:flex; align-items:center; justify-content:space-between; padding:14px 20px; background:var(--paper); border:1px solid var(--line); border-radius:10px;">
+        <a href="/Admin?tab=reports" class="btn ghost">
+            <i class="fas fa-arrow-left text-[10px]"></i>
+            Geri Dön
+        </a>
+        <span style="font-size:11px; color:var(--ink-3);">Kaydet işlemi üst topbar'dan da yapılabilir</span>
+    </div>
+}
 </div>
-<script src="~/assets/js/admin-report-form.js"></script>
-<script src="~/assets/js/dashboard-builder.js"></script>
-<script>
-function toggleReportType(type) {
-    var dashSection = document.getElementById('dashboardHtmlSection');
-    var labelTable = document.getElementById('radioLabelTable');
-    var labelDash = document.getElementById('radioLabelDashboard');
-    if (type === 'dashboard') {
-        dashSection.style.display = 'block';
-        labelDash.style.borderColor = '#a855f7';
-        labelDash.style.background = '#faf5ff';
-        labelTable.style.borderColor = '#e5e7eb';
-        labelTable.style.background = '';
-    } else {
-        dashSection.style.display = 'none';
-        labelTable.style.borderColor = '#3b82f6';
-        labelTable.style.background = '#eff6ff';
-        labelDash.style.borderColor = '#e5e7eb';
-        labelDash.style.background = '';
-    }
-}
-function switchDashMode(mode) {
-    document.getElementById('dashModeBuilder').style.display = mode === 'builder' ? 'block' : 'none';
-    document.getElementById('dashModeHtml').style.display = mode === 'html' ? 'block' : 'none';
-    document.getElementById('modeBuilderBtn').className = mode === 'builder'
-        ? 'px-4 py-2 text-sm font-semibold rounded-lg bg-blue-100 text-blue-700 border border-blue-300'
-        : 'px-4 py-2 text-sm font-semibold rounded-lg bg-gray-50 text-gray-600 border border-gray-200';
-    document.getElementById('modeHtmlBtn').className = mode === 'html'
-        ? 'px-4 py-2 text-sm font-semibold rounded-lg bg-blue-100 text-blue-700 border border-blue-300'
-        : 'px-4 py-2 text-sm font-semibold rounded-lg bg-gray-50 text-gray-600 border border-gray-200';
-}
-</script>
+
+@* M-13 R3 (28 Nisan): admin-report-form.js 531 sat → 2 modül (param-builder + sp-helper) *@
+<script src="~/assets/js/admin-report-form/param-builder.js"></script>
+<script src="~/assets/js/admin-report-form/sp-helper.js"></script>
+<script src="~/assets/js/dashboard-builder/builder-core.js"></script>
+<script src="~/assets/js/dashboard-builder/builder-canvas.js"></script>
+<script src="~/assets/js/dashboard-builder/builder-contract.js"></script>
+<script src="~/assets/js/dashboard-builder/builder-list.js"></script>
+<script src="~/assets/js/dashboard-builder/builder-drawer.js"></script>
+<script src="~/assets/js/dashboard-builder/builder-preview.js"></script>
+<script src="~/assets/js/dashboard-builder/builder-templates.js"></script>

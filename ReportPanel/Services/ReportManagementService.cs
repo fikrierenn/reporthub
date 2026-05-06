@@ -1,19 +1,22 @@
+using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using ReportPanel.Models;
 
 namespace ReportPanel.Services
 {
+    // M-05: DashboardHtml parametresi kaldirildi (legacy retirement). DashboardConfigJson
+    // birincil. Mevcut DB'deki HTML kayitlari ReportsController legacy fallback ile render
+    // edilir ama yeni yazim yollari dokunmaz.
     public record ReportFormInput(
         string? Title,
         string? Description,
         string? DataSourceKey,
         string? ProcName,
         HashSet<int> SelectedRoleIds,
-        HashSet<int> SelectedCategoryIds,
+        HashSet<int> SelectedGroupIds,
         bool IsActive,
         string? ReportType,
         string? ParamSchemaJson,
-        string? DashboardHtml,
         string? DashboardConfigJson);
 
     /// <summary>
@@ -36,6 +39,15 @@ namespace ReportPanel.Services
             var err = Validate(input);
             if (err != null) return AdminOperationResult.Fail(err);
 
+            // ADR-009 · M-11 F-1.5: ReportType dallanmasi kaldirildi — her rapor dashboard.
+            var configJson = string.IsNullOrWhiteSpace(input.DashboardConfigJson)
+                ? BuildDefaultDashboardConfig(input.Title)
+                : input.DashboardConfigJson;
+
+            var dashErr = await ValidateDashboardConfigAsync(configJson, reportId: null, input);
+            if (dashErr != null) return AdminOperationResult.Fail(dashErr);
+
+#pragma warning disable CS0618 // ReportType [Obsolete], Migration 19 drop edecek.
             var entity = new ReportCatalog
             {
                 Title = (input.Title ?? "").Trim(),
@@ -44,18 +56,15 @@ namespace ReportPanel.Services
                 ProcName = (input.ProcName ?? "").Trim(),
                 AllowedRoles = await BuildAllowedRolesCsv(input.SelectedRoleIds),
                 IsActive = input.IsActive,
-                ReportType = NormalizeReportType(input.ReportType),
-                ParamSchemaJson = NormalizeParamSchema(input.ParamSchemaJson, null)
+                ReportType = "dashboard",
+                ParamSchemaJson = NormalizeParamSchema(input.ParamSchemaJson, null),
+                DashboardConfigJson = configJson
             };
-            if (entity.ReportType == "dashboard")
-            {
-                entity.DashboardHtml = input.DashboardHtml;
-                entity.DashboardConfigJson = input.DashboardConfigJson;
-            }
+#pragma warning restore CS0618
 
             _context.ReportCatalog.Add(entity);
             await _context.SaveChangesAsync();
-            await SyncRolesAndCategoriesAsync(entity.ReportId, input.SelectedRoleIds, input.SelectedCategoryIds);
+            await SyncRolesAndGroupsAsync(entity.ReportId, input.SelectedRoleIds, input.SelectedGroupIds);
 
             await _auditLog.LogAsync(new AuditLogEntry
             {
@@ -80,6 +89,17 @@ namespace ReportPanel.Services
             var err = Validate(input);
             if (err != null) return AdminOperationResult.Fail(err);
 
+            // ADR-009 · M-11 F-1.5: ReportType dallanmasi kaldirildi — her rapor dashboard.
+            var configJson = string.IsNullOrWhiteSpace(input.DashboardConfigJson)
+                ? (string.IsNullOrWhiteSpace(report.DashboardConfigJson)
+                    ? BuildDefaultDashboardConfig(input.Title)
+                    : report.DashboardConfigJson)
+                : input.DashboardConfigJson;
+
+            var dashErr = await ValidateDashboardConfigAsync(configJson, reportId, input);
+            if (dashErr != null) return AdminOperationResult.Fail(dashErr);
+
+#pragma warning disable CS0618 // ReportType [Obsolete], Migration 19 drop edecek.
             var oldSnap = new { report.ReportId, report.Title, report.DataSourceKey, report.ProcName, report.AllowedRoles, report.IsActive };
 
             report.Title = (input.Title ?? "").Trim();
@@ -89,12 +109,12 @@ namespace ReportPanel.Services
             report.AllowedRoles = await BuildAllowedRolesCsv(input.SelectedRoleIds);
             report.IsActive = input.IsActive;
             report.ParamSchemaJson = NormalizeParamSchema(input.ParamSchemaJson, report.ParamSchemaJson);
-            report.ReportType = NormalizeReportType(input.ReportType);
-            report.DashboardHtml = report.ReportType == "dashboard" ? input.DashboardHtml : null;
-            report.DashboardConfigJson = report.ReportType == "dashboard" ? input.DashboardConfigJson : null;
+            report.ReportType = "dashboard";
+            report.DashboardConfigJson = configJson;
+#pragma warning restore CS0618
 
             await _context.SaveChangesAsync();
-            await SyncRolesAndCategoriesAsync(report.ReportId, input.SelectedRoleIds, input.SelectedCategoryIds);
+            await SyncRolesAndGroupsAsync(report.ReportId, input.SelectedRoleIds, input.SelectedGroupIds);
 
             await _auditLog.LogAsync(new AuditLogEntry
             {
@@ -144,6 +164,50 @@ namespace ReportPanel.Services
             return null;
         }
 
+        // M-10 Faz 3: Hard error save'i bloke eder + dashboard_config_invalid audit.
+        // Soft warning save'e izin verir ama dashboard_config_warnings audit'e dusurulur.
+        private async Task<string?> ValidateDashboardConfigAsync(string? configJson, int? reportId, ReportFormInput input)
+        {
+            var r = DashboardConfigValidator.Validate(configJson);
+            var targetKey = reportId?.ToString() ?? "(yeni)";
+
+            if (r.HasErrors)
+            {
+                await _auditLog.LogAsync(new AuditLogEntry
+                {
+                    EventType = "dashboard_config_invalid",
+                    TargetType = "report",
+                    TargetKey = targetKey,
+                    ReportId = reportId,
+                    DataSourceKey = input.DataSourceKey,
+                    Description = "Pano yapılandırması kaydedilemedi (validasyon hatası).",
+                    NewValuesJson = AuditLogService.ToJson(new { errors = r.Errors, warnings = r.Warnings }),
+                    IsSuccess = false
+                });
+                // Tüm hataları tek mesajda birleştir — view'da multi-line görünür (white-space: pre-line)
+                return r.Errors.Count == 1
+                    ? r.Errors[0]
+                    : "Pano yapılandırması geçersiz:\n• " + string.Join("\n• ", r.Errors);
+            }
+
+            if (r.HasWarnings)
+            {
+                await _auditLog.LogAsync(new AuditLogEntry
+                {
+                    EventType = "dashboard_config_warnings",
+                    TargetType = "report",
+                    TargetKey = targetKey,
+                    ReportId = reportId,
+                    DataSourceKey = input.DataSourceKey,
+                    Description = "Pano yapılandırması uyarılarla kaydedildi.",
+                    NewValuesJson = AuditLogService.ToJson(new { warnings = r.Warnings }),
+                    IsSuccess = true
+                });
+            }
+
+            return null;
+        }
+
         private async Task<string> BuildAllowedRolesCsv(HashSet<int> roleIds)
         {
             if (roleIds.Count == 0) return "";
@@ -154,29 +218,51 @@ namespace ReportPanel.Services
             return string.Join(",", names);
         }
 
-        private async Task SyncRolesAndCategoriesAsync(int reportId, HashSet<int> roleIds, HashSet<int> categoryIds)
+        private async Task SyncRolesAndGroupsAsync(int reportId, HashSet<int> roleIds, HashSet<int> groupIds)
         {
             var existingRoles = await _context.ReportAllowedRoles.Where(ar => ar.ReportId == reportId).ToListAsync();
             _context.ReportAllowedRoles.RemoveRange(existingRoles);
             foreach (var rid in roleIds)
                 _context.ReportAllowedRoles.Add(new ReportAllowedRole { ReportId = reportId, RoleId = rid, CreatedAt = DateTime.UtcNow });
 
-            var existingCategories = await _context.ReportCategoryLinks.Where(rc => rc.ReportId == reportId).ToListAsync();
-            _context.ReportCategoryLinks.RemoveRange(existingCategories);
-            foreach (var cid in categoryIds)
-                _context.ReportCategoryLinks.Add(new ReportCategoryLink { ReportId = reportId, CategoryId = cid, CreatedAt = DateTime.UtcNow });
+            var existingGroups = await _context.ReportGroupLinks.Where(rg => rg.ReportId == reportId).ToListAsync();
+            _context.ReportGroupLinks.RemoveRange(existingGroups);
+            foreach (var gid in groupIds)
+                _context.ReportGroupLinks.Add(new ReportGroupLink { ReportId = reportId, GroupId = gid, CreatedAt = DateTime.UtcNow });
 
             await _context.SaveChangesAsync();
         }
-
-        private static string NormalizeReportType(string? raw) =>
-            raw == "dashboard" ? "dashboard" : "table";
 
         private static string NormalizeParamSchema(string? raw, string? fallback)
         {
             if (string.IsNullOrWhiteSpace(raw))
                 return string.IsNullOrWhiteSpace(fallback) ? "{}" : fallback;
             return raw.Trim();
+        }
+
+        // ADR-009 · M-11 F-1.5: Yeni raporlar default tek-table-widget dashboard ile baslar.
+        // Migration 18 Adim B ile DB'deki eski ReportType='table' raporlarina da ayni pattern uygulandi.
+        // Admin sonradan builder'da kolonlari/tip ayarlarini duzenleyebilir.
+        private static string BuildDefaultDashboardConfig(string? title)
+        {
+            var escapedTitle = JsonSerializer.Serialize(string.IsNullOrWhiteSpace(title) ? "Rapor" : title.Trim());
+            var widgetId = "w_table_" + Guid.NewGuid().ToString("N").Substring(0, 8);
+            return "{" +
+                "\"schemaVersion\":2," +
+                "\"tabs\":[{" +
+                    "\"title\":\"Genel\"," +
+                    "\"components\":[{" +
+                        "\"id\":\"" + widgetId + "\"," +
+                        "\"type\":\"table\"," +
+                        "\"title\":" + escapedTitle + "," +
+                        "\"span\":4," +
+                        "\"resultSet\":0," +
+                        "\"columns\":[]," +
+                        "\"tableOptions\":{\"totalRow\":false,\"stripe\":true,\"stickyHeader\":true,\"clientSearch\":false,\"pageSize\":0}" +
+                    "}]" +
+                "}]," +
+                "\"calculatedFields\":[]" +
+                "}";
         }
     }
 }

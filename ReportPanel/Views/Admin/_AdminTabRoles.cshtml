@@ -1,0 +1,72 @@
+@model ReportPanel.ViewModels.AdminIndexViewModel
+
+<div style="background:var(--paper); border:1px solid var(--line); border-radius:10px; padding:16px 20px; margin-bottom:14px;">
+    <h2 style="font-size:13px; font-weight:600; color:var(--ink-1); margin:0 0 12px;">
+        <i class="fas fa-circle-plus" style="margin-right:6px; color:var(--ink-3);"></i>
+        Yeni Rol Ekle
+    </h2>
+    <form method="post" style="display:grid; grid-template-columns:1.5fr 2fr auto auto; gap:10px; align-items:end;">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="action" value="create_role" />
+        <div class="field" style="margin-bottom:0;">
+            <label class="lab">Rol Adı <span style="color:var(--accent);">*</span></label>
+            <input type="text" name="Name" class="inp" required />
+        </div>
+        <div class="field" style="margin-bottom:0;">
+            <label class="lab">Açıklama</label>
+            <input type="text" name="Description" class="inp" />
+        </div>
+        <div style="display:flex; align-items:center; gap:6px; height:34px;">
+            <input type="hidden" name="IsActive" value="false" />
+            <input type="checkbox" name="IsActive" value="true" id="newRoleActive" checked
+                   style="width:16px; height:16px; accent-color:var(--accent);" />
+            <label for="newRoleActive" class="lab" style="margin:0;">Aktif</label>
+        </div>
+        <button type="submit" class="btn primary">
+            <i class="fas fa-plus text-[10px]"></i>
+            Ekle
+        </button>
+    </form>
+</div>
+
+<div style="background:var(--paper); border:1px solid var(--line); border-radius:10px; overflow:hidden;">
+    <table class="dt">
+        <thead>
+            <tr>
+                <th>Rol</th>
+                <th>Açıklama</th>
+                <th>Durum</th>
+                <th style="text-align:right;">İşlemler</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var role in Model.Roles)
+            {
+                <tr>
+                    <td style="font-weight:500; color:var(--ink-1);">@role.Name</td>
+                    <td style="font-size:12px; color:var(--ink-3);">@role.Description</td>
+                    <td>
+                        <span class="status @(role.IsActive ? "ok" : "err")">@(role.IsActive ? "Aktif" : "Pasif")</span>
+                    </td>
+                    <td style="text-align:right;">
+                        <div style="display:inline-flex; gap:6px;">
+                            <a href="/Admin/EditRole/@role.RoleId" class="btn ghost" style="font-size:11px; height:28px; padding:0 10px;">
+                                <i class="fas fa-pen text-[9px]"></i>
+                                Düzenle
+                            </a>
+                            <form method="post" style="display:inline;" onsubmit="return confirm('Rol silinsin mi?')">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="action" value="delete_role" />
+                                <input type="hidden" name="id" value="@role.RoleId" />
+                                <button type="submit" class="btn ghost" style="font-size:11px; height:28px; padding:0 10px; color:var(--accent-ink);">
+                                    <i class="fas fa-trash text-[9px]"></i>
+                                    Sil
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

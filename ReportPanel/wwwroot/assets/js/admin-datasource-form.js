@@ -40,14 +40,11 @@
         if (type === 'windows') {
             windowsRadio.checked = true;
             sqlFields.style.display = 'none';
-            windowsRadio.closest('.bg-white')?.classList.add('border-blue-500');
-            sqlRadio.closest('.bg-white')?.classList.remove('border-blue-500');
         } else {
             sqlRadio.checked = true;
             sqlFields.style.display = 'grid';
-            sqlRadio.closest('.bg-white')?.classList.add('border-blue-500');
-            windowsRadio.closest('.bg-white')?.classList.remove('border-blue-500');
         }
+        // .opt-card seçili stilini CSS :has(input[type="radio"]:checked) halleder.
         updateConnectionString();
     };
 
@@ -133,8 +130,6 @@
             if (sqlFields) {
                 sqlFields.style.display = 'none';
             }
-            authWindows?.closest('.bg-white')?.classList.add('border-blue-500');
-            authSql?.closest('.bg-white')?.classList.remove('border-blue-500');
         } else {
             if (authSql) {
                 authSql.checked = true;
@@ -148,9 +143,8 @@
             if (password) {
                 password.value = parsed.password || '';
             }
-            authSql?.closest('.bg-white')?.classList.add('border-blue-500');
-            authWindows?.closest('.bg-white')?.classList.remove('border-blue-500');
         }
+        // .opt-card seçili stilini CSS :has(input[type="radio"]:checked) halleder.
     };
 
     const init = () => {

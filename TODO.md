@@ -62,6 +62,88 @@ Bu dosya yapilanlari ve kalanlari detayli takip icin kullanilir.
 
 ## Devam eden isler (aktif)
 
+### AKTIF SIRA — 2026-05-04 SENTEZI (kolaydan zora)
+
+Bu liste 5 plan dosyasi (`plans/02-06`) + asagidaki FAZ 1-3 + son 5 journal'in yarim kalan kismi taranarak cikarildi. Madde sirasi: efor (kolay → zor). Detay icin ilgili FAZ/plan dosyasina bak.
+
+#### Trivia / housekeeping (~30 dk toplam, en kolay)
+- [x] **CSV İndir butonu commit** ✅ commit `143e1d9` (önceki oturumda yapıldı)
+- [x] **Plan 04 arsivle** ✅ `plans/archive/04-m11-v2-builder-ux-redesign.md`
+- [x] **Plan 06.B arsivle** ✅ `plans/archive/06-m11-v2-edit-parity.md`
+- [x] **Plan 03 arsivle** ✅ `plans/archive/03-*.md` (2 dosya: dashboardv2-standalone + design-system-harmonization)
+- [ ] **M-13 sub-nav unchecked'lar isaretle** — commit'leri var (`7bc8cb0` `831319b` `9ba3c61` `fc55063` `4ada9e6` `4d2f5d2` `c8ce59f`), [x] yap (asagidaki Plan 03 cizelgesi satir 279-317)
+- [ ] **NotebookLM re-login** — kullanici terminalde: `D:/Dev/reporthub/.venv/notebooklm/Scripts/notebooklm.exe login`
+
+#### Küçük işler (~1h)
+- [x] **F-03 · dashboard-builder.js memory leak** ✅ 4 Mayis 2026 audit — F-7 modul split sirasinda zaten cozulmus: `builder-list.js:71` `attachDragDrop()` parent container'a tek listener (delegation) + `dragDropBound` guard re-attach'i engelliyor. js-conventions.md "Memory leak uyarisi" cozumu uygulanmis durumda.
+- [x] **M-03 Faz C · User.Roles kolon drop** ✅ 4 Mayis 2026 — `Database/19_DropUserRolesCsv.sql` (idempotent), `User.Roles` field + EF mapping + pragma silindi. DB drop edildi, build/217 test yesil.
+- [x] **G-07 · Dashboard iframe policy review** ✅ audit tamamlandi (4 Mayis 2026): Run.cshtml `allow-scripts allow-downloads` ✓ (prod, same-origin yok). V2 preview iframe'leri (`EditReportV2`/`CreateReportV2`) `allow-same-origin` icerir — `07ccee8` commit'i tab tiklama bug fix gerekcesiyle, admin-only path icin kabul edilebilir risk. Follow-up: ileride iframe-ici tab switching srcdoc-ici JS ile sandbox-bagimsiz yapilirsa allow-same-origin kalkar.
+- [x] **G-08 · DashboardRenderer JSON escape regresyon test** ✅ zaten kapsanmış — `DashboardRendererTests.cs` 6 escape testi: `</script>` lower/upper/mixed-case + `<!--` + eval guard + data island
+- [x] **Hesaplı kolon autocomplete** ✅ 4 Mayis 2026 (commit `36dd2f3`) — V2 builder formula textarea altina suggest pill grid; tikla → kolon adi formula'ya iliştirilir, Turkce/non-identifier `[Kose]` formatinda.
+- [x] **M-02 son grep** ✅ 4 Mayis 2026 audit — Tum `ex.Message` kullanimlari tarandi (5 nokta). Hepsi kabul edilebilir: AdminController suppress + audit log alanlari (5x) + FormulaParseException TR-friendly + DashboardConfigValidator admin-only JSON debug. User-facing leak yok.
+- [x] **F-02 admin override UI** ✅ zaten kapali (commit `816c8c2`) — `sp-helper.js:34-89` override paneli + typed inputs + paramsJson query. 4 Mayis sentezinde yanlis "yarim" yazilmis, audit ile duzeltildi.
+- [x] **ADR-001 yazimi** ✅ 4 Mayis 2026 — `docs/ADR/001-data-access.md` (SP rapor/dashboard + EF metadata hibrit, Dapper red, inline TVF reuse). ADR-002 zaten ADR-005 olarak yazili (dashboard-architecture).
+- [x] **ReportParamValidator Run path kök fix** ✅ 4 Mayis 2026 audit — Run path (`ReportsController.cs:269`) zaten `ReportParamValidator.ParseSchema()` kullaniyor; commit `2b62d39` PreviewDashboardV2'yi duzeltirken tum parse noktalari ortak helper'a yonlendirildi. Inline `JsonSerializer.Deserialize<List<ReportParamField>>` kalmadi. `ParseSchema_parses_modern_fields_array` testi `{"fields":[...]}` formatini dogruluyor.
+
+#### Orta (2-4h)
+- [ ] **G-09 · SP read-only login** ⚠️ CANLIYA CIKMADAN ZORUNLU (FAZ 2 madde 28.5)
+- [x] **dashboard-builder.js split** ✅ 4 Mayis 2026 audit — V1 monolithic dosya F-7 split'inde (commit serisi M-11) zaten 7 module bolundu (`dashboard-builder/{core,list,canvas,contract,drawer,preview,templates}.js`), tum modeller hard-limit 350 altinda. **Yeni asim**: `builder-v2/builder-drawer.js` 511 satir → ayri madde olarak eklendi (bkz Orta kategorisi).
+
+- [x] **builder-v2/builder-drawer.js split** ✅ 4 Mayis 2026 — 511 → 269 (drawer) + 259 (yeni `builder-table.js` tablo Setup + hesapli kolon mixin). Alpine mixin pattern: `window.__builderV2.tableMixin()` builder.js Object.assign listesine eklendi. EditReportV2 + CreateReportV2'a script tag.
+- [ ] **SP mimarisi · sp_PdksPano → inline TVF refactor** (FAZ 2 madde 21) — ADR-004 adayi
+- [x] **M-10 Faz 4-5 · Named Result Contract** ✅ 5 Mayıs 2026 — Faz 4 (commit `e6ec3b7`): ReportsController.Run dashboard render öncesi required ResultContract entry'leri eksik/out-of-bounds ise `dashboard_required_result_missing` audit + kullanıcı UYARI. Soft-fail (renderer placeholder zaten basıyor). Faz 5 (commit `5f4f5d2`, Migration 26): PDKS sp_PdksPano (7 RS) + Satış bkm.sp_SatisPano (7 RS) ConfigJson'a `resultContract` idempotent eklendi (camelCase). 4 rapor güncel.
+- [x] **M-10 Faz 6 · Legacy fallback kaldır** ✅ 6 Mayıs 2026 (plan: 06, `plans/archive/06-m10-faz6-widget-migrate.md`) — Migration 27: PDKS 15 + Satış 16 widget legacy `resultSet: N` → `result: "<contractName>"` named binding. `DashboardConfig.ResolveResultSet` 3. dal (legacy `comp.ResultSet`) + `DashboardComponent.ResultSet` property silindi. `PlaceholderRenderer` legacy branch + `DashboardConfigValidator` legacy rules temizlendi (NoBinding artık hard error). 228/228 test yeşil. **rsN regex fallback (V2 builder default)** korundu — ileride builder davranışı contract'a zorlanırsa ayrı bir Faz 7 olur (kapsam dışı tutuldu).
+- [x] **DateTime Faz D · DB DEFAULT GETDATE → GETUTCDATE** ✅ 5 Mayıs 2026 — Migration 25 (`Database/25_DefaultGetUtcDate.sql`) dinamik cursor ile 13 DEFAULT constraint dönüştürdü, isim formatı `DF_<Tablo>_<Kolon>` tutarlı. Faz E (veri shift + SP audit) ayrı.
+- [x] **M-08 Async tutarlilik** ✅ 4 Mayis 2026 — `AdminController.CreateUser` GET sync→async (DB hit'li tek sync action; .ToList()→.ToListAsync()). Diger sync action'larda DB hit yok.
+- [x] **M-09 AsNoTracking sweep** ✅ 4 Mayis 2026 — Read-only EF query'lerde AsNoTracking eklendi: AdminController/Index (5 query), AdminController/CreateUser/EditReport/EditUser/BuildCreateUserFormAsync (8 query), TestController/Index (1 query). Write-track gerektiren `RoleManagementService.PropagateRename`/`UpdateLastLogin`/`Profile.Index` POST'ta dokunulmadi.
+- [x] **M-07 ViewModel BindNever** ✅ 4 Mayis 2026 — Models'a kritik alan `[BindNever]` (mass assignment defansif): User (UserId/PasswordHash/LastLoginAt/CreatedAt/UpdatedAt), ReportCatalog (ReportId/CreatedAt), Role (RoleId/CreatedAt), ReportCategory (CategoryId/CreatedAt), DataSource (CreatedAt). DTO refactor sonra (saf koruma katmanı yeterli).
+- [x] **Dashboard P0 · Config deserialize try/catch** ✅ 4 Mayis 2026 audit — Run path zaten tam kapsanmis (line 591-612: try/catch + `dashboard_config_invalid` audit + bos template fallback + kullanici uyarisi). PreviewDashboardV2'ye de paralel audit eklendi (tutarlilik).
+- [x] **Dashboard P1 · Result set index validation** ✅ 4 Mayis 2026 audit — Save zamani validator negatif kontrol (`DashboardConfigValidator.cs:228`), Render zamani `DashboardConfig.ResolveResultSet` out-of-bounds → PlaceholderRenderer fallback. 6 `ResolveResultSet_*` testi coverage saglar.
+- [x] **Dashboard P1 · Mobile responsive grid** ✅ 4 Mayis 2026 — `DashboardShellRenderer.GridColsClass`: `grid-cols-4` → `grid-cols-1 sm:grid-cols-2 lg:grid-cols-4`, compact da `grid-cols-1 sm:grid-cols-2`. Tailwind CDN runtime JIT class'lari yakalar.
+- [x] **Dashboard P1 · Tailwind local serve** ✅ 4 Mayis 2026 — Tailwind Play CDN (407KB) `wwwroot/lib/tailwindcss/tailwindcss.js`'a indirildi, `_AppLayout.cshtml` script src güncellendi. Chart.js sadece iframe srcdoc içinde (about:srcdoc base + relative URL çözümlenmez), CDN bırakıldı. Font Awesome CDN bırakıldı (webfonts ayrı iş).
+- [ ] **Dashboard P1 · Inline RS boyut limiti / lazy-load** (10K satir)
+- [x] **F-05 · Türkçe UTF-8 normalize** ✅ 4 Mayis 2026 — JS dosyalarındaki ASCII kalıntıları (`Duzenle`, `Bilesen`, `Iptal`, `Once`, `secin`, `basarisiz`, `calisti`, `donmedi` vb.) UTF-8'e çevrildi: param-builder.js, sp-helper.js, builder-core.js, builder-list.js, builder-drawer.js. View'lar zaten temizdi.
+- [x] **CreateUser veri filtresi bölümü (P0)** ✅ 4 Mayis 2026 audit — `CreateUser.cshtml:133` zaten `_AdminUserDataFilterPanel` partial'ını cagiriyor; AdminController.Users.cs `BuildUserFormInput` filter parsing yapiyor; UserManagementService.CreateAsync `SyncDataFiltersAsync` ile DB'ye yaziyor. Sentez yanılgıydı.
+
+#### Büyük (>4h, çok-fazlı)
+- [x] **M-11 Plan 02 · F-9 live preview endpoint** ✅ 6 Mayıs 2026 — F-9 madde 46-55 tamamlandı: `DashboardValidate` JSON endpoint, `builder-feedback.js` mixin (validate/toast/undo), `_ReportFormBuilderFeedbackV2.cshtml` partial (banner + toast container), topbar Doğrula+Geri Al butonları, `init() → captureSnapshot()` page-load anında. **Throttle 300ms (madde 49) kapsam dışı bırakıldı** — manuel "Tam Önizle" buton yeterli, kullanıcı kararı.
+- [x] **M-11 Plan 09 · Designer ↔ Run görsel parite** ✅ 6 Mayıs 2026 — 4 faz tamamlandı:
+    - Faz 1 (`66de65b`): KPI 4 variant brand kart + edit overlay + Chart.js CDN
+    - Faz 2 (`0f6a55a`): Chart.js gerçek render (10 variant) + Table brand kart shell
+    - Faz 3 (`95810d7`): KPI variant-spesifik form alanları (compareColumn/trend/target) + capacity warning
+    - Faz 4 (`9cb2ecb`): Tablo conditional format (4 mod) + total row + stripe + sticky header
+    Plan: `plans/archive/09-designer-run-parite.md`. Search/Pager/CSV bilinçli kapsam dışı (Tam Önizle iframe sağlıyor, ADR-008).
+- [x] **M-11 Plan 02 · F-10 sablon + kbd shortcuts** ✅ 6 Mayıs 2026 — `builder-templates.js` (3 preset: KPI Üçlüsü/Trend Grafik/Detay Tablosu) + `builder-shortcuts.js` (Ctrl+S/P, Esc, Delete, ?). 2 yeni partial: `_ReportFormBuilderTemplatesV2.cshtml` + `_ReportFormBuilderShortcutsV2.cshtml`. CreateReportV2 topbar'da "Şablondan Seç" buton. Smoke: 3 preset apply + 4 shortcut hepsi geçti.
+- [ ] **M-11 Plan 02 · F-11 smart defaults** (~3h)
+- [ ] **M-11 Plan 02 · F-12 e2e + screenshot + journal** (~3h)
+- [ ] **Plan 05 · AST formula parser** (~6h+) — kendi recursive descent parser
+- [ ] **DateTime Faz E · Veri shift + SP/seed hizalama** (yarim gun, FAZ 2 madde 28)
+- [ ] **User P1 · Phone/Dept/Position alanlari** (FAZ 2 madde 24)
+- [ ] **User P1 · Admin liste arama+filtre+son giris** (FAZ 2 madde 23)
+- [ ] **ReportCatalog.AllowedRoles CSV deprecate** (FAZ 2 madde 26)
+- [ ] **F-06 · CSP politikasi** (FAZ 3 madde 34)
+- [ ] **M-06 · EF Core Migrations gecisi** (FAZ 3 madde 29)
+- [ ] **Test coverage %30 hedefi** (FAZ 3 madde 35)
+
+#### User yönetimi P2 (operasyonel iyileştirme — TODO satır 525-536)
+- [ ] Hesap kilitleme (5 basarisiz → 15dk)
+- [ ] Sifre karmasikligi kurallari
+- [ ] Zorla sifre degistirme flag
+- [ ] Admin sifre sifirlama (token ile)
+- [ ] Toplu CSV import (ClosedXML)
+- [ ] AD/LDAP senkronizasyon
+- [ ] Kullanici kopyalama
+- [ ] Avatar / tercihler / aktivite ozeti (P3)
+
+#### Stratejik / belirsiz vade (TARTIŞMA gerekli)
+- [ ] Plan 04 (potansiyel) · Alpine.js + htmx adoption (FAZ 3 madde 40)
+- [ ] Plan 05 (potansiyel) · Scheduled Reports + Email Hangfire (FAZ 3 madde 41)
+- [ ] Yeni proje adi brainstorm (TODO satir 207)
+- [ ] vNext · Sirket ici portal architecture (TODO satir 215)
+- [ ] Yetki revizyonu — granular roller (TODO satir 193, TODO madde 39)
+
+---
+
 ### BIRLESIK ONCELIK SIRASI (22 Nisan 2026 sabah)
 Bu liste asagidakilerin sentezidir:
 - `docs/CONTEXT_MANAGEMENT.md` — bagalm yonetimi anayasasi (bugunku arastirma)
@@ -87,47 +169,178 @@ Bu liste asagidakilerin sentezidir:
 ✅ **M-03 Faz A · User.Roles CSV deprecate (kod-duzeyi)** — commit `2d0c3fd` + `docs/ADR/003-role-model.md`. Auth/Profile/Reports/Admin de-sync noktalari temizlendi. Faz B (nullable kolon) + Faz C (drop) ileride.
 ✅ **session-handoff skill auto-commit** — commit `5df75ff` (skill artik docs/journal dosyasini tek-path commit ediyor, commit-discipline.md istisna eklendi).
 
-#### FAZ 1 — KALAN
-9. ⏳ **M-04 kismi · DashboardRenderer + UserDataFilter + UserRole sync unit tests** — DashboardRenderer XSS (9 test) ve UserDataFilterValidator (17 test) ✅ yazildi. Kalan: UserRole sync idempotency testi (AdminController.SyncUserRoles private method, refactor + test ayri is).
-10. ✅ **dashboard-builder.js: spPreviewReady event listener + kolon datalist** — (commit sonradan doldurulacak). document.addEventListener('spPreviewReady'), populateColumnDatalist, attachListAttribute (compColumn, compLabelCol, ds-col, col-key). Browser dogrulandi: 7 result set -> 51 distinct kolon datalist'te.
-11. ✅ **SP Onizle admin-override panel** — F-02 tamamlandi. ProcParams short-name destegi, SpPreview paramsJson overrride, frontend inline typed inputs (date/number/text/checkbox). Browser dogrulandi: `paramsJson={"Tarih":"2026-04-20","FmTop":"5"}` override -> SP 7 result set dondu.
-12. ✅ **M-02 devam** — tarama: AuthController/DashboardController/ProfileController'da user-facing ex.Message yok. Kalan .Message referanslari audit log alanlarinda (ErrorMessage, LogRun param, dashboard_config_invalid Description) — amacli, user-facing degil.
-13. ✅ **M-03 Faz B · User.Roles nullable + [Obsolete]** — Database/15_NullableUserRolesCsv.sql (idempotent, UserRole senkron kontrolu + ALTER COLUMN NULL); User.Roles `string?` + `[Obsolete]`; Fluent API `.IsRequired()` kaldirildi; 4 obsolete uyarisi temizlendi (AuthController AD provision, AdminController CreateUser, ReportPanelContext pragma suppress, Views/Admin/Index.cshtml ViewModel.UserRoleNames join ile degistirildi).
-14. ✅ **UserRole sync idempotency testi** — `Services/UserRoleSyncService` (DI registered, AdminController constructor'da inject, 3 cagri yeri _userRoleSync.SyncAsync'e cevrildi, private method silindi). `ReportPanel.Tests/UserRoleSyncServiceTests` (EF InMemory, 5 test: add, replace-delta, empty-removes-all, idempotent, other-user-untouched). Package: Microsoft.EntityFrameworkCore.InMemory 10.0.1. Tum suite: 66/66 yesil.
-15. **dashboard-builder.js split** (Faz 2, 2h) — dosya 567 satir (yeni csharp-conventions 500 kirmizi cizgi kurali uygulanmali). Mantikli split: `dashboard-builder-core.js` (state + render + events) + `dashboard-builder-forms.js` (component forms + validators). JS'de de ayni 500 satir kurali.
+#### FAZ 1 — ✅ KAPANDI (22 Nisan 2026)
+9. ✅ **M-04 · DashboardRenderer + UserDataFilter + UserRole sync unit tests** — DashboardRenderer XSS (9 test) + UserDataFilterValidator (17 test) commit `6c70b1e`. UserRoleSyncService + 5 idempotency test commit `b714916`. Tum suite: 66/66 yesil.
+10. ✅ **dashboard-builder.js: spPreviewReady event listener + kolon datalist** — commit `b3ae747`. `document.addEventListener('spPreviewReady')`, populateColumnDatalist, attachListAttribute. Browser dogrulandi: 7 result set -> 51 distinct kolon.
+11. ✅ **SP Onizle admin-override panel** — F-02 tamamlandi, commit `816c8c2`. ProcParams short-name destegi, SpPreview paramsJson override, typed inputs (date/number/text/checkbox).
+12. ✅ **M-02 devam · ex.Message sanitize** — commit `a047957` + `b6ff43a`. Oturum 4'te yeniden tarama: AuthController/Reports/Profile/DataSourceService'de user-facing leak YOK. `async void`, `new HttpClient()` yok. Kalan `.Message` kullanimlari audit log alanlarinda (ErrorMessage, LogRun param) — amacli.
+13. ✅ **M-03 Faz B · User.Roles nullable + [Obsolete]** — commit `bf922ae`. `Database/15_NullableUserRolesCsv.sql` (idempotent, UserRole orphan check + ALTER NULL); [User.cs:31](ReportPanel/Models/User.cs:31) `string?` + `[Obsolete]`; [ReportPanelContext.cs:94-97](ReportPanel/Models/ReportPanelContext.cs:94) pragma; [UserManagementService.cs:54](ReportPanel/Services/UserManagementService.cs:54) yeni create'te Roles yazilmaz. Faz C ADR-003'e gore "cok sonra" — Faz 2 madde 25'te bekliyor.
 
 #### FAZ 2 — BU AY (4 hafta, orta oncelik)
-14. **M-01 · AdminController service extraction** (2 gun) — UserManagementService, ReportManagementService, DataSourceService. Controller endpoint'e inisin, 1736 → ~400 satir.
-15. ✅ **G-04 · Audit log genisletme** — 10 CRUD audit eklendi (datasource create/update, report create/update, role create/update/delete, category create/update/delete). `AuditCrudAsync` private helper (AdminController 1876 -> her call 1-2 satir). Event tipler: `<entity>_create`, `<entity>_update`, `<entity>_delete`. OldValues + NewValues snapshot'lari.
-16. ✅ **G-05 · Cookie HttpOnly/Secure/SameSite/ExpireTimeSpan** — Program.cs AddCookie: HttpOnly=true, SecurePolicy=Always (prod) / SameAsRequest (dev), SameSite=Strict, ExpireTimeSpan=8h.
-17. ✅ **G-06 · TestController [Authorize(Roles="admin")] + [ValidateAntiForgeryToken]** — DEBUG-only controller bile olsa class-level yetki + POST CSRF koruma.
-18. **M-05 · DashboardHtml legacy retirement** (1 gun) — kolonu archive tablo'ya tasi, DashboardConfigJson mandatory, Form'dan DashboardHtml input kaldir.
-19. **F-03 · dashboard-builder.js memory leak** (1h) — event delegation veya AbortController. Drag-drop listener re-attach sorunu.
+14. ✅ **M-01 · AdminController service extraction** — 5 adimda tamamlandi:
+    - step 1 CategoryManagementService — commit `f0e6412`
+    - step 2 RoleManagementService — commit `d2228df`
+    - step 3 DataSourceManagementService — commit `175f743`
+    - step 4 ReportManagementService — commit `44d8a5f`
+    - step 5 UserManagementService — commit `212de63`
+    AdminController 1736 satirdan service'lere bolundu. UserRoleSyncService de ayri (madde 9).
+15. ✅ **G-04 · Audit log genisletme** — 10 CRUD audit eklendi, commit `effa7b5`. `AuditCrudAsync` private helper.
+16. ✅ **G-05 · Cookie HttpOnly/Secure/SameSite/ExpireTimeSpan** — commit `fdc97ca`. Program.cs AddCookie.
+17. ✅ **G-06 · TestController [Authorize(Roles="admin")] + [ValidateAntiForgeryToken]** — commit `fdc97ca` (G-05 ile birlesik).
+18. ✅ **M-05 · DashboardHtml legacy retirement** — 3 faz tamamlandi: Faz A (CSV kaldir ~ ADR-005), Faz B (`a2feb5d`) legacy retirement + audit event, Faz C (`0f73478`) DB DROP COLUMN + model sil. Migration `17_DropDashboardHtml.sql`, ADR-005.
+19. ✅ **F-03 · dashboard-builder.js memory leak** — 4 Mayis 2026 audit. F-7 split sirasinda cozulmus: `builder-list.js:71` event delegation + `dragDropBound` guard. js-conventions.md cozumu uygulanmis.
 20. ✅ **F-04 · AGENT.md yaniltici icerik** — commit `7a7b81d` (silindi).
 21. **SP mimarisi · sp_PdksPano → inline TVF refactor** (3h) — `fn_PdksDetay`, `fn_PdksKpiOzet`, `fn_PdksDepartmanKirilim` + orkestrator SP. ADR-004.
 22. **Dashboard canli onizleme iframe** (4h) — builder'da gercek render preview.
 23. **User P1 · Admin listesi arama + filtre + son giris** (1 gun) — admin user tab'a arama kutusu, rol/aktif/AD filtresi, LastLoginAt gosterimi.
 24. **User P1 · User modeline Phone/Department/Position** (4h) — migration 16 + form alanlari.
-25. **M-03 Faz C · User.Roles kolon drop** (30dk-1h) — `16_DropUserRolesCsv.sql` + model field sil. Faz B'den sonra, veri validation sonra.
+25. ✅ **M-03 Faz C · User.Roles kolon drop** — 4 Mayis 2026 tamamlandi. `Database/19_DropUserRolesCsv.sql` (idempotent), `User.Roles` field + EF mapping + pragma silindi. DB drop edildi.
 26. **ReportCatalog.AllowedRoles CSV deprecate** (1 gun) — ADR-004 adayi. ReportAllowedRole junction birincil, CSV kaldir.
+27. ✅ **dashboard-builder.js (V1) split** — 4 Mayis 2026 audit. F-7 modulerlestirmesinde zaten yapildi: `dashboard-builder/{core,list,canvas,contract,drawer,preview,templates}.js` (en buyuk 333 satir, hard-limit 350 altinda). Yeni gorev: `builder-v2/builder-drawer.js` 511 satir asimi (AKTIF SIRA Orta'da listelendi).
+28. ✅ **DateTime.Now → DateTime.UtcNow sweep (app kodu / ADR-006 Faz C)** — tum 19 usage UtcNow'a cevrildi. ADR-006 yazildi. Takip eden iki ayri is:
+    - **Faz D · DB DEFAULT `GETDATE()` → `GETUTCDATE()`** (2-3h) — 14+ DEFAULT constraint (02_CreateTables.sql + Migrations/*). ALTER TABLE DROP CONSTRAINT + ADD CONSTRAINT migration + backup gerekli.
+    - **Faz E · Veri shift + SP/seed hizalama** (yarim gun) — eski "naive-local" satirlari UtcNow ile hizala (tum tarih kolonlarinda `-180 dk`). SP'lerde `GETDATE()` → `GETUTCDATE()` audit. 03_SeedData.sql guncelleme. Backup/rollback plani sart.
+28.5. **G-09 · SP execution read-only login** (CANLI ÖNCESİ ZORUNLU, 2h) — Rapor çalıştırma SP'leri geniş yetkili connection string ile çalışıyor. SP içinde UPDATE/INSERT/DELETE varsa kullanıcı farkında olmadan DML tetikleyebilir. **Çözüm:** Rapor execution için ayrı read-only SQL login (db_datareader + EXECUTE). DataSource modeline `ReadOnlyConnString` ekle veya mevcut ConnString'i read-only login ile değiştir. Canlıya almadan önce mutlaka yapılmalı (kullanıcı kararı 2026-05-01).
+
+29. **M-10 · ADR-007 Named Result Contract** (6 faz, ~1.5 gun toplam) — dashboard widget'larda index bagimliligini kaldir. `resultSet: N` → `result: "chartData"` name-based binding. Scope daraltildi (frontend rewrite / event bus / metadata-first SP REDDEDILDI). Kural: **declare now, enforce later** — shape field schema'da, enforcement Faz 4. Naming: camelCase. Fazlar:
+    - **Faz 1** (~2h) · ADR-007 doc + `DashboardConfig.ResultContract` dictionary + `DashboardComponent.Result` field + `DashboardRenderer` resolver (precedence: `Result > ResultSet`, legacy fallback).
+    - **Faz 2** (~3h) · `dashboard-builder.js` + admin form UI name-based binding. Widget editor'da result dropdown (isim listesi).
+    - ✅ **Faz 3** · Admin save validation — hard: name unique, resultSet index valid, widget.result resolve. Soft: required-ama-kullanilmayan uyari. 10 hard + 3 soft rule, admin-dostu TR mesajlar. `DashboardConfigValidator` + 19 unit test. 96/96 yesil.
+    - **Faz 4** (~1h) · Runtime **soft-fail** (direkt throw DEGIL): required result eksik/bos → kullaniciya "Veri bulunamadi" + `dashboard_required_result_missing` audit event.
+    - **Faz 5** (~2h) · Migration 18 — PDKS (7 RS) + Satis (7 RS) ConfigJson rewrite. **Idempotent**: `resultContract` yoksa uret, varsa atla. `Explore` agent ile her resultSet icin camelCase isim onerisi.
+    - **Faz 6** (~1h) · Legacy `resultSet: N` binding deprecate + renderer fallback kaldir (ayri PR, tum configler migrate edildikten sonra).
+
+29.5. **M-11 · Dashboard Builder UX Redesign + Chart Expansion** (13 faz, ~60h toplam / 1.5-2 hafta solo) — Apache Superset'ten esinlenen modern admin builder. Plan dosyasi: `C:/Users/fikri.eren/.claude/plans/imdi-planlama-yap-bu-optimized-hippo.md`. Mockup: `ReportPanel/wwwroot/mockups/dashboard-builder-v3.html` (Gridstack + Chart.js canli, BKM renkleri tasarim referansi — implementasyon `_AppLayout` + `style.css` custom class'lari ile ayri port edilir). ADR-008 + ADR-009 kabul edildi (24 Nisan). Branch: `feature/m-11-dashboard-builder-redesign`.
+
+    **Guncellemeler (24 Nisan, ADR-008/009 sonrasi):**
+    - **Gridstack.js kabul** — builder-only CDN, runtime (Reports/Run) CSS-grid inline-style. Onceki "Gridstack reddet" karari tersine cevrildi.
+    - **preview = Reports/Run tek renderer** — builder onizleme iframe `/Reports/Run/{id}?preview=1&configOverride=<draft>` ile. Admin-only override. ADR-008 karar A patikasi.
+    - **ReportType kolonu SIL** — tum raporlar dashboard. F-1.5 alt-commit 3 ile migration 19. Run.cshtml tamamen yeniden yazilir (tablo render path'i drop). ADR-009.
+    - **Font Inter + JetBrains Mono** builder-only, `_AppLayout`'a eklenmez.
+    - **Calculated fields** (turetilmis alanlar) — AST-based sandbox parser, `eval()` yasak (F-8).
+    - **Tasarim uyum kurali** — mockup birebir kopyalanmayacak; proje `.btn-brand` / `.card-brand` / `.form-input-brand` + max-w-7xl + `_AppLayout` header/footer icinde.
+
+    **Superset'ten alinan 10 pattern:** Veri|Gorunum drawer tab'i · kategorili chart gallery (arama + chip filter) · Native Filter Bar (param chip'leri) · 3-tab inspect preview (Cikti|Sorgu|JSON) · widget hover menu · loading/empty/error state · kisayol modali (?) · sablon market · dark mode (M-12'ye) · duplicate action.
+
+    **v2 tasarimdan alinan gorsel kit:** topbar kbd hints · collapsible contract bar · component-card · type badge · tab-strip · swatch/icon grid · span toggle · suggest-pill · section-hd · preview panel animasyonu.
+
+    **Widget matrisi:** KPI 4 varyant (basic/delta/sparkline/progress), Chart 10 tip (line/area/bar/hbar/stacked/pie/doughnut/radar/polar/scatter), Table kosullu format (veri bari/renk skalasi/ikon/negatif kirmizi) + ayarlar (satir detay/toplam/cizgili/sticky/arama/sayfalama). Heatmap + Gauge M-12 disabled.
+
+    **YENI unsurlar** (plan disi, 23 Nisan eklendi):
+    - **Turetilmis Alanlar** (formul → yeni kolon) — admin `DeltaCiro = BugunCiro - GecenYilBugun` gibi client-side hesaplanan alan tanimlar, suggest pill'lere `fx DeltaCiro` olarak girer. Fonksiyonlar: `+ - * /`, SUM, AVG, ROUND, IF, COALESCE, CONCAT. Hatali formul inline error banner.
+    - **Veri Kaynagi bar** (drawer ustunde) — Baglanti (DerinSIS) · SP · RS sayisi · son calisma suresi · Onizle + Ayar butonlari.
+
+    **Fazlar:**
+    - **F-0** (~1h) · M-10 Faz 3 bekleyen commit + ADR-008 yaz + branch kurulum.
+    - **F-1** (~3h) · Migration 18 v1→v2 schema + table→dashboard auto-convert (idempotent, audit log'lu).
+    - **F-1.5** (~4h) · `ReportCatalog.ReportType` [Obsolete] → SIL. `isDashboard` dallanmasi 5+ yerden temizle (ReportsController/ReportManagementService/Run.cshtml/EditReport.cshtml). Migration 19 drop.
+    - **F-2** (~5h) · `DashboardRenderer.cs` (422) → `Rendering/` altinda IWidgetRenderer + Kpi/Chart/Table/Shell + Factory + DI refactor.
+    - **F-3** (~4h) · Schema v2 model (variant + numberFormat + axisOptions + tableOptions + calculatedFields) + validator genisletme.
+    - **F-4** (~5h) · 10 chart tipi renderer (Chart.js native; plugin YOK) + axisOptions + numberFormat emit.
+    - **F-5** (~4h) · 4 KPI variant renderer (basic/delta/sparkline/progress).
+    - **F-6** (~4h) · Tablo kosullu format (dataBar/colorScale/iconUpDown/negativeRed) + tableOptions.
+    - **F-7** (~10h) · UI redesign — `dashboard-builder.js` (775) → 6 modul (core/list/drawer/contract/preview/templates) + split-pane Razor + BKM brand CSS.
+    - **F-8** (~6h) · Drawer form — type switcher, variant/chart picker, swatch+icon grid, span toggle, suggest pills, **Turetilmis Alanlar editoru**.
+    - **F-9** (~5h) · Live preview endpoint + validation banner + dirty chip + toast + Geri Al (last-save snapshot).
+    - **F-10** (~3h) · Sablon sistemi (KPI Trio/Trend Grafik/Detay Tablo preset) + kbd shortcuts (Ctrl+S/P, Esc, Delete, ?).
+    - **F-11** (~3h) · Smart defaults (SP preview → suggest pills + chart tipi onerisi).
+    - **F-12** (~3h) · E2E smoke + screenshot + journal.
+
+    **Commit sayisi:** ~19. Her commit <15 dosya (commit-discipline.md).
+
+    **M-12'ye ertelenenler:** dark mode · Cmd+K fuzzy palette · structure widgets (markdown/iframe/divider) · heatmap/gauge/treemap/sankey/funnel/bubble/combo ileri chart tipleri · tam undo/redo stack · cross-chart filter · Chart.js plugin'leri (datalabels/zoom/annotation/matrix). ~~Gridstack~~ 24 Nisan'da geri alindi, F-5 aktif.
 
 #### FAZ 3 — BU CEYREK (3 ay, dusuk oncelik / temizlik)
-27. **M-06 · EF Core Migrations gecisi** (1 gun) — mevcut semayi baseline yap, yeni degisiklikler migration. Database/legacy/ olustur.
-28. **M-07 · ViewModel BindNever + DTO pattern** (4h) — mass assignment riski. UserId, PasswordHash gibi kritik alanlar bind edilmesin.
-29. **M-08 · Async/await tutarlilik** (2h) — AdminController.cs:1087-1091 vb. `.ToList()` → `.ToListAsync()`.
-30. **M-09 · AsNoTracking tutarlilik** (2h) — 15+ read-only query.
-31. **F-05 · Turkce UTF-8 normalize** (3h) — `turkish-ui-normalizer` skill'i ile tum "Duzenle"/"Bilesen" → "Düzenle"/"Bileşen".
-32. **F-06 · CSP politikasi** (1 gun) — opsiyonel; inline onclick/script temizle, header ekle.
-33. **Test coverage %30 hedefi** (1 hafta) — AdminController integration, ReportsController.Run, Admin SpPreview, PasswordHasher edge cases.
-34. **G-07 · Dashboard iframe policy sikisitirma** (30dk) — Referrer-policy + sandbox kombinasyonu gozden gecir.
-35. **G-08 · DashboardRenderer JSON escape regresyon testi** (1h) — `</script>`, `<!--`, case-insensitive bypass test.
-36. **ADR yazimi** (1h) — ADR-001 data-access, ADR-002 dashboard-architecture. (ADR-003 role-model ✅ yazildi bugun.)
+29. **M-06 · EF Core Migrations gecisi** (1 gun) — mevcut semayi baseline yap, yeni degisiklikler migration. Database/legacy/ olustur.
+30. **M-07 · ViewModel BindNever + DTO pattern** (4h) — mass assignment riski. UserId, PasswordHash gibi kritik alanlar bind edilmesin.
+31. **M-08 · Async/await tutarlilik** (2h) — AdminController.cs:1087-1091 vb. `.ToList()` → `.ToListAsync()`.
+32. **M-09 · AsNoTracking tutarlilik** (2h) — 15+ read-only query.
+33. **F-05 · Turkce UTF-8 normalize** (3h) — `turkish-ui-normalizer` skill'i ile tum "Duzenle"/"Bilesen" → "Düzenle"/"Bileşen".
+34. **F-06 · CSP politikasi** (1 gun) — opsiyonel; inline onclick/script temizle, header ekle.
+35. **Test coverage %30 hedefi** (1 hafta) — AdminController integration, ReportsController.Run, Admin SpPreview, PasswordHasher edge cases.
+36. ✅ **G-07 · Dashboard iframe policy sikisitirma** — 4 Mayis 2026 audit. Run.cshtml temiz; V2 preview iframe'leri `allow-same-origin` icerir (07ccee8 tab bug fix), admin-only kabul edilebilir risk. Detay: AKTIF SIRA.
+37. ✅ **G-08 · DashboardRenderer JSON escape regresyon testi** — `DashboardRendererTests.cs` zaten 6 escape testi içeriyor (lower/upper/mixed `</script>` + `<!--` + eval guard + data island). 4 Mayıs 2026 audit.
+38. ✅ **ADR yazimi** — ADR-001 data-access ✅ (4 Mayis 2026, `docs/ADR/001-data-access.md`). ADR-002 dashboard-architecture zaten ADR-005 olarak yazildi (22 Nisan). ADR-003 role-model + ADR-004 skill-design ✅ 22 Nisan.
+41. **PLAN 05 (potansiyel) — Scheduled Reports + Email Delivery** (kullanici 28 Nisan 2026 oturum 4: "sisteme cron job ekleyip raporlari mail olarak belirlenen zamanda gonderme sansimiz olabilir mi") — Tier 3, R refactor + Plan 04 sonrasi.
+   - **Yol**: Hangfire (cron + dashboard + persistence) + MailKit (SMTP). Vanilla BackgroundService + Cronos alternatif (minimal).
+   - **Schema**: `ScheduledReport` (Id, ReportId, CronExpression, Recipients, Format html/xlsx, IsActive, NextRunAt, LastRunAt). Migration `18_CreateScheduledReports.sql`.
+   - **UI**: `Admin/ScheduledReports/{Index,Create,Edit}` — Admin/Index'e yeni subnav tab veya ayri route.
+   - **Service**: `IScheduledReportRunner` Hangfire job — cron tetik → rapor calistir (UserDataFilter dahil) → mail gonder (HTML inline veya Excel attachment) → AuditLog.
+   - **Config**: `appsettings.json:Smtp` (Host/Port/User/Pass/From) — env var prod icin.
+   - **Tahmini**: ~2-3 gun, 8-12 commit, 1 migration, 2 yeni dep (Hangfire + MailKit), 4-5 yeni view, 2 service, 1 ADR.
+   - **Risk**: Mail spam, cron drift (server timezone), HTML email client uyumu (Outlook/Gmail farkli render).
+
+40. **PLAN 04 (potansiyel) — Alpine.js + htmx adoption** (TARTISMA gerekli, R1-R5 refactor sonrasi) — Kullanici 28 Nisan 2026 oturum 4: "kod kisaltmasi da yapmak daha efektif kodlamalar yazmak lazim js yerine daha iyi bir js framework kullanmak isi hizlandirabilir mi". Vanilla JS DOM API kodu kalabaligi (~531 sat admin-report-form, ~333 sat builder-drawer). Aday kombinasyon: **Alpine.js** (form state, mode segmented, dirty chip, opt-card secim) + **htmx** (filter row add/remove, SP Onizle swap, datasource list reload). Build step yok (CDN), Razor MVC + Tailwind ile uyumlu. Kademeli adoption (sayfa basi). PLAN-FIRST: ayri oturum, Tier 3 plan, before/after metrik (satir basina kazanc), regresyon test.
+
+39. **YETKILENDIRME REVIZYONU** ✅ **PLAN 07 İLE KAPANDI** (4-6 Mayıs 2026, `plans/archive/07-yetki-filter-revizyon.md`)
+   - **Yapılanlar:** FilterDefinition master tablo (DataSource bazlı composite unique) + UserDataFilters dinamik UI + deny-by-default + raporGrubu (eski raporKategori, urunKategori karışmasın diye rename) reportAccess scope + Reports/Index liste filtresi + Admin Filtreler CRUD (OptionsQuery Test butonu) + ReportCategories→ReportGroups tam rename
+   - **Migration'lar:** 20 (FilterDefinition + backfill), 21+22 (Sube canonical denemesi → geri sarıldı, Plan B), 23 (raporKategori → raporGrubu rename), 24 (ReportCategories → ReportGroups tablo+kolon)
+   - **Kalan:** SP refactor sp_PdksPano @bolum_Filtre default için yeni FilterDefinition (Faz 6 admin CRUD ile elle eklenebilir); IK (Zirve) sube tablosu netleşince (IK, sube) FilterDefinition aktif edilir; urunKategori (satış) DerinSIS urnKtgr2 üzerinden Faz 6 CRUD ile eklenir + sp_SatisPano `@urunKategori_Filtre` parametre eklenir
+   - **Granular role + permission** (AdminController action-level [Authorize], sidebar conditional render) hala bekliyor — Plan 06 vNext / şirket içi portal kapsamında ayrı oturum.
 
 #### Toplam efor tahmini
 - Faz 0 (bugun): 3 saat — blocker'lari kaldir
 - Faz 1 (hafta): ~5 gun dagitilmis
 - Faz 2 (ay): ~10 gun dagitilmis
 - Faz 3 (ceyrek): ~15 gun dagitilmis
+
+---
+
+### YENI PROJE ADI ARANIYOR (28 Nisan 2026)
+Kullanici 28 Nisan 2026 oturum 4: "projeye reporthub demeyelim bir ara degistirelim isim bulalim". 
+Mevcut iceride brand: "ReportHub" (geçici), kod adi "ReportPanel" (klasor + namespace). 
+Sidebar + AuthLayout'ta "ReportHub" gectigi yerler "BKM Kitap" + "Rapor Paneli" olarak guncelendi 
+(R3.2, 28 Nisan), ama bu da yer tutucu. Yeni isim adaylari + brand-mark logosu (mevcut bkm-logo.svg 
+disinda alternatif logo asetleri) icin ayri brainstorm gerekli. Plan 06 vNext sirket ici portal 
+hazirligi sirasinda (yeni feature seti netlesince) isim de finalize olabilir.
+
+### MAJOR VISION — Sonraki Versiyon: Rapor Portali → Sirket Ici Portal (28 Nisan 2026)
+Kullanici 28 Nisan 2026 oturum 4: "sonraki versiyonda rapor portalindan sirket ici portala dogru evireceğiz yapiyi". 
+Mevcut: rapor + dashboard portal. Hedef versiyon vNext: tam sirket ici portal.
+
+**Eklenebilecekler (taslak):**
+- **Günlük tamim / sirküler / genelge** (28 Nisan 2026 kullanici eklemesi) — günlük resmi duyuru, departman/herkese, okundu-onayli, arsiv, search
+- Duyurular / haberler (announcement feed — günlük tamim ile birlikte ama serbest formatli)
+- Departman / takim dizini (org chart)
+- Doküman / dosya paylasimi (intranet drive)
+- Mesajlasma / yorum (comment thread)
+- Form / anket (form builder + survey)
+- Prosedür / SOP yonetimi (knowledge base)
+- Takvim / etkinlik (event calendar)
+- KPI / hedef takibi (OKR pano)
+- Onay akislari (workflow / approval chains)
+
+**Mimari etkiler (degerlendirilmesi gereken):**
+- Multi-tenant / departman izolasyonu — yetki revizyonu (TODO #39) BURADA kritik
+- Rol modeli granular hale gelmeli (sadece admin yerine: report_designer, hr_admin, doc_manager, vb.)
+- Sidebar conditional render — kullanicinin yetki olduğu modul/menüleri sadece görür
+- Background services çoğalir (Plan 05 cron+email burada genisler — duyuru bildirimi, takvim hatirlatici, vb.)
+- Search global — Elasticsearch / SQL FTS / Meilisearch?
+- Notification subsystem (red bell icon mevcut placeholder, gerçek olur)
+- File storage strategy (MinIO/S3 veya disk)
+- Real-time updates (SignalR — comment thread, notification push)
+
+**Aksiyon:** Plan 03 (M-13 design system) + Plan 04 (Alpine/htmx) + R refactor + Plan 05 (cron/email) tamamlandiktan sonra **Plan 06 — vNext architecture** ayri Tier 3 oturum: skopla alimlanacak (öncelikli modüller, faz planlamasi, breaking change yönetimi). Mevcut url + session + role infrastructure korunmali, modül-by-modül opt-in.
+
+---
+
+### PLAN 03 — M-13 PROJECT-WIDE DESIGN HARMONIZATION ✅ KAPANDI (28 Nisan 2026)
+Plan dosyasi: [plans/archive/03-project-wide-design-system-harmonization.md](plans/archive/03-project-wide-design-system-harmonization.md). Backup branch: `backup/pre-shell-2026-04-27`.
+
+**Sonuc (oturum 4, 28 Nisan):** Faz A+B (Plan 03 ilk yarisi, oturum 3) + Faz C+D+E+F1 (Plan 03 ikinci yarisi, oturum 4) tamamlandi. 17 view dosyasi proje genelinde tek pattern'a alindi: hero + paper card + .field/.lab/.inp + .btn + .dt + subnav + opt-card. Builder topbar Razor blok silinip _AppLayout topbar slot'a tasindi (mode segmented + dirty chip + 4 buton). Auth shell ayrildi (_AuthLayout yeni). _Layout.cshtml legacy Bootstrap silindi.
+
+**Net commit'ler oturum 4:**
+- `7bc8cb0` _FooterHint partial Dashboard model mismatch fix (smoke test sırasinda yakalandi)
+- `831319b` C1: AccessDenied + Reports/Run + Test/Index pattern adaptation
+- `9ba3c61` C2: 6 admin form'u + .opt-card pattern (style.css) + admin-datasource-form.js JS toggle kaldirildi (CSS :has())
+- `fc55063` C3: Admin/Index sub-nav + .dt hub (.subnav pattern style.css'e eklendi, 652 → 430 satir, %34 azalma)
+- `4ada9e6` D: EditReport + CreateReport pattern + builder-topbar consolidation, sidebar Yonetim section 6→1 link sadelestirme
+- `4d2f5d2` E: _AuthLayout YENI + Login + Error pattern + _Layout.cshtml legacy SİLİNDİ
+- `c8ce59f` F1: ui-ux-pro-max audit fix (44px touch target mobile + prefers-reduced-motion) + sidebar collapse buton fix (60px wide içinde sığmıyordu)
+
+**Net etki:** ~1850 satir azalma, 7 yeni commit, 17 view + 4 CSS/JS dosyasi etkilendi.
+
+**Detay Faz A/B/C/D/E/F çizelgesi:** [plans/archive/03-project-wide-design-system-harmonization.md](plans/archive/03-project-wide-design-system-harmonization.md). Tum fazlar ✅ kapandi (commit'ler yukarida).
 
 ---
 
@@ -296,9 +509,7 @@ END
   - ReportPanel/Models/User.cs:27
   - ReportPanel/Controllers/DashboardController.cs:68-82 (CSV parse)
   - ReportPanel/Controllers/ReportsController.cs:73-75 (normalize)
-- [ ] **DashboardHtml vs DashboardConfigJson dual storage**: Hangisi source of truth belirsiz, ikisi de doldurulabiliyor. **Coz:** DashboardConfigJson'u birincil yap, DashboardHtml'i legacy isaretle veya kaldir. Migration script hazirla.
-  - ReportPanel/Models/ReportCatalog.cs (iki kolon)
-  - Database/10_AddDashboardColumns.sql + 11_AddDashboardConfigJson.sql
+- [x] ~~**DashboardHtml vs DashboardConfigJson dual storage**~~ → ✅ M-05 3 faz kapandi (Faz C commit `0f73478`, migration 17, ADR-005). DashboardConfigJson tek source-of-truth.
   - ReportsController.cs:238-249 (iki render path)
 - [ ] **Data access stratejisi belirsiz**: EF Core var, Dapper hic kullanilmamis (Program.cs'de register yok) ama SP'ler var (sp_PdksPano.sql, sp_SatisPano.sql). SP'ler ADO.NET ile mi, EF FromSqlRaw ile mi cagriliyor? **Coz:** Tek strateji sec - ya EF Core + SP'leri repository'ye al, ya Dapper ekle. Dokumante et.
 
@@ -406,7 +617,7 @@ END
 
 **P2 - Mimari:**
 - [ ] **Runtime JS ayir**: DashboardRenderer.cs icinden ~100 satir inline JS'i wwwroot/js/dashboard-runtime.js'e cikar, render sadece config + script src uretsin.
-- [ ] **Legacy DashboardHtml path**: ReportCatalog.DashboardHtml + RenderDashboardTemplate kullaniliyor mu? Kullanilmiyorsa kolonu ve code path'i kaldir (ReportsController.cs:247-248).
+- [x] ~~**Legacy DashboardHtml path**~~ → ✅ M-05 Faz C (`0f73478`) RenderDashboardTemplate silindi, kolon DROP.
 - [ ] **DashboardRenderer static -> DI**: Test edilebilirlik icin IDashboardRenderer interface.
 
 #### P3 - Sonra (nice-to-have)

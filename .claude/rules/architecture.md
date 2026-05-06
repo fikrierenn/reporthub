@@ -11,7 +11,7 @@ _Kapsam: Projenin genel mimarisi, karar kayıtları (ADR'lere dönüşene kadar 
 
 ## Dashboard Mimarisi
 
-- **Config-driven JSON.** `ReportCatalog.DashboardConfigJson` birincil. `DashboardHtml` (legacy) kaldırılacak (TODO M-05).
+- **Config-driven JSON.** `ReportCatalog.DashboardConfigJson` tek source-of-truth. `DashboardHtml` kolonu DROP edildi (ADR-005, migration 17, commit `0f73478`).
 - **Renderer:** `Services/DashboardRenderer.cs` — statik, StringBuilder ile HTML + inline JS emits.
 - **Güvenlik:** iframe sandbox (`allow-scripts` only, `allow-same-origin` yok) — XSS büyük ölçüde izole.
 - **XSS önlemleri (hepsi uygulanmış):**
@@ -30,9 +30,8 @@ _Kapsam: Projenin genel mimarisi, karar kayıtları (ADR'lere dönüşene kadar 
 ## Bilinen Tutarsızlıklar (YÜKSEK risk)
 
 1. **User.Roles CSV + UserRole tablo ikili sistem** — TODO M-03, bu hafta.
-2. **ReportCatalog.DashboardHtml + DashboardConfigJson dual storage** — TODO M-05, bu ay.
-3. **AdminController 1736 satır** — service layer yok. TODO M-01, bu ay.
-4. **Exception handling stack trace sızdırıyor** (`ex.Message` user'a gösteriliyor) — TODO M-02, bu hafta.
+2. **AdminController 1736 satır** — service layer yok. TODO M-01, bu ay.
+3. **Exception handling stack trace sızdırıyor** (`ex.Message` user'a gösteriliyor) — TODO M-02, bu hafta.
 
 ## ORTA risk
 

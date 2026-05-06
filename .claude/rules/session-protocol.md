@@ -57,6 +57,35 @@ Kullanıcı yeni bir kural / tercih söylüyorsa konuşmada kalmaz, hemen ilgili
 ### Mimari karar → ADR
 Mimari bir karar alındıysa `docs/ADR/NNN-konu.md` yaz (veya en azından TODO'ya "ADR-X yaz" kaydı düş).
 
+### 3+ adımlı plan → TodoWrite + plan-tracker (OTOMATIK, HATIRLATMASIZ)
+
+Kullanıcı 3+ adımlı bir iş tanımladığı ya da Claude kendisi çok fazlı iş planlıyorsa (faz A, B, C / madde 1-2-3 / önce X sonra Y sonra Z), **kullanıcı demeden, reminder beklemeden**:
+
+1. **TodoWrite** çağır — her faz/adım ayrı item, ilki `in_progress`.
+2. **`plan-tracker` skill** çağır (Skill tool) — TODO.md'deki aktif faz bölümüne maddeleri yazsın. İş bittikçe ✅ + commit hash.
+
+Kullanıcının "TodoWrite kullanmadın" / "planı dosyaya yazmadın" demesi bu kuralın ihlalidir. 22 Nisan 2026 akşam: ADR-007 6-fazlı plan konuşmada kaldı, kullanıcı hatırlatmak zorunda kaldı. Tekrarı yasak.
+
+**Skill çağırma dili netleştirme** (Claude'ın sık kaçırdığı):
+- TodoWrite **yetmez** — sadece in-session bellek. Compact / `/clear` / oturum sonu = uçar.
+- plan-tracker **dosyaya yazar** — kalıcı. Plan + ilerleme + commit hash.
+- İkisi **paralel** kullanılır, biri diğerinin yerine değil.
+
+### Skill/Agent/MCP proaktif kullanım
+
+İş görünümüne göre:
+
+| Tetik | Tool | Ne zaman |
+|---|---|---|
+| 3+ dosya keşif gerekli | `Explore` agent | "Kodda X pattern nerede?" / "NN dashboard config'lerini tara" |
+| Mimari karar + alternatif değerlendirme | `Plan` agent | "Şu refactor'ı nasıl yaparız, tradeoff?" |
+| 3+ adımlı iş | TodoWrite + `plan-tracker` | Her çok-fazlı plan |
+| Oturum sonu | `session-handoff` | "iyi geceler" / "handoff" / oturum bitişi sinyali |
+| DB işi | `mcp__lokaldb__*` veya `mcp__sqlserver__*` | Migration, schema check, veri validation |
+| Dashboard/UI regresyon | `mcp__Claude_Preview__*` | Render smoke test, console error, screenshot |
+
+Kullanıcı "skill kullan", "agent çağır" demezse bile yukarıdaki tetikler geldiğinde **sessizce** proaktif çağrılır. Overhead endişesi yoksa kullan.
+
 ---
 
 ## Oturum Sonu

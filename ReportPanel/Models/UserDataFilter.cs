@@ -23,7 +23,7 @@ namespace ReportPanel.Models
 
         public int? ReportId { get; set; } // null = tüm raporlar
 
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         // Navigation
         [ForeignKey("UserId")]

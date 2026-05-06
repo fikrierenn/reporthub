@@ -1,137 +1,63 @@
 @model ReportPanel.ViewModels.DashboardViewModel
+@using System.Globalization
 @{
     Layout = "_AppLayout";
-    ViewData["Title"] = "Dashboard - BKM Rapor Paneli";
+    ViewData["Title"] = "Genel Bakış - BKM Rapor Paneli";
+    ViewData["PageTitle"] = "Genel Bakış";
+
+    var trCulture = new CultureInfo("tr-TR");
+    var todayStr = DateTime.Now.ToString("d MMMM yyyy, dddd", trCulture);
+    var firstName = !string.IsNullOrWhiteSpace(Model.FullName)
+        ? Model.FullName.Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? Model.User
+        : Model.User;
+
+    string GreetingByHour()
+    {
+        var h = DateTime.Now.Hour;
+        if (h < 6) return "İyi geceler";
+        if (h < 12) return "Günaydın";
+        if (h < 18) return "İyi günler";
+        return "İyi akşamlar";
+    }
+
+    var statusDotColor = Model.SystemStatusKind switch
+    {
+        "warn" => "var(--warn)",
+        "err"  => "var(--danger)",
+        _      => "var(--ok)"
+    };
 }
 
-<div class="mb-8">
-    <h1 class="text-3xl font-bold text-gray-900 mb-2">
-        Hoş geldin, @Model.User!
-    </h1>
-    <p class="text-gray-600">
-        Rolleriniz: @string.Join(", ", Model.UserRoles)
-    </p>
-</div>
-
-<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-    <div class="card-brand">
-        <div class="card-body-brand">
-            <div class="flex items-center">
-                <div class="w-12 h-12 bg-brand rounded-lg flex items-center justify-center">
-                    <i class="fas fa-file-alt text-white text-xl"></i>
-                </div>
-                <div class="ml-4">
-                    <p class="text-sm text-gray-600">Erişilebilir Rapor</p>
-                    <p class="text-2xl font-bold text-gray-900">@Model.ReportCount</p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="card-brand">
-        <div class="card-body-brand">
-            <div class="flex items-center">
-                <div class="w-12 h-12 bg-green-500 rounded-lg flex items-center justify-center">
-                    <i class="fas fa-play text-white text-xl"></i>
-                </div>
-                <div class="ml-4">
-                    <p class="text-sm text-gray-600">Bu Ay Çalıştırılan</p>
-                    <p class="text-2xl font-bold text-gray-900">@Model.MonthlyRunCount</p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="card-brand">
-        <div class="card-body-brand">
-            <div class="flex items-center">
-                <div class="w-12 h-12 bg-blue-500 rounded-lg flex items-center justify-center">
-                    <i class="fas fa-clock text-white text-xl"></i>
-                </div>
-                <div class="ml-4">
-                    <p class="text-sm text-gray-600">Son Çalıştırma</p>
-                    <p class="text-2xl font-bold text-gray-900">
-                        @(Model.LastRunAt.HasValue ? Model.LastRunAt.Value.ToString("dd.MM.yyyy HH:mm") : "Yok")
-                    </p>
-                </div>
-            </div>
-        </div>
+<div class="hero">
+    <h1>@GreetingByHour(), @firstName 👋</h1>
+    <div class="sub">
+        <span class="mono">@todayStr</span>
+        <span class="pill"><span class="dot" style="background:@statusDotColor"></span>@Model.SystemStatus</span>
+        <span class="pill mono">@Model.DataSourceStatus</span>
     </div>
 </div>
 
-<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-    <div class="card-brand">
-        <div class="card-header-brand">
-            <h2 class="text-lg font-semibold text-gray-900">Son Raporlar</h2>
-        </div>
-        <div class="card-body-brand">
-            @if (!Model.RecentReports.Any())
-            {
-                <div class="text-center py-8 text-gray-500">
-                    <i class="fas fa-folder-open text-3xl mb-3"></i>
-                    <p>Erişilebilir rapor yok</p>
-                </div>
-            }
-            else
-            {
-                <div class="space-y-3">
-                    @foreach (var report in Model.RecentReports)
-                    {
-                        <a href="/Reports/Run?reportId=@report.ReportId"
-                           class="flex items-center p-3 rounded-lg hover:bg-gray-50 transition-brand">
-                            <i class="fas fa-file-alt text-brand mr-3"></i>
-                            <div class="flex-1">
-                                <p class="font-medium text-gray-900">@report.Title</p>
-                                <p class="text-sm text-gray-500">@(report.DataSource?.Title ?? report.DataSourceKey)</p>
-                            </div>
-                            <i class="fas fa-chevron-right text-gray-400"></i>
-                        </a>
-                    }
-                </div>
+@await Html.PartialAsync("_DashKpi", Model)
 
-                <div class="mt-4 pt-4 border-t border-gray-200">
-                    <a href="/Reports" class="btn-brand-outline w-full text-center py-2 rounded-lg">
-                        <i class="fas fa-list mr-2"></i>
-                        Tüm Raporları Gör
-                    </a>
-                </div>
-            }
-        </div>
-    </div>
-
-    <div class="card-brand">
-        <div class="card-header-brand">
-            <h2 class="text-lg font-semibold text-gray-900">Son Aktiviteler</h2>
-        </div>
-        <div class="card-body-brand">
-            @if (!Model.RecentLogs.Any())
-            {
-                <div class="text-center py-8 text-gray-500">
-                    <i class="fas fa-history text-3xl mb-3"></i>
-                    <p>Henüz aktivite yok</p>
-                </div>
-            }
-            else
-            {
-                <div class="space-y-4">
-                    @foreach (var log in Model.RecentLogs)
-                    {
-                        <div class="flex items-start">
-                            <div class="w-8 h-8 @(log.IsSuccess ? "bg-green-100" : "bg-red-100") rounded-full flex items-center justify-center mr-3">
-                                <i class="fas @(log.IsSuccess ? "fa-check text-green-600" : "fa-times text-red-600") text-sm"></i>
-                            </div>
-                            <div class="flex-1">
-                                <p class="text-sm font-medium text-gray-900">
-                                    @(string.IsNullOrWhiteSpace(log.Description) ? "Rapor Calistirma" : log.Description)
-                                </p>
-                                <p class="text-xs text-gray-500">
-                                    @log.CreatedAt.ToString("dd.MM.yyyy HH:mm") - Kayit: @(log.ResultRowCount?.ToString("N0") ?? "0")
-                                </p>
-                            </div>
-                        </div>
-                    }
-                </div>
-            }
-        </div>
-    </div>
+<div class="section-title">
+    <h2>Bugünün Özeti</h2>
+    <a href="/Logs" class="more">Detaylı analiz <i class="fas fa-chevron-right text-[10px]"></i></a>
 </div>
+
+@await Html.PartialAsync("_DashMiniCharts", Model)
+
+<div class="section-title">
+    <h2>Hızlı Erişim</h2>
+    <a href="/Reports" class="more">Tüm raporları gör <i class="fas fa-chevron-right text-[10px]"></i></a>
+</div>
+
+@await Html.PartialAsync("_DashFavorites", Model)
+
+<div class="section-title">
+    <h2>Son Aktivite</h2>
+    <a href="/Logs" class="more">Tüm log <i class="fas fa-chevron-right text-[10px]"></i></a>
+</div>
+
+@await Html.PartialAsync("_DashActivity", Model)
+
+@await Html.PartialAsync("_FooterHint", (string?)null)

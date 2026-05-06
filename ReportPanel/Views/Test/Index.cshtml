@@ -1,111 +1,100 @@
 @model ReportPanel.ViewModels.TestViewModel
 @{
     Layout = "_AppLayout";
-    ViewData["Title"] = "Veritabani Test - BKM Rapor Paneli";
+    ViewData["Title"] = "Veritabanı Test - BKM Rapor Paneli";
+    ViewData["PageTitle"] = "Veritabanı Bağlantı Testi";
 }
 
-<div class="bg-white rounded-2xl shadow-brand border border-gray-100 p-8">
-    <div class="mb-6">
-        <h1 class="text-2xl font-bold text-gray-900">Veritabani Baglanti Testi</h1>
-        <p class="text-sm text-gray-500">Baglanti ve ornek verileri kontrol edin</p>
-    </div>
-
-    @if (!string.IsNullOrWhiteSpace(Model.Error))
-    {
-        <div class="bg-red-50 border border-red-200 rounded-md p-4 mb-4">
-            <div class="flex">
-                <div class="ml-3">
-                    <h3 class="text-sm font-medium text-red-800">Hata</h3>
-                    <div class="mt-2 text-sm text-red-700">@Model.Error</div>
-                </div>
-            </div>
-        </div>
-    }
-
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-        <div class="bg-gray-50 p-4 rounded-lg">
-            <h3 class="text-sm font-medium text-gray-900 mb-2">Baglanti Durumu</h3>
-            @if (Model.CanConnect)
-            {
-                <div class="flex items-center">
-                    <div class="w-3 h-3 bg-green-400 rounded-full mr-2"></div>
-                    <span class="text-green-700 font-medium">Baglanti Basarili</span>
-                </div>
-            }
-            else
-            {
-                <div class="flex items-center">
-                    <div class="w-3 h-3 bg-red-400 rounded-full mr-2"></div>
-                    <span class="text-red-700 font-medium">Baglanti Basarisiz</span>
-                </div>
-            }
-        </div>
-
-        <div class="bg-gray-50 p-4 rounded-lg">
-            <h3 class="text-sm font-medium text-gray-900 mb-2">Tablo Istatistikleri</h3>
-            <div class="space-y-1 text-sm">
-                <div>Veri Kaynaklari: <span class="font-medium">@Model.DataSourceCount</span></div>
-                <div>Raporlar: <span class="font-medium">@Model.ReportCount</span></div>
-                <div>Loglar: <span class="font-medium">@Model.LogCount</span></div>
-            </div>
-        </div>
-    </div>
-
-    @if (Model.DataSources != null)
-    {
-        <div class="mb-6">
-            <h3 class="text-sm font-medium text-gray-900 mb-3">Mevcut Veri Kaynaklari</h3>
-            @if (Model.DataSources.Count > 0)
-            {
-                <div class="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
-                    <table class="min-w-full divide-y divide-gray-300">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Anahtar</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Baslik</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Durum</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Olusturulma</th>
-                            </tr>
-                        </thead>
-                        <tbody class="bg-white divide-y divide-gray-200">
-                            @foreach (var ds in Model.DataSources)
-                            {
-                                <tr>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">@ds.DataSourceKey</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">@ds.Title</td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        @if (ds.IsActive)
-                                        {
-                                            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">Aktif</span>
-                                        }
-                                        else
-                                        {
-                                            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">Pasif</span>
-                                        }
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">@ds.CreatedAt.ToString("dd.MM.yyyy HH:mm")</td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
-                </div>
-            }
-            else
-            {
-                <div class="text-center py-8 text-gray-500">
-                    <p>Henuz veri kaynagi bulunmuyor.</p>
-                </div>
-            }
-        </div>
-    }
-
-    <div class="flex space-x-4">
-        <button onclick="addSampleData()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium">
-            Ornek Veri Ekle
-        </button>
-        <button onclick="location.reload()" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md text-sm font-medium">
-            Yenile
-        </button>
+<div class="hero">
+    <h1>Veritabanı Bağlantı Testi</h1>
+    <div class="sub">
+        <span>Bağlantı ve örnek verileri kontrol edin</span>
+        <span class="pill">
+            <span class="dot" style="background:@(Model.CanConnect ? "var(--ok)" : "var(--danger)");"></span>
+            @(Model.CanConnect ? "Bağlantı Başarılı" : "Bağlantı Başarısız")
+        </span>
     </div>
 </div>
+
+@if (!string.IsNullOrWhiteSpace(Model.Error))
+{
+    <div style="margin-bottom:18px; padding:12px 16px; border-radius:10px; font-size:13px;
+                background:rgba(220,38,38,0.10); border:1px solid rgba(220,38,38,0.25); color:var(--accent-ink);">
+        <i class="fas fa-exclamation-circle" style="margin-right:8px;"></i>
+        <strong>Hata:</strong> @Model.Error
+    </div>
+}
+
+<div class="kpi-grid" style="grid-template-columns:repeat(3,1fr); margin-bottom:18px;">
+    <div class="kpi-card k-ink">
+        <div class="head">
+            <span class="label">Veri Kaynakları</span>
+        </div>
+        <div class="value">@Model.DataSourceCount</div>
+    </div>
+    <div class="kpi-card k-ink">
+        <div class="head">
+            <span class="label">Raporlar</span>
+        </div>
+        <div class="value">@Model.ReportCount</div>
+    </div>
+    <div class="kpi-card k-ink">
+        <div class="head">
+            <span class="label">Loglar</span>
+        </div>
+        <div class="value">@Model.LogCount</div>
+    </div>
+</div>
+
+@if (Model.DataSources != null && Model.DataSources.Count > 0)
+{
+    <div style="background:var(--paper); border:1px solid var(--line); border-radius:10px; overflow:hidden; margin-bottom:18px;">
+        <div style="padding:14px 18px; border-bottom:1px solid var(--line); display:flex; align-items:center; justify-content:space-between;">
+            <h2 style="font-size:13px; font-weight:600; color:var(--ink-1); margin:0;">Mevcut Veri Kaynakları</h2>
+            <span style="font-size:11px; color:var(--ink-3);">@Model.DataSources.Count kayıt</span>
+        </div>
+        <table class="dt">
+            <thead>
+                <tr>
+                    <th>Anahtar</th>
+                    <th>Başlık</th>
+                    <th>Durum</th>
+                    <th>Oluşturulma</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var ds in Model.DataSources)
+                {
+                    <tr>
+                        <td><span class="mono">@ds.DataSourceKey</span></td>
+                        <td>@ds.Title</td>
+                        <td>
+                            <span class="status @(ds.IsActive ? "ok" : "err")">@(ds.IsActive ? "Aktif" : "Pasif")</span>
+                        </td>
+                        <td><span class="ago">@ds.CreatedAt.ToString("dd.MM.yyyy HH:mm")</span></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+else if (Model.DataSources != null)
+{
+    <div style="background:var(--paper); border:1px dashed var(--line-2); border-radius:10px; padding:32px; text-align:center; color:var(--ink-3); margin-bottom:18px;">
+        <i class="fas fa-database" style="font-size:24px; margin-bottom:8px; opacity:0.5;"></i>
+        <p style="margin:0;">Henüz veri kaynağı bulunmuyor.</p>
+    </div>
+}
+
+<div style="display:flex; gap:10px;">
+    <button onclick="addSampleData()" class="btn primary">
+        <i class="fas fa-plus text-[10px]"></i>
+        Örnek Veri Ekle
+    </button>
+    <button onclick="location.reload()" class="btn">
+        <i class="fas fa-rotate text-[10px]"></i>
+        Yenile
+    </button>
+</div>
+
 <script src="~/assets/js/test-page.js"></script>

@@ -2,7 +2,8 @@
 @using System.Linq
 @{
     Layout = "_AppLayout";
-    ViewData["Title"] = "Kullanici Duzenle - BKM Rapor Paneli";
+    ViewData["Title"] = "Kullanıcı Düzenle - BKM Rapor Paneli";
+    ViewData["PageTitle"] = "Kullanıcı Düzenle";
     var message = Model.Message ?? "";
     var messageType = Model.MessageType ?? "";
     var availableRoles = Model.AvailableRoles ?? new List<ReportPanel.Models.Role>();
@@ -11,237 +12,142 @@
     var dataSources = Model.DataSources ?? new List<ReportPanel.Models.DataSource>();
 }
 
-<div class="mb-6 flex items-center justify-between">
-    <div>
-        <h1 class="text-3xl font-bold text-gray-900">Kullanici Duzenle</h1>
-        <p class="text-sm text-gray-500">Kullanici bilgilerini guncelleyin</p>
+@section Breadcrumb {
+    <div class="crumbs">
+        <a href="/Dashboard">BKM Kitap</a>
+        <span class="sep">/</span>
+        <a href="/Admin?tab=users">Yönetim</a>
+        <span class="sep">/</span>
+        <a href="/Admin?tab=users">Kullanıcılar</a>
+        <span class="sep">/</span>
+        <span class="current">@(string.IsNullOrWhiteSpace(user.Username) ? "Düzenle" : user.Username)</span>
     </div>
-    <a href="/Admin?tab=users" class="btn-brand-outline flex items-center px-4 py-2 text-sm font-medium rounded-lg">
-        <i class="fas fa-times mr-2"></i>Iptal
+}
+
+@section TopActions {
+    <a href="/Admin?tab=users" class="btn">
+        <i class="fas fa-xmark text-[10px]"></i>
+        İptal
     </a>
+}
+
+<div class="hero">
+    <h1>Kullanıcı Düzenle</h1>
+    <div class="sub">
+        <span>Kullanıcı bilgilerini güncelleyin</span>
+        <span class="pill"><span class="mono">@user.Username</span></span>
+        @if (user.IsAdUser)
+        {
+            <span class="pill"><i class="fas fa-windows" style="font-size:9px; color:var(--ink-3);"></i> AD</span>
+        }
+        <span class="pill" style="@(user.IsActive ? "" : "background:rgba(220,38,38,0.06); border-color:rgba(220,38,38,0.2);")">
+            <span class="dot" style="background:@(user.IsActive ? "var(--ok)" : "var(--danger)");"></span>
+            @(user.IsActive ? "Aktif" : "Pasif")
+        </span>
+    </div>
 </div>
 
 @if (!string.IsNullOrWhiteSpace(message))
 {
-    <div class="mb-6">
-        <div class="@(messageType == "success" ? "bg-green-100 border-green-400 text-green-700" : "bg-red-100 border-red-400 text-red-700") px-4 py-3 rounded border">
-            @message
-        </div>
+    <div role="alert" style="margin-bottom:18px; padding:12px 16px; border-radius:10px; font-size:13px;
+                background: @(messageType == "success" ? "rgba(16,185,129,0.10)" : "rgba(220,38,38,0.10)");
+                border: 1px solid @(messageType == "success" ? "rgba(16,185,129,0.25)" : "rgba(220,38,38,0.25)");
+                color: @(messageType == "success" ? "#065f46" : "var(--accent-ink)");">
+        <i class="fas @(messageType == "success" ? "fa-check-circle" : "fa-exclamation-circle")" style="margin-right:8px;"></i>
+        @message
     </div>
 }
 
-<div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-    <div class="bg-gradient-to-r from-emerald-50 to-green-50 px-8 py-6 border-b border-gray-100">
-        <div class="flex items-center space-x-4">
-            <div class="w-12 h-12 bg-emerald-600 rounded-xl flex items-center justify-center shadow-lg">
-                <i class="fas fa-user-edit text-white text-xl"></i>
-            </div>
-            <div>
-                <h2 class="text-2xl font-bold text-gray-900">Kullanici Bilgileri</h2>
-                <p class="text-gray-600">Degisiklikleri kaydedin</p>
-            </div>
+<form method="post">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="UserId" value="@user.UserId" />
+
+    <div style="background:var(--paper); border:1px solid var(--line); border-radius:10px; overflow:hidden; max-width:880px; margin-bottom:18px;">
+        <div style="padding:14px 18px; border-bottom:1px solid var(--line);">
+            <h2 style="font-size:13px; font-weight:600; color:var(--ink-1); margin:0;">
+                <i class="fas fa-user-pen" style="margin-right:6px; color:var(--ink-3);"></i>
+                Kullanıcı Bilgileri
+            </h2>
+            <div style="font-size:12px; color:var(--ink-3); margin-top:2px;">Hesap detayları + roller + şifre</div>
         </div>
-    </div>
 
-    <div class="p-8">
-        <form method="post" class="space-y-6">
-            @Html.AntiForgeryToken()
-            <input type="hidden" name="UserId" value="@user.UserId" />
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-2">Kullanici Adi *</label>
-                    <input type="text" name="Username" value="@user.Username" required
-                           class="form-input-brand w-full px-4 py-3 rounded-lg">
+        <div style="padding:20px;">
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:14px;">
+                <div class="field" style="margin-bottom:0;">
+                    <label class="lab">Kullanıcı Adı <span style="color:var(--accent);">*</span></label>
+                    <input type="text" name="Username" value="@user.Username" required class="inp" />
                 </div>
-                <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-2">Ad Soyad *</label>
-                    <input type="text" name="FullName" value="@user.FullName" required
-                           class="form-input-brand w-full px-4 py-3 rounded-lg">
+                <div class="field" style="margin-bottom:0;">
+                    <label class="lab">Ad Soyad <span style="color:var(--accent);">*</span></label>
+                    <input type="text" name="FullName" value="@user.FullName" required class="inp" />
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-2">E-posta</label>
-                    <input type="email" name="Email" value="@user.Email"
-                           class="form-input-brand w-full px-4 py-3 rounded-lg">
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:14px;">
+                <div class="field" style="margin-bottom:0;">
+                    <label class="lab">E-posta</label>
+                    <input type="email" name="Email" value="@user.Email" class="inp" placeholder="ornek@bkmkitap.com" />
                 </div>
-                <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-2">Roller *</label>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <div class="field" style="margin-bottom:0;">
+                    <label class="lab">Roller <span style="color:var(--accent);">*</span></label>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; padding:8px 10px; background:var(--canvas); border:1px solid var(--line); border-radius:8px;">
                         @if (!availableRoles.Any())
                         {
-                            <div class="text-sm text-red-600">Rol listesi tanimli degil.</div>
+                            <div style="font-size:12px; color:var(--accent-ink);">Rol listesi tanımlı değil.</div>
                         }
                         else
                         {
                             foreach (var role in availableRoles)
                             {
                                 var isChecked = selectedRoleIds.Contains(role.RoleId);
-                                <label class="flex items-center gap-2 text-sm text-gray-700">
+                                <label style="display:flex; align-items:center; gap:6px; font-size:12px; color:var(--ink-2); cursor:pointer;">
                                     <input type="checkbox" name="SelectedRoles" value="@role.RoleId" @(isChecked ? "checked" : "")
-                                           class="h-4 w-4 text-brand border-gray-300 rounded">
+                                           style="width:14px; height:14px; accent-color:var(--accent);" />
                                     <span>@role.Name</span>
                                 </label>
                             }
                         }
                     </div>
-                    <p class="text-xs text-gray-500 mt-2">Birden fazla rol secilebilir.</p>
                 </div>
             </div>
 
-            <div>
-                <label class="block text-sm font-semibold text-gray-700 mb-2">Yeni Sifre</label>
-                <input type="password" id="Password" name="Password"
-                       class="form-input-brand w-full px-4 py-3 rounded-lg"
-                       placeholder="Bos birakirsaniz sifre degismez">
+            <div class="field" style="margin-bottom:14px;">
+                <label class="lab">Yeni Şifre</label>
+                <input type="password" id="Password" name="Password" class="inp" placeholder="Boş bırakırsanız şifre değişmez" autocomplete="new-password" />
             </div>
 
-            <div class="flex items-center space-x-3">
-                <input type="hidden" name="IsAdUser" value="false">
-                <input type="checkbox" id="IsAdUser" name="IsAdUser" value="true" @(user.IsAdUser ? "checked" : "")
-                       class="w-5 h-5 text-brand focus:ring-brand border-gray-300 rounded">
-                <label class="text-sm font-medium text-gray-700">Windows AD kullanicisi</label>
-            </div>
-            <p class="text-xs text-gray-500">AD kullanicilari DOMAIN\\kullanici ile giris yapar.</p>
-
-            <div class="flex items-center space-x-3">
-                <input type="hidden" name="IsActive" value="false">
-                <input type="checkbox" name="IsActive" value="true" @(user.IsActive ? "checked" : "")
-                       class="w-5 h-5 text-brand focus:ring-brand border-gray-300 rounded">
-                <label class="text-sm font-medium text-gray-700">Kullaniciyi aktif yap</label>
-            </div>
-
-            <div class="bg-amber-50 rounded-2xl border border-amber-200 p-6">
-                <h3 class="text-lg font-bold text-gray-900 mb-2 flex items-center">
-                    <i class="fas fa-filter mr-3 text-amber-600"></i> Veri Filtreleri
-                </h3>
-                <p class="text-xs text-gray-500 mb-4">
-                    Kullanicinin gorebilecegi verileri kisitlayin. Filtre eklenmezse tum verileri gorur (GM, admin).
-                    Ayni filtre tipinde birden fazla deger = VEYA, farkli filtre tipleri arasi = VE mantigi uygulanir.
-                </p>
-
-                <div id="filterList" class="space-y-2 mb-4">
-                    <!-- Mevcut filtreler JS ile yüklenecek -->
+            <div style="display:flex; flex-wrap:wrap; gap:18px; padding-top:8px;">
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <input type="hidden" name="IsAdUser" value="false" />
+                    <input type="checkbox" id="IsAdUser" name="IsAdUser" value="true" @(user.IsAdUser ? "checked" : "")
+                           style="width:16px; height:16px; accent-color:var(--accent);" />
+                    <label for="IsAdUser" class="lab" style="margin:0;">Windows AD kullanıcısı</label>
+                    <span style="font-size:11px; color:var(--ink-3);" title="AD kullanıcıları DOMAIN\\kullanici ile giriş yapar">
+                        <i class="fas fa-circle-info"></i>
+                    </span>
                 </div>
-                <button type="button" id="addFilterBtn" class="text-blue-600 hover:text-blue-800 text-sm font-semibold">
-                    <i class="fas fa-plus-circle mr-1"></i> Filtre Ekle
-                </button>
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <input type="hidden" name="IsActive" value="false" />
+                    <input type="checkbox" id="userActive" name="IsActive" value="true" @(user.IsActive ? "checked" : "")
+                           style="width:16px; height:16px; accent-color:var(--accent);" />
+                    <label for="userActive" class="lab" style="margin:0;">Kullanıcıyı aktif yap</label>
+                </div>
             </div>
-
-            <div class="flex items-center justify-between pt-6 border-t border-gray-200">
-                <a href="/Admin?tab=users" class="btn-brand-outline flex items-center px-6 py-3 text-sm font-medium rounded-lg">
-                    <i class="fas fa-arrow-left mr-2"></i>Geri Don
-                </a>
-                <button type="submit" class="btn-brand flex items-center px-6 py-3 text-sm font-semibold rounded-lg">
-                    <i class="fas fa-save mr-2"></i>Kullanici Guncelle
-                </button>
-            </div>
-        </form>
+        </div>
     </div>
-</div>
 
-<script>
-    (function () {
-        const adToggle = document.getElementById('IsAdUser');
-        const passwordInput = document.getElementById('Password');
-        if (!adToggle || !passwordInput) {
-            return;
-        }
+    @await Html.PartialAsync("_AdminUserDataFilterPanel", Model)
 
-        const syncPasswordState = () => {
-            if (adToggle.checked) {
-                passwordInput.value = '';
-                passwordInput.disabled = true;
-                passwordInput.removeAttribute('required');
-            } else {
-                passwordInput.disabled = false;
-            }
-        };
+    <div style="display:flex; align-items:center; justify-content:space-between; max-width:880px; padding:14px 20px; background:var(--paper); border:1px solid var(--line); border-radius:10px;">
+        <a href="/Admin?tab=users" class="btn ghost">
+            <i class="fas fa-arrow-left text-[10px]"></i>
+            Geri Dön
+        </a>
+        <button type="submit" class="btn primary">
+            <i class="fas fa-check text-[10px]"></i>
+            Kullanıcıyı Güncelle
+        </button>
+    </div>
+</form>
 
-        adToggle.addEventListener('change', syncPasswordState);
-        syncPasswordState();
-    })();
-
-    var dsOptions = '<option value="">Tum kaynaklar</option>' +
-        @Html.Raw("'" + string.Join("' + '", dataSources.Select(ds => $"<option value=\"{ds.DataSourceKey}\">{ds.Title}</option>")) + "'");
-
-    function createFilterRow(selectedKey, selectedValue, selectedDs) {
-        var row = document.createElement('div');
-        row.className = 'flex items-center gap-3 filter-row';
-
-        var keySelect = document.createElement('select');
-        keySelect.name = 'FilterKeys';
-        keySelect.className = 'px-3 py-2 border border-gray-300 rounded-lg text-sm w-36';
-        keySelect.innerHTML = '<option value="sube">Sube</option><option value="bolum">Bolum</option><option value="bolge">Bolge</option>' +
-            '<option value="kategori">Kategori</option><option value="maliyet_merkezi">Maliyet Merkezi</option>';
-        if (selectedKey) keySelect.value = selectedKey;
-
-        var valueSelect = document.createElement('select');
-        valueSelect.name = 'FilterValues';
-        valueSelect.className = 'flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm';
-        valueSelect.innerHTML = '<option value="">Yukleniyor...</option>';
-
-        var dsSelect = document.createElement('select');
-        dsSelect.name = 'FilterDataSources';
-        dsSelect.className = 'px-3 py-2 border border-gray-300 rounded-lg text-sm w-36';
-        dsSelect.innerHTML = dsOptions;
-        if (selectedDs) dsSelect.value = selectedDs;
-
-        var delBtn = document.createElement('button');
-        delBtn.type = 'button';
-        delBtn.className = 'text-red-500 hover:text-red-700 text-sm';
-        delBtn.innerHTML = '<i class="fas fa-trash"></i>';
-        delBtn.onclick = function() { row.remove(); };
-
-        row.appendChild(keySelect);
-        row.appendChild(valueSelect);
-        row.appendChild(dsSelect);
-        row.appendChild(delBtn);
-
-        function loadOptions() {
-            var key = keySelect.value;
-            var ds = dsSelect.value;
-            var url = '/Admin/FilterOptions?filterKey=' + encodeURIComponent(key);
-            if (ds) url += '&dataSourceKey=' + encodeURIComponent(ds);
-
-            fetch(url)
-                .then(function(r) { return r.json(); })
-                .then(function(data) {
-                    var opts = '<option value="">Seciniz...</option>';
-                    if (data.options && data.options.length > 0) {
-                        data.options.forEach(function(o) {
-                            var sel = (selectedValue && o.value === selectedValue) ? ' selected' : '';
-                            opts += '<option value="' + o.value + '"' + sel + '>' + o.label + '</option>';
-                        });
-                    } else {
-                        opts = '<option value="">Liste bos</option>';
-                    }
-                    valueSelect.innerHTML = opts;
-                    selectedValue = null; // sadece ilk yuklemede set et
-                })
-                .catch(function() {
-                    valueSelect.innerHTML = '<option value="">Hata</option>';
-                });
-        }
-
-        keySelect.addEventListener('change', loadOptions);
-        dsSelect.addEventListener('change', loadOptions);
-        loadOptions();
-
-        return row;
-    }
-
-    // Mevcut filtreleri yükle
-    var existingFilters = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
-        Model.DataFilters.Select(f => new { key = f.FilterKey, value = f.FilterValue, ds = f.DataSourceKey ?? "" })));
-    var filterListEl = document.getElementById('filterList');
-    existingFilters.forEach(function(f) {
-        filterListEl.appendChild(createFilterRow(f.key, f.value, f.ds));
-    });
-
-    document.getElementById('addFilterBtn').addEventListener('click', function() {
-        filterListEl.appendChild(createFilterRow(null, null, null));
-    });
-</script>
+@await Html.PartialAsync("_AdminUserAdToggleScript")

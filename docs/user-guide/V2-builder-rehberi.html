@@ -1,0 +1,562 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8" />
+<title>BKM Rapor Paneli — Yeni Rapor Tasarımı Rehberi</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+
+<style>
+:root {
+    --ink-0: #111827; --ink-1: #1f2937; --ink-2: #374151; --ink-3: #6b7280; --ink-4: #9ca3af;
+    --line: #e5e7eb; --line-2: #f3f4f6;
+    --paper: #ffffff; --canvas: #f9fafb; --chip: #f3f4f6;
+    --accent: #dc2626; --accent-soft: rgba(220,38,38,0.08); --accent-ink: #991b1b;
+    --ok: #10b981; --warn: #f59e0b; --info: #3b82f6;
+}
+* { box-sizing: border-box; }
+html, body {
+    margin: 0; padding: 0;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    color: var(--ink-1); background: var(--canvas);
+    line-height: 1.6;
+}
+body { padding: 30px 20px 80px; }
+
+.wrap { max-width: 880px; margin: 0 auto; background: var(--paper); border-radius: 14px; box-shadow: 0 4px 20px -8px rgba(17,24,39,0.12); overflow: hidden; }
+
+header {
+    background: linear-gradient(135deg, var(--accent) 0%, var(--accent-ink) 100%);
+    color: #fff;
+    padding: 36px 44px 28px;
+}
+header h1 { margin: 0; font-size: 28px; font-weight: 700; letter-spacing: -0.02em; }
+header .sub { font-size: 14px; margin-top: 8px; opacity: 0.92; }
+header .meta { font-size: 12px; margin-top: 16px; font-family: 'JetBrains Mono', ui-monospace, monospace; opacity: 0.75; }
+
+main { padding: 28px 44px 44px; }
+
+h2 { font-size: 22px; margin: 36px 0 14px; padding-bottom: 8px; border-bottom: 2px solid var(--accent-soft); color: var(--ink-0); }
+h3 { font-size: 17px; margin: 24px 0 10px; color: var(--ink-1); }
+h4 { font-size: 14px; margin: 18px 0 6px; color: var(--ink-2); text-transform: uppercase; letter-spacing: 0.04em; }
+
+p { margin: 0 0 12px; }
+
+a { color: var(--accent); }
+code { background: var(--chip); padding: 2px 6px; border-radius: 4px; font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 13px; }
+kbd { display: inline-block; background: var(--canvas); border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; padding: 1px 7px; font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--ink-2); }
+
+ol, ul { padding-left: 26px; margin: 8px 0 16px; }
+ol li, ul li { margin-bottom: 6px; }
+
+.toc {
+    background: var(--canvas);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 16px 22px;
+    margin: 0 0 24px;
+}
+.toc h3 { margin: 0 0 8px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-3); }
+.toc ol { margin: 0; padding-left: 20px; columns: 2; column-gap: 24px; }
+.toc a { text-decoration: none; }
+.toc a:hover { text-decoration: underline; }
+
+.box {
+    border-left: 4px solid var(--accent);
+    background: var(--accent-soft);
+    padding: 12px 16px;
+    border-radius: 0 8px 8px 0;
+    margin: 14px 0;
+}
+.box.tip { border-color: var(--info); background: rgba(59, 130, 246, 0.08); }
+.box.warn { border-color: var(--warn); background: rgba(245, 158, 11, 0.10); }
+.box.ok { border-color: var(--ok); background: rgba(16, 185, 129, 0.08); }
+.box .lbl { font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-3); margin-bottom: 4px; }
+
+.diagram {
+    background: var(--canvas);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin: 16px 0;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    line-height: 1.5;
+    white-space: pre;
+    overflow-x: auto;
+    color: var(--ink-2);
+}
+
+.steps {
+    list-style: none;
+    padding: 0;
+    counter-reset: step;
+}
+.steps > li {
+    position: relative;
+    padding-left: 44px;
+    margin-bottom: 18px;
+    counter-increment: step;
+}
+.steps > li::before {
+    content: counter(step);
+    position: absolute;
+    left: 0; top: 0;
+    width: 30px; height: 30px;
+    background: var(--accent);
+    color: #fff;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700;
+    font-size: 14px;
+}
+
+.shot-placeholder {
+    background: repeating-linear-gradient(45deg, var(--canvas), var(--canvas) 10px, var(--line-2) 10px, var(--line-2) 20px);
+    border: 1px dashed var(--ink-4);
+    border-radius: 8px;
+    padding: 28px;
+    text-align: center;
+    color: var(--ink-3);
+    font-size: 12px;
+    margin: 12px 0;
+}
+.shot-placeholder .icon { font-size: 22px; opacity: 0.5; margin-bottom: 6px; }
+.shot-placeholder strong { color: var(--ink-2); display: block; margin-bottom: 4px; font-size: 13px; }
+
+table {
+    width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 13px;
+}
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); }
+th { background: var(--canvas); font-weight: 600; color: var(--ink-2); }
+
+.chip {
+    display: inline-flex; align-items: center; gap: 4px;
+    background: var(--chip); color: var(--ink-2);
+    padding: 2px 8px; border-radius: 999px;
+    font-size: 11px; font-weight: 600;
+}
+.chip.kpi { background: rgba(220, 38, 38, 0.10); color: var(--accent-ink); }
+.chip.chart { background: var(--line-2); color: var(--ink-1); }
+.chip.table { background: rgba(16, 185, 129, 0.12); color: #065f46; }
+
+footer {
+    text-align: center; padding: 22px;
+    color: var(--ink-4); font-size: 12px; font-family: 'JetBrains Mono', monospace;
+    border-top: 1px solid var(--line); margin-top: 30px;
+}
+</style>
+</head>
+
+<body>
+<div class="wrap">
+
+<header>
+    <h1>BKM Rapor Paneli — Yeni Rapor Tasarımı (V2)</h1>
+    <div class="sub">Sürükle-bırak builder ile sıfırdan dashboard kurma rehberi</div>
+    <div class="meta">Sürüm: V2 · Hazırlanma: 29 Nisan 2026 · Hedef: rapor admin'leri</div>
+</header>
+
+<main>
+
+<div class="toc">
+    <h3>İçindekiler</h3>
+    <ol>
+        <li><a href="#a-ozet">Genel Akış</a></li>
+        <li><a href="#a-erisim">V2 Builder'a Erişim</a></li>
+        <li><a href="#a-arayuz">Arayüz Tanıtımı</a></li>
+        <li><a href="#a-veri">Veri Setlerini Tanıma</a></li>
+        <li><a href="#a-isim">Veri Setlerine İsim Verme</a></li>
+        <li><a href="#a-widget">Widget Ekleme</a></li>
+        <li><a href="#a-bagla">Veri Bağlama (1-tıkla)</a></li>
+        <li><a href="#a-gorunum">Görünüm: Renk + İkon</a></li>
+        <li><a href="#a-formul">Aggregation ve Formül</a></li>
+        <li><a href="#a-param">Param-bar (Tarih Test)</a></li>
+        <li><a href="#a-onizle">Önizle / Düzenle</a></li>
+        <li><a href="#a-kaydet">Kaydet</a></li>
+        <li><a href="#a-sss">Sık Sorulan Sorular</a></li>
+    </ol>
+</div>
+
+<h2 id="a-ozet">1. Genel Akış</h2>
+<p>V2 builder; SQL stored procedure'ünden gelen 7 result set'lik veriyi sürükle-bırak widget'larla dashboard'a dönüştürmenizi sağlar. Tipik akış 5-10 dakika alır:</p>
+
+<div class="diagram">  ┌────────────┐    ┌────────────┐    ┌────────────┐    ┌────────────┐
+  │ 1. Yeni    │ →  │ 2. Genel + │ →  │ 3. Tasarım │ →  │ 4. Kaydet  │
+  │   Rapor    │    │   Teknik   │    │   (V2)     │    │            │
+  │ klasik form│    │ form'u dol-│    │ widget +   │    │ DB'ye yaz  │
+  │  ile başla │    │   dur      │    │ bağla      │    │            │
+  └────────────┘    └────────────┘    └────────────┘    └────────────┘
+</div>
+
+<div class="box tip">
+    <div class="lbl">Önemli</div>
+    Her widget bir SQL stored procedure'inin <strong>belirli bir kolonuna</strong> bağlanır. Sistem hangi kolon ne anlama geldiğini <em>bilemez</em> — anlamlandırmayı siz yapın: veri setlerine isim verin, kolon kartlarına tıklayıp widget'lara bağlayın.
+</div>
+
+<h2 id="a-erisim">2. V2 Builder'a Erişim</h2>
+
+<ol class="steps">
+    <li>
+        <strong>Sol menü → Yönetim Paneli</strong>'ne girin (admin yetkisi gerekir).
+    </li>
+    <li>
+        <strong>Raporlar</strong> sekmesinde mevcut bir rapor seçin <em>veya</em> <code>+ Yeni Rapor</code> ile başlayın. <br>
+        Klasik formda <strong>Genel Bilgiler</strong> + <strong>Teknik Ayarlar</strong> + <strong>Param Schema</strong>'yı doldurun:
+        <ul>
+            <li>Rapor Adı, Veri Kaynağı, Açıklama, Kategoriler</li>
+            <li>Prosedür Adı (örn. <code>sp_PdksPano</code>)</li>
+            <li>İzinli Roller, ParamSchemaJson (Tarih, vs.)</li>
+        </ul>
+    </li>
+    <li>
+        Kaydet sonrası adres çubuğunda URL'yi <code>EditReport</code> → <code>EditReportV2</code> olarak değiştirin: <br>
+        <code>http://&lt;host&gt;/Admin/EditReportV2/&lt;reportId&gt;</code>
+    </li>
+</ol>
+
+<div class="box warn">
+    <div class="lbl">Geçici durum</div>
+    V2 ile V1 sayfaları paralel çalışıyor. Kategori/Rol/Param Schema gibi metadata'yı klasik formda düzenliyorsunuz; tasarımı ise V2'de. Sonraki sürümde tek sayfada birleşecek.
+</div>
+
+<h2 id="a-arayuz">3. Arayüz Tanıtımı</h2>
+
+<div class="diagram">  ┌──────────────────────────────────────────────────────────────────────┐
+  │ TOPBAR  Breadcrumb · sp_chip · Arama · [Düzenle|Önizle] · Kaydet      │
+  ├──────────┬───────────────────────────────────────┬──────────────────┤
+  │ PALETTE  │ CANVAS                                 │ DRAWER (sağ)     │
+  │ (sol)    │ Param-bar: Tarih [29.04.2026]         │ ▸ Veri           │
+  │          │            Sıfırla  [Çalıştır]         │ ▸ Görünüm        │
+  │ + KPI    │                                        │ ▸ Ayarlar        │
+  │ + Grafik │ ┌──────┐ ┌──────┐ ┌──────┐ ┌──────┐  │                   │
+  │ + Tablo  │ │ KPI  │ │ KPI  │ │ KPI  │ │ KPI  │  │ Bağlı: Bolum [×] │
+  │          │ └──────┘ └──────┘ └──────┘ └──────┘  │                   │
+  │ Veri     │                                        │ Kolon ara...     │
+  │ Setleri  │ ┌─────────────────┐ ┌──────────────┐ │                   │
+  │ ▸ rs1    │ │   Grafik (8w)   │ │   Tablo(4w)  │ │ Veri Seti 3      │
+  │ ▸ rs2    │ │                 │ │              │ │  [KadroToplam]   │
+  │   ...    │ └─────────────────┘ └──────────────┘ │  [KadroGelen]    │
+  │          │                                        │   ...            │
+  │ Bileşen- │                                        │                   │
+  │ ler (7)  │                                        │                   │
+  ├──────────┴───────────────────────────────────────┴──────────────────┤
+  │ FOOT  ⌘S kaydet · ⌘P önizle · ⌘Z geri al · Del seçili sil           │
+  └──────────────────────────────────────────────────────────────────────┘
+</div>
+
+<table>
+    <tr><th>Bölge</th><th>Ne Yapar</th></tr>
+    <tr><td><strong>Topbar</strong></td><td>Breadcrumb, mode toggle (Düzenle/Önizle), Kaydet, JSON kopyala</td></tr>
+    <tr><td><strong>Palette (sol)</strong></td><td>Yeni widget tipleri, Veri Setleri etiketi, mevcut bileşen listesi</td></tr>
+    <tr><td><strong>Canvas (orta)</strong></td><td>Widget'ların sürükle-bırak yerleştiği 12-sütun grid; üstte Param-bar</td></tr>
+    <tr><td><strong>Drawer (sağ)</strong></td><td>Seçili widget için Veri / Görünüm / Ayarlar sekmeleri</td></tr>
+    <tr><td><strong>Footer</strong></td><td>Klavye kısayolları</td></tr>
+</table>
+
+<div class="shot-placeholder">
+    <div class="icon">📷</div>
+    <strong>EKRAN: V2 ana görünüm</strong>
+    Topbar + Palette + Canvas + Drawer 3-pane düzeni
+</div>
+
+<h2 id="a-veri">4. Veri Setlerini Tanıma</h2>
+
+<p>Sayfa açıldığında stored procedure otomatik çalıştırılır (ParamSchema'daki default değerlerle, örn. <code>Tarih: bugün</code>). Dönen result set'ler:</p>
+
+<ul>
+    <li>Sol palette'te <strong>Veri Setleri</strong> bölümünde</li>
+    <li>Sağ drawer <strong>Veri</strong> sekmesinde detaylı (kolon listesi + örnek değer)</li>
+</ul>
+
+<p>Bir SP genellikle 3-7 result set döndürür:</p>
+
+<div class="diagram">  Veri Seti 1   50 satır · 18 kolon  →  Plan-Fiili kişi listesi (örn.)
+  Veri Seti 2    7 satır · 10 kolon  →  Şube özeti
+  Veri Seti 3    1 satır · 14 kolon  →  Toplam KPI'lar
+  Veri Seti 4   10 satır ·  6 kolon  →  Fazla mesai listesi
+  Veri Seti 5   10 satır ·  5 kolon  →  Geç kalanlar
+  Veri Seti 6   13 satır ·  4 kolon  →  Bölüm doluluk
+  Veri Seti 7   15 satır ·  5 kolon  →  Eksik okutmalar
+</div>
+
+<h2 id="a-isim">5. Veri Setlerine İsim Verme</h2>
+
+<p>Default isim "Veri Seti 1, 2, 3..." → kullanıcılarınıza anlamlı gelmez. Anlamlı etiketler verin:</p>
+
+<ol class="steps">
+    <li>Sol palette → <strong>Veri Setleri</strong> başlığının altındaki listeye gidin.</li>
+    <li>"Veri Seti 1" yazısına tıklayın → düzenlenebilir input olur.</li>
+    <li>Anlamlı bir ad yazın (örn. <em>"Plan-Fiili Detay"</em>, <em>"Genel KPI"</em>, <em>"Şube Özet"</em>).</li>
+    <li><kbd>Enter</kbd> veya alanı terk edince kaydedilir.</li>
+    <li>Aynı işlemi sağ drawer Veri sekmesinde de yapabilirsiniz (orada büyük başlık olarak gösterilir).</li>
+</ol>
+
+<div class="box ok">
+    <div class="lbl">Sonuç</div>
+    Verilen isimler <code>DashboardConfigJson.resultContract</code> alanına kaydedilir; sayfayı kapayıp açan herkes (ve sonraki kullanıcılar) bu adları görür.
+</div>
+
+<div class="shot-placeholder">
+    <div class="icon">📷</div>
+    <strong>EKRAN: Veri Setleri başlık düzenleme</strong>
+</div>
+
+<h2 id="a-widget">6. Widget Ekleme</h2>
+
+<p>Sol palette'in en üstünde 3 widget tipi:</p>
+
+<table>
+    <tr><th>Tip</th><th>Ne için</th><th>Default boyut</th></tr>
+    <tr><td><span class="chip kpi">KPI</span></td><td>Tek sayı + delta (örn. "Toplam Kadro: 254")</td><td>3×2 (1/4 genişlik, 2 satır)</td></tr>
+    <tr><td><span class="chip chart">Grafik</span></td><td>Trend / Bar / Pie</td><td>8×4 (2/3 genişlik, 4 satır)</td></tr>
+    <tr><td><span class="chip table">Tablo</span></td><td>Result set satırlarını liste</td><td>4×4 (1/3 genişlik, 4 satır)</td></tr>
+</table>
+
+<h3>Eklemenin 3 yolu:</h3>
+<ul>
+    <li><strong>Tek tık</strong>: Palette kartına tıkla → canvas'ta otomatik bir konuma yerleştirilir</li>
+    <li><strong>+ butonu</strong>: Kartın sağ alt köşesindeki + ikonu</li>
+    <li><strong>Sürükle-bırak</strong>: Karta basılı tut → canvas'ta istediğin yere bırak</li>
+</ul>
+
+<h3>Yerleştirme + Boyutlandırma</h3>
+<ul>
+    <li>Widget başlığını tutup sürükleyerek konum değiştir</li>
+    <li>Köşe veya kenardan tutup boyutlandır (Gridstack 12-col grid'e snap'lenir)</li>
+    <li>Layout otomatik kaydedilir (Kaydet'e tıklayınca DB'ye yazılır)</li>
+</ul>
+
+<h2 id="a-bagla">7. Veri Bağlama (1-tıkla)</h2>
+
+<p>Bu V2'nin en önemli özelliği. Widget'a hangi kolonun bağlı olacağını <strong>tek tıkla</strong> seçersiniz:</p>
+
+<ol class="steps">
+    <li>Canvas'ta widget'ı tıklayın (seçili olduğunu kırmızı kenardan anlarsınız).</li>
+    <li>Sağ drawer otomatik <strong>Veri</strong> sekmesinde açıktır.</li>
+    <li>Drawer'da kolon kartı listesi görünür. Her kart şunları gösterir:
+        <ul>
+            <li><code>Sube</code> · <span class="chip">METİN</span> · <em>FSM</em> &larr; örnek değer</li>
+            <li><code>KadroToplam</code> · <span class="chip kpi">SAYI</span> · <em>254</em></li>
+            <li><code>Tarih</code> · <span class="chip table">TARİH</span> · <em>2026-04-29</em></li>
+        </ul>
+    </li>
+    <li>İstediğiniz kolona <strong>tıklayın</strong> → seçili widget'a bağlanır:
+        <ul>
+            <li><code>comp.column</code> &larr; kolon adı</li>
+            <li><code>comp.result</code> &larr; result set adı (rs5)</li>
+            <li><code>comp.agg</code> &larr; <em>otomatik</em> (sayı→sum, metin→count, tarih→first)</li>
+            <li><code>comp.title</code> &larr; widget yeni eklenmişse kolon adına eşitlenir</li>
+        </ul>
+    </li>
+    <li>Bağlandığını üç yerden anlarsınız:
+        <ul>
+            <li>Drawer üstünde <strong>Bağlı: rs5 · Bolum [×]</strong> banner'ı</li>
+            <li>Widget header'ında <strong>result-pill</strong>: <code>Veri Seti 6 · Bolum</code></li>
+            <li>Widget body'sinde <strong>bound-chip</strong>: <code>🔗 Bolum</code></li>
+        </ul>
+    </li>
+</ol>
+
+<div class="box tip">
+    <div class="lbl">Hızlı yol</div>
+    <strong>Hiç widget seçili değilken</strong> bir kolon kartına tıklarsanız sistem otomatik olarak yeni KPI ekler ve o kolona bağlar. Boş canvas'tan başlarken zaman kazandırır.
+</div>
+
+<h3>Bağı Kaldırmak</h3>
+<p>Drawer Veri tab üstündeki <strong>"Bağlı: ... [×]"</strong> banner'ında <kbd>×</kbd> butonuna tıklayın.</p>
+
+<h3>Kolon Arama</h3>
+<p>SP çok kolon döndürüyorsa drawer'ın üstündeki <strong>"Kolon ara..."</strong> kutusuna yazın → tüm RS gruplarında filtre uygulanır.</p>
+
+<div class="shot-placeholder">
+    <div class="icon">📷</div>
+    <strong>EKRAN: Drawer Veri tab</strong>
+    Bağlı banner + kolon arama + RS grupları + kolon kartları
+</div>
+
+<h2 id="a-gorunum">8. Görünüm: Renk + İkon</h2>
+
+<p>Drawer'da <strong>Görünüm</strong> sekmesine geçin (widget seçili olmalı):</p>
+
+<h3>Renk Vurgusu</h3>
+<p>7 hazır renk: <span style="color:#dc2626;">●</span> Kırmızı, <span style="color:#3b82f6;">●</span> Mavi, <span style="color:#10b981;">●</span> Yeşil, <span style="color:#f59e0b;">●</span> Sarı, <span style="color:#a855f7;">●</span> Mor, <span style="color:#f43f5e;">●</span> Pembe, <span style="color:#64748b;">●</span> Gri.</p>
+<p>"Kaldır" linki ile renk seçimini sıfırlayabilirsiniz (varsayılan brand kırmızı).</p>
+
+<h3>İkon</h3>
+<ol class="steps">
+    <li>İkon arama kutusuna yazın (<code>chart</code>, <code>user</code>, <code>calendar</code>, <code>store</code>, <code>coins</code>, <code>percent</code>).</li>
+    <li>Filtreden istediğiniz ikona tıklayın.</li>
+    <li>İkon KPI başlığında küçük olarak görünür.</li>
+    <li>Listede yoksa: <strong>Manuel ikon adı gir</strong> bölümünden Font Awesome 6 sınıfı yazın (örn. <code>fa-rocket</code>, <code>fa-truck-fast</code>).</li>
+</ol>
+
+<div class="box tip">
+    <div class="lbl">Font Awesome 6</div>
+    Tüm sınıflara <a href="https://fontawesome.com/icons" target="_blank">fontawesome.com/icons</a>'den bakabilirsiniz. <code>fa-</code> prefix'li tüm sınıflar destekleniyor.
+</div>
+
+<div class="shot-placeholder">
+    <div class="icon">📷</div>
+    <strong>EKRAN: Drawer Görünüm tab</strong>
+    Renk swatch + icon arama + filtered grid
+</div>
+
+<h2 id="a-formul">9. Aggregation ve Formül (KPI için)</h2>
+
+<p>Drawer Veri tab'da en altta <strong>"İleri ayar ▸"</strong> bölümünü açın:</p>
+
+<h3>Aggregation (Hesap Yöntemi)</h3>
+<p>Tek bir kolon üzerinde 6 hesap tipi:</p>
+<table>
+    <tr><th>Hesap</th><th>Anlamı</th><th>Ne zaman</th></tr>
+    <tr><td>Satır Sayısı</td><td>Result set'teki satır sayısı</td><td>"Toplam personel"</td></tr>
+    <tr><td>Toplam (sum)</td><td>Kolon değerlerinin toplamı</td><td>"Aylık ciro"</td></tr>
+    <tr><td>Ortalama (avg)</td><td>Aritmetik ortalama</td><td>"Ortalama sepet"</td></tr>
+    <tr><td>Minimum</td><td>En küçük değer</td><td>"En düşük satış"</td></tr>
+    <tr><td>Maksimum</td><td>En büyük değer</td><td>"En yüksek satış"</td></tr>
+    <tr><td>İlk Değer (first)</td><td>İlk satırın değeri</td><td>1-satırlık result set'ler</td></tr>
+</table>
+
+<h3>Formül (2-kolon)</h3>
+<p>Mevcut iki kolonu birleştirerek hesap yapın:</p>
+
+<ol class="steps">
+    <li><strong>Kolon A</strong>: ilk operand (RS gruplarına göre dropdown)</li>
+    <li><strong>İşlem</strong>: <code>A + B</code>, <code>A − B</code>, <code>A × B</code>, <code>A ÷ B</code>, <code>% (A/B)</code> (yüzde)</li>
+    <li><strong>Kolon B</strong>: ikinci operand</li>
+</ol>
+
+<h4>Örnekler:</h4>
+<ul>
+    <li><strong>Plan açığı</strong>: <code>PlanToplam − PlanGeldi</code> = bugün gelmemiş plan</li>
+    <li><strong>Katılım yüzdesi</strong>: <code>% (KadroGelen / KadroToplam)</code> = devam yüzdesi</li>
+    <li><strong>Ortalama sepet</strong>: <code>Ciro ÷ FisAdeti</code></li>
+    <li><strong>Trend farkı</strong>: <code>BuAy − GecenAy</code></li>
+</ul>
+
+<div class="box warn">
+    <div class="lbl">Sınırlamalar (V2)</div>
+    Şu an sadece <strong>2-kolon arası aritmetik</strong> destekleniyor. <code>IF</code>, <code>ROUND</code>, <code>COALESCE</code>, üçten fazla operand gibi karmaşık formüller için tam AST parser ileri sürümde gelecek.
+</div>
+
+<h2 id="a-param">10. Param-bar (Tarih Test)</h2>
+
+<p>Canvas'ın üstünde <strong>Param-bar</strong> görürsünüz:</p>
+
+<div class="diagram">  ┌────────────────────────────────────────────────────────────────┐
+  │ PARAMETRELER  📅 Tarih: 29.04.2026   🔄 Sıfırla   ▶ Çalıştır   │
+  └────────────────────────────────────────────────────────────────┘
+</div>
+
+<ol class="steps">
+    <li><strong>Tarih chip'ine tıklayın</strong> → date input açılır.</li>
+    <li>İstediğiniz tarihi seçin (geçmiş tarihler için sayfayı yenilemenize gerek yok).</li>
+    <li><kbd>Enter</kbd> tuşu veya <strong>Çalıştır</strong> butonuna basın → SP yeni param ile çalıştırılır, widget değerleri yenilenir.</li>
+    <li>Default'a dönmek için <strong>Sıfırla</strong> linkine tıklayın.</li>
+</ol>
+
+<div class="box tip">
+    <div class="lbl">Neden işe yarar</div>
+    Bugünün verisi henüz tamamlanmamış olabilir (gece, gün başlangıcı). Geçmiş tamamlanmış bir gün üzerinde dashboard'unuzun tüm değerlerini test edebilirsiniz. Param-bar değişiklikleri sadece test içindir, kaydedilmez.
+</div>
+
+<h2 id="a-onizle">11. Önizle / Düzenle</h2>
+
+<p>Topbar'da <strong>[Düzenle | Önizle]</strong> mode toggle:</p>
+
+<table>
+    <tr><th>Düzenle Mode</th><th>Önizle Mode</th></tr>
+    <tr>
+        <td>
+            <ul style="margin:0;">
+                <li>Drag-resize aktif</li>
+                <li>Palette + Drawer açık</li>
+                <li>Widget'lar "—" placeholder gösterir</li>
+                <li>Bound-chip görünür</li>
+            </ul>
+        </td>
+        <td>
+            <ul style="margin:0;">
+                <li>Drag-resize pasif</li>
+                <li>Palette + Drawer dimmed</li>
+                <li>Widget'lar gerçek SP verisiyle dolu</li>
+                <li>Chart SVG ve tablo satırları render</li>
+            </ul>
+        </td>
+    </tr>
+</table>
+
+<p>Önizle modu, <strong>kullanıcının dashboard'u nasıl göreceğini</strong> tahmin etmenizi sağlar.</p>
+
+<h2 id="a-kaydet">12. Kaydet</h2>
+
+<p>Topbar'ın sağ köşesindeki kırmızı <strong>Kaydet</strong> butonu, tüm değişiklikleri DB'ye yazar:</p>
+
+<ul>
+    <li>Widget listesi + boyutlar + bağlama</li>
+    <li>Veri Setleri için verdiğiniz isimler (Result Contract)</li>
+    <li>Renk + ikon + alt yazı + formül</li>
+    <li>Genel rapor metadata (klasik formdan gelmesi gerekiyorsa)</li>
+</ul>
+
+<p>Kayıt sonrası sayfa yenilenir. Adres çubuğunda <code>?reportId=...</code> parametresi varsa edit modu kaybolmaz.</p>
+
+<div class="box ok">
+    <div class="lbl">Saklama yeri</div>
+    Tüm tasarım <code>ReportCatalog.DashboardConfigJson</code> kolununa JSON olarak yazılır. SQL'de saklanır, tüm kullanıcılar aynı tasarımı görür.
+</div>
+
+<h3>JSON Kopyala</h3>
+<p>Topbar'da <strong>JSON</strong> butonuna tıklayınca <code>DashboardConfigJson</code> içeriği panoya kopyalanır. Backup için veya başka rapora aktarmak için kullanışlıdır.</p>
+
+<h2 id="a-sss">13. Sık Sorulan Sorular</h2>
+
+<h3>Soru: Widget'ı yanlış konuma yerleştirdim, eski hale nasıl alırım?</h3>
+<p>Cevap: Şu an undo (geri al) yok. Widget'ı tekrar sürükleyerek doğru yere taşıyın veya boyutlandırın. (V3 plan: <kbd>Ctrl+Z</kbd> destek)</p>
+
+<h3>Soru: KPI değeri "—" gösteriyor, neden?</h3>
+<p>Olası sebepler:</p>
+<ol>
+    <li>Düzenle modundasınız (sadece preview moda gerçek değer görünür)</li>
+    <li>Kolon henüz bağlanmamış (drawer'da bound banner yok)</li>
+    <li>SP o tarih için 0 satır döndürüyor (param-bar'dan farklı tarih deneyin)</li>
+    <li>Bağlı kolon NULL değer döndürüyor (SP'ye bakın)</li>
+</ol>
+
+<h3>Soru: Sayfa açılınca veri çok yavaş geliyor.</h3>
+<p>SP çağrısı arka planda gerçekleşir. Result set'lerde 50+ satır cap'ı vardır (UI sınırı). SP'nin kendisi yavaşsa optimizasyon SP tarafında yapılmalı (index, sub-query, vs).</p>
+
+<h3>Soru: Bir widget'ı silmek istiyorum.</h3>
+<p>Widget üzerinde mouse'unuzu gezdirin → sağ üst köşede 🗑 (çöp) ikonu görünür → tıklayın.</p>
+
+<h3>Soru: Aynı widget'ı başka yerde kullanmak istiyorum.</h3>
+<p>Widget üzerinde 📋 (kopyala) ikonu var → klona oluşturur, taşıyın.</p>
+
+<h3>Soru: Stored procedure'ün dönüş yapısı değişti, ne olur?</h3>
+<p>Yeni kolon → drawer'da otomatik görünür, bağlanmış widget'lar etkilenmez. <br>
+Eski kolon silindi → o kolona bağlı widget "—" gösterir; başka kolon seçin veya silin. <br>
+Result set sırası değişti → otomatik yeni başlık ("Veri Seti N") gelir; verdiğiniz isim (resultContract) <code>rsN</code> indeks'ine bağlı, isim eski indeksde kalır. Manual güncelleme gerekebilir.</p>
+
+<h3>Soru: V1 (klasik) sayfasıyla aynı raporu açtım, V2 değişikliklerimi görür mü?</h3>
+<p>Evet — ikisi de aynı <code>DashboardConfigJson</code>'a yazıyor. V1 sayfasını refreshlerseniz V2'de yaptığınız tasarımı görürsünüz.</p>
+
+<h3>Soru: Param-bar'da Tarih dışında başka param ekleyebilir miyim?</h3>
+<p>Evet — klasik form'daki <strong>ParamSchemaJson</strong> alanına yeni field ekleyin (<code>"name"</code>, <code>"type"</code> = date/text/number/decimal/checkbox). V2 builder otomatik chip render eder.</p>
+
+<h3>Soru: SP'mde 7 result set var ama bazıları boş geliyor.</h3>
+<p>Bu SP'nin davranışı, V2 builder bunu değiştirmez. Eğer beklediğiniz veriyi aldığınız bir parametreyle test ederseniz (param-bar'da farklı tarih deneyin), boş RS'lerin gerçek SP davranışı mı yoksa default param sorunu mu olduğunu anlarsınız.</p>
+
+<div class="box ok">
+    <div class="lbl">Yardım?</div>
+    Bu rehberle çözülmeyen durumlar için sistem yöneticinize başvurun. SQL tarafındaki SP veya yetki konuları, builder'ın değil; backend tarafının sorunudur.
+</div>
+
+</main>
+
+<footer>
+    BKM Rapor Paneli · V2 Builder Rehberi · Sürüm: 1.0 · 29 Nisan 2026
+</footer>
+
+</div>
+</body>
+</html>

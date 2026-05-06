@@ -36,7 +36,7 @@ namespace ReportPanel.Services
                 NewValuesJson = entry.NewValuesJson,
                 IsSuccess = entry.IsSuccess,
                 ErrorMessage = entry.ErrorMessage,
-                CreatedAt = DateTime.Now,
+                CreatedAt = DateTime.UtcNow,
                 ReportId = entry.ReportId,
                 DataSourceKey = entry.DataSourceKey,
                 ParamsJson = entry.ParamsJson,

@@ -1,0 +1,77 @@
+@model ReportPanel.ViewModels.DashboardViewModel
+@using System.Globalization
+@{
+    var trCulture = new CultureInfo("tr-TR");
+
+    string TimeAgo(DateTime dt)
+    {
+        var diff = DateTime.UtcNow - (dt.Kind == DateTimeKind.Utc ? dt : dt.ToUniversalTime());
+        if (diff.TotalSeconds < 60) return "şimdi";
+        if (diff.TotalMinutes < 60) return $"{(int)diff.TotalMinutes} dk önce";
+        if (diff.TotalHours < 24) return $"{(int)diff.TotalHours} sa önce";
+        if (diff.TotalDays < 7) return $"{(int)diff.TotalDays} gün önce";
+        return dt.ToString("dd.MM.yyyy", trCulture);
+    }
+
+    string AvatarInitials(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name)) return "?";
+        var parts = name.Trim().Split(new[] { ' ', '.', '_' }, StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length >= 2) return $"{parts[0][0]}{parts[1][0]}".ToUpperInvariant();
+        return name.Substring(0, Math.Min(2, name.Length)).ToUpperInvariant();
+    }
+}
+
+@if (!Model.RecentLogs.Any())
+{
+    <div style="background:var(--paper); border:1px solid var(--line); border-radius:10px; padding:32px; text-align:center; color:var(--ink-3);">
+        <i class="fas fa-history text-4xl mb-3 opacity-40"></i>
+        <p style="margin:0; font-size:13px;">Henüz aktivite kaydı yok.</p>
+    </div>
+}
+else
+{
+    <div class="activity">
+        <table class="dt">
+            <thead>
+                <tr>
+                    <th style="width:28%;">Kullanıcı</th>
+                    <th>Eylem</th>
+                    <th>Hedef</th>
+                    <th class="num">Sonuç</th>
+                    <th>Durum</th>
+                    <th class="num">Zaman</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var log in Model.RecentLogs)
+                {
+                    var ev = log.EventType switch
+                    {
+                        "report_run" => "Çalıştırdı",
+                        "report_create" => "Yeni rapor",
+                        "report_update" => "Düzenledi",
+                        "export" => "Excel export",
+                        _ => log.EventType
+                    };
+                    var statusClass = log.IsSuccess ? "ok" : "err";
+                    var statusText = log.IsSuccess ? "başarılı" : "hata";
+                    var rowCount = log.ResultRowCount?.ToString("N0", trCulture) ?? "—";
+                    <tr>
+                        <td>
+                            <div class="who">
+                                <div class="av">@AvatarInitials(log.Username ?? "")</div>
+                                <span>@(log.Username ?? "?")</span>
+                            </div>
+                        </td>
+                        <td>@ev</td>
+                        <td>@(string.IsNullOrWhiteSpace(log.Description) ? (log.TargetType ?? "-") : log.Description)</td>
+                        <td class="num mono">@rowCount</td>
+                        <td><span class="status @statusClass">@statusText</span></td>
+                        <td class="num"><span class="ago">@TimeAgo(log.CreatedAt)</span></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

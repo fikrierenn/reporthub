@@ -1,0 +1,966 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8" />
+<title>ReportHub · Dashboard Düzenle (Builder + Sidebar Mockup v1)</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+
+<script src="https://cdn.tailwindcss.com"></script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --ink-0:#111827; --ink-1:#1f2937; --ink-2:#374151; --ink-3:#6b7280; --ink-4:#9ca3af;
+    --line:#e5e7eb; --line-2:#f3f4f6;
+    --paper:#ffffff; --canvas:#f9fafb; --chip:#f3f4f6;
+    --accent:#dc2626; --accent-soft:rgba(220,38,38,0.10); --accent-ink:#991b1b;
+    --danger:#b91c1c; --ok:#10b981; --warn:#f59e0b;
+
+    --sidebar-w: 240px;
+    --sidebar-w-collapsed: 60px;
+    --header-h: 56px;
+    --palette-w: 270px;
+    --drawer-w: 340px;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{
+    background:var(--canvas); color:var(--ink-1);
+    font-family:'Inter',ui-sans-serif,system-ui,sans-serif;
+    font-feature-settings:'ss01','cv11';
+    margin:0; height:100%;
+    -webkit-font-smoothing:antialiased;
+  }
+  .mono{font-family:'JetBrains Mono',ui-monospace,monospace;}
+
+  /* ============ APP SHELL ============ */
+  .app-shell{
+    display:grid;
+    grid-template-columns: var(--sidebar-w) 1fr;
+    height:100vh; overflow:hidden;
+    transition: grid-template-columns .18s ease;
+  }
+  .app-shell.collapsed{ grid-template-columns: var(--sidebar-w-collapsed) 1fr; }
+
+  /* ============ SIDEBAR (app-shell-v1 ile birebir) ============ */
+  .sidebar{ background:var(--paper); border-right:1px solid var(--line); display:flex; flex-direction:column; overflow:hidden; }
+  .side-head{ height:var(--header-h); border-bottom:1px solid var(--line); display:flex; align-items:center; padding:0 14px; gap:10px; flex-shrink:0; }
+  .brand-mark{
+    width:30px; height:30px; border-radius:7px;
+    display:grid; place-items:center;
+    background:var(--accent); color:#fff;
+    font-weight:800; font-size:14px; letter-spacing:-.04em;
+    box-shadow: inset 0 -1px 0 rgba(0,0,0,.18);
+    flex-shrink:0;
+  }
+  .brand-name{ line-height:1.05; }
+  .brand-name .t{font-size:13.5px; font-weight:700; letter-spacing:-.01em; color:var(--ink-1);}
+  .brand-name .s{font-size:10.5px; color:var(--ink-4); font-family:'JetBrains Mono',monospace; margin-top:2px; display:block;}
+  .collapsed .brand-name{display:none;}
+
+  .side-collapse{ margin-left:auto; width:24px; height:24px; border-radius:5px; display:grid; place-items:center; color:var(--ink-3); cursor:pointer; border:none; background:transparent; transition:background .12s, color .12s; }
+  .side-collapse:hover{ background:var(--line-2); color:var(--ink-1); }
+  .collapsed .side-collapse svg{ transform:rotate(180deg); }
+  .side-collapse svg{ transition:transform .18s ease; }
+
+  .side-section{ padding: 14px 18px 6px; font-size:10.5px; font-weight:700; letter-spacing:.10em; text-transform:uppercase; color:var(--ink-4); }
+  .collapsed .side-section{ font-size:0; padding:14px 0 4px; height:14px; }
+  .collapsed .side-section::after{ content:""; display:block; height:1px; width:24px; margin:0 auto; background:var(--line); }
+
+  .nav{ list-style:none; padding:0 8px; margin:0; display:flex; flex-direction:column; gap:1px; }
+  .nav a{ display:flex; align-items:center; gap:10px; padding:8px 10px; border-radius:7px; color:var(--ink-2); font-size:13px; font-weight:500; text-decoration:none; transition: background .12s, color .12s; position:relative; }
+  .nav a:hover{ background:var(--line-2); color:var(--ink-1); }
+  .nav a.active{ background:var(--accent-soft); color:var(--accent-ink); font-weight:600; }
+  .nav a.active::before{ content:""; position:absolute; left:-8px; top:6px; bottom:6px; width:3px; background:var(--accent); border-radius:0 3px 3px 0; }
+  .nav a .icon{ width:18px; height:18px; flex-shrink:0; display:flex; align-items:center; justify-content:center; }
+  .nav a .label{ flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .nav a .badge{ margin-left:auto; font-size:10.5px; font-weight:600; padding:1px 6px; border-radius:999px; background:var(--chip); color:var(--ink-3); }
+  .nav a.active .badge{ background:var(--accent); color:#fff; }
+  .collapsed .nav a{ justify-content:center; padding:8px 0; }
+  .collapsed .nav a .label, .collapsed .nav a .badge{ display:none; }
+  .collapsed .nav a.active::before{ left:0; }
+
+  .side-body{ flex:1; overflow-y:auto; padding-bottom:8px; }
+  .side-body::-webkit-scrollbar{ width:6px; }
+  .side-body::-webkit-scrollbar-thumb{ background:var(--line); border-radius:3px; }
+
+  .side-foot{ border-top:1px solid var(--line); padding:10px; display:flex; align-items:center; gap:10px; flex-shrink:0; }
+  .avatar{ width:32px; height:32px; border-radius:50%; background:linear-gradient(135deg, var(--accent) 0%, var(--accent-ink) 100%); color:#fff; display:grid; place-items:center; font-size:12px; font-weight:700; flex-shrink:0; }
+  .user-info{ flex:1; min-width:0; line-height:1.2; }
+  .user-info .n{ font-size:12.5px; font-weight:600; color:var(--ink-1); }
+  .user-info .r{ font-size:10.5px; color:var(--ink-4); font-family:'JetBrains Mono',monospace; }
+  .user-actions button{ width:26px; height:26px; border-radius:5px; border:none; background:transparent; color:var(--ink-3); cursor:pointer; display:grid; place-items:center; }
+  .user-actions button:hover{ background:var(--line-2); color:var(--ink-1); }
+  .user-actions button.danger:hover{ background:rgba(220,38,38,0.10); color:var(--danger); }
+  .collapsed .user-info, .collapsed .user-actions{ display:none; }
+  .collapsed .side-foot{ justify-content:center; padding:10px 0; }
+
+  /* ============ MAIN ============ */
+  .main{ display:flex; flex-direction:column; min-width:0; overflow:hidden; }
+
+  .topbar{ height:var(--header-h); border-bottom:1px solid var(--line); background:var(--paper); display:flex; align-items:center; gap:14px; padding:0 20px; flex-shrink:0; }
+
+  /* Breadcrumb (derin) */
+  .crumbs{ display:flex; align-items:center; gap:6px; font-size:13px; color:var(--ink-3); white-space:nowrap; min-width:0; }
+  .crumbs a{ color:var(--ink-3); text-decoration:none; transition:color .12s; }
+  .crumbs a:hover{ color:var(--accent); }
+  .crumbs .sep{ color:var(--ink-4); }
+  .crumbs .current{ color:var(--ink-1); font-weight:600; max-width:280px; overflow:hidden; text-overflow:ellipsis; }
+  .crumbs .sp-chip{ background:var(--chip); color:var(--ink-2); font-family:'JetBrains Mono',monospace; font-size:10.5px; padding:2px 7px; border-radius:4px; margin-left:6px; }
+
+  /* Mode segmented (Düzenle / Önizle) */
+  .mode-seg{
+    display:inline-flex; border:1px solid var(--line); border-radius:7px; padding:2px;
+    background:var(--paper); gap:2px; margin-left:auto;
+  }
+  .mode-seg button{
+    height:28px; padding:0 14px; border-radius:5px;
+    font-size:12px; font-weight:500;
+    color:var(--ink-2); background:transparent;
+    border:none; cursor:pointer; transition: background .12s, color .12s;
+    display:inline-flex; align-items:center; gap:6px;
+  }
+  .mode-seg button:hover{ background:var(--line-2); color:var(--ink-1); }
+  .mode-seg button.on{ background:var(--accent); color:#fff; }
+  .mode-seg button:disabled{ color:var(--ink-4); cursor:not-allowed; }
+
+  /* Topbar actions */
+  .top-actions{ display:flex; align-items:center; gap:8px; }
+  .icon-btn{ width:32px; height:32px; border-radius:6px; border:none; background:transparent; color:var(--ink-3); display:grid; place-items:center; cursor:pointer; transition: background .12s, color .12s; position:relative; }
+  .icon-btn:hover{ background:var(--line-2); color:var(--ink-1); }
+  .btn{
+    display:inline-flex; align-items:center; gap:6px;
+    height:32px; padding:0 12px; border-radius:6px;
+    font-size:12.5px; font-weight:500;
+    border:1px solid var(--line); background:var(--paper); color:var(--ink-1);
+    cursor:pointer; transition: all .12s;
+  }
+  .btn:hover{ border-color:var(--ink-4); background:var(--line-2); }
+  .btn:disabled{ color:var(--ink-4); cursor:not-allowed; opacity:.7; }
+  .btn.primary{ background:var(--accent); border-color:var(--accent); color:#fff; }
+  .btn.primary:hover{ background:var(--accent-ink); border-color:var(--accent-ink); }
+  .btn.ghost{ background:transparent; border-color:transparent; }
+  .btn.ghost:hover{ background:var(--line-2); }
+
+  .dirty-chip{
+    font-family:'JetBrains Mono',monospace; font-size:10.5px;
+    color:#92400e; background:rgba(245,158,11,0.10);
+    border:1px solid rgba(245,158,11,0.25);
+    padding:3px 10px; border-radius:999px; font-weight:500;
+  }
+
+  /* ============ BUILDER SHELL (3-pane) ============ */
+  .builder{
+    flex:1; display:grid;
+    grid-template-columns: var(--palette-w) 1fr var(--drawer-w);
+    min-width:0; overflow:hidden;
+  }
+
+  /* SOL: PALETTE */
+  .palette{
+    background:var(--paper); border-right:1px solid var(--line);
+    overflow-y:auto; display:flex; flex-direction:column;
+  }
+  .palette::-webkit-scrollbar{ width:6px; }
+  .palette::-webkit-scrollbar-thumb{ background:var(--line); border-radius:3px; }
+
+  .pal-section{ padding: 14px 16px 8px; }
+  .pal-title{ font-size:10.5px; font-weight:700; letter-spacing:.10em; text-transform:uppercase; color:var(--ink-4); margin-bottom:2px; }
+  .pal-sub{ font-size:11.5px; color:var(--ink-4); line-height:1.4; }
+
+  .pal-cards{ padding:0 12px; display:flex; flex-direction:column; gap:8px; }
+  .palette-card{
+    border:1px solid var(--line); border-radius:8px; padding:11px 12px;
+    background:var(--paper); cursor:grab; transition:all .12s;
+    display:flex; gap:10px; align-items:center;
+  }
+  .palette-card:hover{ border-color:var(--ink-4); background:#fafafa; transform:translateY(-1px); }
+  .palette-card:active{ cursor:grabbing; }
+  .palette-icon{ width:34px; height:34px; border-radius:6px; display:grid; place-items:center; flex-shrink:0; }
+  .palette-icon.kpi{ background:rgba(220,38,38,0.10); color:var(--accent-ink); }
+  .palette-icon.chart{ background:var(--line-2); color:var(--ink-1); }
+  .palette-icon.table{ background:rgba(16,185,129,0.12); color:#065f46; }
+  .palette-card .info{ flex:1; min-width:0; }
+  .palette-card .info .t{ font-size:13px; font-weight:600; color:var(--ink-1); line-height:1.2; }
+  .palette-card .info .d{ font-size:11px; color:var(--ink-3); margin-top:2px; line-height:1.3; }
+  .palette-card .add{
+    width:24px; height:24px; border-radius:5px;
+    color:var(--ink-3); cursor:pointer; border:none; background:transparent;
+    display:grid; place-items:center; flex-shrink:0;
+  }
+  .palette-card:hover .add{ color:var(--accent); }
+
+  /* Mevcut bileşen liste (sol palette altta) */
+  .pal-list{ padding:0 12px 12px; display:flex; flex-direction:column; gap:6px; }
+  .comp-row{
+    display:flex; align-items:center; gap:8px;
+    padding:8px 10px; border:1px solid var(--line);
+    border-radius:7px; background:var(--paper);
+    transition:all .12s; cursor:pointer;
+  }
+  .comp-row:hover{ border-color:var(--ink-4); background:#fafafa; }
+  .comp-row.editing{ border-color:var(--accent); background:var(--accent-soft); }
+  .comp-row .grip{ color:var(--ink-4); cursor:grab; flex-shrink:0; }
+  .comp-row .type-chip{ font-size:9.5px; padding:1px 6px; height:auto; flex-shrink:0; }
+  .comp-row .title{ flex:1; min-width:0; font-size:12px; color:var(--ink-1); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-weight:500; }
+  .comp-row .meta{ font-size:10px; color:var(--ink-4); font-family:'JetBrains Mono',monospace; flex-shrink:0; }
+
+  .type-chip{
+    display:inline-flex; align-items:center; gap:4px;
+    height:18px; padding:0 6px; border-radius:4px;
+    font-size:10px; font-weight:700; letter-spacing:.02em; text-transform:uppercase;
+  }
+  .type-kpi   {background:rgba(220,38,38,0.10); color:var(--accent-ink);}
+  .type-chart {background:var(--line-2);         color:var(--ink-1);}
+  .type-table {background:rgba(16,185,129,0.12); color:#065f46;}
+
+  /* Result Contract (palette üstte) */
+  .contract{
+    border:1px solid var(--line); border-radius:8px; margin:0 12px 12px;
+    background:#fafafa;
+  }
+  .contract-head{
+    padding:9px 12px; display:flex; align-items:center; justify-content:space-between;
+    border-bottom:1px solid var(--line);
+  }
+  .contract-head .t{ font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--ink-3); display:flex; align-items:center; gap:6px; }
+  .contract-head .ico{ color:var(--accent); }
+  .contract-head .add{ font-size:11px; color:var(--accent); font-weight:600; cursor:pointer; }
+  .contract-list{ padding:8px 10px; display:flex; flex-direction:column; gap:5px; }
+  .contract-row{
+    display:flex; align-items:center; gap:8px; padding:5px 8px;
+    background:var(--paper); border:1px solid var(--line); border-radius:5px;
+    font-size:11.5px;
+  }
+  .contract-row .name{ font-family:'JetBrains Mono',monospace; color:var(--ink-1); flex:1; min-width:0; }
+  .contract-row .rs{ font-family:'JetBrains Mono',monospace; color:var(--ink-3); font-size:10.5px; }
+  .contract-row .req{
+    width:14px; height:14px; border:1px solid var(--ink-4); border-radius:3px;
+    display:grid; place-items:center; flex-shrink:0;
+  }
+  .contract-row .req.on{ background:var(--accent); border-color:var(--accent); }
+  .contract-row .req.on::after{ content:""; width:6px; height:3px; border-left:1.5px solid #fff; border-bottom:1.5px solid #fff; transform:rotate(-45deg); margin-top:-2px; }
+
+  /* ORTA: CANVAS */
+  .canvas{
+    background:var(--canvas);
+    background-image: radial-gradient(circle, rgba(17,24,39,0.06) 1px, transparent 1px);
+    background-size: 24px 24px;
+    overflow:auto; padding:16px;
+    position:relative;
+  }
+  .param-bar{
+    background:linear-gradient(to right, var(--accent-soft), var(--paper) 50%);
+    border:1px solid var(--line); border-left:3px solid var(--accent);
+    border-radius:8px; padding:8px 12px; margin-bottom:12px;
+    display:flex; align-items:center; gap:8px; flex-wrap:wrap;
+  }
+  .param-bar .lbl{ font-size:10px; font-weight:700; color:var(--ink-3); text-transform:uppercase; letter-spacing:.06em; margin-right:4px; }
+  .param-chip{
+    display:inline-flex; align-items:center; gap:6px;
+    background:var(--paper); border:1px dashed var(--accent); color:var(--accent-ink);
+    border-radius:999px; padding:4px 10px; font-size:11px; font-weight:500;
+    cursor:pointer; transition:background .12s;
+  }
+  .param-chip:hover{ background:var(--accent-soft); }
+  .param-chip .v{ font-family:'JetBrains Mono',monospace; }
+  .param-bar .run-btn{ margin-left:auto; }
+
+  /* Widget grid (Gridstack hint) */
+  .wgrid{
+    display:grid; grid-template-columns: repeat(12, 1fr);
+    grid-auto-rows: 80px; gap:8px;
+  }
+  .widget{
+    background:var(--paper); border:1px solid var(--line); border-radius:10px;
+    overflow:hidden; display:flex; flex-direction:column;
+    transition:all .15s;
+    box-shadow:0 1px 0 rgba(17,24,39,0.02);
+    cursor:pointer; position:relative;
+  }
+  .widget:hover{ border-color:var(--ink-4); box-shadow:0 4px 14px -8px rgba(17,24,39,0.18); }
+  .widget.selected{
+    border-color:var(--accent);
+    box-shadow:0 0 0 1px var(--accent), 0 4px 14px -8px rgba(220,38,38,.25);
+  }
+  .w-head{
+    display:flex; align-items:center; gap:8px;
+    padding:9px 11px; border-bottom:1px solid var(--line-2);
+    background:#fafafa; cursor:move; user-select:none;
+  }
+  .w-head .title{ font-size:12.5px; font-weight:600; color:var(--ink-1); flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .result-pill{
+    font-family:'JetBrains Mono',monospace; font-size:10.5px;
+    background:var(--paper); border:1px solid var(--line); border-radius:4px;
+    padding:1px 6px; color:var(--ink-2);
+    display:inline-flex; align-items:center; gap:3px;
+  }
+  .result-pill::before{ content:"result:"; color:var(--ink-4); }
+  .w-actions{ display:flex; gap:1px; opacity:0; transition:opacity .12s; }
+  .widget:hover .w-actions, .widget.selected .w-actions{ opacity:1; }
+  .w-actions button{
+    width:22px; height:22px; border-radius:4px; color:var(--ink-3);
+    background:transparent; border:none; cursor:pointer;
+    display:grid; place-items:center;
+  }
+  .w-actions button:hover{ background:var(--line-2); color:var(--ink-1); }
+  .w-actions button.danger:hover{ background:rgba(220,38,38,0.10); color:var(--danger); }
+
+  .w-body{ flex:1; min-height:0; padding:12px; display:flex; flex-direction:column; }
+
+  /* KPI inside widget */
+  .kpi-label{ font-size:10.5px; color:var(--ink-3); text-transform:uppercase; letter-spacing:.06em; font-weight:700; margin-bottom:4px; }
+  .kpi-value{ font-size:32px; font-weight:700; color:var(--ink-0); line-height:1; letter-spacing:-.02em; font-variant-numeric: tabular-nums; }
+  .kpi-sub{ display:flex; align-items:center; gap:6px; margin-top:6px; }
+  .kpi-delta{ font-size:11px; font-weight:600; display:inline-flex; align-items:center; gap:3px; }
+  .kpi-delta.up{ color:var(--ok); }
+  .kpi-delta.down{ color:var(--danger); }
+  .kpi-desc{ font-size:11px; color:var(--ink-4); }
+
+  /* Table inside widget */
+  .dt{ width:100%; border-collapse:collapse; font-size:12px; }
+  .dt thead th{ text-align:left; font-weight:600; color:var(--ink-3); padding:6px 8px; border-bottom:1px solid var(--line); text-transform:uppercase; font-size:9.5px; letter-spacing:.06em; background:#fafafa; position:sticky; top:0; }
+  .dt tbody td{ padding:7px 8px; border-bottom:1px solid var(--line-2); color:var(--ink-1); }
+  .dt tbody tr:hover td{ background:var(--line-2); }
+  .dt .num{ text-align:right; font-variant-numeric:tabular-nums; }
+  .dt-wrap{ overflow:auto; flex:1; min-height:0; margin:-12px; padding:0; }
+
+  /* SAĞ: DRAWER */
+  .drawer{
+    background:var(--paper); border-left:1px solid var(--line);
+    overflow-y:auto; display:flex; flex-direction:column;
+  }
+  .drawer::-webkit-scrollbar{ width:6px; }
+  .drawer::-webkit-scrollbar-thumb{ background:var(--line); border-radius:3px; }
+
+  .drawer-tabs{
+    display:flex; border-bottom:1px solid var(--line);
+    flex-shrink:0; background:var(--paper);
+    position:sticky; top:0; z-index:1;
+  }
+  .drawer-tabs button{
+    flex:1; height:42px; border:none; background:transparent;
+    font-size:11.5px; font-weight:700; text-transform:uppercase; letter-spacing:.06em;
+    color:var(--ink-3); cursor:pointer; transition: color .12s;
+    border-bottom:2px solid transparent;
+    display:inline-flex; align-items:center; justify-content:center; gap:6px;
+  }
+  .drawer-tabs button.active{ color:var(--accent); border-bottom-color:var(--accent); }
+  .drawer-tabs button:hover:not(.active):not(:disabled){ color:var(--ink-1); }
+  .drawer-tabs button:disabled{ color:var(--ink-4); cursor:not-allowed; }
+
+  .drawer-content{ padding:14px 16px 24px; }
+
+  .selected-banner{
+    background:var(--accent-soft); border:1px solid var(--accent);
+    border-radius:7px; padding:9px 12px; margin-bottom:14px;
+    display:flex; align-items:center; gap:8px;
+    font-size:12px; color:var(--accent-ink);
+  }
+  .selected-banner .ico{ color:var(--accent); }
+  .selected-banner .name{ font-weight:600; flex:1; }
+
+  /* Form pattern (.field/.lab/.inp) */
+  .field{ margin-bottom:12px; }
+  .lab{ display:block; font-size:10.5px; font-weight:700; color:var(--ink-3); text-transform:uppercase; letter-spacing:.06em; margin-bottom:5px; }
+  .inp{
+    width:100%; height:30px; padding:0 9px;
+    border:1px solid var(--line); border-radius:6px;
+    background:var(--paper);
+    font-size:12.5px; color:var(--ink-1);
+  }
+  .inp:focus{ outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft); }
+  select.inp{ appearance:none; background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'><path d='M2 4l3 3 3-3' stroke='%236b7280' stroke-width='1.3' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>"); background-repeat:no-repeat; background-position:right 10px center; padding-right:28px; }
+
+  .seg-full{ display:flex; border:1px solid var(--line); border-radius:6px; padding:2px; gap:2px; }
+  .seg-full button{ flex:1; height:26px; border-radius:4px; background:transparent; border:none; font-size:11.5px; color:var(--ink-2); cursor:pointer; }
+  .seg-full button.on{ background:var(--accent); color:#fff; font-weight:600; }
+
+  .swatch-grid{ display:grid; grid-template-columns: repeat(7, 1fr); gap:5px; }
+  .swatch{ aspect-ratio:1; border-radius:5px; cursor:pointer; border:2px solid transparent; transition: border-color .12s; }
+  .swatch.on{ border-color:var(--ink-1); }
+  .swatch.s-red{ background:#dc2626; } .swatch.s-blue{ background:#3b82f6; } .swatch.s-green{ background:#10b981; }
+  .swatch.s-amber{ background:#f59e0b; } .swatch.s-violet{ background:#a855f7; } .swatch.s-rose{ background:#f43f5e; } .swatch.s-slate{ background:#64748b; }
+
+  .icon-grid{ display:grid; grid-template-columns: repeat(8, 1fr); gap:5px; }
+  .icon-pick{ aspect-ratio:1; border:1px solid var(--line); border-radius:5px; display:grid; place-items:center; color:var(--ink-2); cursor:pointer; transition:all .12s; }
+  .icon-pick:hover{ border-color:var(--ink-4); }
+  .icon-pick.on{ border-color:var(--accent); background:var(--accent-soft); color:var(--accent-ink); }
+
+  .span-toggle{ display:flex; gap:5px; }
+  .span-toggle button{
+    flex:1; height:32px; border:1px solid var(--line); border-radius:6px;
+    background:var(--paper); font-size:12px; color:var(--ink-2); cursor:pointer; font-weight:600;
+  }
+  .span-toggle button.on{ border-color:var(--accent); background:var(--accent-soft); color:var(--accent-ink); }
+
+  .section-hd{
+    font-size:10.5px; font-weight:700; color:var(--ink-3);
+    text-transform:uppercase; letter-spacing:.08em;
+    padding-bottom:6px; border-bottom:1px solid var(--line-2);
+    margin: 18px 0 12px;
+  }
+
+  /* Suggest pills (SP kolonları) */
+  .pills{ display:flex; flex-wrap:wrap; gap:5px; margin-top:6px; }
+  .pill-sug{
+    display:inline-flex; align-items:center; gap:4px;
+    background:var(--chip); color:var(--ink-2);
+    border-radius:999px; padding:3px 8px; font-size:11px;
+    font-family:'JetBrains Mono',monospace;
+    cursor:pointer; transition:background .12s;
+  }
+  .pill-sug:hover{ background:var(--line); }
+  .pill-sug .fx{
+    background:var(--accent); color:#fff; font-size:9px; font-weight:700;
+    padding:0 4px; border-radius:3px; letter-spacing:.02em;
+  }
+
+  /* Search input (header) */
+  .search{ flex:1; max-width:280px; position:relative; margin-left:8px; }
+  .search input{
+    width:100%; height:30px; padding:0 12px 0 30px;
+    border:1px solid var(--line); border-radius:6px;
+    background:var(--canvas); font-size:12px; color:var(--ink-1);
+  }
+  .search input:focus{ outline:none; background:var(--paper); border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft); }
+  .search .ico{ position:absolute; left:9px; top:50%; transform:translateY(-50%); color:var(--ink-4); }
+  .search .kbd{ position:absolute; right:6px; top:50%; transform:translateY(-50%); font-family:'JetBrains Mono',monospace; font-size:9.5px; background:var(--paper); border:1px solid var(--line); border-bottom-width:2px; border-radius:3px; padding:0 4px; color:var(--ink-3); }
+
+  /* Hint / footer */
+  .builder-foot{
+    height:30px; border-top:1px solid var(--line); background:var(--paper);
+    display:flex; align-items:center; padding:0 16px;
+    font-size:10.5px; color:var(--ink-4); font-family:'JetBrains Mono',monospace;
+    flex-shrink:0; gap:14px;
+  }
+  .builder-foot .kbd{ background:var(--canvas); border:1px solid var(--line); border-bottom-width:2px; border-radius:3px; padding:0 4px; }
+</style>
+</head>
+
+<body>
+
+<div class="app-shell" id="appShell">
+
+  <!-- ============ SIDEBAR ============ -->
+  <aside class="sidebar">
+    <div class="side-head">
+      <div class="brand-mark">R</div>
+      <div class="brand-name">
+        <div class="t">ReportHub</div>
+        <span class="s">bkm-kitap</span>
+      </div>
+      <button class="side-collapse" id="btnCollapse" title="Daralt/Aç (Ctrl+B)">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M10 4l-4 4 4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+    </div>
+
+    <div class="side-body">
+      <div class="side-section">Ana</div>
+      <ul class="nav">
+        <li><a href="#"><span class="icon"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 7l6-5 6 5v7a1 1 0 01-1 1h-3v-4H6v4H3a1 1 0 01-1-1V7z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg></span><span class="label">Genel Bakış</span></a></li>
+        <li><a href="#"><span class="icon"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 13V8M7 13V4M11 13v-6M13 13H3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span><span class="label">Raporlar</span><span class="badge">42</span></a></li>
+        <li><a href="#" class="active"><span class="icon"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="2" y="2" width="5.5" height="5.5" rx="1" stroke="currentColor" stroke-width="1.4"/><rect x="8.5" y="2" width="5.5" height="5.5" rx="1" stroke="currentColor" stroke-width="1.4"/><rect x="2" y="8.5" width="5.5" height="5.5" rx="1" stroke="currentColor" stroke-width="1.4"/><rect x="8.5" y="8.5" width="5.5" height="5.5" rx="1" stroke="currentColor" stroke-width="1.4"/></svg></span><span class="label">Dashboard'lar</span><span class="badge">8</span></a></li>
+        <li><a href="#"><span class="icon"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 2l1.8 3.7L14 6.3l-3 2.9.7 4.1L8 11.5 4.3 13.3 5 9.2 2 6.3l4.2-.6L8 2z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg></span><span class="label">Favoriler</span><span class="badge">7</span></a></li>
+      </ul>
+      <div class="side-section">Sistem</div>
+      <ul class="nav">
+        <li><a href="#"><span class="icon"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.4"/><path d="M8 4v4l2.5 1.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></span><span class="label">Geçmiş / Loglar</span></a></li>
+        <li><a href="#"><span class="icon"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 4h12M2 8h12M2 12h7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span><span class="label">Veri Kaynakları</span></a></li>
+      </ul>
+      <div class="side-section">Yönetim</div>
+      <ul class="nav">
+        <li><a href="#"><span class="icon"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="6" r="2.5" stroke="currentColor" stroke-width="1.4"/><path d="M3 14c.5-2.4 2.6-4 5-4s4.5 1.6 5 4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></span><span class="label">Kullanıcılar</span></a></li>
+        <li><a href="#"><span class="icon"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6 1.5L1.5 4 6 6.5 10.5 4 6 1.5z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="M1.5 8L6 10.5 10.5 8M1.5 12L6 14.5 10.5 12" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg></span><span class="label">Roller</span></a></li>
+      </ul>
+    </div>
+
+    <div class="side-foot">
+      <div class="avatar">FE</div>
+      <div class="user-info">
+        <div class="n">Fikri EREN</div>
+        <div class="r">admin</div>
+      </div>
+      <div class="user-actions">
+        <button class="danger" title="Çıkış"><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M6 2H3a1 1 0 00-1 1v10a1 1 0 001 1h3M10 5l3 3-3 3M13 8H6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ============ MAIN ============ -->
+  <main class="main">
+
+    <!-- ====== TOPBAR ====== -->
+    <div class="topbar">
+      <div class="crumbs">
+        <a href="#">BKM Kitap</a>
+        <span class="sep">/</span>
+        <a href="#">Yönetim</a>
+        <span class="sep">/</span>
+        <a href="#">Raporlar</a>
+        <span class="sep">/</span>
+        <span class="current">Düzenle: PDKS Pano</span>
+        <span class="sp-chip">sp_PdksPano</span>
+      </div>
+
+      <div class="search">
+        <span class="ico"><svg width="13" height="13" viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="1.5"/><path d="M11 11l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span>
+        <input type="text" placeholder="Ara..." />
+        <span class="kbd">⌘K</span>
+      </div>
+
+      <div class="mode-seg" id="modeSeg">
+        <button data-mode="edit" class="on">
+          <svg width="11" height="11" viewBox="0 0 16 16" fill="none"><path d="M11.5 2L14 4.5l-9 9-2.8.5.5-2.8 9-9z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>
+          Düzenle
+        </button>
+        <button data-mode="preview">
+          <svg width="11" height="11" viewBox="0 0 16 16" fill="none"><path d="M8 3c-3 0-5.6 2-7 5 1.4 3 4 5 7 5s5.6-2 7-5c-1.4-3-4-5-7-5z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.4"/></svg>
+          Önizle
+        </button>
+      </div>
+
+      <div class="top-actions">
+        <span class="dirty-chip">değişiklik var</span>
+        <button class="btn ghost" title="Geri Al" disabled>
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M3 8a5 5 0 0110 0M3 8L1 6M3 8l-2 2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Geri Al
+        </button>
+        <button class="btn">
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M3 2h7l3 3v9a1 1 0 01-1 1H3a1 1 0 01-1-1V3a1 1 0 011-1z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>
+          JSON
+        </button>
+        <button class="btn primary">
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M3 8l3 3 7-7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          Kaydet
+        </button>
+      </div>
+    </div>
+
+    <!-- ====== BUILDER 3-PANE ====== -->
+    <div class="builder">
+
+      <!-- SOL: PALETTE -->
+      <aside class="palette">
+        <div class="pal-section">
+          <div class="pal-title">Bileşen Ekle</div>
+          <div class="pal-sub">Tuvale sürükle ya da + ile ekle</div>
+        </div>
+        <div class="pal-cards">
+          <div class="palette-card">
+            <div class="palette-icon kpi"><svg width="18" height="18" viewBox="0 0 20 20" fill="none"><path d="M5 14l4-4 3 3 4-5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="9" cy="10" r="1.3" fill="currentColor"/><circle cx="12" cy="13" r="1.3" fill="currentColor"/><circle cx="16" cy="8" r="1.3" fill="currentColor"/></svg></div>
+            <div class="info"><div class="t">KPI</div><div class="d">Tek sayı + delta</div></div>
+            <button class="add"><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></button>
+          </div>
+          <div class="palette-card">
+            <div class="palette-icon chart"><svg width="18" height="18" viewBox="0 0 20 20" fill="none"><path d="M3 16V9M8 16V5M13 16v-4M17 16H3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></div>
+            <div class="info"><div class="t">Grafik</div><div class="d">Bar, line, area, donut</div></div>
+            <button class="add"><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></button>
+          </div>
+          <div class="palette-card">
+            <div class="palette-icon table"><svg width="18" height="18" viewBox="0 0 20 20" fill="none"><rect x="3" y="4" width="14" height="12" rx="1.2" stroke="currentColor" stroke-width="1.4"/><path d="M3 8h14M3 12h14M9 4v12" stroke="currentColor" stroke-width="1.4"/></svg></div>
+            <div class="info"><div class="t">Tablo</div><div class="d">Result set satırları</div></div>
+            <button class="add"><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></button>
+          </div>
+        </div>
+
+        <div class="pal-section" style="padding-top:18px;">
+          <div class="pal-title">Result Contract</div>
+          <div class="pal-sub">SP'den dönen result set'ler</div>
+        </div>
+        <div class="contract">
+          <div class="contract-list">
+            <div class="contract-row"><span class="name">summary</span><span class="rs">RS:0</span><span class="req on" title="Zorunlu"></span></div>
+            <div class="contract-row"><span class="name">trend</span><span class="rs">RS:1</span><span class="req on"></span></div>
+            <div class="contract-row"><span class="name">magaza</span><span class="rs">RS:2</span><span class="req"></span></div>
+            <div class="contract-row"><span class="name">detail</span><span class="rs">RS:3</span><span class="req"></span></div>
+          </div>
+          <div class="contract-head" style="border-top:1px solid var(--line); border-bottom:none;">
+            <span class="add">+ Yeni isim ekle</span>
+          </div>
+        </div>
+
+        <div class="pal-section" style="padding-top:8px;">
+          <div class="pal-title">Bileşenler (5)</div>
+        </div>
+        <div class="pal-list">
+          <div class="comp-row editing">
+            <span class="grip"><svg width="10" height="14" viewBox="0 0 8 12" fill="currentColor"><circle cx="2" cy="2" r="1"/><circle cx="6" cy="2" r="1"/><circle cx="2" cy="6" r="1"/><circle cx="6" cy="6" r="1"/><circle cx="2" cy="10" r="1"/><circle cx="6" cy="10" r="1"/></svg></span>
+            <span class="type-chip type-kpi">KPI</span>
+            <span class="title">Bugün Ciro</span>
+            <span class="meta">1/4</span>
+          </div>
+          <div class="comp-row">
+            <span class="grip"><svg width="10" height="14" viewBox="0 0 8 12" fill="currentColor"><circle cx="2" cy="2" r="1"/><circle cx="6" cy="2" r="1"/><circle cx="2" cy="6" r="1"/><circle cx="6" cy="6" r="1"/><circle cx="2" cy="10" r="1"/><circle cx="6" cy="10" r="1"/></svg></span>
+            <span class="type-chip type-kpi">KPI</span>
+            <span class="title">Ay Kümüle</span>
+            <span class="meta">1/4</span>
+          </div>
+          <div class="comp-row">
+            <span class="grip"><svg width="10" height="14" viewBox="0 0 8 12" fill="currentColor"><circle cx="2" cy="2" r="1"/><circle cx="6" cy="2" r="1"/><circle cx="2" cy="6" r="1"/><circle cx="6" cy="6" r="1"/><circle cx="2" cy="10" r="1"/><circle cx="6" cy="10" r="1"/></svg></span>
+            <span class="type-chip type-kpi">KPI</span>
+            <span class="title">Ortalama Sepet</span>
+            <span class="meta">1/4</span>
+          </div>
+          <div class="comp-row">
+            <span class="grip"><svg width="10" height="14" viewBox="0 0 8 12" fill="currentColor"><circle cx="2" cy="2" r="1"/><circle cx="6" cy="2" r="1"/><circle cx="2" cy="6" r="1"/><circle cx="6" cy="6" r="1"/><circle cx="2" cy="10" r="1"/><circle cx="6" cy="10" r="1"/></svg></span>
+            <span class="type-chip type-chart">Grafik</span>
+            <span class="title">15 Günlük Trend</span>
+            <span class="meta">3/4</span>
+          </div>
+          <div class="comp-row">
+            <span class="grip"><svg width="10" height="14" viewBox="0 0 8 12" fill="currentColor"><circle cx="2" cy="2" r="1"/><circle cx="6" cy="2" r="1"/><circle cx="2" cy="6" r="1"/><circle cx="6" cy="6" r="1"/><circle cx="2" cy="10" r="1"/><circle cx="6" cy="10" r="1"/></svg></span>
+            <span class="type-chip type-table">Tablo</span>
+            <span class="title">Mağaza Performansı</span>
+            <span class="meta">4/4</span>
+          </div>
+        </div>
+      </aside>
+
+      <!-- ORTA: CANVAS -->
+      <main class="canvas">
+
+        <div class="param-bar">
+          <span class="lbl">Parametreler</span>
+          <span class="param-chip"><svg width="10" height="10" viewBox="0 0 16 16" fill="none"><rect x="2" y="3" width="12" height="11" rx="1.2" stroke="currentColor" stroke-width="1.3"/><path d="M2 7h12M6 2v3M10 2v3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>Tarih: <span class="v">2026-04-27</span></span>
+          <span class="param-chip"><svg width="10" height="10" viewBox="0 0 16 16" fill="none"><path d="M2 6l1-3h10l1 3v1H2V6zM3 7v6h10V7" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>Mağaza: <span class="v">Tümü</span></span>
+          <span class="param-chip"><svg width="10" height="10" viewBox="0 0 16 16" fill="none"><path d="M2 2h6l6 6-6 6-6-6V2z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>Kategori: <span class="v">Tümü</span></span>
+          <button class="btn run-btn">
+            <svg width="11" height="11" viewBox="0 0 16 16" fill="none"><path d="M13 8a5 5 0 11-1.5-3.5M13 3v3h-3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Çalıştır
+          </button>
+        </div>
+
+        <div class="wgrid">
+
+          <!-- KPI 1 (selected) -->
+          <div class="widget selected" style="grid-column: span 3; grid-row: span 2;">
+            <div class="w-head">
+              <span class="type-chip type-kpi">KPI</span>
+              <span class="title">Bugün Ciro</span>
+              <span class="result-pill">summary</span>
+              <div class="w-actions">
+                <button title="Düzenle"><svg width="11" height="11" viewBox="0 0 16 16" fill="none"><path d="M11.5 2L14 4.5l-9 9-2.8.5.5-2.8 9-9z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg></button>
+                <button title="Kopyala"><svg width="11" height="11" viewBox="0 0 16 16" fill="none"><rect x="5" y="5" width="9" height="9" rx="1.2" stroke="currentColor" stroke-width="1.4"/><path d="M5 11H3a1 1 0 01-1-1V3a1 1 0 011-1h7a1 1 0 011 1v2" stroke="currentColor" stroke-width="1.4"/></svg></button>
+                <button class="danger" title="Sil"><svg width="11" height="11" viewBox="0 0 16 16" fill="none"><path d="M3 4h10M5 4V2h6v2M4 4l1 10h6l1-10" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></button>
+              </div>
+            </div>
+            <div class="w-body">
+              <div class="kpi-label">Bugün Ciro</div>
+              <div class="kpi-value">₺127.480</div>
+              <div class="kpi-sub">
+                <span class="kpi-delta up">↑ %12.4</span>
+                <span class="kpi-desc">geçen aynı gün</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- KPI 2 -->
+          <div class="widget" style="grid-column: span 3; grid-row: span 2;">
+            <div class="w-head">
+              <span class="type-chip type-kpi">KPI</span>
+              <span class="title">Ay Kümüle</span>
+              <span class="result-pill">summary</span>
+              <div class="w-actions"><button><svg width="11" height="11" viewBox="0 0 16 16" fill="none"><path d="M11.5 2L14 4.5l-9 9-2.8.5.5-2.8 9-9z" stroke="currentColor" stroke-width="1.4"/></svg></button><button class="danger"><svg width="11" height="11" viewBox="0 0 16 16" fill="none"><path d="M3 4h10M5 4V2h6v2M4 4l1 10h6l1-10" stroke="currentColor" stroke-width="1.4"/></svg></button></div>
+            </div>
+            <div class="w-body">
+              <div class="kpi-label">Ay Kümüle</div>
+              <div class="kpi-value">₺1.284K</div>
+              <div class="kpi-sub"><span class="kpi-delta up">↑ %5.8</span><span class="kpi-desc">hedef ₺1.5M</span></div>
+            </div>
+          </div>
+
+          <!-- KPI 3 -->
+          <div class="widget" style="grid-column: span 3; grid-row: span 2;">
+            <div class="w-head">
+              <span class="type-chip type-kpi">KPI</span>
+              <span class="title">Ortalama Sepet</span>
+              <span class="result-pill">summary</span>
+              <div class="w-actions"><button><svg width="11" height="11" viewBox="0 0 16 16" fill="none"><path d="M11.5 2L14 4.5l-9 9-2.8.5.5-2.8 9-9z" stroke="currentColor" stroke-width="1.4"/></svg></button><button class="danger"><svg width="11" height="11" viewBox="0 0 16 16" fill="none"><path d="M3 4h10M5 4V2h6v2M4 4l1 10h6l1-10" stroke="currentColor" stroke-width="1.4"/></svg></button></div>
+            </div>
+            <div class="w-body">
+              <div class="kpi-label">Ortalama Sepet</div>
+              <div class="kpi-value">₺152.58</div>
+              <div class="kpi-sub"><span class="kpi-delta down">↓ %2.1</span><span class="kpi-desc">geçen ay</span></div>
+            </div>
+          </div>
+
+          <!-- KPI 4 -->
+          <div class="widget" style="grid-column: span 3; grid-row: span 2;">
+            <div class="w-head">
+              <span class="type-chip type-kpi">KPI</span>
+              <span class="title">Fiş Sayısı</span>
+              <span class="result-pill">summary</span>
+              <div class="w-actions"><button><svg width="11" height="11" viewBox="0 0 16 16" fill="none"><path d="M11.5 2L14 4.5l-9 9-2.8.5.5-2.8 9-9z" stroke="currentColor" stroke-width="1.4"/></svg></button><button class="danger"><svg width="11" height="11" viewBox="0 0 16 16" fill="none"><path d="M3 4h10M5 4V2h6v2M4 4l1 10h6l1-10" stroke="currentColor" stroke-width="1.4"/></svg></button></div>
+            </div>
+            <div class="w-body">
+              <div class="kpi-label">Fiş Sayısı</div>
+              <div class="kpi-value">3.215</div>
+              <div class="kpi-sub"><span class="kpi-delta up">↑ %9.1</span><span class="kpi-desc">dünden</span></div>
+            </div>
+          </div>
+
+          <!-- Chart (büyük) -->
+          <div class="widget" style="grid-column: span 8; grid-row: span 4;">
+            <div class="w-head">
+              <span class="type-chip type-chart">Grafik</span>
+              <span class="title">15 Günlük Ciro Trendi</span>
+              <span class="result-pill">trend</span>
+              <div class="w-actions"><button><svg width="11" height="11" viewBox="0 0 16 16" fill="none"><path d="M11.5 2L14 4.5l-9 9-2.8.5.5-2.8 9-9z" stroke="currentColor" stroke-width="1.4"/></svg></button><button class="danger"><svg width="11" height="11" viewBox="0 0 16 16" fill="none"><path d="M3 4h10M5 4V2h6v2M4 4l1 10h6l1-10" stroke="currentColor" stroke-width="1.4"/></svg></button></div>
+            </div>
+            <div class="w-body" style="padding:12px 16px;">
+              <svg width="100%" height="100%" viewBox="0 0 600 220" preserveAspectRatio="none">
+                <defs>
+                  <linearGradient id="gd" x1="0" x2="0" y1="0" y2="1">
+                    <stop offset="0%" stop-color="#dc2626" stop-opacity=".24"/>
+                    <stop offset="100%" stop-color="#dc2626" stop-opacity="0"/>
+                  </linearGradient>
+                </defs>
+                <line x1="0" y1="50" x2="600" y2="50" stroke="#f3f4f6"/>
+                <line x1="0" y1="110" x2="600" y2="110" stroke="#f3f4f6"/>
+                <line x1="0" y1="170" x2="600" y2="170" stroke="#f3f4f6"/>
+                <!-- Hedef (kesik) -->
+                <path d="M0,80 L40,80 L80,75 L120,75 L160,68 L200,65 L240,62 L280,58 L320,55 L360,52 L400,50 L440,48 L480,45 L520,42 L560,40 L600,38" fill="none" stroke="#9ca3af" stroke-width="1.5" stroke-dasharray="4,3"/>
+                <!-- Ciro area -->
+                <path d="M0,150 L40,135 L80,120 L120,128 L160,100 L200,90 L240,98 L280,80 L320,70 L360,55 L400,62 L440,50 L480,40 L520,35 L560,30 L600,25 L600,220 L0,220 Z" fill="url(#gd)"/>
+                <path d="M0,150 L40,135 L80,120 L120,128 L160,100 L200,90 L240,98 L280,80 L320,70 L360,55 L400,62 L440,50 L480,40 L520,35 L560,30 L600,25" fill="none" stroke="#dc2626" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+                <circle cx="600" cy="25" r="4" fill="#dc2626"/>
+              </svg>
+            </div>
+          </div>
+
+          <!-- Tablo -->
+          <div class="widget" style="grid-column: span 4; grid-row: span 4;">
+            <div class="w-head">
+              <span class="type-chip type-table">Tablo</span>
+              <span class="title">Mağaza Performansı</span>
+              <span class="result-pill">magaza</span>
+              <div class="w-actions"><button><svg width="11" height="11" viewBox="0 0 16 16" fill="none"><path d="M11.5 2L14 4.5l-9 9-2.8.5.5-2.8 9-9z" stroke="currentColor" stroke-width="1.4"/></svg></button><button class="danger"><svg width="11" height="11" viewBox="0 0 16 16" fill="none"><path d="M3 4h10M5 4V2h6v2M4 4l1 10h6l1-10" stroke="currentColor" stroke-width="1.4"/></svg></button></div>
+            </div>
+            <div class="w-body" style="padding:0;">
+              <div class="dt-wrap" style="margin:0;">
+                <table class="dt">
+                  <thead><tr><th>Mağaza</th><th class="num">Ciro</th><th class="num">Pay</th></tr></thead>
+                  <tbody>
+                    <tr><td>Kadıköy</td><td class="num mono">₺540.000</td><td class="num mono">42%</td></tr>
+                    <tr><td>Beşiktaş</td><td class="num mono">₺385.000</td><td class="num mono">30%</td></tr>
+                    <tr><td>Bağdat Cd.</td><td class="num mono">₺230.000</td><td class="num mono">18%</td></tr>
+                    <tr><td>Nişantaşı</td><td class="num mono">₺128.730</td><td class="num mono">10%</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </main>
+
+      <!-- SAĞ: DRAWER -->
+      <aside class="drawer">
+        <div class="drawer-tabs">
+          <button class="active">
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M2 4h12M2 8h12M2 12h12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+            Veri
+          </button>
+          <button>
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M8 2v12M2 8h12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.4"/></svg>
+            Görünüm
+          </button>
+        </div>
+
+        <div class="drawer-content">
+
+          <div class="selected-banner">
+            <span class="ico"><svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M11.5 2L14 4.5l-9 9-2.8.5.5-2.8 9-9z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg></span>
+            <span class="name">Bugün Ciro</span>
+            <span style="font-family:'JetBrains Mono',monospace; font-size:10.5px; opacity:.7;">KPI</span>
+          </div>
+
+          <div class="field">
+            <label class="lab">Tip</label>
+            <div class="seg-full">
+              <button class="on">KPI</button>
+              <button>Grafik</button>
+              <button>Tablo</button>
+            </div>
+          </div>
+
+          <div class="field">
+            <label class="lab">Başlık</label>
+            <input type="text" class="inp" value="Bugün Ciro" />
+          </div>
+
+          <div class="field">
+            <label class="lab">Result (name)</label>
+            <select class="inp">
+              <option>summary (RS:0)</option>
+              <option>trend (RS:1)</option>
+              <option>magaza (RS:2)</option>
+              <option>detail (RS:3)</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label class="lab">Genişlik</label>
+            <div class="span-toggle">
+              <button>1/4</button>
+              <button>2/4</button>
+              <button class="on">3/4</button>
+              <button>4/4</button>
+            </div>
+          </div>
+
+          <div class="section-hd">KPI Detayı</div>
+
+          <div class="field">
+            <label class="lab">Aggregation</label>
+            <select class="inp">
+              <option>İlk Değer (first)</option>
+              <option>Toplam (sum)</option>
+              <option>Ortalama (avg)</option>
+              <option>Sayım (count)</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label class="lab">Kolon</label>
+            <input type="text" class="inp" value="bugun_ciro" />
+            <div class="pills">
+              <span class="pill-sug">bugun_ciro</span>
+              <span class="pill-sug">ay_kumule</span>
+              <span class="pill-sug">ort_sepet</span>
+              <span class="pill-sug">fis_sayisi</span>
+              <span class="pill-sug"><span class="fx">fx</span>DeltaCiro</span>
+            </div>
+          </div>
+
+          <div class="field">
+            <label class="lab">Karşılaştırma Kolonu (delta için)</label>
+            <input type="text" class="inp" value="bugun_ciro_delta" />
+          </div>
+
+          <div class="field">
+            <label class="lab">Alt Yazı</label>
+            <input type="text" class="inp" value="geçen aynı gün" />
+          </div>
+
+          <div class="section-hd">Stil</div>
+
+          <div class="field">
+            <label class="lab">Renk Vurgusu</label>
+            <div class="swatch-grid">
+              <div class="swatch s-red on"></div>
+              <div class="swatch s-blue"></div>
+              <div class="swatch s-green"></div>
+              <div class="swatch s-amber"></div>
+              <div class="swatch s-violet"></div>
+              <div class="swatch s-rose"></div>
+              <div class="swatch s-slate"></div>
+            </div>
+          </div>
+
+          <div class="field">
+            <label class="lab">İkon</label>
+            <div class="icon-grid">
+              <div class="icon-pick on"><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M8 1l1.8 3.7L14 5.3l-3 2.9.7 4.1L8 10.5 4.3 12.3 5 8.2 2 5.3l4.2-.6L8 1z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg></div>
+              <div class="icon-pick"><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M3 13V8M7 13V4M11 13v-6M13 13H3" stroke="currentColor" stroke-width="1.5"/></svg></div>
+              <div class="icon-pick"><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.4"/><path d="M8 4v4l2.5 1.5" stroke="currentColor" stroke-width="1.4"/></svg></div>
+              <div class="icon-pick"><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M2 8h12M8 2v12" stroke="currentColor" stroke-width="1.5"/></svg></div>
+              <div class="icon-pick"><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="6" r="2.5" stroke="currentColor" stroke-width="1.4"/><path d="M3 14c.5-2.4 2.6-4 5-4s4.5 1.6 5 4" stroke="currentColor" stroke-width="1.4"/></svg></div>
+              <div class="icon-pick"><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><rect x="3" y="3" width="10" height="10" rx="1.5" stroke="currentColor" stroke-width="1.4"/></svg></div>
+              <div class="icon-pick"><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M3 8c2-3 5-3 5-3s3 0 5 3M3 8c2 3 5 3 5 3s3 0 5-3" stroke="currentColor" stroke-width="1.4"/></svg></div>
+              <div class="icon-pick"><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M3 13l4-4 3 3 4-5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></div>
+            </div>
+          </div>
+
+        </div>
+      </aside>
+
+    </div>
+
+    <!-- ====== BUILDER FOOT ====== -->
+    <div class="builder-foot">
+      <span><span class="kbd">⌘S</span> kaydet</span>
+      <span><span class="kbd">⌘P</span> önizle</span>
+      <span><span class="kbd">⌘Z</span> geri al</span>
+      <span><span class="kbd">Del</span> seçili sil</span>
+      <span><span class="kbd">?</span> tüm kısayollar</span>
+      <span style="margin-left:auto;">5 bileşen · 12 sütun grid · son kaydet 4 dk önce</span>
+    </div>
+
+  </main>
+
+</div>
+
+<script>
+  var shell = document.getElementById('appShell');
+  document.getElementById('btnCollapse').addEventListener('click', function(){ shell.classList.toggle('collapsed'); });
+  document.addEventListener('keydown', function(e){
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'b'){ e.preventDefault(); shell.classList.toggle('collapsed'); }
+  });
+
+  // Mode segmented
+  document.querySelectorAll('.mode-seg button').forEach(function(b){
+    b.addEventListener('click', function(){
+      document.querySelectorAll('.mode-seg button').forEach(function(x){ x.classList.remove('on'); });
+      b.classList.add('on');
+    });
+  });
+
+  // Drawer tab
+  document.querySelectorAll('.drawer-tabs button').forEach(function(b){
+    b.addEventListener('click', function(){
+      if (b.disabled) return;
+      document.querySelectorAll('.drawer-tabs button').forEach(function(x){ x.classList.remove('active'); });
+      b.classList.add('active');
+    });
+  });
+
+  // Widget select
+  document.querySelectorAll('.widget').forEach(function(w){
+    w.addEventListener('click', function(){
+      document.querySelectorAll('.widget.selected').forEach(function(x){ x.classList.remove('selected'); });
+      w.classList.add('selected');
+    });
+  });
+
+  // Comp-row select
+  document.querySelectorAll('.comp-row').forEach(function(r){
+    r.addEventListener('click', function(){
+      document.querySelectorAll('.comp-row.editing').forEach(function(x){ x.classList.remove('editing'); });
+      r.classList.add('editing');
+    });
+  });
+
+  // Swatch / icon-pick toggle
+  document.querySelectorAll('.swatch-grid .swatch').forEach(function(s){
+    s.addEventListener('click', function(){
+      s.parentElement.querySelectorAll('.on').forEach(function(x){ x.classList.remove('on'); });
+      s.classList.add('on');
+    });
+  });
+  document.querySelectorAll('.icon-grid .icon-pick').forEach(function(s){
+    s.addEventListener('click', function(){
+      s.parentElement.querySelectorAll('.on').forEach(function(x){ x.classList.remove('on'); });
+      s.classList.add('on');
+    });
+  });
+  document.querySelectorAll('.span-toggle button').forEach(function(s){
+    s.addEventListener('click', function(){
+      s.parentElement.querySelectorAll('.on').forEach(function(x){ x.classList.remove('on'); });
+      s.classList.add('on');
+    });
+  });
+  document.querySelectorAll('.seg-full button').forEach(function(s){
+    s.addEventListener('click', function(){
+      s.parentElement.querySelectorAll('.on').forEach(function(x){ x.classList.remove('on'); });
+      s.classList.add('on');
+    });
+  });
+</script>
+
+</body>
+</html>

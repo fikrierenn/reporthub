@@ -17,11 +17,37 @@
 **/*secrets*.json
 **/appsettings.Development.json
 
+# MCP server config (plain-text DB credentials for local dev — not shared)
+.mcp.json
+
 # Cowork sandbox worktrees (isolated copies, not tracked)
 .claude/worktrees/
 
+# Klonlanan skill'ler (git clone ile kurulan, gitignored — README'de install komutu)
+.claude/skills/htmx-expert/
+
 # Per-user Claude Code permissions (not shared)
 .claude/settings.local.json
+
+# Claude scheduled tasks runtime lock (PID kaydı, oturum bazlı)
+.claude/scheduled_tasks.lock
+
+# Codex sandbox (boş skill dizinleri, ReportHub'a ait değil)
+.agents/
+
+# Codex agent dokümanı (deneme — CLAUDE.md tek source-of-truth)
+AGENTS.md
+
+# Code aggregation utility output (39K+ satır dump)
+TUM_PROJE_KODLARI.txt
+kod_toplayici_v*.ps1
+
+# Kişisel dev utility script'leri (per-user, paylaşılmaz)
+ReportPanel/start.bat
+kodlari_topla_v2.bat
+
+# Python virtual environments (NotebookLM CLI vb.)
+.venv/
 
 # OS junk
 .DS_Store

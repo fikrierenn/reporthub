@@ -1,0 +1,147 @@
+@model ReportPanel.ViewModels.AdminUserFormViewModel
+@*
+    Plan 07 Faz 5 + Plan B (5 Mayis 2026) — FilterDefinition'lar DataSource bazli gruplandirilir.
+    Her DataSource bir bolum (header), altinda o sistemin filter section'lari.
+    Cross-cutting (DataSourceKey=NULL) "Sistem" basligi altinda.
+
+    Default (Onaylanmis karar 4 Mayis): yeni user formunda "Hepsi" KAPALI + multi-select bos.
+    Backfill (Migration 20+22) mevcut user'lara her aktif (DataSourceKey, FilterKey) icin '*' eklemis,
+    EditUser'da "Hepsi" ON.
+
+    Hidden input: backend flat array (FilterKeys[] / FilterValues[] / FilterDataSources[]) — paralel index.
+*@
+@{
+    var definitions = Model.FilterDefinitions ?? new List<ReportPanel.Models.FilterDefinition>();
+    var dataSourceTitleByKey = (Model.DataSources ?? new List<ReportPanel.Models.DataSource>())
+        .ToDictionary(ds => ds.DataSourceKey, ds => ds.Title ?? ds.DataSourceKey, StringComparer.OrdinalIgnoreCase);
+
+    var groupsData = definitions
+        .GroupBy(def => def.DataSourceKey)
+        .OrderBy(g => g.Key == null ? 1 : 0).ThenBy(g => g.Key)
+        .Select(g =>
+        {
+            var dsKey = g.Key;
+            var title = dsKey == null
+                ? "Sistem"
+                : (dataSourceTitleByKey.TryGetValue(dsKey, out var t) ? t : dsKey);
+            var sections = g.OrderBy(d => d.DisplayOrder).ThenBy(d => d.Label).Select(def =>
+            {
+                var userRecords = Model.DataFilters
+                    .Where(f => string.Equals(f.FilterKey, def.FilterKey, StringComparison.OrdinalIgnoreCase)
+                        && string.Equals(f.DataSourceKey ?? "", def.DataSourceKey ?? "", StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+                var hasStar = userRecords.Any(r => r.FilterValue == ReportPanel.Models.FilterDefinition.ValueAll);
+                var concreteValues = userRecords
+                    .Where(r => r.FilterValue != ReportPanel.Models.FilterDefinition.ValueAll)
+                    .Select(r => r.FilterValue)
+                    .ToList();
+                return new
+                {
+                    key = def.FilterKey,
+                    label = def.Label,
+                    dataSourceKey = def.DataSourceKey ?? "",
+                    isAll = hasStar,
+                    selected = concreteValues,
+                    options = new object[0]
+                };
+            }).ToList();
+            return new { title, dataSourceKey = dsKey ?? "", sections };
+        }).ToList();
+    var groupsJson = System.Text.Json.JsonSerializer.Serialize(groupsData);
+}
+
+@* Plan B: window.__userFilterGroups — DataSource bazli gruplama (groups[].sections[]). *@
+<script>window.__userFilterGroups = @Html.Raw(groupsJson);</script>
+
+<div style="background:var(--paper); border:1px solid var(--line); border-radius:10px; overflow:hidden; max-width:880px; margin-bottom:18px;">
+    <div style="padding:14px 18px; border-bottom:1px solid var(--line);">
+        <h2 style="font-size:13px; font-weight:600; color:var(--ink-1); margin:0;">
+            <i class="fas fa-filter" style="margin-right:6px; color:var(--ink-3);"></i>
+            Veri Filtreleri
+        </h2>
+        <div style="font-size:12px; color:var(--ink-3); margin-top:2px;">
+            Her sistem için ayrı yetki tanımlanır. "Hepsi" işaretli ya da spesifik değerler seçili olmalı; aksi halde kullanıcı o kapsamda rapor çalıştıramaz.
+        </div>
+    </div>
+
+    <div style="padding:18px 20px;"
+         x-data="{
+            groups: window.__userFilterGroups || [],
+            async loadOptions(gi, si) {
+                var s = this.groups[gi].sections[si];
+                var url = '/Admin/FilterOptions?filterKey=' + encodeURIComponent(s.key);
+                if (s.dataSourceKey) url += '&dataSourceKey=' + encodeURIComponent(s.dataSourceKey);
+                try {
+                    var r = await fetch(url);
+                    var d = await r.json();
+                    s.options = (d.options && d.options.length) ? d.options : [];
+                } catch { s.options = []; }
+            },
+            toggleAll(gi, si) {
+                if (this.groups[gi].sections[si].isAll) this.groups[gi].sections[si].selected = [];
+            },
+            init() {
+                this.groups.forEach((g, gi) => g.sections.forEach((_, si) => this.loadOptions(gi, si)));
+            }
+         }"
+         x-init="init()">
+
+        <template x-if="groups.length === 0">
+            <div style="font-size:12px; color:var(--ink-3);">Aktif filtre tanımı yok. Yönetim Paneli &gt; Filtreler bölümünden ekleyebilirsiniz.</div>
+        </template>
+
+        <template x-for="(g, gi) in groups" :key="g.title">
+            <div style="margin-bottom:18px;">
+                <div style="display:flex; align-items:center; gap:8px; padding:8px 10px; background:rgba(0,0,0,0.03); border-radius:6px; margin-bottom:8px;">
+                    <i class="fas fa-database" style="font-size:11px; color:var(--ink-3);"></i>
+                    <span style="font-size:12px; font-weight:600; color:var(--ink-2); text-transform:uppercase; letter-spacing:0.4px;" x-text="g.title"></span>
+                </div>
+
+                <template x-for="(s, si) in g.sections" :key="g.dataSourceKey + ':' + s.key">
+                    <div style="border:1px solid var(--line); border-radius:8px; padding:12px 14px; margin-bottom:10px;">
+                        <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
+                            <label style="font-size:13px; font-weight:600; color:var(--ink-1);" x-text="s.label"></label>
+                            <label style="margin-left:auto; font-size:12px; color:var(--ink-2); display:flex; align-items:center; gap:5px; cursor:pointer;">
+                                <input type="checkbox" x-model="s.isAll" @@change="toggleAll(gi, si)">
+                                Hepsi
+                            </label>
+                        </div>
+                        <select multiple x-model="s.selected" :disabled="s.isAll"
+                                size="6" class="inp"
+                                style="width:100%; min-height:120px;"
+                                :style="s.isAll ? 'width:100%; min-height:120px; background:#f5f5f5; opacity:0.5;' : 'width:100%; min-height:120px;'">
+                            <template x-for="opt in (s.options || [])" :key="opt.value">
+                                <option :value="opt.value" x-text="opt.label"></option>
+                            </template>
+                        </select>
+                        <div style="font-size:11px; margin-top:4px; min-height:14px;">
+                            <span x-show="s.isAll" style="color:var(--ink-3);">"Hepsi" işaretli — kullanıcı tüm değerleri görür.</span>
+                            <span x-show="!s.isAll && s.selected.length === 0" style="color:#b91c1c;">
+                                Hiçbir değer seçili değil — kullanıcı bu kapsamda rapor çalıştıramaz.
+                            </span>
+                            <span x-show="!s.isAll && s.selected.length > 0" style="color:var(--ink-3);" x-text="s.selected.length + ' değer seçili'"></span>
+                        </div>
+
+                        @* Backend flat array: FilterKeys[] / FilterValues[] / FilterDataSources[] (paralel index). *@
+                        <template x-if="s.isAll">
+                            <span>
+                                <input type="hidden" name="FilterKeys" :value="s.key">
+                                <input type="hidden" name="FilterValues" value="*">
+                                <input type="hidden" name="FilterDataSources" :value="s.dataSourceKey">
+                            </span>
+                        </template>
+                        <template x-if="!s.isAll">
+                            <template x-for="v in s.selected" :key="v">
+                                <span>
+                                    <input type="hidden" name="FilterKeys" :value="s.key">
+                                    <input type="hidden" name="FilterValues" :value="v">
+                                    <input type="hidden" name="FilterDataSources" :value="s.dataSourceKey">
+                                </span>
+                            </template>
+                        </template>
+                    </div>
+                </template>
+            </div>
+        </template>
+    </div>
+</div>

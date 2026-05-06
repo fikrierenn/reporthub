@@ -9,6 +9,10 @@ paths:
 
 - **Konum:** `wwwroot/assets/js/<ozellik>.js`.
 - **IIFE wrap:** Her dosya bir IIFE ile sarılı, global namespace'i koru.
+- **Dosya boyutu (M-11 F-7'de kabul, 27 Nis 2026):**
+  - **Soft-limit: 250 satır** — bu eşiği geçen modülde "konuya göre alt-modüle bölünebilir mi?" sorusu sorulur.
+  - **Hard-limit: 350 satır** — bu eşiği geçen modül **bölünmek zorunda**, sonraki commit'in ilk işi.
+  - Çok-modüllü feature'larda alt-klasör pattern: `wwwroot/assets/js/<feature>/<feature>-<konu>.js` (örn. `dashboard-builder/builder-core.js`, `builder-drawer.js`).
 
 ```js
 (function() {

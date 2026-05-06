@@ -16,10 +16,11 @@ namespace ReportPanel.Models
         public DbSet<ReportFavorite> ReportFavorites { get; set; }
         public DbSet<Role> Roles { get; set; }
         public DbSet<UserRole> UserRoles { get; set; }
-        public DbSet<ReportCategory> ReportCategories { get; set; }
-        public DbSet<ReportCategoryLink> ReportCategoryLinks { get; set; }
+        public DbSet<ReportGroup> ReportGroups { get; set; }
+        public DbSet<ReportGroupLink> ReportGroupLinks { get; set; }
         public DbSet<ReportAllowedRole> ReportAllowedRoles { get; set; }
         public DbSet<UserDataFilter> UserDataFilters { get; set; }
+        public DbSet<FilterDefinition> FilterDefinitions { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -42,8 +43,9 @@ namespace ReportPanel.Models
                 entity.Property(e => e.DataSourceKey).HasMaxLength(50);
                 entity.Property(e => e.ProcName).HasMaxLength(200).IsRequired();
                 entity.Property(e => e.AllowedRoles).HasMaxLength(200).IsRequired();
-                entity.Property(e => e.ReportType).HasMaxLength(20).IsRequired().HasDefaultValue("table");
-                entity.Property(e => e.DashboardHtml);
+#pragma warning disable CS0618 // ADR-009: ReportType [Obsolete] — Migration 19 drop edince bu satir da silinir.
+                entity.Property(e => e.ReportType).HasMaxLength(20).IsRequired().HasDefaultValue("dashboard");
+#pragma warning restore CS0618
                 entity.Property(e => e.DashboardConfigJson);
                 entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETDATE()");
                 
@@ -91,10 +93,6 @@ namespace ReportPanel.Models
                 entity.Property(e => e.PasswordHash).HasMaxLength(255).IsRequired();
                 entity.Property(e => e.FullName).HasMaxLength(100).IsRequired();
                 entity.Property(e => e.Email).HasMaxLength(100);
-                // M-03 Faz B: User.Roles CSV deprecate — nullable, [Obsolete]. Legacy okuma icin alan korunuyor.
-#pragma warning disable CS0618
-                entity.Property(e => e.Roles).HasMaxLength(200);
-#pragma warning restore CS0618
                 entity.Property(e => e.IsAdUser).HasDefaultValue(false);
                 entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETDATE()");
                 entity.Property(e => e.UpdatedAt).HasDefaultValueSql("GETDATE()");
@@ -126,29 +124,29 @@ namespace ReportPanel.Models
                     .OnDelete(DeleteBehavior.Cascade);
             });
 
-            // ReportCategories configuration
-            modelBuilder.Entity<ReportCategory>(entity =>
+            // ReportGroups configuration (Plan 07 son rename: ReportCategories → ReportGroups)
+            modelBuilder.Entity<ReportGroup>(entity =>
             {
-                entity.HasKey(e => e.CategoryId);
+                entity.HasKey(e => e.GroupId);
                 entity.Property(e => e.Name).HasMaxLength(100).IsRequired();
                 entity.Property(e => e.Description).HasMaxLength(300);
                 entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETDATE()");
             });
 
-            // ReportCategoryLinks configuration
-            modelBuilder.Entity<ReportCategoryLink>(entity =>
+            // ReportGroupLinks configuration
+            modelBuilder.Entity<ReportGroupLink>(entity =>
             {
-                entity.HasKey(e => new { e.ReportId, e.CategoryId });
+                entity.HasKey(e => new { e.ReportId, e.GroupId });
                 entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETDATE()");
 
                 entity.HasOne(e => e.Report)
-                    .WithMany(r => r.ReportCategories)
+                    .WithMany(r => r.ReportGroups)
                     .HasForeignKey(e => e.ReportId)
                     .OnDelete(DeleteBehavior.Cascade);
 
-                entity.HasOne(e => e.Category)
+                entity.HasOne(e => e.Group)
                     .WithMany()
-                    .HasForeignKey(e => e.CategoryId)
+                    .HasForeignKey(e => e.GroupId)
                     .OnDelete(DeleteBehavior.Cascade);
             });
 
@@ -209,6 +207,28 @@ namespace ReportPanel.Models
                     .WithMany()
                     .HasForeignKey(e => e.ReportId)
                     .OnDelete(DeleteBehavior.SetNull);
+            });
+
+            // FilterDefinition configuration (Plan 07 Faz 2 — master tablo, Migration 20)
+            modelBuilder.Entity<FilterDefinition>(entity =>
+            {
+                entity.ToTable("FilterDefinition");
+                entity.HasKey(e => e.FilterDefinitionId);
+                entity.Property(e => e.FilterKey).HasMaxLength(50).IsRequired();
+                entity.Property(e => e.Label).HasMaxLength(100).IsRequired();
+                entity.Property(e => e.Scope).HasMaxLength(20).IsRequired();
+                entity.Property(e => e.DataSourceKey).HasMaxLength(50);
+                entity.Property(e => e.IsActive).HasDefaultValue(true);
+                entity.Property(e => e.DisplayOrder).HasDefaultValue(0);
+                entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETDATE()");
+
+                // Plan B (5 Mayis): composite (DataSourceKey, FilterKey) — ayni 'sube' 3 DataSource icin 3 satir
+                entity.HasIndex(e => new { e.DataSourceKey, e.FilterKey }).IsUnique();
+
+                entity.HasOne(e => e.DataSource)
+                    .WithMany()
+                    .HasForeignKey(e => e.DataSourceKey)
+                    .OnDelete(DeleteBehavior.Restrict);
             });
 
             base.OnModelCreating(modelBuilder);

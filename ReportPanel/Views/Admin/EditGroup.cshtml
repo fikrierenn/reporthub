@@ -1,0 +1,91 @@
+@model ReportPanel.ViewModels.AdminGroupFormViewModel
+@{
+    Layout = "_AppLayout";
+    ViewData["Title"] = "Grup Düzenle - BKM Rapor Paneli";
+    ViewData["PageTitle"] = "Grup Düzenle";
+    var message = Model.Message ?? "";
+    var messageType = Model.MessageType ?? "";
+    var group = Model.Group ?? new ReportPanel.Models.ReportGroup();
+}
+
+@section Breadcrumb {
+    <div class="crumbs">
+        <a href="/Dashboard">BKM Kitap</a>
+        <span class="sep">/</span>
+        <a href="/Admin?tab=groups">Yönetim</a>
+        <span class="sep">/</span>
+        <a href="/Admin?tab=groups">Gruplar</a>
+        <span class="sep">/</span>
+        <span class="current">@(string.IsNullOrWhiteSpace(group.Name) ? "Düzenle" : group.Name)</span>
+    </div>
+}
+
+@section TopActions {
+    <a href="/Admin?tab=groups" class="btn">
+        <i class="fas fa-xmark text-[10px]"></i>
+        İptal
+    </a>
+}
+
+<div class="hero">
+    <h1>Grup Düzenle</h1>
+    <div class="sub">
+        <span>Grup bilgilerini güncelleyin</span>
+        <span class="pill"><span class="mono">#@group.GroupId</span></span>
+    </div>
+</div>
+
+@if (!string.IsNullOrWhiteSpace(message))
+{
+    <div role="alert" style="margin-bottom:18px; padding:12px 16px; border-radius:10px; font-size:13px;
+                background: @(messageType == "success" ? "rgba(16,185,129,0.10)" : "rgba(220,38,38,0.10)");
+                border: 1px solid @(messageType == "success" ? "rgba(16,185,129,0.25)" : "rgba(220,38,38,0.25)");
+                color: @(messageType == "success" ? "#065f46" : "var(--accent-ink)");">
+        <i class="fas @(messageType == "success" ? "fa-check-circle" : "fa-exclamation-circle")" style="margin-right:8px;"></i>
+        @message
+    </div>
+}
+
+<div style="background:var(--paper); border:1px solid var(--line); border-radius:10px; overflow:hidden; max-width:720px;">
+    <div style="padding:14px 18px; border-bottom:1px solid var(--line);">
+        <h2 style="font-size:13px; font-weight:600; color:var(--ink-1); margin:0;">
+            <i class="fas fa-folder-tree" style="margin-right:6px; color:var(--ink-3);"></i>
+            Grup Bilgileri
+        </h2>
+        <div style="font-size:12px; color:var(--ink-3); margin-top:2px;">Değişiklikleri kaydedin</div>
+    </div>
+
+    <form method="post" style="padding:20px;">
+        @Html.AntiForgeryToken()
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:14px;">
+            <div class="field" style="margin-bottom:0;">
+                <label class="lab">Grup Adı <span style="color:var(--accent);">*</span></label>
+                <input type="text" name="Name" value="@group.Name" required class="inp" />
+            </div>
+            <div class="field" style="margin-bottom:0;">
+                <label class="lab">Açıklama</label>
+                <input type="text" name="Description" value="@group.Description" class="inp" />
+            </div>
+        </div>
+
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:18px;">
+            <input type="hidden" name="IsActive" value="false" />
+            <input type="checkbox" name="IsActive" value="true" id="groupActive"
+                   @(group.IsActive ? "checked" : "")
+                   style="width:16px; height:16px; accent-color:var(--accent);" />
+            <label for="groupActive" class="lab" style="margin:0;">Grubu aktif yap</label>
+        </div>
+
+        <div style="display:flex; align-items:center; justify-content:space-between; padding-top:18px; border-top:1px solid var(--line);">
+            <a href="/Admin?tab=groups" class="btn ghost">
+                <i class="fas fa-arrow-left text-[10px]"></i>
+                Geri Dön
+            </a>
+            <button type="submit" class="btn primary">
+                <i class="fas fa-check text-[10px]"></i>
+                Grubu Güncelle
+            </button>
+        </div>
+    </form>
+</div>

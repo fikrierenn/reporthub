@@ -14,6 +14,8 @@ namespace ReportPanel.ViewModels
         // M-03 Faz B: UserId -> ["admin","ik",...] (UserRole junction'dan dolduruldu). View icin.
         public Dictionary<int, List<string>> UserRoleNames { get; set; } = new();
         public List<Role> Roles { get; set; } = new();
-        public List<ReportCategory> Categories { get; set; } = new();
+        public List<ReportGroup> Groups { get; set; } = new();
+        // Plan 07 Faz 6 — Admin "Filtreler" tab listesi.
+        public List<FilterDefinition> FilterDefinitions { get; set; } = new();
     }
 }
