@@ -7,12 +7,14 @@ namespace ReportPanel.ViewModels
         public string User { get; set; } = "";
         public string FullName { get; set; } = "";
         public string[] UserRoles { get; set; } = Array.Empty<string>();
+        public bool IsAdminView { get; set; }
 
         // KPI'lar
         public int ReportCount { get; set; }
         public int TodayRunCount { get; set; }
         public int MonthlyRunCount { get; set; }
         public int ActiveUserCount { get; set; }
+        public int Last7DaysRunCount { get; set; }
         public DateTime? LastRunAt { get; set; }
 
         // Listeler

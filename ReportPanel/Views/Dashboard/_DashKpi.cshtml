@@ -30,29 +30,45 @@
 
     <div class="kpi-card k-ink">
         <div class="head">
-            <span class="label">Bugün Çalıştırılan</span>
+            <span class="label">@(Model.IsAdminView ? "Bugün Çalıştırılan" : "Bugün Çalıştırdıkların")</span>
             <div class="ico"><i class="fas fa-play"></i></div>
         </div>
         <div class="value">@Model.TodayRunCount.ToString("N0", trCulture)</div>
         <div class="delta">
-            <span class="desc">tüm kullanıcılar</span>
+            <span class="desc">@(Model.IsAdminView ? "tüm kullanıcılar" : "bugünkü çalıştırma")</span>
         </div>
     </div>
 
-    <div class="kpi-card k-green">
-        <div class="head">
-            <span class="label">Aktif Kullanıcı</span>
-            <div class="ico"><i class="fas fa-users"></i></div>
+    @if (Model.IsAdminView)
+    {
+        <div class="kpi-card k-green">
+            <div class="head">
+                <span class="label">Aktif Kullanıcı</span>
+                <div class="ico"><i class="fas fa-users"></i></div>
+            </div>
+            <div class="value">@Model.ActiveUserCount.ToString("N0", trCulture)</div>
+            <div class="delta">
+                <span class="desc">son 1 saat</span>
+            </div>
         </div>
-        <div class="value">@Model.ActiveUserCount.ToString("N0", trCulture)</div>
-        <div class="delta">
-            <span class="desc">son 1 saat</span>
+    }
+    else
+    {
+        <div class="kpi-card k-green">
+            <div class="head">
+                <span class="label">Son 7 Gün</span>
+                <div class="ico"><i class="fas fa-calendar-week"></i></div>
+            </div>
+            <div class="value">@Model.Last7DaysRunCount.ToString("N0", trCulture)</div>
+            <div class="delta">
+                <span class="desc">haftalık çalıştırma</span>
+            </div>
         </div>
-    </div>
+    }
 
     <div class="kpi-card k-warn">
         <div class="head">
-            <span class="label">Bu Ay (Sen)</span>
+            <span class="label">@(Model.IsAdminView ? "Bu Ay (Sen)" : "Bu Ay")</span>
             <div class="ico"><i class="fas fa-clock"></i></div>
         </div>
         <div class="value">@Model.MonthlyRunCount.ToString("N0", trCulture)</div>

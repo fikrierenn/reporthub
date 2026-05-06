@@ -26,12 +26,14 @@ namespace ReportPanel.Controllers
                 .Distinct()
                 .ToArray();
             var fullName = User.Claims.FirstOrDefault(c => c.Type == "full_name")?.Value ?? "";
+            var isAdminView = User.IsInRole("admin");
 
             var model = new DashboardViewModel
             {
                 User = userName,
                 FullName = fullName,
-                UserRoles = roles
+                UserRoles = roles,
+                IsAdminView = isAdminView
             };
 
             var userRolesCsv = string.Join(",", roles);
@@ -55,30 +57,50 @@ namespace ReportPanel.Controllers
             var startOfDay = new DateTime(nowUtc.Year, nowUtc.Month, nowUtc.Day, 0, 0, 0, DateTimeKind.Utc);
             var startOfMonth = new DateTime(nowUtc.Year, nowUtc.Month, 1, 0, 0, 0, DateTimeKind.Utc);
             var oneHourAgo = nowUtc.AddHours(-1);
+            var sevenDaysAgo = nowUtc.AddDays(-7);
 
-            // Bugün çalıştırılan (toplam, tüm kullanıcılar)
-            model.TodayRunCount = await _context.AuditLogs
-                .AsNoTracking()
-                .CountAsync(l => l.EventType == "report_run" && l.CreatedAt >= startOfDay);
+            // Bugün çalıştırılan: admin → sistem toplam, sıradan → kendi
+            model.TodayRunCount = isAdminView
+                ? await _context.AuditLogs
+                    .AsNoTracking()
+                    .CountAsync(l => l.EventType == "report_run" && l.CreatedAt >= startOfDay)
+                : await _context.AuditLogs
+                    .AsNoTracking()
+                    .CountAsync(l => l.Username == userName && l.EventType == "report_run" && l.CreatedAt >= startOfDay);
 
-            // Bu ay (sadece bu kullanıcı için)
+            // Bu ay (her zaman bu kullanıcı için)
             model.MonthlyRunCount = await _context.AuditLogs
                 .AsNoTracking()
                 .CountAsync(l => l.Username == userName && l.EventType == "report_run" && l.CreatedAt >= startOfMonth);
 
-            // Aktif kullanıcı (son 1 saat distinct username)
-            model.ActiveUserCount = await _context.AuditLogs
-                .AsNoTracking()
-                .Where(l => l.CreatedAt >= oneHourAgo && !string.IsNullOrEmpty(l.Username))
-                .Select(l => l.Username)
-                .Distinct()
-                .CountAsync();
+            if (isAdminView)
+            {
+                // Aktif kullanıcı (son 1 saat distinct username) — sadece admin görür
+                model.ActiveUserCount = await _context.AuditLogs
+                    .AsNoTracking()
+                    .Where(l => l.CreatedAt >= oneHourAgo && !string.IsNullOrEmpty(l.Username))
+                    .Select(l => l.Username)
+                    .Distinct()
+                    .CountAsync();
+            }
+            else
+            {
+                // Son 7 gün (kullanıcının kendi run sayısı) — sıradan kullanıcı görür
+                model.Last7DaysRunCount = await _context.AuditLogs
+                    .AsNoTracking()
+                    .CountAsync(l => l.Username == userName && l.EventType == "report_run" && l.CreatedAt >= sevenDaysAgo);
+            }
 
-            // ---- En çok çalıştırılan top-5 (son 30 gün) ----
+            // ---- En çok çalıştırılan top-5 (son 30 gün) — admin: sistem geneli, sıradan: kendi ----
             var thirtyDaysAgo = nowUtc.AddDays(-30);
-            var topRunRaw = await _context.AuditLogs
+            var topRunQuery = _context.AuditLogs
                 .AsNoTracking()
-                .Where(l => l.EventType == "report_run" && l.CreatedAt >= thirtyDaysAgo && l.TargetKey != null)
+                .Where(l => l.EventType == "report_run" && l.CreatedAt >= thirtyDaysAgo && l.TargetKey != null);
+            if (!isAdminView)
+            {
+                topRunQuery = topRunQuery.Where(l => l.Username == userName);
+            }
+            var topRunRaw = await topRunQuery
                 .GroupBy(l => l.TargetKey)
                 .Select(g => new { TargetKey = g.Key, Count = g.Count() })
                 .OrderByDescending(x => x.Count)
@@ -148,13 +170,16 @@ namespace ReportPanel.Controllers
                 model.FavoriteReports.AddRange(recent);
             }
 
-            // ---- Son aktivite (tüm kullanıcılar, son 7) ----
-            model.RecentLogs = await _context.AuditLogs
-                .AsNoTracking()
-                .Where(l => l.EventType == "report_run" || l.EventType == "report_create" || l.EventType == "report_update" || l.EventType == "export")
-                .OrderByDescending(l => l.CreatedAt)
-                .Take(7)
-                .ToListAsync();
+            // ---- Son aktivite — admin: tüm kullanıcılar full audit; sıradan: gizli (boş liste) ----
+            if (isAdminView)
+            {
+                model.RecentLogs = await _context.AuditLogs
+                    .AsNoTracking()
+                    .Where(l => l.EventType == "report_run" || l.EventType == "report_create" || l.EventType == "report_update" || l.EventType == "export")
+                    .OrderByDescending(l => l.CreatedAt)
+                    .Take(7)
+                    .ToListAsync();
+            }
 
             model.LastRunAt = await _context.AuditLogs
                 .AsNoTracking()
@@ -168,9 +193,14 @@ namespace ReportPanel.Controllers
             // Saat başına yuvarla (mevcut saatin başlangıcı)
             startOfTrend = new DateTime(startOfTrend.Year, startOfTrend.Month, startOfTrend.Day, startOfTrend.Hour, 0, 0, DateTimeKind.Utc);
 
-            var hourlyRaw = await _context.AuditLogs
+            var hourlyBaseQuery = _context.AuditLogs
                 .AsNoTracking()
-                .Where(l => l.EventType == "report_run" && l.CreatedAt >= startOfTrend)
+                .Where(l => l.EventType == "report_run" && l.CreatedAt >= startOfTrend);
+            if (!isAdminView)
+            {
+                hourlyBaseQuery = hourlyBaseQuery.Where(l => l.Username == userName);
+            }
+            var hourlyRaw = await hourlyBaseQuery
                 .GroupBy(l => new { l.CreatedAt.Year, l.CreatedAt.Month, l.CreatedAt.Day, l.CreatedAt.Hour })
                 .Select(g => new
                 {
@@ -197,69 +227,70 @@ namespace ReportPanel.Controllers
                 });
             }
 
-            // ---- DataSource durumu (aktif/toplam + son SP exec response) ----
-            var dsList = await _context.DataSources
-                .AsNoTracking()
-                .Select(d => new { d.Title, d.DataSourceKey, d.IsActive })
-                .ToListAsync();
-            var activeDsCount = dsList.Count(d => d.IsActive);
-            var totalDsCount = dsList.Count;
-            var primaryDs = dsList.FirstOrDefault(d => d.IsActive);
-
-            // ---- Sistem durumu ----
-            // Kontrol: son 1 saatte audit log error oranı, aktif DataSource oranı
-            var oneHourLogs = await _context.AuditLogs
-                .AsNoTracking()
-                .Where(l => l.CreatedAt >= oneHourAgo && l.EventType == "report_run")
-                .Select(l => new { l.IsSuccess })
-                .ToListAsync();
-            var totalRecent = oneHourLogs.Count;
-            var failRecent = oneHourLogs.Count(l => !l.IsSuccess);
-            var failRatio = totalRecent > 0 ? (double)failRecent / totalRecent : 0.0;
-
-            if (activeDsCount == 0)
+            // ---- DataSource + Sistem durumu (sadece admin görür) ----
+            if (isAdminView)
             {
-                model.SystemStatus = "veri kaynağı yok";
-                model.SystemStatusKind = "err";
-            }
-            else if (failRatio > 0.20 && totalRecent >= 5)
-            {
-                model.SystemStatus = $"son saatte %{(int)(failRatio * 100)} hata";
-                model.SystemStatusKind = "warn";
-            }
-            else if (activeDsCount < totalDsCount)
-            {
-                model.SystemStatus = $"{activeDsCount}/{totalDsCount} kaynak aktif";
-                model.SystemStatusKind = "warn";
-            }
-            else
-            {
-                model.SystemStatus = "tüm sistemler çalışıyor";
-                model.SystemStatusKind = "ok";
-            }
-
-            // DataSource pill — primary kaynak adı + son SP duration tahmini (audit log'da DurationMs varsa)
-            if (primaryDs != null)
-            {
-                var avgDurationMs = await _context.AuditLogs
+                var dsList = await _context.DataSources
                     .AsNoTracking()
-                    .Where(l => l.EventType == "report_run" && l.CreatedAt >= oneHourAgo && l.DurationMs.HasValue)
-                    .Select(l => l.DurationMs!.Value)
+                    .Select(d => new { d.Title, d.DataSourceKey, d.IsActive })
                     .ToListAsync();
-                if (avgDurationMs.Count > 0)
+                var activeDsCount = dsList.Count(d => d.IsActive);
+                var totalDsCount = dsList.Count;
+                var primaryDs = dsList.FirstOrDefault(d => d.IsActive);
+
+                // Kontrol: son 1 saatte audit log error oranı, aktif DataSource oranı
+                var oneHourLogs = await _context.AuditLogs
+                    .AsNoTracking()
+                    .Where(l => l.CreatedAt >= oneHourAgo && l.EventType == "report_run")
+                    .Select(l => new { l.IsSuccess })
+                    .ToListAsync();
+                var totalRecent = oneHourLogs.Count;
+                var failRecent = oneHourLogs.Count(l => !l.IsSuccess);
+                var failRatio = totalRecent > 0 ? (double)failRecent / totalRecent : 0.0;
+
+                if (activeDsCount == 0)
                 {
-                    var avg = (int)avgDurationMs.Average();
-                    var latency = avg > 1000 ? $"{avg / 1000.0:F1}s" : $"{avg}ms";
-                    model.DataSourceStatus = $"{primaryDs.Title} · {latency}";
+                    model.SystemStatus = "veri kaynağı yok";
+                    model.SystemStatusKind = "err";
+                }
+                else if (failRatio > 0.20 && totalRecent >= 5)
+                {
+                    model.SystemStatus = $"son saatte %{(int)(failRatio * 100)} hata";
+                    model.SystemStatusKind = "warn";
+                }
+                else if (activeDsCount < totalDsCount)
+                {
+                    model.SystemStatus = $"{activeDsCount}/{totalDsCount} kaynak aktif";
+                    model.SystemStatusKind = "warn";
                 }
                 else
                 {
-                    model.DataSourceStatus = $"{primaryDs.Title} · {activeDsCount} kaynak";
+                    model.SystemStatus = "tüm sistemler çalışıyor";
+                    model.SystemStatusKind = "ok";
                 }
-            }
-            else
-            {
-                model.DataSourceStatus = "kaynak yok";
+
+                if (primaryDs != null)
+                {
+                    var avgDurationMs = await _context.AuditLogs
+                        .AsNoTracking()
+                        .Where(l => l.EventType == "report_run" && l.CreatedAt >= oneHourAgo && l.DurationMs.HasValue)
+                        .Select(l => l.DurationMs!.Value)
+                        .ToListAsync();
+                    if (avgDurationMs.Count > 0)
+                    {
+                        var avg = (int)avgDurationMs.Average();
+                        var latency = avg > 1000 ? $"{avg / 1000.0:F1}s" : $"{avg}ms";
+                        model.DataSourceStatus = $"{primaryDs.Title} · {latency}";
+                    }
+                    else
+                    {
+                        model.DataSourceStatus = $"{primaryDs.Title} · {activeDsCount} kaynak";
+                    }
+                }
+                else
+                {
+                    model.DataSourceStatus = "kaynak yok";
+                }
             }
 
             return View(model);
