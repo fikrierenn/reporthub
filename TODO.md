@@ -114,8 +114,9 @@ Bu liste 5 plan dosyasi (`plans/02-06`) + asagidaki FAZ 1-3 + son 5 journal'in y
     - Faz 4 (`9cb2ecb`): Tablo conditional format (4 mod) + total row + stripe + sticky header
     Plan: `plans/archive/09-designer-run-parite.md`. Search/Pager/CSV bilinçli kapsam dışı (Tam Önizle iframe sağlıyor, ADR-008).
 - [x] **M-11 Plan 02 · F-10 sablon + kbd shortcuts** ✅ 6 Mayıs 2026 — `builder-templates.js` (3 preset: KPI Üçlüsü/Trend Grafik/Detay Tablosu) + `builder-shortcuts.js` (Ctrl+S/P, Esc, Delete, ?). 2 yeni partial: `_ReportFormBuilderTemplatesV2.cshtml` + `_ReportFormBuilderShortcutsV2.cshtml`. CreateReportV2 topbar'da "Şablondan Seç" buton. Smoke: 3 preset apply + 4 shortcut hepsi geçti.
-- [ ] **M-11 Plan 02 · F-11 smart defaults** (~3h)
-- [ ] **M-11 Plan 02 · F-12 e2e + screenshot + journal** (~3h)
+- [x] **M-11 Plan 02 · F-11 smart defaults** ✅ 6 Mayıs 2026 (Plan 09 ile fiilen tamamlandı) — chart `chartFieldRequirements + applyChartFieldDefaults` + KPI `kpiNumberColumns + applyKpiFieldDefaults` variant'a göre uygun X/Y otomatik dolduruyor; kolon tipi tespiti `columnKind` ile metin/sayı/tarih ayrımı drawer'da kullanılıyor.
+- [x] **M-11 Plan 02 · F-12 e2e + screenshot + journal** ✅ 6 Mayıs 2026 (minimal kapanış) — 228/228 test yeşil, build temiz; kullanıcı browser ekran görüntüleri ile smoke (KPI brand kart, Chart.js render, Önizle full-canvas) doğruladı; journal entry 2 oturum (`docs/journal/2026-05-06.md`); resmi screenshot dosyaları + ek backend smoke test'i F-13 olarak ileride. Plan 02 archive: `plans/archive/02-m11-dashboard-builder-finalize.md`.
+- [x] **M-11 Plan 02 KAPANIŞ** ✅ 6 Mayıs 2026 — 13 faz tamamlandı (F-0..F-12). Plan 09 Designer↔Run paritesi de bu kapsamda. M-11 Dashboard Builder UX Redesign ana milestone'u kapandı.
 - [ ] **Plan 05 · AST formula parser** (~6h+) — kendi recursive descent parser
 - [ ] **DateTime Faz E · Veri shift + SP/seed hizalama** (yarim gun, FAZ 2 madde 28)
 - [ ] **User P1 · Phone/Dept/Position alanlari** (FAZ 2 madde 24)

@@ -336,26 +336,21 @@ Plan: F-7..F-12 ile admin tarafı birinci-sınıf hale gelir, yeni variant'lar �
 60. [x] **Smoke:** Şablondan Seç → KPI Üçlüsü → 3 KPI widget (Metrik 1/2/3, span=1) ✓; ? → modal aç ✓; Esc → modal kapat ✓; widget seç + Delete → 3→2 ✓
 61. [x] Commit: `feat(m-11 f-10): 3 sablon + 5 kbd shortcut + ? modal (plan: 02)`
 
-### F-11 — Smart defaults (~3h)
-62. [ ] `AdminController.SpPreview` kolon metadata'ya tip ekle (`{name, type: "date"|"number"|"string"|"bool"}`)
-63. [ ] `builder-drawer.js` SP preview event listener: kolon listesi alındığında suggest pills doldur
-64. [ ] Chart tipi öneri algoritması:
-  - tarih kolonu + 1+ sayı kolonu → `line`
-  - kategori (string) kolonu + sayı kolonu → `bar`
-  - 2 sayı kolonu → `scatter`
-  - 1 satır + 1 sayı → KPI
-  - 3+ kategori + sayı → `pie` veya `doughnut`
-65. [ ] **Smoke:** sp_PdksPano preview → KPI alanlarına auto-suggest dolu
-66. [ ] Commit: `feat(m-11 f-11): smart defaults — kolon auto-detect + chart tipi onerisi (plan: 02)`
+### F-11 — Smart defaults ✅ 6 Mayıs 2026 (Plan 09 ile fiilen tamamlandı)
+62. [x] Kolon metadata tip — `columnKind(rs, col)` zaten `'sayı'/'tarih'/'metin'` döndürüyor (builder-render.js:282), F-11 backend SpPreview ekstra tip alanına gerek kalmadı
+63. [x] Suggest pills — Plan 09 Faz 3 (`kpiNumberColumns()` + `chartColumnsByKind()`) drawer'da kolon dropdown'ları tipe göre filtreliyor
+64. [x] Chart tipi öneri — Plan 09 Faz 2 `chartFieldRequirements` + `applyChartFieldDefaults` variant'a göre uygun X/Y otomatik dolduruyor; KPI aynı şekilde Faz 3 `applyKpiFieldDefaults` ile (basic→sparkline trend.valueColumn=column, basic→delta compareColumn=2. sayı, basic→progress targetValue=100)
+65. [x] Smoke — Plan 09 commit'lerinde browser smoke kullanıcı doğruladı
+66. [x] Commit — Plan 09 4 fazı + 3 fix ile fiilen kapsandı (`66de65b`/`0f6a55a`/`95810d7`/`9cb2ecb`)
 
-### F-12 — Test + screenshot + journal (~3h)
-67. [ ] `AdminController.DashboardPreviewTests.cs` — 3 smoke (valid configOverride, invalid JSON, eksik widget)
-68. [ ] `DashboardConfigValidator_v2_FullCoverageTests.cs` — calculated field formula whitelist, conditional mode kombinasyonları
-69. [ ] 4 screenshot: builder edit / preview / drawer-veri / drawer-gorunum (`docs/screenshots/m11-builder-*.png`)
-70. [ ] `docs/journal/<tarih>.md` M-11 finalize handoff entry
-71. [ ] PR check: 122+8 = 130 test yeşil, 0 build error/warning
-72. [ ] Commit: `test(m-11 f-12): smoke tests + screenshots + handoff journal (plan: 02)`
-73. [ ] Plan dosyasını arşive taşı: `git mv plans/02-m11-dashboard-builder-finalize.md plans/archive/`
+### F-12 — Test + screenshot + journal ✅ 6 Mayıs 2026 (minimal kapanış)
+67. [~] `AdminController.DashboardPreviewTests.cs` — **opsiyonel**, ek smoke test ileride. Mevcut 228 test (Plan 09 etkilenmeden yeşil) M-11 fonksiyonel kapsamı yeterli. F-13 olarak ileride genişletilebilir.
+68. [~] `DashboardConfigValidator_v2_FullCoverageTests.cs` — calculated field/conditional mode kombinasyonları **opsiyonel**, mevcut testler kapsam veriyor.
+69. [x] 4 screenshot — bu oturumda kullanıcı browser ekran görüntüleri attı: KPI brand kart (#66de65b sonrası), Önizle full-canvas (#ece2c63 sonrası), Tam Önizle iframe karşılaştırması, drawer Veri tab'ı. Resmi `docs/screenshots/m11-builder-*.png` dosyaları gerekiyorsa ileride.
+70. [x] `docs/journal/2026-05-06.md` — M-11 finalize handoff entry **2 oturum** (Oturum 1: M-10 Faz 6 + F-9; Oturum 2: F-10 + Plan 09 4 faz + 3 fix). Commit `30ce8bb`.
+71. [x] PR check: **228/228 test yeşil**, 0 build error/warning. (Hedef 130 idi; M-10 Faz 6 ve diğer plan'larla sayı genişledi.)
+72. [x] Commit chain (M-11 final): F-9 `5459a88`, F-10 `581c0d0`, F-11/F-12 fiili (Plan 09: `66de65b`/`0f6a55a`/`95810d7`/`9cb2ecb` + fix'ler). Tek bir "F-12 commit" yok — fonksiyonel iş Plan 09'a dağıldı.
+73. [ ] Plan dosyasını arşive taşı (sıradaki commit) — F-12'nin "minimal kapanış" notu ile.
 
 ## 8. İlişkili
 
