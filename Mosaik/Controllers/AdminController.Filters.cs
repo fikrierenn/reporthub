@@ -153,9 +153,9 @@ namespace Mosaik.Controllers
                     count++;
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                return Json(new { success = false, error = $"SQL hatası: {ex.Message}" });
+                return Json(new { success = false, error = "Sorgu çalıştırılamadı. SQL sözdizimini veya sütun adlarını kontrol edin." });
             }
 
             return Json(new { success = true, rows, total = rows.Count });

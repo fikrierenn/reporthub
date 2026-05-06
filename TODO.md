@@ -120,13 +120,7 @@ Bu liste 5 plan dosyasi (`plans/02-06`) + asagidaki FAZ 1-3 + son 5 journal'in y
 - [ ] **Plan 05 · AST formula parser** (~6h+) — kendi recursive descent parser
 - [x] **DateTime Faz E · Veri shift + SP/seed hizalama** ✅ 7 May 2026 — Plan 11 reset baseline ile kapsandı (`418b268` `70c8429`). PortalHUB DROP → Mosaik CREATE → 03_SeedData.sql GETDATE→GETUTCDATE. Plan 10 superseded.
 - [x] **Plan 11 · Mosaik Foundation (rebrand + DB reset + UTC)** ✅ 7 May 2026 — Faz 1+2 (kod rebrand csproj/sln/namespace + iç klasör), Faz 5+6+7+8 (migration update + DB reset + smoke + closure). Faz 3+4 (Brand parametric + Module switchable) Plan 12'ye ertelendi. plans/archive/11-rebrand-reset-mosaik.md.
-- [ ] **Plan 12 · Admin GUI + Brand+Module parametric** (~6-8h, sıradaki)
-    - Plan 11 Faz 3 BrandSettings tablo + IBrandService + Layout config-driven
-    - Plan 11 Faz 4 Modules tablo + IModuleService + Sidebar koşullu render
-    - Admin sayfaları: /Admin/BrandSettings (file upload, color picker), /Admin/Modules (toggle list)
-    - **V2 builder save bug** — kullanıcı kaydet sonrası "bulunmadı" hatası, route confusion (Plan 11 smoke'ta tespit)
-    - **Plain table rapor için V1 fallback link veya V2 wizard'da Step 1 — Genel basit sayfa** (V2 dashboard odaklı, plain table karmaşık)
-    - **Reports/Run route fix** — `/Reports/Run/{id}` route attribute eksik (mevcut sadece `?reportId=` query string)
+- [x] **Plan 12 · Admin GUI + Brand+Module parametric** ✅ 7 Mayıs 2026 — BrandSettings + Modules CRUD + IBrandService/IModuleService Singleton cache + AdminSubnav navigasyon + modern CSS pattern (.field/.lab/.inp/.btn). plans/archive/12-admin-gui-brand-modules.md.
 - [ ] **Plan 13+ · vNext modüller** (Documents, Announcements, Calendar, Forms, Messages, Approvals — modül-modül ekleme, Plan 12 module infrastructure üzerine)
 - [ ] **Plan 14 · Install/Deploy script** — master kurulum (DB CREATE + migration + seed + brand + admin user prompt). Plan 11 öğretisi: rapor metadata dump (ReportCatalog SQL backup) install kapsamına dahil olmalı (manuel admin GUI'den eklenenler kayıp gitmesin)
 - [ ] **context-mode esinlenmesi · 2 hook** — (1) `PreCompact` hook: `/compact` öncesi aktif TODO + son commitler otomatik journal'a append. (2) `PostToolUse` output-size uyarısı: MCP tool çıktısı >50 satırı geçince `⚠️ Büyük çıktı` logla. Bağımlılık sıfır, sadece shell script. Kaynak: https://github.com/mksglu/context-mode

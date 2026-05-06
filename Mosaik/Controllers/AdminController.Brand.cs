@@ -10,7 +10,7 @@ namespace Mosaik.Controllers
         [Route("Admin/BrandSettings")]
         public async Task<IActionResult> BrandSettings()
         {
-            var brand = await _context.BrandSettings.FirstOrDefaultAsync()
+            var brand = await _context.BrandSettings.AsNoTracking().FirstOrDefaultAsync()
                         ?? new BrandSettings();
             return View(brand);
         }

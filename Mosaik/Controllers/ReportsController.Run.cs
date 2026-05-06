@@ -23,14 +23,12 @@ namespace Mosaik.Controllers
             }
 
             var viewMode = ResolveViewMode(Request.Query["viewMode"].ToString());
-            // ADR-009: Tüm raporlar dashboard. IsDashboard ViewModel'da kaldı (alt-commit 2 Razor rewrite sonrası sil).
             var model = new ReportRunViewModel
             {
                 SelectedReport = context.SelectedReport,
                 ParamFields = context.ParamFields,
                 ViewMode = viewMode.ViewMode,
                 BodyClass = viewMode.BodyClass,
-                IsDashboard = true
             };
 
             // Parametresiz → otomatik çalıştır (hepsi dashboard)
@@ -105,8 +103,6 @@ namespace Mosaik.Controllers
             var searchTerm = form["ResultSearch"].ToString();
             model.ResultSearch = searchTerm;
             var stopwatch = System.Diagnostics.Stopwatch.StartNew();
-            model.IsDashboard = true; // ADR-009: tüm raporlar dashboard.
-
             try
             {
                 // ADR-009: Tek path. Eski else-branch (tablo render) DROP edildi.

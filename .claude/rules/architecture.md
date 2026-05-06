@@ -9,16 +9,34 @@ _Kapsam: Projenin genel mimarisi, karar kayıtları (ADR'lere dönüşene kadar 
 - **Dapper yok**, eklenmeyecek (tek geliştirici için gereksiz katman).
 - **SP execution helper:** `ReportsController.ExecuteStoredProcedureMultiResultSets` — ileride `Services/IStoredProcedureExecutor.cs`'e taşınacak (TODO M-01 service extraction ile birlikte).
 
-## Dashboard Mimarisi
+## Rapor Render Mimarisi (TEK PATH — ADR-009)
 
-- **Config-driven JSON.** `ReportCatalog.DashboardConfigJson` tek source-of-truth. `DashboardHtml` kolonu DROP edildi (ADR-005, migration 17, commit `0f73478`).
+**`ReportType` kolonu `[Obsolete]`** — kod bu alana **bakmıyor**. Her rapor aynı path'ten geçer:
+
+```
+GET /Reports/Run/{id}  →  parametresiz ise otomatik POST
+POST /Reports/Run
+  → ReportParamValidator.ValidateAndBuild()   [param parse + SqlParameter]
+  → UserDataFilterInjector.InjectAsync()       [multi-tenant filtre]
+  → IStoredProcedureExecutor.ExecuteMultipleAsync()  [multi-RS ADO.NET]
+  → DashboardConfig deserialize (NULL → boş config fallback + audit)
+  → DashboardRenderer.Render(config, resultSets)
+      kpi → KpiRenderer | chart → ChartRenderer | table → TableRenderer
+  → Run.cshtml: <iframe sandbox="allow-scripts" srcdoc="...">
+```
+
+- **`ReportType="table"` DB'de görünse bile davranış değişmez** — Migration 18B tam çalışmadı, DB'deki `table` değerleri stale. Migration 19 DROP edecek.
+- **`DashboardConfigJson` boşsa:** `dashboard_config_missing` audit + boş config → boş iframe (veri var ama görünmez).
+- **Table widget `columns:[]`:** SP'nin döndürdüğü tüm kolonları otomatik gösterir.
+- **Result binding:** `result:"rs0"` / `result:"rs1"` (rsN regex) veya `ResultContract` named lookup. `ResolveResultSet()` → `DashboardConfig.cs:41`.
+- **Export:** Yalnızca first result set, dashboard config'e bakılmaz.
+
+## Dashboard Config Yapısı
+
+- **Config-driven JSON.** `ReportCatalog.DashboardConfigJson` tek source-of-truth. `DashboardHtml` DROP edildi (ADR-005, migration 17).
 - **Renderer:** `Services/DashboardRenderer.cs` — statik, StringBuilder ile HTML + inline JS emits.
 - **Güvenlik:** iframe sandbox (`allow-scripts` only, `allow-same-origin` yok) — XSS büyük ölçüde izole.
-- **XSS önlemleri (hepsi uygulanmış):**
-  - DOM API: `createElement` + `textContent` (asla `innerHTML`).
-  - `eval()` **yasak** — `window.__RS[rs]` array indexing kullan.
-  - `onclick` inline attribute yasak — `addEventListener` + closure.
-  - `</script>` break-out case-insensitive regex ile, `<!--` de kaçırıldı.
+- **XSS önlemleri:** DOM API `createElement`+`textContent`, `eval()` yasak, `onclick` attribute yasak, `addEventListener`+closure, `</script>` regex kaçırma.
 
 ## Auth + Yetkilendirme
 
@@ -29,23 +47,31 @@ _Kapsam: Projenin genel mimarisi, karar kayıtları (ADR'lere dönüşene kadar 
 
 ## Bilinen Tutarsızlıklar (YÜKSEK risk)
 
-1. **User.Roles CSV + UserRole tablo ikili sistem** — TODO M-03, bu hafta.
-2. **AdminController 1736 satır** — service layer yok. TODO M-01, bu ay.
-3. **Exception handling stack trace sızdırıyor** (`ex.Message` user'a gösteriliyor) — TODO M-02, bu hafta.
+1. **`AllowedRoles` CSV — DashboardController hâlâ kullanıyor** — `DashboardController.cs:299-313` CSV-bazlı `AllowedForUser`. `ReportsController` ise junction tablosunu doğru kullanıyor. İki paralel sistem. TODO M-03 kapsamı. `DashboardController` junction'a geçmeli.
+2. **User.Roles CSV + UserRole tablo ikili sistem** — TODO M-03, bu hafta.
+3. **AdminController çok büyük** — service layer'a bölünmüş ama partial split yeterli değil. TODO M-01.
 
 ## ORTA risk
 
-- **Async/await tutarsız** — bazı GET action'larda `.ToList()` sync. TODO M-08.
-- **`.AsNoTracking()` eksik** — 15+ read query. TODO M-09.
+- **`ReportType [Obsolete]` hâlâ yazılıyor** — `ReportManagementService.cs` + `AdminController.cs:273` `"dashboard"` sabit yazıyor. Migration 19 çalıştırıldıktan sonra `#pragma` + DTO temizle.
+- **`DateTime.Now` view'da** — `Dashboard/Index.cshtml:9,16`. Server UTC değilse yanlış saat. Comment ekle veya timezone config.
 - **ViewModel entity direkt mapping** — mass assignment riski. TODO M-07.
-- **Form syntax karışık** — `Html.BeginForm` vs raw `<form>`. Standart: `Html.BeginForm`.
+- **`.AsNoTracking()` eksik** — okuma sorgularının büyük kısmı tracked. ✅ `AdminController.Brand.cs` düzeltildi (7 Mayıs 2026).
 
 ## DÜŞÜK risk
 
+- **Form syntax: raw `<form>` standart** — 21/24 view raw kullanıyor, 3'ü `Html.BeginForm`. Standart: raw `<form method="post">` + `@Html.AntiForgeryToken()` (CSRF eşdeğer, tutarlılık için).
 - **AuditLog selektif** — datasource/category delete log'lanmıyor. TODO G-04.
-- **CSS Tailwind utility + custom karışık** — PostCSS build pipeline ilerde.
-- **DB script organizasyonu** — `Database/` alt klasörlere ayrılacak. TODO M-06.
 - **Test coverage <%10** — öncelik: DashboardRenderer, UserDataFilter, UserRole sync.
+
+## Düzeltilen Aykırılıklar (7 Mayıs 2026 taraması)
+
+- ✅ `ex.Message` → user'a JSON dönme — `AdminController.Filters.cs:158` güvenli mesaja çevrildi.
+- ✅ `IsDashboard` ölü property — `ReportRunViewModel.cs` + 2 controller set satırı silindi.
+- ✅ CSS eski class — `form-card`/`btn-brand` vb. tüm view'larda temiz (M-13 Plan 03 R2 sonrası).
+- ✅ `[ValidateAntiForgeryToken]` — tüm POST action'larda mevcut.
+- ✅ `async void` — hiç yok.
+- ✅ `AdminController.Brand.cs` GET → `.AsNoTracking()` eklendi.
 
 ## Kararlar (kronolojik — küçük notlar, büyük kararlar ADR'lere)
 
@@ -61,11 +87,27 @@ _Kapsam: Projenin genel mimarisi, karar kayıtları (ADR'lere dönüşene kadar 
 - **Deprecated dosya silme > banner.** `Views/Auth/AGENT.md` banner yerine silindi (`7a7b81d`). Banner kafa karıştırır.
 - **Koşulsuz SessionStart hook kuralı.** `.claude/rules/session-protocol.md` — context'te hook çıktısı görünse bile `bash` elle tekrar çalıştırılır. Aksi varsayım iki kez hata üretti.
 
+## CSS Pattern Kuralı (ZORUNLU)
+
+`form-card` / `form-group` / `form-label` / `form-input-brand` / `btn-brand` / `btn-brand-outline` → **M-13 Plan 03 R2'de SİLİNDİ.** Yeni view yazarken kullanma.
+
+**Modern pattern:** `.field` / `.lab` / `.inp` / `.btn` / `.btn.primary` / inline `var(--paper)` card (CreateUser.cshtml referans al).
+
+## Controller → Sorumluluk Hızlı Referans
+
+`AdminController` (8 partial) → admin CRUD hub | `AuthController` → login/cookie | `DashboardController` → ana sayfa | `LogsController` → audit viewer | `ProfileController` → profil+şifre | `ReportsController` (3 partial) → rapor index+run+export+preview | `TestController` → dev-only DB test
+
+## Service → Sorumluluk Hızlı Referans
+
+`IBrandService` / `IModuleService` → **Singleton**, DB cache, `Invalidate()` sonrası yeniler | `StoredProcedureExecutor` → multi-RS ADO.NET | `UserDataFilterInjector` → multi-tenant, deny-by-default | `DashboardRenderer` → static orchestrator | `AuditLogService` → tüm kritik aksiyonlar | `PasswordHasher` → PBKDF2 100k iter
+
+**Tam mimari harita:** `memory/project_architecture_map.md`
+
 ## Proje Durumu (snapshot)
 
-- **Olgunluk:** %78 (Faz 0 + Faz 1 öncelikli üçlü + M-03 Faz A kapandı).
-- **Uncommitted:** tipik olarak 0 (post-commit hook journal append'leri hariç).
-- **Aktif modüller:** rol sistemi, kategori, favori, AD user, user data filter, dashboard motoru, SP önizleme, Claude tooling (hook'lar + skill'ler + agent'lar).
+- **Olgunluk:** ~%80 (Brand+Modules eklendi — Plan 12).
+- **Uncommitted:** tipik olarak 0.
+- **Aktif modüller:** rapor, dashboard, rol, favori, AD user, user data filter, dashboard builder V2, Brand+Modules sistemi.
 
 ## Referanslar
 

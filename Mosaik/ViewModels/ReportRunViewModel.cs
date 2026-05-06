@@ -16,7 +16,6 @@ namespace Mosaik.ViewModels
         public string ViewMode { get; set; } = "";
         public string BodyClass { get; set; } = "";
         public string ResultSearch { get; set; } = "";
-        public bool IsDashboard { get; set; }
         public string DashboardRenderedHtml { get; set; } = "";
     }
 }

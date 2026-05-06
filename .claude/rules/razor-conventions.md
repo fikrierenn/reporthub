@@ -13,10 +13,10 @@ paths:
 
 ## Form Kuralları
 
-- **Tek pattern:** `@using (Html.BeginForm("Action", "Controller", method, htmlAttrs)) { ... }`. Raw `<form>` kullanma (tutarsızlık — TODO).
-- **Antiforgery:** `@Html.AntiForgeryToken()` her form'da. Tag helper kullanıyorsan otomatik gelir.
+- **Standart:** Raw `<form method="post">` + `@Html.AntiForgeryToken()`. `Html.BeginForm` kullanma (21/24 view raw kullanıyor — 7 Mayıs 2026 kararı, eşdeğer CSRF, tutarlılık için raw standart).
+- **Antiforgery:** `@Html.AntiForgeryToken()` her POST form'da — zorunlu.
 - **Validation:** `<div asp-validation-for="Field"></div>` veya manuel `@Html.ValidationMessageFor(m => m.Field)`.
-- **Input:** `form-input-brand` custom class veya Tailwind utility. Karışık yazma, bir form = bir stil.
+- **Input:** `.inp` class (modern). `form-input-brand` SİLİNDİ — kullanma.
 
 ## Güvenlik
 
