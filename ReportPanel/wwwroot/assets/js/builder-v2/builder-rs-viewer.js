@@ -1,83 +1,52 @@
-// builder-v2/builder-rs-viewer.js — SP çıktısının ham önizleme modalı.
+// builder-v2/builder-rs-viewer.js — drawer Veri tab'ında inline RS preview paneli.
 // Object.assign ile builder.js main IIFE'sinde compose edilir.
 //
-// Akıl: spPreview (init'te /Admin/SpPreview ile çekilen) RS'lerini tab tab göster.
-// Her tab içinde tam kolon × ilk 50 satır tablo. resultContract isimleri varsa
-// tab adı olarak kullan ("kpi · Veri Seti 3"), yoksa "Veri Seti N".
+// Modal yerine drawer içinde collapsible panel: Veri Seti dropdown'ından sonra
+// "Önizle / Gizle" toggle. Açıkken seçili widget'ın bağlı RS'inin ilk 10 satır
+// × tüm kolonlarının kompakt tablosu. Workflow kırmaz, anlık (Alpine reactive,
+// sadece 10 satır render — modal'ın 50×N hücre overhead'i yok).
 
 (function () {
     "use strict";
     window.__builderV2 = window.__builderV2 || {};
 
-    var ROW_LIMIT = 50;
+    var ROW_LIMIT = 10;
 
     window.__builderV2.rsViewerMixin = function () {
         return {
-            rsModal: { open: false, activeIdx: 0 },
+            rsPanelOpen: false,
 
-            openRsModal(initialIdx) {
-                var idx = (typeof initialIdx === 'number' && initialIdx >= 0) ? initialIdx : 0;
-                this.rsModal = { open: true, activeIdx: idx };
+            toggleRsPanel() {
+                this.rsPanelOpen = !this.rsPanelOpen;
             },
 
-            closeRsModal() {
-                this.rsModal = { open: false, activeIdx: 0 };
-            },
-
-            selectRsTab(idx) {
-                if (this.rsModal && this.rsModal.open) this.rsModal.activeIdx = idx;
-            },
-
-            // ResultContract'tan name veya RS.name veya "Veri Seti N"
-            rsTabLabel(rs, idx) {
-                var contract = (this.config && this.config.resultContract) || {};
-                // Reverse lookup: contract'ta resultSet=idx olan key var mı
-                for (var key in contract) {
-                    if (contract.hasOwnProperty(key) && contract[key] && contract[key].resultSet === idx) {
-                        return key;
-                    }
-                }
-                if (rs && rs.name && rs.name !== ('rs' + idx)) return rs.name;
-                return 'Veri Seti ' + (idx + 1);
-            },
-
-            // Aktif RS'in row preview (limit=50)
-            rsActiveRows() {
-                var sets = this.spPreview && this.spPreview.resultSets;
-                if (!sets || !sets[this.rsModal.activeIdx]) return [];
-                var rs = sets[this.rsModal.activeIdx];
+            // Seçili widget'ın bağlı RS — selectedRs() drawer-mixin'den geliyor.
+            rsPanelRows() {
+                var rs = this.selectedRs ? this.selectedRs() : null;
+                if (!rs) return [];
                 return (rs.rows || []).slice(0, ROW_LIMIT);
             },
 
-            rsActiveColumns() {
-                var sets = this.spPreview && this.spPreview.resultSets;
-                if (!sets || !sets[this.rsModal.activeIdx]) return [];
-                var rs = sets[this.rsModal.activeIdx];
-                return rs.columns || [];
+            rsPanelColumns() {
+                var rs = this.selectedRs ? this.selectedRs() : null;
+                return rs ? (rs.columns || []) : [];
             },
 
-            rsActiveTotalRows() {
-                var sets = this.spPreview && this.spPreview.resultSets;
-                if (!sets || !sets[this.rsModal.activeIdx]) return 0;
-                var rs = sets[this.rsModal.activeIdx];
-                return (rs.rows || []).length;
+            rsPanelTotalRows() {
+                var rs = this.selectedRs ? this.selectedRs() : null;
+                return rs ? (rs.rows || []).length : 0;
             },
 
-            rsCellValue(row, col) {
+            rsPanelCellValue(row, col) {
                 if (!row || row[col] == null) return '—';
                 var v = row[col];
-                // ISO datetime kısalt: "2026-05-05T00:00:00" → "2026-05-05"
-                if (typeof v === 'string' && /^\d{4}-\d{2}-\d{2}T/.test(v)) {
-                    return v.slice(0, 10);
-                }
+                if (typeof v === 'string' && /^\d{4}-\d{2}-\d{2}T/.test(v)) return v.slice(0, 10);
                 return v;
             },
 
-            rsCellAlign(row, col) {
+            rsPanelCellAlign(row, col) {
                 if (!row) return 'left';
-                var v = row[col];
-                if (typeof v === 'number') return 'right';
-                return 'left';
+                return typeof row[col] === 'number' ? 'right' : 'left';
             }
         };
     };
