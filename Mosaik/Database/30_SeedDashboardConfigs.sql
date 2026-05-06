@@ -25,6 +25,14 @@ SET DashboardConfigJson = N'{"schemaVersion":2,"resultContract":{"planFiili":{"r
 WHERE ProcName LIKE N'%sp_PdksPano' AND DashboardConfigJson IS NULL;
 GO
 
+-- 1b. PDKS Pano ParamSchema — canlı SP @FmTop/@GecTop default'sız olduğu için
+--     ParamSchema'dan değer geçmek zorunda. Default 10 (lokal source ile uyumlu).
+UPDATE dbo.ReportCatalog
+SET ParamSchemaJson = N'{"fields":[{"name":"Tarih","label":"Tarih","type":"date","required":false,"default":"today","placeholder":"gg.aa.yyyy","help":"Boş bırakılırsa bugün kullanılır"},{"name":"FmTop","label":"Fazla Mesai TOP N","type":"number","required":false,"default":"10","help":"Listelenecek satır sayısı"},{"name":"GecTop","label":"Geç Kalma TOP N","type":"number","required":false,"default":"10","help":"Listelenecek satır sayısı"},{"name":"sube_Filtre","label":"Şube Filtresi","type":"text","required":false,"placeholder":"SubeNo virgülle, boş=tümü"},{"name":"bolum_Filtre","label":"Bölüm Filtresi","type":"text","required":false,"placeholder":"Bölüm adı virgülle, boş=tümü"}]}'
+WHERE ProcName LIKE N'%sp_PdksPano'
+  AND ParamSchemaJson NOT LIKE N'%FmTop%';
+GO
+
 -- =========================================================================
 -- 2. Satış Pano — yoksa ekle (config + ReportAllowedRoles)
 --    NOT: ProcName schema remote DB'ye göre değişir.
