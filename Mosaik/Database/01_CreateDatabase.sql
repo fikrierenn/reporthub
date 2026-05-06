@@ -4,7 +4,15 @@
 USE master;
 GO
 
--- Eğer veritabanı varsa sil (sadece dev/staging için!)
+-- Eski PortalHUB (Mosaik öncesi adı) varsa sil (rebrand için)
+IF EXISTS (SELECT 1 FROM sys.databases WHERE name = 'PortalHUB')
+BEGIN
+    ALTER DATABASE PortalHUB SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
+    DROP DATABASE PortalHUB;
+END
+GO
+
+-- Mevcut Mosaik varsa sil (sadece dev/staging için!)
 IF EXISTS (SELECT name FROM sys.databases WHERE name = 'Mosaik')
 BEGIN
     ALTER DATABASE Mosaik SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
