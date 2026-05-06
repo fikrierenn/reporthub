@@ -12,6 +12,8 @@ namespace Mosaik.Controllers
     public partial class ReportsController
     {
         [HttpGet]
+        [Route("Reports/Run/{reportId:int}")]
+        [Route("Reports/Run")]
         public async Task<IActionResult> Run(int reportId)
         {
             var context = await BuildReportsContext(reportId, null, null);
