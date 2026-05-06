@@ -346,20 +346,8 @@
                     // F09 Faz 2: chartRenderMixin.renderChartContainer (preview'da canvas + Chart.js mount, edit'te SVG)
                     html += '<div class="w-content">' + this.renderChartContainer(comp, rs, isPreview) + '</div>';
                 } else if (comp.type === 'table') {
-                    // F09 Faz 2: Tablo brand kart shell (server TableRenderer paritesi, conditional format Faz 4)
-                    if (isPreview && rs && rs.rows && rs.rows.length > 0) {
-                        html += '<div class="w-content">' +
-                            '<div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden h-full flex flex-col">' +
-                            (comp.title ? '<div class="px-5 py-3 border-b border-gray-100"><h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wide">' + this.esc(comp.title) + '</h3></div>' : '') +
-                            '<div class="overflow-auto" style="flex:1; min-height:0;">' +
-                            this.renderTablePreview(rs, comp) +
-                            '</div></div></div>';
-                    } else {
-                        html += '<div class="w-content">' +
-                            '<div class="bg-white rounded-xl border border-gray-200 shadow-sm h-full flex items-center justify-center text-gray-400 text-xs">' +
-                            (isPreview ? 'veri yok' : 'tablo önizleme — Önizle moduna geçin') +
-                            '</div></div>';
-                    }
+                    // F09 Faz 4: tableRenderMixin.renderTableCard — brand kart + conditional format + total row + stripe
+                    html += '<div class="w-content">' + this.renderTableCard(comp, rs, isPreview) + '</div>';
                 } else {
                     // Bilinmeyen tip — placeholder (RemovedWidget gibi)
                     html += '<div class="w-content"><div class="bg-yellow-50 border border-yellow-200 rounded-xl p-4 h-full flex items-center justify-center text-yellow-700 text-xs">Bilinmeyen tip: ' + this.esc(comp.type) + '</div></div>';

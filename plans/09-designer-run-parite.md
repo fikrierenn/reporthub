@@ -120,8 +120,22 @@ Tek dosya `builder-render.js` (+ minor view edit'ler). Sorun olursa:
 13. [x] **F09.13** Chart scatter labelColumn UI mevcut `chartFieldRequirements.needsLabel` ile gizleniyor (Faz 2 öncesinde de çalışıyordu)
 14. [x] **F09.14** Build yeşil, Faz 3 commit
 
+### Faz 4 — Tablo conditional format + total row + stripe + sticky header ✅ 6 Mayıs 2026
+
+**Sorun:** Faz 2'de tablo brand kart shell yapıldı (bg-white rounded-xl + uppercase başlık) ama içerik basit `renderTablePreview` (eski simplified). Conditional format, total row, sticky header, stripe yoktu — Run sayfasıyla görsel parite eksik kaldı.
+
+15. [x] **F09.15** `builder-v2/builder-table-render.js` mixin (~145 satır):
+    - `fmtCell(rawVal, fmt)`: number/currency/percent/date/text/auto formatter
+    - `condFormatCellHtml(condFormat, n, stats, fmttedEsc, alignCls)`: 4 mod (negativeRed/iconUpDown/colorScale/dataBar) — server `applyConditionalFormat` paritesi
+    - `computeColStats(data, cols)`: dataBar/colorScale için min/max
+    - `renderTableCard(comp, rs, isPreview)`: bg-white kart + sticky thead + stripe rows + conditional format cells + total row (sayı kolonları sum) + 50 satır limit notu
+    - **Search/Pager/CSV**: kapsam dışı — Tam Önizle iframe (Run) zaten sağlıyor (ADR-008 "preview tek renderer")
+16. [x] **F09.16** `widgetInnerHtml` table dalı `renderTableCard` mixin'e delegate
+17. [x] **F09.17** EditReportV2 + CreateReportV2 script tag
+18. [x] **F09.18** Build yeşil + Faz 4 commit: `feat(m-11 f-09 faz-4): tablo conditional format + total row + stripe (plan: 09)`
+
 ### Kapanış
-15. [ ] **F09.9** Plan dosyası → `plans/archive/` (3 faz tamamlanınca)
+19. [ ] **F09.9** Plan dosyası → `plans/archive/` (4 faz tamamlandı)
 
 ## 8. İlişkili
 
