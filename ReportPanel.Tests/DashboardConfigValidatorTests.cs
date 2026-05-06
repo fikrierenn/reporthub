@@ -412,4 +412,137 @@ public class DashboardConfigValidatorTests
         var r = DashboardConfigValidator.Validate(json);
         Assert.Contains(r.Errors, e => e.Contains("formül"));
     }
+
+    // ---- Plan 02 F-12 madde 68: calc field + conditional + table column full coverage ----
+
+    [Fact]
+    public void Validate_rejects_calculated_field_invalid_format()
+    {
+        var json = """
+        {
+          "schemaVersion": 2,
+          "calculatedFields": [ { "name": "ciro", "formula": "a+b", "format": "rainbow" } ],
+          "tabs": [ { "components": [ { "type": "kpi", "result": "rs0" } ] } ]
+        }
+        """;
+        var r = DashboardConfigValidator.Validate(json);
+        Assert.Contains(r.Errors, e => e.Contains("ciro") && e.Contains("format"));
+    }
+
+    [Fact]
+    public void Validate_accepts_valid_calculated_field()
+    {
+        var json = """
+        {
+          "schemaVersion": 2,
+          "calculatedFields": [ { "name": "deltaCiro", "formula": "current - previous", "format": "currency" } ],
+          "tabs": [ { "components": [ { "type": "kpi", "result": "rs0" } ] } ]
+        }
+        """;
+        var r = DashboardConfigValidator.Validate(json);
+        Assert.False(r.HasErrors);
+    }
+
+    [Theory]
+    [InlineData("none")]
+    [InlineData("dataBar")]
+    [InlineData("colorScale")]
+    [InlineData("iconUpDown")]
+    [InlineData("negativeRed")]
+    public void Validate_accepts_known_conditional_format_modes(string mode)
+    {
+        var json = $$"""
+        {
+          "schemaVersion": 2,
+          "tabs": [ { "components": [ { "type": "table", "result": "rs0", "columns": [ { "key": "a", "label": "A", "conditionalFormat": { "mode": "{{mode}}" } } ] } ] } ]
+        }
+        """;
+        var r = DashboardConfigValidator.Validate(json);
+        Assert.False(r.HasErrors);
+    }
+
+    [Theory]
+    [InlineData("auto")]
+    [InlineData("text")]
+    [InlineData("currency")]
+    [InlineData("number")]
+    [InlineData("date")]
+    [InlineData("percent")]
+    public void Validate_accepts_known_table_column_formats(string format)
+    {
+        var json = $$"""
+        {
+          "schemaVersion": 2,
+          "tabs": [ { "components": [ { "type": "table", "result": "rs0", "columns": [ { "key": "a", "label": "A", "format": "{{format}}" } ] } ] } ]
+        }
+        """;
+        var r = DashboardConfigValidator.Validate(json);
+        Assert.False(r.HasErrors);
+    }
+
+    [Fact]
+    public void Validate_rejects_invalid_table_column_format()
+    {
+        var json = """
+        {
+          "schemaVersion": 2,
+          "tabs": [ { "components": [ { "type": "table", "result": "rs0", "columns": [ { "key": "a", "label": "A", "format": "rainbow" } ] } ] } ]
+        }
+        """;
+        var r = DashboardConfigValidator.Validate(json);
+        Assert.Contains(r.Errors, e => e.Contains("format") && e.Contains("rainbow"));
+    }
+
+    [Fact]
+    public void Validate_rejects_table_column_invalid_formula_syntax()
+    {
+        // Plan 05.B FormulaParser: ')' eksik
+        var json = """
+        {
+          "schemaVersion": 2,
+          "tabs": [ { "components": [ { "type": "table", "result": "rs0", "columns": [ { "key": "x", "label": "X", "formula": "(a + b" } ] } ] } ]
+        }
+        """;
+        var r = DashboardConfigValidator.Validate(json);
+        Assert.Contains(r.Errors, e => e.Contains("formül"));
+    }
+
+    [Fact]
+    public void Validate_accepts_table_column_valid_formula()
+    {
+        var json = """
+        {
+          "schemaVersion": 2,
+          "tabs": [ { "components": [ { "type": "table", "result": "rs0", "columns": [ { "key": "x", "label": "X", "formula": "(a + b) * 0.18" } ] } ] } ]
+        }
+        """;
+        var r = DashboardConfigValidator.Validate(json);
+        Assert.False(r.HasErrors);
+    }
+
+    [Fact]
+    public void Validate_accepts_kpi_delta_with_compareColumn()
+    {
+        var json = """
+        {
+          "schemaVersion": 2,
+          "tabs": [ { "components": [ { "type": "kpi", "variant": "delta", "result": "rs0", "delta": { "compareColumn": "previous" } } ] } ]
+        }
+        """;
+        var r = DashboardConfigValidator.Validate(json);
+        Assert.False(r.HasErrors);
+    }
+
+    [Fact]
+    public void Validate_accepts_kpi_progress_with_targetValue()
+    {
+        var json = """
+        {
+          "schemaVersion": 2,
+          "tabs": [ { "components": [ { "type": "kpi", "variant": "progress", "result": "rs0", "progress": { "targetValue": 100 } } ] } ]
+        }
+        """;
+        var r = DashboardConfigValidator.Validate(json);
+        Assert.False(r.HasErrors);
+    }
 }
