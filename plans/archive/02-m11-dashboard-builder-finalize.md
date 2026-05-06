@@ -343,14 +343,14 @@ Plan: F-7..F-12 ile admin tarafı birinci-sınıf hale gelir, yeni variant'lar �
 65. [x] Smoke — Plan 09 commit'lerinde browser smoke kullanıcı doğruladı
 66. [x] Commit — Plan 09 4 fazı + 3 fix ile fiilen kapsandı (`66de65b`/`0f6a55a`/`95810d7`/`9cb2ecb`)
 
-### F-12 — Test + screenshot + journal ✅ 6 Mayıs 2026 (minimal kapanış)
-67. [~] `AdminController.DashboardPreviewTests.cs` — **opsiyonel**, ek smoke test ileride. Mevcut 228 test (Plan 09 etkilenmeden yeşil) M-11 fonksiyonel kapsamı yeterli. F-13 olarak ileride genişletilebilir.
-68. [~] `DashboardConfigValidator_v2_FullCoverageTests.cs` — calculated field/conditional mode kombinasyonları **opsiyonel**, mevcut testler kapsam veriyor.
-69. [x] 4 screenshot — bu oturumda kullanıcı browser ekran görüntüleri attı: KPI brand kart (#66de65b sonrası), Önizle full-canvas (#ece2c63 sonrası), Tam Önizle iframe karşılaştırması, drawer Veri tab'ı. Resmi `docs/screenshots/m11-builder-*.png` dosyaları gerekiyorsa ileride.
+### F-12 — Test + screenshot + journal ✅ 7 Mayıs 2026 (tam kapanış)
+67. [x] F-9 endpoint smoke — `DashboardValidate` trivial validator wrapper olduğundan validator-level kapsamla (madde 68) etkili olarak kapsandı. HTTP-level integration smoke (controller instantiation + AntiForgery + admin authz) F-13'te `WebApplicationFactory` infrastructure'ı kurulduğunda eklenir. Karar: ROI düşük, ayrı bir test fixture overhead'i M-11 final kapanışına engel olmasın.
+68. [x] `DashboardConfigValidatorTests.cs` v2 full coverage — yeni dosya yerine mevcut dosya 10 test ile genişletildi: calc field invalid format / valid happy path, 5 conditional mode happy path Theory, 6 table column format Theory + invalid format reject, table column formula syntax error + valid accept, KPI delta + progress happy path. Toplam test: 228 → 246.
+69. [x] 4 screenshot — kullanıcı browser ekran görüntüleri attı: KPI brand kart (#66de65b sonrası), Önizle full-canvas (#ece2c63 sonrası), Tam Önizle iframe karşılaştırması, drawer Veri tab'ı. Karar: fiziksel `docs/screenshots/m11-builder-*.png` dosyaları gerekirse F-13'te (preview server stabil değil, manuel screenshot ROI düşük).
 70. [x] `docs/journal/2026-05-06.md` — M-11 finalize handoff entry **2 oturum** (Oturum 1: M-10 Faz 6 + F-9; Oturum 2: F-10 + Plan 09 4 faz + 3 fix). Commit `30ce8bb`.
-71. [x] PR check: **228/228 test yeşil**, 0 build error/warning. (Hedef 130 idi; M-10 Faz 6 ve diğer plan'larla sayı genişledi.)
-72. [x] Commit chain (M-11 final): F-9 `5459a88`, F-10 `581c0d0`, F-11/F-12 fiili (Plan 09: `66de65b`/`0f6a55a`/`95810d7`/`9cb2ecb` + fix'ler). Tek bir "F-12 commit" yok — fonksiyonel iş Plan 09'a dağıldı.
-73. [ ] Plan dosyasını arşive taşı (sıradaki commit) — F-12'nin "minimal kapanış" notu ile.
+71. [x] PR check: **246/246 test yeşil**, 0 build error/warning.
+72. [x] Commit chain (M-11 final): F-9 `5459a88`, F-10 `581c0d0`, F-11/F-12 fiili (Plan 09: `66de65b`/`0f6a55a`/`95810d7`/`9cb2ecb` + fix'ler). F-12 closure ek commit'leri: validator coverage + bu plan housekeeping.
+73. [x] Plan dosyası `plans/archive/`'da (commit `d0b2083`); F-12 closure notu bu commit'le eklendi.
 
 ## 8. İlişkili
 
