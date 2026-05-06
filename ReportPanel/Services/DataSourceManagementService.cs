@@ -1,8 +1,8 @@
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
-using ReportPanel.Models;
+using Mosaik.Models;
 
-namespace ReportPanel.Services
+namespace Mosaik.Services
 {
     /// <summary>
     /// M-01: DataSource CRUD + connection test. AdminController.HandlePostAction
@@ -10,10 +10,10 @@ namespace ReportPanel.Services
     /// </summary>
     public class DataSourceManagementService
     {
-        private readonly ReportPanelContext _context;
+        private readonly MosaikContext _context;
         private readonly AuditLogService _auditLog;
 
-        public DataSourceManagementService(ReportPanelContext context, AuditLogService auditLog)
+        public DataSourceManagementService(MosaikContext context, AuditLogService auditLog)
         {
             _context = context;
             _auditLog = auditLog;

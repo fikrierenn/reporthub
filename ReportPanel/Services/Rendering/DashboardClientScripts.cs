@@ -1,6 +1,6 @@
 using System.Text;
 
-namespace ReportPanel.Services.Rendering
+namespace Mosaik.Services.Rendering
 {
     // M-13 R5 (28 Nisan 2026): DashboardShellRenderer.cs 620 sat → 2 partial dosya.
     // 4 Mayıs 2026 split (csharp-conventions hard-limit 500 aşımı, 551 → ~150):

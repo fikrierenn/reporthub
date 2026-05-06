@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace ReportPanel.Models
+namespace Mosaik.Models
 {
     public class UserDataFilter
     {

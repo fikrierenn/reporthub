@@ -1,8 +1,8 @@
 using System.Text;
 using System.Text.Json;
-using ReportPanel.Models;
+using Mosaik.Models;
 
-namespace ReportPanel.Services.Rendering
+namespace Mosaik.Services.Rendering
 {
     // M-11 F-5 (ADR-008): 4 KPI variant — basic/delta/sparkline/progress.
     //

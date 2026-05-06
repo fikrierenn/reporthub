@@ -1,7 +1,7 @@
 using System.Data;
 using Microsoft.Data.SqlClient;
 
-namespace ReportPanel.Services;
+namespace Mosaik.Services;
 
 /// <summary>
 /// SQL Server stored procedure execution servisi.

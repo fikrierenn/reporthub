@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 
-namespace ReportPanel.Models
+namespace Mosaik.Models
 {
     // M-07: GroupId + CreatedAt [BindNever] — mass assignment koruması.
     // Plan 07 son rename: ReportCategory → ReportGroup (urunKategori ile çakışmasın).

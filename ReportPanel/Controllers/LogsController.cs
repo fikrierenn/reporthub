@@ -1,18 +1,18 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using ReportPanel.Models;
-using ReportPanel.ViewModels;
+using Mosaik.Models;
+using Mosaik.ViewModels;
 using System.Security.Claims;
 
-namespace ReportPanel.Controllers
+namespace Mosaik.Controllers
 {
     [Authorize(Roles = "admin")]
     public class LogsController : Controller
     {
-        private readonly ReportPanelContext _context;
+        private readonly MosaikContext _context;
 
-        public LogsController(ReportPanelContext context)
+        public LogsController(MosaikContext context)
         {
             _context = context;
         }

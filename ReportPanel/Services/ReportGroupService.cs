@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
-using ReportPanel.Models;
+using Mosaik.Models;
 
-namespace ReportPanel.Services
+namespace Mosaik.Services
 {
     /// <summary>
     /// M-01: ReportGroup CRUD (create/update/delete). G-04 audit log calls.
@@ -9,10 +9,10 @@ namespace ReportPanel.Services
     /// </summary>
     public class ReportGroupService
     {
-        private readonly ReportPanelContext _context;
+        private readonly MosaikContext _context;
         private readonly AuditLogService _auditLog;
 
-        public ReportGroupService(ReportPanelContext context, AuditLogService auditLog)
+        public ReportGroupService(MosaikContext context, AuditLogService auditLog)
         {
             _context = context;
             _auditLog = auditLog;

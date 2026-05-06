@@ -1,7 +1,7 @@
 using System.Collections.Generic;
-using ReportPanel.Services.Eval;
+using Mosaik.Services.Eval;
 
-namespace ReportPanel.Tests;
+namespace Mosaik.Tests;
 
 public class FormulaEvaluatorTests
 {

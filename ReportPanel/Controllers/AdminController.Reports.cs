@@ -1,10 +1,10 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using ReportPanel.Models;
-using ReportPanel.Services;
-using ReportPanel.ViewModels;
+using Mosaik.Models;
+using Mosaik.Services;
+using Mosaik.ViewModels;
 
-namespace ReportPanel.Controllers
+namespace Mosaik.Controllers
 {
     // Partial split (csharp-conventions hard-limit). Rapor CRUD + V2 builder redirects +
     // BuildReportFormViewModel.

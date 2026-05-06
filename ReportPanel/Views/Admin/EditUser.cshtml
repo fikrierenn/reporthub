@@ -1,4 +1,4 @@
-@model ReportPanel.ViewModels.AdminUserFormViewModel
+@model Mosaik.ViewModels.AdminUserFormViewModel
 @using System.Linq
 @{
     Layout = "_AppLayout";
@@ -6,10 +6,10 @@
     ViewData["PageTitle"] = "Kullanıcı Düzenle";
     var message = Model.Message ?? "";
     var messageType = Model.MessageType ?? "";
-    var availableRoles = Model.AvailableRoles ?? new List<ReportPanel.Models.Role>();
+    var availableRoles = Model.AvailableRoles ?? new List<Mosaik.Models.Role>();
     var selectedRoleIds = Model.SelectedRoleIds ?? new HashSet<int>();
-    var user = Model.User ?? new ReportPanel.Models.User();
-    var dataSources = Model.DataSources ?? new List<ReportPanel.Models.DataSource>();
+    var user = Model.User ?? new Mosaik.Models.User();
+    var dataSources = Model.DataSources ?? new List<Mosaik.Models.DataSource>();
 }
 
 @section Breadcrumb {

@@ -1,8 +1,8 @@
 using System.Text;
 using System.Text.Json;
-using ReportPanel.Models;
+using Mosaik.Models;
 
-namespace ReportPanel.Services.Rendering
+namespace Mosaik.Services.Rendering
 {
     // M-11 F-4 (ADR-008): Chart widget HTML + 10 variant destegi.
     //

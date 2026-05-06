@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
-using ReportPanel.Models;
+using Mosaik.Models;
 
-namespace ReportPanel.Services
+namespace Mosaik.Services
 {
     public record UserFilterInput(string Key, string Value, string? DataSourceKey);
 
@@ -23,12 +23,12 @@ namespace ReportPanel.Services
     /// </summary>
     public class UserManagementService
     {
-        private readonly ReportPanelContext _context;
+        private readonly MosaikContext _context;
         private readonly AuditLogService _auditLog;
         private readonly UserRoleSyncService _userRoleSync;
 
         public UserManagementService(
-            ReportPanelContext context,
+            MosaikContext context,
             AuditLogService auditLog,
             UserRoleSyncService userRoleSync)
         {

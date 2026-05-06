@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace ReportPanel.ViewModels
+namespace Mosaik.ViewModels
 {
     public class LoginViewModel
     {

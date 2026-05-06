@@ -1,20 +1,20 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using ReportPanel.Models;
-using ReportPanel.ViewModels;
+using Mosaik.Models;
+using Mosaik.ViewModels;
 
-namespace ReportPanel.Controllers
+namespace Mosaik.Controllers
 {
 #if DEBUG
     // G-06: DEBUG olsa bile admin-only + CSRF koruma. Prod'da #if DEBUG ile butun sinif excluded.
     [Authorize(Roles = "admin")]
     public class TestController : Controller
     {
-        private readonly ReportPanelContext _context;
+        private readonly MosaikContext _context;
         private readonly IConfiguration _configuration;
 
-        public TestController(ReportPanelContext context, IConfiguration configuration)
+        public TestController(MosaikContext context, IConfiguration configuration)
         {
             _context = context;
             _configuration = configuration;

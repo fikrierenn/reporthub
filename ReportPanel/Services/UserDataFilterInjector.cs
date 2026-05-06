@@ -1,9 +1,9 @@
 using System.Data;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
-using ReportPanel.Models;
+using Mosaik.Models;
 
-namespace ReportPanel.Services;
+namespace Mosaik.Services;
 
 /// <summary>
 /// Multi-tenant veri filtresi enjeksiyon servisi.
@@ -17,10 +17,10 @@ namespace ReportPanel.Services;
 /// </summary>
 public class UserDataFilterInjector
 {
-    private readonly ReportPanelContext _context;
+    private readonly MosaikContext _context;
     private readonly AuditLogService _auditLog;
 
-    public UserDataFilterInjector(ReportPanelContext context, AuditLogService auditLog)
+    public UserDataFilterInjector(MosaikContext context, AuditLogService auditLog)
     {
         _context = context;
         _auditLog = auditLog;

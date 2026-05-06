@@ -1,19 +1,19 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using ReportPanel.Models;
-using ReportPanel.Services;
-using ReportPanel.ViewModels;
+using Mosaik.Models;
+using Mosaik.Services;
+using Mosaik.ViewModels;
 
-namespace ReportPanel.Controllers
+namespace Mosaik.Controllers
 {
     [Authorize]
     public class ProfileController : Controller
     {
-        private readonly ReportPanelContext _context;
+        private readonly MosaikContext _context;
         private readonly AuditLogService _auditLog;
 
-        public ProfileController(ReportPanelContext context, AuditLogService auditLog)
+        public ProfileController(MosaikContext context, AuditLogService auditLog)
         {
             _context = context;
             _auditLog = auditLog;

@@ -1,7 +1,7 @@
 using System.Text;
-using ReportPanel.Models;
+using Mosaik.Models;
 
-namespace ReportPanel.Services.Rendering
+namespace Mosaik.Services.Rendering
 {
     // M-11 F-2: Widget fallback placeholder'ları.
     // - MissingResult: ADR-007 binding çözümlenmedi (unknown contract / out-of-bounds / binding yok)

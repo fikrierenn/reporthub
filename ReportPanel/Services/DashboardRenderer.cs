@@ -1,9 +1,9 @@
 using System.Text;
-using ReportPanel.Models;
-using ReportPanel.Services.Eval;
-using ReportPanel.Services.Rendering;
+using Mosaik.Models;
+using Mosaik.Services.Eval;
+using Mosaik.Services.Rendering;
 
-namespace ReportPanel.Services
+namespace Mosaik.Services
 {
     // M-11 F-2: Dashboard render orkestrasyonu. Önceki 422 satırlık monolithic class
     // Rendering/ altına split edildi (RenderContext + KpiRenderer + ChartRenderer +

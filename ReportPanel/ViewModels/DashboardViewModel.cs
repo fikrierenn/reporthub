@@ -1,6 +1,6 @@
-using ReportPanel.Models;
+using Mosaik.Models;
 
-namespace ReportPanel.ViewModels
+namespace Mosaik.ViewModels
 {
     public class DashboardViewModel
     {

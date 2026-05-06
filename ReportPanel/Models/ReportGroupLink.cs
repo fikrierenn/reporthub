@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace ReportPanel.Models
+namespace Mosaik.Models
 {
     // Plan 07 son rename: ReportCategoryLink → ReportGroupLink.
     public class ReportGroupLink

@@ -1,8 +1,8 @@
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
-using ReportPanel.Models;
+using Mosaik.Models;
 
-namespace ReportPanel.Services
+namespace Mosaik.Services
 {
     // M-05: DashboardHtml parametresi kaldirildi (legacy retirement). DashboardConfigJson
     // birincil. Mevcut DB'deki HTML kayitlari ReportsController legacy fallback ile render
@@ -25,10 +25,10 @@ namespace ReportPanel.Services
     /// </summary>
     public class ReportManagementService
     {
-        private readonly ReportPanelContext _context;
+        private readonly MosaikContext _context;
         private readonly AuditLogService _auditLog;
 
-        public ReportManagementService(ReportPanelContext context, AuditLogService auditLog)
+        public ReportManagementService(MosaikContext context, AuditLogService auditLog)
         {
             _context = context;
             _auditLog = auditLog;

@@ -1,6 +1,6 @@
-using ReportPanel.Services;
+using Mosaik.Services;
 
-namespace ReportPanel.Tests;
+namespace Mosaik.Tests;
 
 // M-10 Faz 3 (ADR-007): DashboardConfigValidator save-time contract.
 // Hard errors save'i bloke eder; soft warnings audit'e dusurulur ama kayit izni verir.

@@ -1,4 +1,4 @@
-@model ReportPanel.ViewModels.AdminUserFormViewModel
+@model Mosaik.ViewModels.AdminUserFormViewModel
 @*
     Plan 07 Faz 5 + Plan B (5 Mayis 2026) — FilterDefinition'lar DataSource bazli gruplandirilir.
     Her DataSource bir bolum (header), altinda o sistemin filter section'lari.
@@ -11,8 +11,8 @@
     Hidden input: backend flat array (FilterKeys[] / FilterValues[] / FilterDataSources[]) — paralel index.
 *@
 @{
-    var definitions = Model.FilterDefinitions ?? new List<ReportPanel.Models.FilterDefinition>();
-    var dataSourceTitleByKey = (Model.DataSources ?? new List<ReportPanel.Models.DataSource>())
+    var definitions = Model.FilterDefinitions ?? new List<Mosaik.Models.FilterDefinition>();
+    var dataSourceTitleByKey = (Model.DataSources ?? new List<Mosaik.Models.DataSource>())
         .ToDictionary(ds => ds.DataSourceKey, ds => ds.Title ?? ds.DataSourceKey, StringComparer.OrdinalIgnoreCase);
 
     var groupsData = definitions
@@ -30,9 +30,9 @@
                     .Where(f => string.Equals(f.FilterKey, def.FilterKey, StringComparison.OrdinalIgnoreCase)
                         && string.Equals(f.DataSourceKey ?? "", def.DataSourceKey ?? "", StringComparison.OrdinalIgnoreCase))
                     .ToList();
-                var hasStar = userRecords.Any(r => r.FilterValue == ReportPanel.Models.FilterDefinition.ValueAll);
+                var hasStar = userRecords.Any(r => r.FilterValue == Mosaik.Models.FilterDefinition.ValueAll);
                 var concreteValues = userRecords
-                    .Where(r => r.FilterValue != ReportPanel.Models.FilterDefinition.ValueAll)
+                    .Where(r => r.FilterValue != Mosaik.Models.FilterDefinition.ValueAll)
                     .Select(r => r.FilterValue)
                     .ToList();
                 return new

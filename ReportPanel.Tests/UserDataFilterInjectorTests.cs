@@ -1,10 +1,10 @@
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
-using ReportPanel.Models;
-using ReportPanel.Services;
+using Mosaik.Models;
+using Mosaik.Services;
 
-namespace ReportPanel.Tests;
+namespace Mosaik.Tests;
 
 /// <summary>
 /// M-13 R6.2 regression coverage: UserDataFilterInjector.
@@ -12,12 +12,12 @@ namespace ReportPanel.Tests;
 /// </summary>
 public class UserDataFilterInjectorTests
 {
-    private static (UserDataFilterInjector sut, ReportPanelContext ctx) CreateSut()
+    private static (UserDataFilterInjector sut, MosaikContext ctx) CreateSut()
     {
-        var options = new DbContextOptionsBuilder<ReportPanelContext>()
+        var options = new DbContextOptionsBuilder<MosaikContext>()
             .UseInMemoryDatabase($"udf-{Guid.NewGuid()}")
             .Options;
-        var ctx = new ReportPanelContext(options);
+        var ctx = new MosaikContext(options);
         // AuditLogService dependency: HttpContextAccessor + IConfiguration. NullLogger pattern yok burada;
         // ama InjectAsync sadece LogAsync çağrısı yapıyor — minimal stub yeterli.
         var auditLog = new AuditLogService(ctx, new Microsoft.AspNetCore.Http.HttpContextAccessor());

@@ -1,9 +1,9 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Primitives;
-using ReportPanel.Models;
-using ReportPanel.Services;
+using Mosaik.Models;
+using Mosaik.Services;
 
-namespace ReportPanel.Tests;
+namespace Mosaik.Tests;
 
 /// <summary>
 /// M-13 R6.4 regression coverage: ReportParamValidator (static utility).

@@ -1,11 +1,11 @@
-@model ReportPanel.ViewModels.AdminIndexViewModel
+@model Mosaik.ViewModels.AdminIndexViewModel
 @*
     Plan 07 Faz 6 — Admin Filtreler tab.
     FilterDefinition listesi (DataSource bazli gruplandirilmis); CRUD detay sayfasi
     /Admin/CreateFilter ve /Admin/EditFilter/{id}.
 *@
 @{
-    var dataSourceTitleByKey = (Model.DataSources ?? new List<ReportPanel.Models.DataSource>())
+    var dataSourceTitleByKey = (Model.DataSources ?? new List<Mosaik.Models.DataSource>())
         .ToDictionary(ds => ds.DataSourceKey, ds => ds.Title ?? ds.DataSourceKey, StringComparer.OrdinalIgnoreCase);
 
     var groups = Model.FilterDefinitions

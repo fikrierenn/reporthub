@@ -1,8 +1,8 @@
-@model ReportPanel.ViewModels.DashboardViewModel
+@model Mosaik.ViewModels.DashboardViewModel
 @{
     int maxRun = Model.TopRunReports.Count > 0 ? Model.TopRunReports.Max(t => t.Count) : 1;
 
-    string BuildHourlyPath(List<ReportPanel.ViewModels.HourlyTrendItem> trend, bool closeArea)
+    string BuildHourlyPath(List<Mosaik.ViewModels.HourlyTrendItem> trend, bool closeArea)
     {
         if (trend == null || trend.Count == 0) return "";
         var max = Math.Max(1, trend.Max(t => t.Count));

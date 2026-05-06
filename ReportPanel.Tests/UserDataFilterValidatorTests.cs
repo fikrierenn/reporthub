@@ -1,6 +1,6 @@
-using ReportPanel.Services;
+using Mosaik.Services;
 
-namespace ReportPanel.Tests;
+namespace Mosaik.Tests;
 
 /// <summary>
 /// G-03 regression coverage: UserDataFilter key/value whitelist.

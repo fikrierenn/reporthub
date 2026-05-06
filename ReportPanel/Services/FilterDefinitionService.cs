@@ -1,8 +1,8 @@
 using System.Text.RegularExpressions;
 using Microsoft.EntityFrameworkCore;
-using ReportPanel.Models;
+using Mosaik.Models;
 
-namespace ReportPanel.Services
+namespace Mosaik.Services
 {
     /// <summary>
     /// Plan 07 Faz 2 — FilterDefinition (master tablo) CRUD.
@@ -11,7 +11,7 @@ namespace ReportPanel.Services
     /// </summary>
     public class FilterDefinitionService
     {
-        private readonly ReportPanelContext _context;
+        private readonly MosaikContext _context;
         private readonly AuditLogService _auditLog;
 
         private static readonly Regex FilterKeyPattern = new("^[a-zA-Z][a-zA-Z0-9_]*$", RegexOptions.Compiled);
@@ -19,7 +19,7 @@ namespace ReportPanel.Services
             @"\b(EXEC|EXECUTE|INSERT|UPDATE|DELETE|DROP|MERGE|ALTER|TRUNCATE|GRANT|REVOKE|CREATE)\b",
             RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
-        public FilterDefinitionService(ReportPanelContext context, AuditLogService auditLog)
+        public FilterDefinitionService(MosaikContext context, AuditLogService auditLog)
         {
             _context = context;
             _auditLog = auditLog;
@@ -103,7 +103,7 @@ namespace ReportPanel.Services
             entity.OptionsQuery = string.IsNullOrWhiteSpace(optionsQuery) ? null : optionsQuery.Trim();
             entity.IsActive = isActive;
             entity.DisplayOrder = displayOrder;
-            entity.UpdatedAt = DateTime.Now;
+            entity.UpdatedAt = DateTime.UtcNow;
 
             // Cascade: FilterKey veya DataSourceKey değişirse UserDataFilters kayıtlarını da güncelle
             // (aksi halde UserDataFilterInjector eski isimle parametre enjekte eder, SP'de yok hatası).

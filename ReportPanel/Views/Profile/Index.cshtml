@@ -1,4 +1,4 @@
-@model ReportPanel.ViewModels.ProfileViewModel
+@model Mosaik.ViewModels.ProfileViewModel
 @{
     Layout = "_AppLayout";
     ViewData["Title"] = "Profil - BKM Rapor Paneli";
@@ -82,14 +82,14 @@
 
         @* Plan 04 F2.3 (28 Nisan): _PasswordInput partial — DRY + Alpine show/hide toggle. *@
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:14px; margin-bottom:18px;">
-            @await Html.PartialAsync("_PasswordInput", new ReportPanel.ViewModels.PasswordInputViewModel {
+            @await Html.PartialAsync("_PasswordInput", new Mosaik.ViewModels.PasswordInputViewModel {
                 Id = "NewPassword",
                 Name = "NewPassword",
                 Label = "Yeni Şifre",
                 Placeholder = "Yeni şifre",
                 Autocomplete = "new-password"
             })
-            @await Html.PartialAsync("_PasswordInput", new ReportPanel.ViewModels.PasswordInputViewModel {
+            @await Html.PartialAsync("_PasswordInput", new Mosaik.ViewModels.PasswordInputViewModel {
                 Id = "ConfirmPassword",
                 Name = "ConfirmPassword",
                 Label = "Yeni Şifre (Tekrar)",

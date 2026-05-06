@@ -1,4 +1,4 @@
-@model ReportPanel.ViewModels.LoginViewModel
+@model Mosaik.ViewModels.LoginViewModel
 @{
     Layout = "_AuthLayout";
     ViewData["Title"] = "Giriş - BKM Rapor Paneli";
@@ -37,7 +37,7 @@
     </div>
 
     @* Plan 04 F2.3 (28 Nisan): _PasswordInput partial — DRY (Profile + Login ortak). *@
-    @await Html.PartialAsync("_PasswordInput", new ReportPanel.ViewModels.PasswordInputViewModel {
+    @await Html.PartialAsync("_PasswordInput", new Mosaik.ViewModels.PasswordInputViewModel {
         Id = "Password",
         Name = "Password",
         Label = "Şifre",

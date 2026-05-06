@@ -1,4 +1,4 @@
-# CLAUDE.md — ReportHub / ReportPanel
+# CLAUDE.md — Mosaik
 
 Bu dosya her Claude oturumunun başında okunur. **Değişmez kurallar + kimlik.** Tarihli notlar, geçmiş kararlar ve detay kurallar ayrı dosyalarda:
 
@@ -38,17 +38,22 @@ Detay: [`.claude/rules/session-protocol.md`](.claude/rules/session-protocol.md).
 
 ## 1. Proje Kimliği
 
-**ReportHub** (iç ad: **ReportPanel**) — SQL Server stored procedure'ları üzerinde çalışan rapor + dashboard portalı. Kullanıcılar rapor çalıştırır, parametrelerle filtreler, sonuçları tablo veya dashboard olarak görüntüler, Excel'e export eder. Admin tarafında rapor/data source/kullanıcı/rol/kategori yönetimi var.
+**Mosaik** — modüler şirket içi portal. Şu an aktif modül: rapor + dashboard (SQL Server stored procedure'ları üzerinde çalışan). vNext modüller (TODO.md:298): tamim/sirküler, duyurular, departman dizini, doküman paylaşımı, mesajlaşma, form/anket, SOP, takvim, KPI/OKR, onay akışları. Brand metaforu: her modül bir taş, birlikte mozaiği oluşturur.
+
+**Canonical kimlik (sabit):** `Mosaik` namespace + `Mosaik.csproj` + `Mosaik.sln`.
+**Repo klasörü:** `D:\Dev\reporthub` (tarihsel, kod-içi rebrand kapsam dışı bırakıldı; iç klasörler `ReportPanel/` + `ReportPanel.Tests/` adlarında kalır).
+**Brand görünümü (parametric):** UI marka adı/logo/renk DB-driven (Plan 11 Faz 3 BrandSettings — bekliyor).
+**Modüller (switchable):** Sidebar'da hangi modüller görünür, DB-driven (Plan 11 Faz 4 Modules — bekliyor).
 
 ### Tech stack
-- **.NET 10.0** (`ReportPanel.csproj` → `net10.0`). `net8.0`'a DÖNME — "8 için destek bitecek" uyarısı var. NuGet paketleri 10.0.1.
-- **ASP.NET Core MVC** (Controller + Razor Views). Razor Pages **DEĞİL**. (`Views/Auth/AGENT.md` yanıltıcı, siliniyor — TODO F-04.)
-- **Entity Framework Core 10** (`ReportPanelContext`). Metadata CRUD için. SP çağrıları ADO.NET/`SqlCommand` ile. Dapper yok.
-- **SQL Server** — `mcp__sqlserver__*` ve `mcp__sqlserver-express__*` MCP'leri mevcut.
+- **.NET 10.0** (`Mosaik.csproj` → `net10.0`). `net8.0`'a DÖNME — "8 için destek bitecek" uyarısı var. NuGet paketleri 10.0.1.
+- **ASP.NET Core MVC** (Controller + Razor Views). Razor Pages **DEĞİL**.
+- **Entity Framework Core 10** (`MosaikContext`). Metadata CRUD için. SP çağrıları ADO.NET/`SqlCommand` ile. Dapper yok.
+- **SQL Server** — DB adı şu an `PortalHUB` (Plan 11 Faz 6 reset'te `Mosaik`'e geçecek). `mcp__portalhub__*` MCP.
 - **Tailwind CSS** (CDN, utility-first) + `wwwroot/assets/css/style.css` custom sınıflar (`btn-brand`, `form-input-brand`).
 - **Chart.js 4** + **Font Awesome 6** CDN (dashboard render).
 - **Frontend JS:** Vanilla, IIFE pattern, `wwwroot/assets/js/`. jQuery yok.
-- **Testler:** xUnit (`ReportPanel.Tests/`). Mevcut: `PasswordHasher`, `AuditLogService`. Coverage <%10.
+- **Testler:** xUnit (`ReportPanel.Tests/Mosaik.Tests.csproj`). 246 test geçiyor.
 
 ### Ana klasörler
 - `ReportPanel/Controllers/` — `Admin`, `Auth`, `Reports`, `Dashboard`, `Profile`, `Home`, `Test`, `Logs`
@@ -56,7 +61,7 @@ Detay: [`.claude/rules/session-protocol.md`](.claude/rules/session-protocol.md).
 - `ReportPanel/ViewModels/` — view-model wrapper'ları
 - `ReportPanel/Views/` — Razor views, `_AppLayout.cshtml` ana layout
 - `ReportPanel/Services/` — `PasswordHasher`, `AuditLogService`, `DashboardRenderer`
-- `ReportPanel/Database/` — SQL migration + seed + SP scriptleri (01_ → 14_)
+- `ReportPanel/Database/` — SQL migration + seed + SP scriptleri (01_ → 27_)
 - `ReportPanel/wwwroot/assets/{js,css}/` — static assets
 
 ---

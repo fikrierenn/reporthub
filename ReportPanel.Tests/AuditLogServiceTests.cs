@@ -1,6 +1,6 @@
-using ReportPanel.Services;
+using Mosaik.Services;
 
-namespace ReportPanel.Tests;
+namespace Mosaik.Tests;
 
 public class AuditLogServiceTests
 {

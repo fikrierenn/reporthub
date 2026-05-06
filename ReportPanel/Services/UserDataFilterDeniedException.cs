@@ -1,4 +1,4 @@
-namespace ReportPanel.Services;
+namespace Mosaik.Services;
 
 /// <summary>
 /// Plan 07 Faz 4 — deny-by-default. Aktif bir FilterDefinition icin kullanicinin

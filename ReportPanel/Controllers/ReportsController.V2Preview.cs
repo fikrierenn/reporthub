@@ -2,10 +2,10 @@ using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using ReportPanel.Models;
-using ReportPanel.Services;
+using Mosaik.Models;
+using Mosaik.Services;
 
-namespace ReportPanel.Controllers
+namespace Mosaik.Controllers
 {
     // Partial split (csharp-conventions hard-limit). M-11 V2 builder runtime path:
     // RunJsonV2 (V1 Run paritesi JSON), RunJsonV2Preview (CreateReportV2 reportId-less),
@@ -354,7 +354,7 @@ namespace ReportPanel.Controllers
                 }
                 if (dashConfig == null) return BadRequest("Pano yapılandırması boş.");
 
-                var html = ReportPanel.Services.DashboardRenderer.Render(dashConfig, resultSets);
+                var html = Mosaik.Services.DashboardRenderer.Render(dashConfig, resultSets);
 
                 await _auditLog.LogAsync(new AuditLogEntry
                 {

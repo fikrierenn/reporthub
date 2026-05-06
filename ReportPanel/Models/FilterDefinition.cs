@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 
-namespace ReportPanel.Models
+namespace Mosaik.Models
 {
     public class FilterDefinition
     {

@@ -1,4 +1,4 @@
-namespace ReportPanel.Services
+namespace Mosaik.Services
 {
     /// <summary>
     /// M-01: Admin servislerinden donen standard sonuc.

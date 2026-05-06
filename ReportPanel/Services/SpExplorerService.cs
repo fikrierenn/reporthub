@@ -1,10 +1,10 @@
 using System.Data;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
-using ReportPanel.Models;
+using Mosaik.Models;
 using System.Text.RegularExpressions;
 
-namespace ReportPanel.Services;
+namespace Mosaik.Services;
 
 /// <summary>
 /// Stored procedure keşif servisi: liste / parametre meta / önizleme.
@@ -13,10 +13,10 @@ namespace ReportPanel.Services;
 /// </summary>
 public class SpExplorerService
 {
-    private readonly ReportPanelContext _context;
+    private readonly MosaikContext _context;
     private readonly ILogger<SpExplorerService> _logger;
 
-    public SpExplorerService(ReportPanelContext context, ILogger<SpExplorerService> logger)
+    public SpExplorerService(MosaikContext context, ILogger<SpExplorerService> logger)
     {
         _context = context;
         _logger = logger;

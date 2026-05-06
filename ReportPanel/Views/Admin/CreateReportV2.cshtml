@@ -1,13 +1,13 @@
-@model ReportPanel.ViewModels.AdminReportFormViewModel
+@model Mosaik.ViewModels.AdminReportFormViewModel
 @{
     Layout = "_AppLayout";
     ViewData["Title"] = "V2 Yeni Rapor - BKM Rapor Paneli";
     ViewData["PageTitle"] = "Rapor Tasarımı (V2)";
     ViewData["BodyClass"] = "builder-v2-page";
-    var dataSources = Model.DataSources ?? new List<ReportPanel.Models.DataSource>();
-    var availableRoles = Model.AvailableRoles ?? new List<ReportPanel.Models.Role>();
+    var dataSources = Model.DataSources ?? new List<Mosaik.Models.DataSource>();
+    var availableRoles = Model.AvailableRoles ?? new List<Mosaik.Models.Role>();
     var selectedRoleIds = Model.SelectedRoleIds ?? new HashSet<int>();
-    var availableGroups = Model.AvailableGroups ?? new List<ReportPanel.Models.ReportGroup>();
+    var availableGroups = Model.AvailableGroups ?? new List<Mosaik.Models.ReportGroup>();
     var selectedGroupIds = Model.SelectedGroupIds ?? new HashSet<int>();
 }
 

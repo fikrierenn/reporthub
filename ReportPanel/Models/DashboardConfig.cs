@@ -1,7 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace ReportPanel.Models
+namespace Mosaik.Models
 {
     // Plan 05 B: JsonExtensionData — frontend'in eklediği typed olmayan alanlar Extra dict'e
     // düşer, save/load sırasında round-trip korunur. Yeni alan ihtiyacı çıktığında frontend

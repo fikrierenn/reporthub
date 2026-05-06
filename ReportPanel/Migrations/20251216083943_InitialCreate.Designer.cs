@@ -5,13 +5,13 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using ReportPanel.Models;
+using Mosaik.Models;
 
 #nullable disable
 
-namespace ReportPanel.Migrations
+namespace Mosaik.Migrations
 {
-    [DbContext(typeof(ReportPanelContext))]
+    [DbContext(typeof(MosaikContext))]
     [Migration("20251216083943_InitialCreate")]
     partial class InitialCreate
     {
@@ -25,7 +25,7 @@ namespace ReportPanel.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("ReportPanel.Models.DataSource", b =>
+            modelBuilder.Entity("Mosaik.Models.DataSource", b =>
                 {
                     b.Property<string>("DataSourceKey")
                         .HasMaxLength(50)
@@ -54,7 +54,7 @@ namespace ReportPanel.Migrations
                     b.ToTable("DataSources");
                 });
 
-            modelBuilder.Entity("ReportPanel.Models.ReportCatalog", b =>
+            modelBuilder.Entity("Mosaik.Models.ReportCatalog", b =>
                 {
                     b.Property<int>("ReportId")
                         .ValueGeneratedOnAdd()
@@ -105,7 +105,7 @@ namespace ReportPanel.Migrations
                     b.ToTable("ReportCatalog");
                 });
 
-            modelBuilder.Entity("ReportPanel.Models.ReportRunLog", b =>
+            modelBuilder.Entity("Mosaik.Models.ReportRunLog", b =>
                 {
                     b.Property<Guid>("RunId")
                         .ValueGeneratedOnAdd()
@@ -153,9 +153,9 @@ namespace ReportPanel.Migrations
                     b.ToTable("ReportRunLog");
                 });
 
-            modelBuilder.Entity("ReportPanel.Models.ReportCatalog", b =>
+            modelBuilder.Entity("Mosaik.Models.ReportCatalog", b =>
                 {
-                    b.HasOne("ReportPanel.Models.DataSource", "DataSource")
+                    b.HasOne("Mosaik.Models.DataSource", "DataSource")
                         .WithMany("Reports")
                         .HasForeignKey("DataSourceKey")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -164,9 +164,9 @@ namespace ReportPanel.Migrations
                     b.Navigation("DataSource");
                 });
 
-            modelBuilder.Entity("ReportPanel.Models.ReportRunLog", b =>
+            modelBuilder.Entity("Mosaik.Models.ReportRunLog", b =>
                 {
-                    b.HasOne("ReportPanel.Models.ReportCatalog", "Report")
+                    b.HasOne("Mosaik.Models.ReportCatalog", "Report")
                         .WithMany("RunLogs")
                         .HasForeignKey("ReportId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -175,12 +175,12 @@ namespace ReportPanel.Migrations
                     b.Navigation("Report");
                 });
 
-            modelBuilder.Entity("ReportPanel.Models.DataSource", b =>
+            modelBuilder.Entity("Mosaik.Models.DataSource", b =>
                 {
                     b.Navigation("Reports");
                 });
 
-            modelBuilder.Entity("ReportPanel.Models.ReportCatalog", b =>
+            modelBuilder.Entity("Mosaik.Models.ReportCatalog", b =>
                 {
                     b.Navigation("RunLogs");
                 });

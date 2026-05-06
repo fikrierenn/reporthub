@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore;
-using ReportPanel.Models;
-using ReportPanel.Services;
+using Mosaik.Models;
+using Mosaik.Services;
 
-namespace ReportPanel.Tests;
+namespace Mosaik.Tests;
 
 /// <summary>
 /// M-04: UserRoleSyncService idempotency + delta kontrolu.
@@ -10,12 +10,12 @@ namespace ReportPanel.Tests;
 /// </summary>
 public class UserRoleSyncServiceTests
 {
-    private static ReportPanelContext NewContext(string name)
+    private static MosaikContext NewContext(string name)
     {
-        var options = new DbContextOptionsBuilder<ReportPanelContext>()
+        var options = new DbContextOptionsBuilder<MosaikContext>()
             .UseInMemoryDatabase(databaseName: name + "_" + Guid.NewGuid())
             .Options;
-        var ctx = new ReportPanelContext(options);
+        var ctx = new MosaikContext(options);
         // Seed: 3 rol + 1 kullanici (FK constraint'i InMemory'de uygulanmaz ama veri tutarliligi icin ekleyelim)
         ctx.Roles.AddRange(
             new Role { RoleId = 1, Name = "admin", IsActive = true, CreatedAt = DateTime.UtcNow },

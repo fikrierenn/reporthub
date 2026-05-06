@@ -1,6 +1,6 @@
 using ClosedXML.Excel;
 
-namespace ReportPanel.Services;
+namespace Mosaik.Services;
 
 /// <summary>
 /// Rapor sonuçlarını Excel (.xlsx) byte array'ine dönüştürür.

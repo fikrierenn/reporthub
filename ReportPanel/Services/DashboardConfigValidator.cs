@@ -1,9 +1,9 @@
 using System.Text.Json;
 using System.Text.RegularExpressions;
-using ReportPanel.Models;
-using ReportPanel.Services.Eval;
+using Mosaik.Models;
+using Mosaik.Services.Eval;
 
-namespace ReportPanel.Services
+namespace Mosaik.Services
 {
     // M-10 Faz 3 (ADR-007): DashboardConfigJson save-time validation.
     // M-11 F-3 (ADR-008): schema v2 alanları — variant / numberFormat / axisOptions /

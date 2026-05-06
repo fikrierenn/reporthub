@@ -1,9 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using ReportPanel.Models;
-using ReportPanel.ViewModels;
+using Mosaik.Models;
+using Mosaik.ViewModels;
 
-namespace ReportPanel.Controllers
+namespace Mosaik.Controllers
 {
     // Partial split (csharp-conventions hard-limit). Rol + Kategori CRUD action'lari
     // (HandlePostAction üzerinden Index POST'ta CRUD; bu dosya sadece detay sayfa

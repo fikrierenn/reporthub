@@ -1,11 +1,11 @@
-@model ReportPanel.ViewModels.AdminGroupFormViewModel
+@model Mosaik.ViewModels.AdminGroupFormViewModel
 @{
     Layout = "_AppLayout";
     ViewData["Title"] = "Grup Düzenle - BKM Rapor Paneli";
     ViewData["PageTitle"] = "Grup Düzenle";
     var message = Model.Message ?? "";
     var messageType = Model.MessageType ?? "";
-    var group = Model.Group ?? new ReportPanel.Models.ReportGroup();
+    var group = Model.Group ?? new Mosaik.Models.ReportGroup();
 }
 
 @section Breadcrumb {

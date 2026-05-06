@@ -1,6 +1,6 @@
 using System.Text.RegularExpressions;
 
-namespace ReportPanel.Services
+namespace Mosaik.Services
 {
     /// <summary>
     /// G-03: Multi-tenant data filter whitelist. FilterKey SP parametre adına dönüştüğü için T-SQL

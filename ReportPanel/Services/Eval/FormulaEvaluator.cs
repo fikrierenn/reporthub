@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace ReportPanel.Services.Eval
+namespace Mosaik.Services.Eval
 {
     // Plan 05 — AST tree walker. SQL benzeri semantik:
     //   * null arithmetic/comparison/logic 3VL (1 + NULL = NULL, NULL = 1 = NULL).

@@ -1,10 +1,10 @@
 using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
-using ReportPanel.Models;
-using ReportPanel.Services;
-using ReportPanel.ViewModels;
+using Mosaik.Models;
+using Mosaik.Services;
+using Mosaik.ViewModels;
 
-namespace ReportPanel.Controllers
+namespace Mosaik.Controllers
 {
     // Partial split (csharp-conventions hard-limit). User-facing rapor çalıştırma:
     // Run GET (otomatik veya formlu), Run POST (parametre validasyonu + SP exec +

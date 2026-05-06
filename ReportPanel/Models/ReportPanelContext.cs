@@ -1,10 +1,10 @@
 using Microsoft.EntityFrameworkCore;
 
-namespace ReportPanel.Models
+namespace Mosaik.Models
 {
-    public class ReportPanelContext : DbContext
+    public class MosaikContext : DbContext
     {
-        public ReportPanelContext(DbContextOptions<ReportPanelContext> options) : base(options)
+        public MosaikContext(DbContextOptions<MosaikContext> options) : base(options)
         {
         }
 

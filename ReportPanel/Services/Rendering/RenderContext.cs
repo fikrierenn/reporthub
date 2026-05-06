@@ -1,4 +1,4 @@
-namespace ReportPanel.Services.Rendering
+namespace Mosaik.Services.Rendering
 {
     // M-11 F-2: DashboardRenderer split paylaşılan yardımcıları.
     // Tüm per-widget renderer'lar bu context'ten okur (renk map'leri + Esc).

@@ -1,6 +1,6 @@
 using System.Text;
 
-namespace ReportPanel.Services.Rendering
+namespace Mosaik.Services.Rendering
 {
     // M-11 ADR-008 F-5: KPI 4 variant init (basic/delta/sparkline/progress).
     // 4 Mayıs 2026: DashboardClientScripts.cs hard-limit aşımı split.

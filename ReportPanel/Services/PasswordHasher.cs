@@ -1,6 +1,6 @@
 using System.Security.Cryptography;
 
-namespace ReportPanel.Services
+namespace Mosaik.Services
 {
     public static class PasswordHasher
     {

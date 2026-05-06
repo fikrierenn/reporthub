@@ -1,6 +1,6 @@
 using System.Text;
 
-namespace ReportPanel.Services.Rendering
+namespace Mosaik.Services.Rendering
 {
     // M-11 ADR-008 F-4: 10 chart variant init (line/area/bar/hbar/stacked/pie/doughnut/radar/polarArea/scatter).
     // Chart.js 4 native, plugin yok.

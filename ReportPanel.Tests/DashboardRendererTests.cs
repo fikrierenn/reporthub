@@ -1,8 +1,8 @@
 using System.Collections.Generic;
-using ReportPanel.Models;
-using ReportPanel.Services;
+using Mosaik.Models;
+using Mosaik.Services;
 
-namespace ReportPanel.Tests;
+namespace Mosaik.Tests;
 
 /// <summary>
 /// XSS regression coverage for DashboardRenderer. Dashboards render inside a

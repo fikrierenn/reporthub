@@ -1,15 +1,15 @@
 using System.Text.Json;
 using Microsoft.AspNetCore.Http;
-using ReportPanel.Models;
+using Mosaik.Models;
 
-namespace ReportPanel.Services
+namespace Mosaik.Services
 {
     public class AuditLogService
     {
-        private readonly ReportPanelContext _context;
+        private readonly MosaikContext _context;
         private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public AuditLogService(ReportPanelContext context, IHttpContextAccessor httpContextAccessor)
+        public AuditLogService(MosaikContext context, IHttpContextAccessor httpContextAccessor)
         {
             _context = context;
             _httpContextAccessor = httpContextAccessor;

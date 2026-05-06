@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using ReportPanel.Services.Eval;
+using Mosaik.Services.Eval;
 
-namespace ReportPanel.Controllers
+namespace Mosaik.Controllers
 {
     // Partial split (csharp-conventions hard-limit). SP keşif/önizleme + formula validation
     // (admin builder runtime'i için).

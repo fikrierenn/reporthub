@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace ReportPanel.Models
+namespace Mosaik.Models
 {
     public class UserRole
     {

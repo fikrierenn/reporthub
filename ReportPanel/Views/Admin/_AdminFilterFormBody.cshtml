@@ -1,11 +1,11 @@
-@model ReportPanel.ViewModels.AdminFilterDefinitionFormViewModel
+@model Mosaik.ViewModels.AdminFilterDefinitionFormViewModel
 @*
     Plan 07 Faz 6 — Create + Edit ortak form gövdesi.
     Caller: CreateFilter.cshtml ve EditFilter.cshtml.
 *@
 @{
-    var def = Model.Definition ?? new ReportPanel.Models.FilterDefinition();
-    var dataSources = Model.DataSources ?? new List<ReportPanel.Models.DataSource>();
+    var def = Model.Definition ?? new Mosaik.Models.FilterDefinition();
+    var dataSources = Model.DataSources ?? new List<Mosaik.Models.DataSource>();
 }
 
 <form method="post" style="padding:20px;">

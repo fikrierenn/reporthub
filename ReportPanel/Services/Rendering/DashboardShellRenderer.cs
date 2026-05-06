@@ -1,9 +1,9 @@
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
-using ReportPanel.Models;
+using Mosaik.Models;
 
-namespace ReportPanel.Services.Rendering
+namespace Mosaik.Services.Rendering
 {
     // M-11 F-2: HTML iskelet + resultSets inject + tabs header + modal + client-side init scripts.
     // Widget-agnostik — sadece shell. Per-widget HTML per-widget renderer'larda.

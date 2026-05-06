@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace ReportPanel.Services.Eval
+namespace Mosaik.Services.Eval
 {
     // Plan 05 — Recursive descent parser, precedence climbing.
     // Hierarchy (lowest -> highest):

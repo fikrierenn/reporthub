@@ -1,11 +1,11 @@
-@model ReportPanel.ViewModels.AdminFilterDefinitionFormViewModel
+@model Mosaik.ViewModels.AdminFilterDefinitionFormViewModel
 @{
     Layout = "_AppLayout";
     ViewData["Title"] = "Filtre Düzenle - BKM Rapor Paneli";
     ViewData["PageTitle"] = "Filtre Düzenle";
     var message = Model.Message ?? "";
     var messageType = Model.MessageType ?? "";
-    var def = Model.Definition ?? new ReportPanel.Models.FilterDefinition();
+    var def = Model.Definition ?? new Mosaik.Models.FilterDefinition();
 }
 
 @section Breadcrumb {

@@ -1,6 +1,6 @@
 using System.Text;
 
-namespace ReportPanel.Services.Rendering
+namespace Mosaik.Services.Rendering
 {
     // M-11 ADR-008 F-6: Tablo widget init (kolon format + conditional format + arama + sayfalama).
     // Plan 05.B: hesaplı kolon formula enrichment renderer-side, client sadece display.

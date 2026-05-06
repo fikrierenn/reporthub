@@ -1,11 +1,11 @@
-@model ReportPanel.ViewModels.AdminRoleFormViewModel
+@model Mosaik.ViewModels.AdminRoleFormViewModel
 @{
     Layout = "_AppLayout";
     ViewData["Title"] = "Rol Düzenle - BKM Rapor Paneli";
     ViewData["PageTitle"] = "Rol Düzenle";
     var message = Model.Message ?? "";
     var messageType = Model.MessageType ?? "";
-    var role = Model.Role ?? new ReportPanel.Models.Role();
+    var role = Model.Role ?? new Mosaik.Models.Role();
 }
 
 @section Breadcrumb {

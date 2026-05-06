@@ -2,11 +2,11 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using ReportPanel.Models;
-using ReportPanel.Services;
-using ReportPanel.ViewModels;
+using Mosaik.Models;
+using Mosaik.Services;
+using Mosaik.ViewModels;
 
-namespace ReportPanel.Controllers
+namespace Mosaik.Controllers
 {
     // Partial split (csharp-conventions hard-limit 500). Ana dosya: ctor + DI fields +
     // user identity helpers + Index + Favorite/Unfavorite + private helpers
@@ -18,14 +18,14 @@ namespace ReportPanel.Controllers
     {
         // G-03: Multi-tenant data filter whitelist'i UserDataFilterValidator'da (test edilebilir).
 
-        private readonly ReportPanelContext _context;
+        private readonly MosaikContext _context;
         private readonly AuditLogService _auditLog;
         private readonly ExcelExportService _excelExport;
         private readonly UserDataFilterInjector _filterInjector;
         private readonly StoredProcedureExecutor _spExecutor;
 
         public ReportsController(
-            ReportPanelContext context,
+            MosaikContext context,
             AuditLogService auditLog,
             ExcelExportService excelExport,
             UserDataFilterInjector filterInjector,

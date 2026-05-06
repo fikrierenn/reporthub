@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
-using ReportPanel.Models;
+using Mosaik.Models;
 
-namespace ReportPanel.Services
+namespace Mosaik.Services
 {
     /// <summary>
     /// M-03 Faz A kapsaminda AdminController.SyncUserRoles private method'undan ekstrakte edildi.
@@ -11,9 +11,9 @@ namespace ReportPanel.Services
     /// </summary>
     public class UserRoleSyncService
     {
-        private readonly ReportPanelContext _context;
+        private readonly MosaikContext _context;
 
-        public UserRoleSyncService(ReportPanelContext context)
+        public UserRoleSyncService(MosaikContext context)
         {
             _context = context;
         }

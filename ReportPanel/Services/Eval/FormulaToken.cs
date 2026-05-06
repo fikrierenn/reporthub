@@ -1,4 +1,4 @@
-namespace ReportPanel.Services.Eval
+namespace Mosaik.Services.Eval
 {
     // Plan 05 — Formula DSL token tipleri (whitelist).
     // Bu enum dışındaki hiçbir sembol kabul edilmez (security).

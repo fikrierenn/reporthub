@@ -1,8 +1,8 @@
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
-using ReportPanel.Models;
+using Mosaik.Models;
 
-namespace ReportPanel.Services;
+namespace Mosaik.Services;
 
 /// <summary>
 /// Plan 07 Faz 3 — DB-driven filter options.
@@ -12,10 +12,10 @@ namespace ReportPanel.Services;
 /// </summary>
 public class FilterOptionsService
 {
-    private readonly ReportPanelContext _context;
+    private readonly MosaikContext _context;
     private readonly ILogger<FilterOptionsService> _logger;
 
-    private static readonly Dictionary<string, Func<ReportPanelContext, Task<List<FilterOption>>>> NativeSources = new()
+    private static readonly Dictionary<string, Func<MosaikContext, Task<List<FilterOption>>>> NativeSources = new()
     {
         ["raporGrubu"] = async ctx => await ctx.ReportGroups
             .AsNoTracking().Where(c => c.IsActive).OrderBy(c => c.Name)
@@ -23,7 +23,7 @@ public class FilterOptionsService
             .ToListAsync()
     };
 
-    public FilterOptionsService(ReportPanelContext context, ILogger<FilterOptionsService> logger)
+    public FilterOptionsService(MosaikContext context, ILogger<FilterOptionsService> logger)
     {
         _context = context;
         _logger = logger;

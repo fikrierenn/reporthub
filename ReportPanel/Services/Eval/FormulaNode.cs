@@ -1,4 +1,4 @@
-namespace ReportPanel.Services.Eval
+namespace Mosaik.Services.Eval
 {
     // AST node'ları. Her parser çıktısı bir IFormulaNode tree'sidir.
     // Evaluator tree'yi walker'la dolaşır, IDictionary<string, object?> row scope üstünde değer döner.

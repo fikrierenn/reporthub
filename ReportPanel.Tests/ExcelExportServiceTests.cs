@@ -1,7 +1,7 @@
 using ClosedXML.Excel;
-using ReportPanel.Services;
+using Mosaik.Services;
 
-namespace ReportPanel.Tests;
+namespace Mosaik.Tests;
 
 /// <summary>
 /// M-13 R6.1 regression coverage: ExcelExportService.

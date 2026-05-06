@@ -1,5 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using ReportPanel.Models;
+using Mosaik.Models;
 using Microsoft.AspNetCore.Authentication.Cookies;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -13,22 +13,22 @@ if (builder.Environment.IsDevelopment())
     mvcBuilder.AddRazorRuntimeCompilation();
 }
 builder.Services.AddHttpContextAccessor();
-builder.Services.AddScoped<ReportPanel.Services.AuditLogService>();
-builder.Services.AddScoped<ReportPanel.Services.UserRoleSyncService>();
-builder.Services.AddScoped<ReportPanel.Services.ReportGroupService>();
-builder.Services.AddScoped<ReportPanel.Services.RoleManagementService>();
-builder.Services.AddScoped<ReportPanel.Services.DataSourceManagementService>();
-builder.Services.AddScoped<ReportPanel.Services.ReportManagementService>();
-builder.Services.AddScoped<ReportPanel.Services.UserManagementService>();
-builder.Services.AddScoped<ReportPanel.Services.SpExplorerService>();
-builder.Services.AddScoped<ReportPanel.Services.FilterOptionsService>();
-builder.Services.AddScoped<ReportPanel.Services.FilterDefinitionService>();
-builder.Services.AddScoped<ReportPanel.Services.ExcelExportService>();
-builder.Services.AddScoped<ReportPanel.Services.UserDataFilterInjector>();
-builder.Services.AddScoped<ReportPanel.Services.StoredProcedureExecutor>();
+builder.Services.AddScoped<Mosaik.Services.AuditLogService>();
+builder.Services.AddScoped<Mosaik.Services.UserRoleSyncService>();
+builder.Services.AddScoped<Mosaik.Services.ReportGroupService>();
+builder.Services.AddScoped<Mosaik.Services.RoleManagementService>();
+builder.Services.AddScoped<Mosaik.Services.DataSourceManagementService>();
+builder.Services.AddScoped<Mosaik.Services.ReportManagementService>();
+builder.Services.AddScoped<Mosaik.Services.UserManagementService>();
+builder.Services.AddScoped<Mosaik.Services.SpExplorerService>();
+builder.Services.AddScoped<Mosaik.Services.FilterOptionsService>();
+builder.Services.AddScoped<Mosaik.Services.FilterDefinitionService>();
+builder.Services.AddScoped<Mosaik.Services.ExcelExportService>();
+builder.Services.AddScoped<Mosaik.Services.UserDataFilterInjector>();
+builder.Services.AddScoped<Mosaik.Services.StoredProcedureExecutor>();
 
 // Add Entity Framework
-builder.Services.AddDbContext<ReportPanelContext>(options =>
+builder.Services.AddDbContext<MosaikContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.AddAuthentication(options =>
@@ -56,7 +56,7 @@ builder.Services.AddAuthorization();
 
 // Health Checks ekle
 builder.Services.AddHealthChecks()
-    .AddDbContextCheck<ReportPanelContext>("database")
+    .AddDbContextCheck<MosaikContext>("database")
     .AddCheck("self", () => Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckResult.Healthy());
 
 var app = builder.Build();

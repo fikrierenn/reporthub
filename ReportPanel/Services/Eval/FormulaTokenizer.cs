@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 
-namespace ReportPanel.Services.Eval
+namespace Mosaik.Services.Eval
 {
     // Plan 05 — Char-by-char state machine. Whitelist dışı sembol → FormulaParseException.
     // Türkçe kolon adları: identifier Unicode letter category (Şube, Çıkış).

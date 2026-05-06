@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 
-namespace ReportPanel.Models
+namespace Mosaik.Models
 {
     // M-07: RoleId + CreatedAt [BindNever] — mass assignment koruması.
     public class Role

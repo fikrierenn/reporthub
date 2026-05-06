@@ -1,11 +1,11 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using ReportPanel.Models;
-using ReportPanel.Services;
-using ReportPanel.ViewModels;
+using Mosaik.Models;
+using Mosaik.Services;
+using Mosaik.ViewModels;
 
-namespace ReportPanel.Controllers
+namespace Mosaik.Controllers
 {
     // Partial split (csharp-conventions hard-limit 500). Ana dosya: ctor + DI fields +
     // Index G+P + HandlePostAction + cross-cutting helpers (ReadFormBool, ReadBool,
@@ -25,7 +25,7 @@ namespace ReportPanel.Controllers
     [Authorize(Roles = "admin")]
     public partial class AdminController : Controller
     {
-        private readonly ReportPanelContext _context;
+        private readonly MosaikContext _context;
         private readonly AuditLogService _auditLog;
         private readonly IConfiguration _configuration;
         private readonly UserRoleSyncService _userRoleSync;
@@ -39,7 +39,7 @@ namespace ReportPanel.Controllers
         private readonly FilterDefinitionService _filterDefService;
 
         public AdminController(
-            ReportPanelContext context,
+            MosaikContext context,
             AuditLogService auditLog,
             IConfiguration configuration,
             UserRoleSyncService userRoleSync,

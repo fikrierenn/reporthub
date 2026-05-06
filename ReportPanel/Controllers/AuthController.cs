@@ -7,19 +7,19 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using ReportPanel.Models;
-using ReportPanel.Services;
-using ReportPanel.ViewModels;
+using Mosaik.Models;
+using Mosaik.Services;
+using Mosaik.ViewModels;
 
-namespace ReportPanel.Controllers
+namespace Mosaik.Controllers
 {
     public class AuthController : Controller
     {
-        private readonly ReportPanelContext _context;
+        private readonly MosaikContext _context;
         private readonly AuditLogService _auditLog;
         private readonly IHostEnvironment _env;
 
-        public AuthController(ReportPanelContext context, AuditLogService auditLog, IHostEnvironment env)
+        public AuthController(MosaikContext context, AuditLogService auditLog, IHostEnvironment env)
         {
             _context = context;
             _auditLog = auditLog;

@@ -1,8 +1,8 @@
 using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
-using ReportPanel.Models;
+using Mosaik.Models;
 
-namespace ReportPanel.Controllers;
+namespace Mosaik.Controllers;
 
 public class HomeController : Controller
 {

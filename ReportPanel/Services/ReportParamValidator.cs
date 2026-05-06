@@ -2,9 +2,9 @@ using System.Data;
 using System.Text.Json;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Data.SqlClient;
-using ReportPanel.Models;
+using Mosaik.Models;
 
-namespace ReportPanel.Services;
+namespace Mosaik.Services;
 
 /// <summary>
 /// Rapor parametre schema parser + form validation servisi (static utility — DI gerektirmez).

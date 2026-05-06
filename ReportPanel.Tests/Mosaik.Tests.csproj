@@ -4,6 +4,8 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <RootNamespace>Mosaik.Tests</RootNamespace>
+    <AssemblyName>Mosaik.Tests</AssemblyName>
 
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
@@ -22,7 +24,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\ReportPanel\ReportPanel.csproj" />
+    <ProjectReference Include="..\ReportPanel\Mosaik.csproj" />
   </ItemGroup>
 
 </Project>

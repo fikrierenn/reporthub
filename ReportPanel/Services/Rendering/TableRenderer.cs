@@ -1,8 +1,8 @@
 using System.Text;
 using System.Text.Json;
-using ReportPanel.Models;
+using Mosaik.Models;
 
-namespace ReportPanel.Services.Rendering
+namespace Mosaik.Services.Rendering
 {
     // M-11 F-6 (ADR-008): Table widget HTML + tableOptions + kolon format/conditionalFormat.
     // Client-side DOM builder JS (shell) her kolonu textContent ile insert eder (XSS-safe),

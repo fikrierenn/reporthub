@@ -1,4 +1,4 @@
-namespace ReportPanel.Models;
+namespace Mosaik.Models;
 
 public class ErrorViewModel
 {

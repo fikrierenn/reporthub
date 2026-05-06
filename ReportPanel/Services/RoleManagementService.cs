@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
-using ReportPanel.Models;
+using Mosaik.Models;
 
-namespace ReportPanel.Services
+namespace Mosaik.Services
 {
     /// <summary>
     /// M-01: Role CRUD + ReportCatalog.AllowedRoles CSV propagation.
@@ -10,10 +10,10 @@ namespace ReportPanel.Services
     /// </summary>
     public class RoleManagementService
     {
-        private readonly ReportPanelContext _context;
+        private readonly MosaikContext _context;
         private readonly AuditLogService _auditLog;
 
-        public RoleManagementService(ReportPanelContext context, AuditLogService auditLog)
+        public RoleManagementService(MosaikContext context, AuditLogService auditLog)
         {
             _context = context;
             _auditLog = auditLog;

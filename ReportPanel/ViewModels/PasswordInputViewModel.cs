@@ -1,4 +1,4 @@
-namespace ReportPanel.ViewModels;
+namespace Mosaik.ViewModels;
 
 /// <summary>
 /// Reusable password input partial için view-model.

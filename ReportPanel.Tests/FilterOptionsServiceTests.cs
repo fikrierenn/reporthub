@@ -1,9 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
-using ReportPanel.Models;
-using ReportPanel.Services;
+using Mosaik.Models;
+using Mosaik.Services;
 
-namespace ReportPanel.Tests;
+namespace Mosaik.Tests;
 
 /// <summary>
 /// Plan 07 Faz 3 — FilterOptionsService DB-driven davranis testleri.
@@ -12,15 +12,15 @@ namespace ReportPanel.Tests;
 /// </summary>
 public class FilterOptionsServiceTests
 {
-    private static ReportPanelContext NewContext(string name)
+    private static MosaikContext NewContext(string name)
     {
-        var options = new DbContextOptionsBuilder<ReportPanelContext>()
+        var options = new DbContextOptionsBuilder<MosaikContext>()
             .UseInMemoryDatabase(databaseName: name + "_" + Guid.NewGuid())
             .Options;
-        return new ReportPanelContext(options);
+        return new MosaikContext(options);
     }
 
-    private static FilterOptionsService NewService(ReportPanelContext ctx)
+    private static FilterOptionsService NewService(MosaikContext ctx)
         => new(ctx, NullLogger<FilterOptionsService>.Instance);
 
     [Fact]

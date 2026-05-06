@@ -1,8 +1,8 @@
 using System.Collections.Generic;
 using System.Text.Json;
-using ReportPanel.Models;
+using Mosaik.Models;
 
-namespace ReportPanel.Tests;
+namespace Mosaik.Tests;
 
 // Plan 05 B — JsonExtensionData round-trip esneklik.
 // Frontend'in eklediği typed-olmayan alanlar Extra dict'e düşer, save/load sırasında
@@ -121,7 +121,7 @@ public class DashboardConfigExtensionDataTests
         Assert.Contains("futureField", roundTripped);
 
         // Validator round-tripped JSON'u da kabul eder
-        var result = ReportPanel.Services.DashboardConfigValidator.Validate(roundTripped);
+        var result = Mosaik.Services.DashboardConfigValidator.Validate(roundTripped);
         Assert.False(result.HasErrors);
     }
 }
