@@ -345,6 +345,99 @@ window.__availableDataSources = @Html.Raw(System.Text.Json.JsonSerializer.Serial
                             <option value="max">Max</option>
                         </select>
                     </div>
+
+                    @* F09 Faz 3 — KPI variant'a göre koşullu form alanları *@
+                    <template x-if="selected && selected.type === 'kpi' && selected.result">
+                        <div>
+                            @* Capacity warning *@
+                            <template x-if="kpiCapacityWarning()">
+                                <div style="background:#fef3c7; border:1px solid #fde68a; color:#92400e; padding:8px 10px; border-radius:6px; font-size:11px; margin-bottom:10px;">
+                                    <i class="fas fa-triangle-exclamation text-[10px]"></i>
+                                    <span x-text="kpiCapacityWarning()"></span>
+                                </div>
+                            </template>
+
+                            @* DELTA: karşılaştırma kolonu + etiket *@
+                            <template x-if="(selected.variant || 'basic') === 'delta'">
+                                <div>
+                                    <div class="field">
+                                        <label class="lab">Karşılaştırma Kolonu</label>
+                                        <select class="inp"
+                                                :value="selected.delta && selected.delta.compareColumn || ''"
+                                                @@change="setDeltaField('compareColumn', $event.target.value)">
+                                            <option value="">— seç —</option>
+                                            <template x-for="col in kpiNumberColumns()" :key="col">
+                                                <option :value="col" x-text="col"></option>
+                                            </template>
+                                        </select>
+                                        <p style="font-size:10px; color:var(--ink-4); margin-top:4px;">Değişim yüzdesi bu kolona göre hesaplanır.</p>
+                                    </div>
+                                    <div class="field">
+                                        <label class="lab">Karşılaştırma Etiketi</label>
+                                        <input type="text" class="inp"
+                                               :value="(selected.delta && selected.delta.compareLabel) || ''"
+                                               @@input="setDeltaField('compareLabel', $event.target.value)"
+                                               placeholder="örn: vs önceki ay" />
+                                    </div>
+                                </div>
+                            </template>
+
+                            @* SPARKLINE: trend değer kolonu (mini grafik beslemesi) *@
+                            <template x-if="(selected.variant || 'basic') === 'sparkline'">
+                                <div>
+                                    <div class="field">
+                                        <label class="lab">Trend Değer Kolonu</label>
+                                        <select class="inp"
+                                                :value="(selected.trend && selected.trend.valueColumn) || ''"
+                                                @@change="setTrendField('valueColumn', $event.target.value)">
+                                            <option value="">— seç —</option>
+                                            <template x-for="col in kpiNumberColumns()" :key="col">
+                                                <option :value="col" x-text="col"></option>
+                                            </template>
+                                        </select>
+                                        <p style="font-size:10px; color:var(--ink-4); margin-top:4px;">Mini grafik bu kolonun satır-satır değerlerini çizer.</p>
+                                    </div>
+                                </div>
+                            </template>
+
+                            @* PROGRESS: hedef tipi (Sabit/Kolon) + value | column *@
+                            <template x-if="(selected.variant || 'basic') === 'progress'">
+                                <div>
+                                    <div class="field">
+                                        <label class="lab">Hedef Tipi</label>
+                                        <div class="seg-full">
+                                            <button type="button" :class="progressTargetMode() === 'value' && 'on'" @@click="switchProgressTargetMode('value')">Sabit Değer</button>
+                                            <button type="button" :class="progressTargetMode() === 'column' && 'on'" @@click="switchProgressTargetMode('column')">Kolon</button>
+                                        </div>
+                                    </div>
+                                    <template x-if="progressTargetMode() === 'value'">
+                                        <div class="field">
+                                            <label class="lab">Hedef Değer</label>
+                                            <input type="number" class="inp"
+                                                   :value="(selected.progress && selected.progress.targetValue != null) ? selected.progress.targetValue : ''"
+                                                   @@input="setProgressField('targetValue', $event.target.value)"
+                                                   placeholder="örn: 100" />
+                                            <p style="font-size:10px; color:var(--ink-4); margin-top:4px;">İlerleme yüzdesi (Değer / Hedef × 100) ile hesaplanır.</p>
+                                        </div>
+                                    </template>
+                                    <template x-if="progressTargetMode() === 'column'">
+                                        <div class="field">
+                                            <label class="lab">Hedef Kolonu</label>
+                                            <select class="inp"
+                                                    :value="(selected.progress && selected.progress.targetColumn) || ''"
+                                                    @@change="setProgressField('targetColumn', $event.target.value)">
+                                                <option value="">— seç —</option>
+                                                <template x-for="col in kpiNumberColumns()" :key="col">
+                                                    <option :value="col" x-text="col"></option>
+                                                </template>
+                                            </select>
+                                            <p style="font-size:10px; color:var(--ink-4); margin-top:4px;">Hedef ilk satırın bu kolonu olarak alınır.</p>
+                                        </div>
+                                    </template>
+                                </div>
+                            </template>
+                        </div>
+                    </template>
                 </div>
 
                 @* M-11 chart binding: variant'a göre otomatik X/Y doldurur, manuel override edilebilir *@
@@ -637,7 +730,7 @@ window.__availableDataSources = @Html.Raw(System.Text.Json.JsonSerializer.Serial
                                                            {k:'progress',label:'İlerleme',icon:'fa-battery-half',desc:'Yüzde bar'}]" :key="v.k">
                                         <button type="button" class="variant-card"
                                                 :class="(selected.variant || 'basic') === v.k && 'on'"
-                                                @@click="setField('variant', v.k)">
+                                                @@click="setKpiVariant(v.k)">
                                             <i class="fas" :class="v.icon" style="font-size:16px; margin-bottom:4px;"></i>
                                             <span class="variant-label" x-text="v.label"></span>
                                             <span class="variant-desc" x-text="v.desc"></span>
@@ -963,6 +1056,7 @@ window.__availableDataSources = @Html.Raw(System.Text.Json.JsonSerializer.Serial
 <script src="~/assets/js/builder-v2/builder-feedback.js" asp-append-version="true"></script>
 <script src="~/assets/js/builder-v2/builder-chart.js" asp-append-version="true"></script>
 <script src="~/assets/js/builder-v2/builder-chart-render.js" asp-append-version="true"></script>
+<script src="~/assets/js/builder-v2/builder-kpi-fields.js" asp-append-version="true"></script>
 <script src="~/assets/js/builder-v2/builder-templates.js" asp-append-version="true"></script>
 <script src="~/assets/js/builder-v2/builder-shortcuts.js" asp-append-version="true"></script>
 <script src="~/assets/js/builder-v2/builder-rs-viewer.js" asp-append-version="true"></script>
