@@ -343,29 +343,26 @@
                 if (comp.type === 'kpi') {
                     html += '<div class="w-content">' + this.renderKpiCard(comp, rs, isPreview) + '</div>';
                 } else if (comp.type === 'chart') {
+                    // F09 Faz 2: chartRenderMixin.renderChartContainer (preview'da canvas + Chart.js mount, edit'te SVG)
+                    html += '<div class="w-content">' + this.renderChartContainer(comp, rs, isPreview) + '</div>';
+                } else if (comp.type === 'table') {
+                    // F09 Faz 2: Tablo brand kart shell (server TableRenderer paritesi, conditional format Faz 4)
                     if (isPreview && rs && rs.rows && rs.rows.length > 0) {
-                        html += '<div class="w-body" style="padding:8px 12px;">' +
-                            this.renderChartPreviewSvg(rs, comp) +
-                            boundChip +
-                            '</div>';
-                    } else {
-                        html += '<div class="w-body" style="align-items:center; justify-content:center; color:var(--ink-4); font-size:11px; gap:8px;">' +
-                            '<span>' + (isPreview ? 'veri yok' : 'grafik önizleme — Önizle moduna geçin') + '</span>' +
-                            boundChip +
-                            '</div>';
-                    }
-                } else {
-                    if (isPreview && rs && rs.rows && rs.rows.length > 0) {
-                        html += '<div class="w-body" style="padding:0;">' +
+                        html += '<div class="w-content">' +
+                            '<div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden h-full flex flex-col">' +
+                            (comp.title ? '<div class="px-5 py-3 border-b border-gray-100"><h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wide">' + this.esc(comp.title) + '</h3></div>' : '') +
+                            '<div class="overflow-auto" style="flex:1; min-height:0;">' +
                             this.renderTablePreview(rs, comp) +
-                            '<div style="padding:6px 10px; background:#fafafa; border-top:1px solid var(--line-2);">' + boundChip + '</div>' +
-                            '</div>';
+                            '</div></div></div>';
                     } else {
-                        html += '<div class="w-body" style="padding:0;"><div class="dt-wrap" style="margin:0; padding:8px 12px; color:var(--ink-4); font-size:11px;">' +
+                        html += '<div class="w-content">' +
+                            '<div class="bg-white rounded-xl border border-gray-200 shadow-sm h-full flex items-center justify-center text-gray-400 text-xs">' +
                             (isPreview ? 'veri yok' : 'tablo önizleme — Önizle moduna geçin') +
-                            '<div style="margin-top:6px;">' + boundChip + '</div>' +
                             '</div></div>';
                     }
+                } else {
+                    // Bilinmeyen tip — placeholder (RemovedWidget gibi)
+                    html += '<div class="w-content"><div class="bg-yellow-50 border border-yellow-200 rounded-xl p-4 h-full flex items-center justify-center text-yellow-700 text-xs">Bilinmeyen tip: ' + this.esc(comp.type) + '</div></div>';
                 }
                 return html;
             },
@@ -405,10 +402,16 @@
 
             refreshAllWidgets() {
                 var self = this;
+                // F09 Faz 2: Chart.js instance'ları yeniden render öncesi temizle (memory leak guard)
+                if (this.destroyAllCharts) this.destroyAllCharts();
                 this.components.forEach(function (c) {
                     var el = self.$el.querySelector('[data-widget-id="' + c.id + '"] .grid-stack-item-content');
                     if (el) el.innerHTML = self.widgetInnerHtml(c);
                 });
+                // innerHTML basıldıktan sonra Chart.js mount (canvas DOM'a girince)
+                if (this.mountAllCharts) {
+                    this.$nextTick(function () { self.mountAllCharts(); });
+                }
             },
 
             // Result set başlığı. Sektör-özel tahmin yok — anlamlı isimlendirmeyi

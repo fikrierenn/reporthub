@@ -102,13 +102,27 @@ Tek dosya `builder-render.js` (+ minor view edit'ler). Sorun olursa:
 3. [x] **F09.6** EditReportV2 + CreateReportV2 Chart.js CDN script tag (chart.js@4.4.0/chart.umd.min.js — Faz 2'de kullanılacak)
 4. [x] Commit (Faz 1): `feat(m-11 f-09 faz-1): KPI 4 variant brand kart + edit overlay + Chart.js CDN (plan: 09)`
 
-### Faz 2 — Chart.js entegrasyon + Table parite (BEKLEMEDE)
+### Faz 2 — Chart.js entegrasyon + Table parite (in_progress)
 5. [ ] **F09.3** Chart.js entegrasyonu — `widgetCharts` Map, `mountChartWidget(comp, el)` her render sonrası init, `destroyWidgetChart(id)` cleanup; `refreshAllWidgets` öncesi tüm chart'ları destroy
 6. [ ] **F09.4** Chart 10 variant Chart.js config — server `EmitChartInit` (`DashboardClientScripts.Chart.cs`) JS port
 7. [ ] **F09.5** Table renderer dalı — conditional format (dataBar/colorScale/iconUpDown/negativeRed) + sticky header + total row + stripe (server `TableRenderer` paritesi)
 8. [ ] **F09.7** Smoke: edit mode + preview mode iki ekran karşılaştır + screenshot
 9. [ ] **F09.8** Faz 2 commit: `feat(m-11 f-09 faz-2): Chart.js + Table parite (plan: 09)`
-10. [ ] **F09.9** Plan dosyası → `plans/archive/`
+
+### Faz 3 — KPI variant-spesifik UI alanları + capacity warning (BEKLEMEDE, kullanıcı 2026-05-06)
+**Sorun:** Drawer'da KPI variant değiştiğinde (basic→delta/sparkline/progress) gerekli alanlar (compareColumn, trend.valueColumn, progress.target) UI'da YOK. Server validator zorunlu kılıyor ama kullanıcı dolduramıyor → renderer hep "—" basıyor.
+
+10. [ ] **F09.10** Drawer Veri tab'ında variant-spesifik blok (x-if=variant'a göre):
+    - delta: `compareColumn` (sayı dropdown) + `compareLabel` (input)
+    - sparkline: `trend.valueColumn` (sayı dropdown) + opsiyonel `trend.labelColumn`
+    - progress: Hedef tipi seçimi (Sabit / Kolon) → `targetValue` veya `targetColumn`
+11. [ ] **F09.11** `applyKpiFieldDefaults()` — variant değişiminde akıllı doldurma (basic→sparkline: trend.valueColumn=column auto; basic→delta: compareColumn=ikinci sayı kolonu)
+12. [ ] **F09.12** `kpiCapacityWarning()` — yetersiz veri durumunda banner (delta için 2 sayı, sparkline için trend.valueColumn dolu, progress için target dolu)
+13. [ ] **F09.13** Chart scatter labelColumn UI smoke — mevcut `chartFieldRequirements.needsLabel` ile gizleniyor, doğrula
+14. [ ] **F09.14** Smoke + Faz 3 commit: `feat(m-11 f-09 faz-3): KPI variant fields + capacity warning (plan: 09)`
+
+### Kapanış
+15. [ ] **F09.9** Plan dosyası → `plans/archive/` (3 faz tamamlanınca)
 
 ## 8. İlişkili
 
