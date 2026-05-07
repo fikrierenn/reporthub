@@ -204,22 +204,51 @@ namespace Mosaik.Services
         private async Task SyncDataFiltersAsync(int userId, List<UserFilterInput> filters)
         {
             var existing = await _context.UserDataFilters.Where(f => f.UserId == userId).ToListAsync();
-            _context.UserDataFilters.RemoveRange(existing);
 
-            foreach (var f in filters)
+            var oldSet = existing
+                .Select(e => new FilterTuple(e.FilterKey, e.FilterValue, NormalizeDs(e.DataSourceKey)))
+                .ToHashSet();
+            var newSet = filters
+                .Where(f => !string.IsNullOrWhiteSpace(f.Key) && !string.IsNullOrWhiteSpace(f.Value))
+                .Select(f => new FilterTuple(f.Key.Trim(), f.Value.Trim(), NormalizeDs(f.DataSourceKey)))
+                .ToHashSet();
+
+            var added = newSet.Except(oldSet).OrderBy(t => t.Key).ThenBy(t => t.Value).ToList();
+            var removed = oldSet.Except(newSet).OrderBy(t => t.Key).ThenBy(t => t.Value).ToList();
+
+            if (added.Count == 0 && removed.Count == 0)
+                return;
+
+            _context.UserDataFilters.RemoveRange(existing);
+            foreach (var t in newSet)
             {
-                if (string.IsNullOrWhiteSpace(f.Key) || string.IsNullOrWhiteSpace(f.Value)) continue;
                 _context.UserDataFilters.Add(new UserDataFilter
                 {
                     UserId = userId,
-                    FilterKey = f.Key.Trim(),
-                    FilterValue = f.Value.Trim(),
-                    DataSourceKey = string.IsNullOrWhiteSpace(f.DataSourceKey) ? null : f.DataSourceKey.Trim(),
+                    FilterKey = t.Key,
+                    FilterValue = t.Value,
+                    DataSourceKey = t.DataSourceKey,
                     CreatedAt = DateTime.UtcNow
                 });
             }
             await _context.SaveChangesAsync();
+
+            await _auditLog.LogAsync(new AuditLogEntry
+            {
+                EventType = "user_data_filter_sync",
+                TargetType = "user",
+                TargetKey = userId.ToString(),
+                Description = $"UserDataFilter sync: +{added.Count} -{removed.Count}",
+                OldValuesJson = AuditLogService.ToJson(oldSet.OrderBy(t => t.Key).ThenBy(t => t.Value)),
+                NewValuesJson = AuditLogService.ToJson(new { added, removed }),
+                IsSuccess = true
+            });
         }
+
+        private static string? NormalizeDs(string? raw) =>
+            string.IsNullOrWhiteSpace(raw) ? null : raw.Trim();
+
+        private record FilterTuple(string Key, string Value, string? DataSourceKey);
 
         public static string NormalizeUsername(string? raw)
         {

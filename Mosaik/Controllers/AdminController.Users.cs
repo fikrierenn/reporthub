@@ -13,30 +13,12 @@ namespace Mosaik.Controllers
         [Route("Admin/CreateUser")]
         public async Task<IActionResult> CreateUser()
         {
-            var roles = await _context.Roles
-                .AsNoTracking()
-                .Where(r => r.IsActive)
-                .OrderBy(r => r.Name)
-                .ToListAsync();
-            var dataSources = await _context.DataSources
-                .AsNoTracking()
-                .Where(ds => ds.IsActive)
-                .OrderBy(ds => ds.Title)
-                .ToListAsync();
-            var filterDefs = await _context.FilterDefinitions
-                .AsNoTracking()
-                .Where(f => f.IsActive)
-                .OrderBy(f => f.DisplayOrder).ThenBy(f => f.Label)
-                .ToListAsync();
-            return View(new AdminUserFormViewModel
-            {
-                User = new User { IsActive = true },
-                AvailableRoles = roles,
-                SelectedRoleIds = new HashSet<int>(),
-                DataFilters = new List<UserDataFilter>(),
-                DataSources = dataSources,
-                FilterDefinitions = filterDefs
-            });
+            return View(await BuildAdminUserFormAsync(
+                user: new User { IsActive = true },
+                selectedRoleIds: new HashSet<int>(),
+                postedFilters: new List<UserDataFilter>(),
+                message: null,
+                messageType: null));
         }
 
         [HttpPost]
@@ -45,6 +27,10 @@ namespace Mosaik.Controllers
         public async Task<IActionResult> CreateUser(User user)
         {
             var input = BuildUserFormInput(user);
+            if (!ModelState.IsValid)
+                return View(await BuildAdminUserFormAsync(user, input.SelectedRoleIds, postedFilters: null,
+                    message: "Form gecersiz, hatalari duzeltin.", messageType: "error"));
+
             var result = await _userService.CreateAsync(input);
             if (result.Success)
             {
@@ -52,7 +38,8 @@ namespace Mosaik.Controllers
                 TempData["MessageType"] = "success";
                 return RedirectToAction("Index", new { tab = "users" });
             }
-            return View(await BuildCreateUserFormAsync(user, input.SelectedRoleIds, result.Message, "error"));
+            return View(await BuildAdminUserFormAsync(user, input.SelectedRoleIds, postedFilters: null,
+                message: result.Message, messageType: "error"));
         }
 
         [Route("Admin/EditUser/{id}")]
@@ -66,11 +53,6 @@ namespace Mosaik.Controllers
                 return RedirectToAction("Index", new { tab = "users" });
             }
 
-            var roles = await _context.Roles
-                .AsNoTracking()
-                .Where(r => r.IsActive)
-                .OrderBy(r => r.Name)
-                .ToListAsync();
             var selectedRoleIds = await _context.UserRoles
                 .Where(ur => ur.UserId == user.UserId)
                 .Select(ur => ur.RoleId)
@@ -80,24 +62,9 @@ namespace Mosaik.Controllers
                 .OrderBy(f => f.FilterKey)
                 .ThenBy(f => f.FilterValue)
                 .ToListAsync();
-            var dataSources = await _context.DataSources
-                .Where(ds => ds.IsActive)
-                .OrderBy(ds => ds.Title)
-                .ToListAsync();
-            var filterDefs = await _context.FilterDefinitions
-                .AsNoTracking()
-                .Where(f => f.IsActive)
-                .OrderBy(f => f.DisplayOrder).ThenBy(f => f.Label)
-                .ToListAsync();
-            return View(new AdminUserFormViewModel
-            {
-                User = user,
-                AvailableRoles = roles,
-                SelectedRoleIds = selectedRoleIds.ToHashSet(),
-                DataFilters = dataFilters,
-                DataSources = dataSources,
-                FilterDefinitions = filterDefs
-            });
+
+            return View(await BuildAdminUserFormAsync(user, selectedRoleIds.ToHashSet(),
+                postedFilters: dataFilters, message: null, messageType: null));
         }
 
         [HttpPost]
@@ -107,7 +74,13 @@ namespace Mosaik.Controllers
         {
             // User.UserId'de [BindNever] (M-07 mass assignment koruması) — form'dan
             // UserId hidden input gelse bile bind edilmez. Route parametresi id'yi kullan.
+            user.UserId = id; // view'de "Pasif" gibi yaniltici state olusmasin
             var input = BuildUserFormInput(user);
+
+            if (!ModelState.IsValid)
+                return View(await BuildAdminUserFormAsync(user, input.SelectedRoleIds, postedFilters: null,
+                    message: "Form gecersiz, hatalari duzeltin.", messageType: "error"));
+
             var result = await _userService.UpdateAsync(id, input);
             if (result.Success)
             {
@@ -115,16 +88,8 @@ namespace Mosaik.Controllers
                 TempData["MessageType"] = "success";
                 return RedirectToAction("Index", new { tab = "users" });
             }
-            user.UserId = id; // view'de "Pasif" gibi yanilticarengi state olusmasin
-            var allRoles = await _context.Roles.AsNoTracking().Where(r => r.IsActive).OrderBy(r => r.Name).ToListAsync();
-            return View(new AdminUserFormViewModel
-            {
-                User = user,
-                AvailableRoles = allRoles,
-                SelectedRoleIds = input.SelectedRoleIds,
-                Message = result.Message,
-                MessageType = "error"
-            });
+            return View(await BuildAdminUserFormAsync(user, input.SelectedRoleIds, postedFilters: null,
+                message: result.Message, messageType: "error"));
         }
 
         // M-01: Form -> UserFormInput. UserManagementService.NormalizeUsername static.
@@ -153,44 +118,60 @@ namespace Mosaik.Controllers
                 DataFilters: filters);
         }
 
-        private async Task<AdminUserFormViewModel> BuildCreateUserFormAsync(User user, HashSet<int> selectedRoleIds, string message, string messageType)
+        // 3 cagri noktasi: CreateUser GET (postedFilters=empty), CreateUser POST error
+        // (postedFilters=null -> Request.Form'dan oku), EditUser GET (postedFilters=DB'den
+        // gelen kayit), EditUser POST error (postedFilters=null -> Request.Form'dan oku).
+        // postedFilters null oldugunda Request.Form parsing yapilir (POST hata durumu).
+        private async Task<AdminUserFormViewModel> BuildAdminUserFormAsync(
+            User user,
+            HashSet<int> selectedRoleIds,
+            List<UserDataFilter>? postedFilters,
+            string? message,
+            string? messageType)
         {
             var roles = await _context.Roles.AsNoTracking().Where(r => r.IsActive).OrderBy(r => r.Name).ToListAsync();
             var dataSources = await _context.DataSources.AsNoTracking().Where(ds => ds.IsActive).OrderBy(ds => ds.Title).ToListAsync();
-            // Form tarafindan gonderilen filtreleri geri yukle ki kullanici kayip hissetmesin
+            var filterDefs = await _context.FilterDefinitions
+                .AsNoTracking()
+                .Where(f => f.IsActive)
+                .OrderBy(f => f.DisplayOrder).ThenBy(f => f.Label)
+                .ToListAsync();
+
+            var filters = postedFilters ?? ReadPostedFilters();
+
+            return new AdminUserFormViewModel
+            {
+                User = user,
+                AvailableRoles = roles,
+                SelectedRoleIds = selectedRoleIds,
+                DataFilters = filters,
+                DataSources = dataSources,
+                FilterDefinitions = filterDefs,
+                Message = message ?? "",
+                MessageType = messageType ?? ""
+            };
+        }
+
+        private List<UserDataFilter> ReadPostedFilters()
+        {
             var filterKeys = Request.Form["FilterKeys"].ToArray();
             var filterValues = Request.Form["FilterValues"].ToArray();
             var filterDataSources = Request.Form["FilterDataSources"].ToArray();
-            var postedFilters = new List<UserDataFilter>();
+            var posted = new List<UserDataFilter>();
             for (var i = 0; i < filterKeys.Length; i++)
             {
                 var key = filterKeys[i]?.Trim();
                 var value = i < filterValues.Length ? filterValues[i]?.Trim() : null;
                 var ds = i < filterDataSources.Length ? filterDataSources[i]?.Trim() : null;
                 if (string.IsNullOrWhiteSpace(key) || string.IsNullOrWhiteSpace(value)) continue;
-                postedFilters.Add(new UserDataFilter
+                posted.Add(new UserDataFilter
                 {
                     FilterKey = key!,
                     FilterValue = value!,
                     DataSourceKey = string.IsNullOrWhiteSpace(ds) ? null : ds
                 });
             }
-            var filterDefs = await _context.FilterDefinitions
-                .AsNoTracking()
-                .Where(f => f.IsActive)
-                .OrderBy(f => f.DisplayOrder).ThenBy(f => f.Label)
-                .ToListAsync();
-            return new AdminUserFormViewModel
-            {
-                User = user,
-                AvailableRoles = roles,
-                SelectedRoleIds = selectedRoleIds,
-                DataFilters = postedFilters,
-                DataSources = dataSources,
-                FilterDefinitions = filterDefs,
-                Message = message,
-                MessageType = messageType
-            };
+            return posted;
         }
     }
 }
