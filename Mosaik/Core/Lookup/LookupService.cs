@@ -1,0 +1,103 @@
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
+using Mosaik.Core.Domain;
+using Mosaik.Models;
+
+namespace Mosaik.Core.Lookup
+{
+    // YonetIQ LookupService port + IMemoryCache 10dk TTL.
+    // Cache invalidation: CRUD sonrası otomatik flush.
+    public class LookupService
+    {
+        private readonly MosaikContext _context;
+        private readonly IMemoryCache _cache;
+        private static readonly TimeSpan CacheDuration = TimeSpan.FromMinutes(10);
+
+        public LookupService(MosaikContext context, IMemoryCache cache)
+        {
+            _context = context;
+            _cache = cache;
+        }
+
+        private static string CacheKey(string typeCode) => $"lookup_values_{typeCode}";
+
+        public async Task<List<DictionaryValue>> GetValuesAsync(string typeCode)
+        {
+            var key = CacheKey(typeCode);
+            if (_cache.TryGetValue(key, out List<DictionaryValue>? cached) && cached != null)
+                return cached;
+
+            var values = await _context.DictionaryValues
+                .AsNoTracking()
+                .Include(v => v.Type)
+                .Where(v => v.IsActive
+                         && v.Type != null
+                         && v.Type.IsActive
+                         && v.Type.Code == typeCode)
+                .OrderBy(v => v.DisplayOrder).ThenBy(v => v.Label)
+                .ToListAsync();
+
+            _cache.Set(key, values, CacheDuration);
+            return values;
+        }
+
+        public async Task<DictionaryValue?> GetByCodeAsync(string typeCode, string valueCode)
+        {
+            var values = await GetValuesAsync(typeCode);
+            return values.FirstOrDefault(v => v.Code == valueCode);
+        }
+
+        public async Task<List<DictionaryType>> GetTypesAsync()
+        {
+            return await _context.DictionaryTypes
+                .AsNoTracking()
+                .Where(t => t.IsActive)
+                .OrderBy(t => t.Name)
+                .ToListAsync();
+        }
+
+        public async Task<ServiceResult<DictionaryValue>> CreateValueAsync(
+            int typeId, string code, string label, int displayOrder, string createdBy)
+        {
+            if (string.IsNullOrWhiteSpace(code) || string.IsNullOrWhiteSpace(label))
+                return ServiceResult<DictionaryValue>.Failure("Kod ve etiket zorunludur.");
+
+            var type = await _context.DictionaryTypes.FindAsync(typeId);
+            if (type == null) return ServiceResult<DictionaryValue>.Failure("Tip bulunamadi.");
+
+            if (await _context.DictionaryValues.AnyAsync(v => v.TypeId == typeId && v.Code == code))
+                return ServiceResult<DictionaryValue>.Failure("Bu kod zaten mevcut.");
+
+            var value = new DictionaryValue
+            {
+                TypeId = typeId,
+                Code = code.Trim(),
+                Label = label.Trim(),
+                DisplayOrder = displayOrder,
+                IsActive = true,
+                CreatedBy = createdBy
+            };
+            _context.DictionaryValues.Add(value);
+            await _context.SaveChangesAsync();
+
+            _cache.Remove(CacheKey(type.Code));
+            return ServiceResult<DictionaryValue>.Ok(value, "Eklendi.");
+        }
+
+        public async Task<ServiceResult> SetActiveAsync(int valueId, bool active, string updatedBy)
+        {
+            var value = await _context.DictionaryValues.Include(v => v.Type).FirstOrDefaultAsync(v => v.Id == valueId);
+            if (value == null) return ServiceResult.Failure("Deger bulunamadi.");
+
+            value.IsActive = active;
+            value.UpdatedBy = updatedBy;
+            value.UpdatedAt = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+
+            if (value.Type != null) _cache.Remove(CacheKey(value.Type.Code));
+            return ServiceResult.Ok(active ? "Aktif edildi." : "Pasif edildi.");
+        }
+
+        public void InvalidateCache(string typeCode) => _cache.Remove(CacheKey(typeCode));
+    }
+}

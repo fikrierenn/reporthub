@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Mosaik.Core.Lookup;
 using Mosaik.Core.Workflow;
 
 namespace Mosaik.Models
@@ -29,6 +30,10 @@ namespace Mosaik.Models
         public DbSet<ApprovalRequest> ApprovalRequests { get; set; }
         public DbSet<ApprovalStep> ApprovalSteps { get; set; }
         public DbSet<StatusTransition> StatusTransitions { get; set; }
+
+        // Plan 16.5 Faz B — Lookup (dictionary)
+        public DbSet<DictionaryType> DictionaryTypes { get; set; }
+        public DbSet<DictionaryValue> DictionaryValues { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -293,6 +298,31 @@ namespace Mosaik.Models
                 entity.Property(e => e.ToStatus).HasMaxLength(30).IsRequired();
                 entity.Property(e => e.AllowedRoles).HasMaxLength(200);
                 entity.HasIndex(e => new { e.EntityType, e.FromStatus, e.ToStatus }).IsUnique();
+            });
+
+            // Plan 16.5 Faz B — Lookup
+            modelBuilder.Entity<DictionaryType>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Code).HasMaxLength(50).IsRequired();
+                entity.Property(e => e.Name).HasMaxLength(100).IsRequired();
+                entity.Property(e => e.Description).HasMaxLength(500);
+                entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+                entity.HasIndex(e => e.Code).IsUnique();
+            });
+
+            modelBuilder.Entity<DictionaryValue>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Code).HasMaxLength(50).IsRequired();
+                entity.Property(e => e.Label).HasMaxLength(200).IsRequired();
+                entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+                entity.HasOne(v => v.Type)
+                      .WithMany(t => t.Values)
+                      .HasForeignKey(v => v.TypeId)
+                      .OnDelete(DeleteBehavior.Cascade);
+                entity.HasIndex(e => new { e.TypeId, e.Code }).IsUnique();
+                entity.HasIndex(e => new { e.TypeId, e.IsActive, e.DisplayOrder });
             });
 
             base.OnModelCreating(modelBuilder);

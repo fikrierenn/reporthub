@@ -29,6 +29,14 @@ builder.Services.AddScoped<Mosaik.Services.StoredProcedureExecutor>();
 builder.Services.AddSingleton<Mosaik.Services.IBrandService, Mosaik.Services.BrandSettingsService>();
 builder.Services.AddSingleton<Mosaik.Services.IModuleService, Mosaik.Services.ModuleService>();
 
+// Plan 16.5 Faz A+B — Mosaik.Core
+builder.Services.AddMemoryCache();
+builder.Services.AddScoped<Mosaik.Core.Workflow.ApprovalService>();
+builder.Services.AddScoped<Mosaik.Core.Lookup.LookupService>();
+builder.Services.AddScoped<Mosaik.Core.DataScope.DataScopeRegistry>();
+// IUserDataScope implementasyonları Plan 14 Faz C'de eklenecek
+// (SpInjectionScope, ReportAccessScope)
+
 // Add Entity Framework
 builder.Services.AddDbContext<MosaikContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
