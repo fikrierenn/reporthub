@@ -49,7 +49,7 @@ Detay: [`.claude/rules/session-protocol.md`](.claude/rules/session-protocol.md).
 - **.NET 10.0** (`Mosaik.csproj` → `net10.0`). `net8.0`'a DÖNME — "8 için destek bitecek" uyarısı var. NuGet paketleri 10.0.1.
 - **ASP.NET Core MVC** (Controller + Razor Views). Razor Pages **DEĞİL**.
 - **Entity Framework Core 10** (`MosaikContext`). Metadata CRUD için. SP çağrıları ADO.NET/`SqlCommand` ile. Dapper yok.
-- **SQL Server** — DB adı şu an `PortalHUB` (Plan 11 Faz 6 reset'te `Mosaik`'e geçecek). `mcp__portalhub__*` MCP.
+- **SQL Server** — DB adı `Mosaik` (Plan 11 Faz 6 reset 2026-05-06'da tamamlandı). `mcp__sqlserver__*` MCP (canonical, BKM kurumsal DB'leri için). `mcp__portalhub__*` ölü — eski DB adı, kullanma. **MCP allowlist:** master, DerinSISBkm, DerinSISBkmCrm, DerinSISBkmWeb, BKMDATA, EncoreMerkez, BKM. **Mosaik DB allowlist'te yok** — uygulama içi DB sorgusu için MCP değil, dotnet run + SSMS/sqlcmd kullan.
 - **Tailwind CSS** (CDN, utility-first) + `wwwroot/assets/css/style.css` custom sınıflar (`btn-brand`, `form-input-brand`).
 - **Chart.js 4** + **Font Awesome 6** CDN (dashboard render).
 - **Frontend JS:** Vanilla, IIFE pattern, `wwwroot/assets/js/`. jQuery yok.
@@ -72,7 +72,7 @@ Ayrıntılı kurallar `.claude/rules/` altında — burada sadece değişmez pre
 
 1. **Sistematik çalış.** Her karar + kural + talimat dosyaya yazılır (CLAUDE.md, TODO.md, `.claude/rules/`, `docs/ADR/`, `docs/journal/`). Konuşma hafızasında kalmaz. Detay: [`docs/CONTEXT_MANAGEMENT.md`](docs/CONTEXT_MANAGEMENT.md).
 
-2. **Skill + agent + MCP aktif kullan.**
+2. **Skill + agent + MCP — ANA ÇALIŞMA PRENSİBİ.** Kullanıcı kararı (2026-05-07): "İşleri mutlaka subagent ve skill kullanarak yapmalısın senin ana çalışma prensibin olmalı." Subagent + skill **default**, manuel iş **istisnai**. Hatırlatma bekleme. Detay: [`.claude/rules/session-protocol.md`](.claude/rules/session-protocol.md) → "Skill/Agent/MCP proaktif kullanım — ANA ÇALIŞMA PRENSİBİ" + [`memory/feedback_subagent_skill_ana_prensip.md`].
    - Built-in agent: `Explore` (keşif, audit), `Plan` (tasarım), `general-purpose` (araştırma). Paralel 2-3'e kadar.
    - **Proje agent'ları (`.claude/agents/`):**
      - `code-architect` — feature mimari blueprint (file:line referanslı, build sequence)

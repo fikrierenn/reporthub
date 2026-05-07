@@ -71,20 +71,44 @@ Kullanıcının "TodoWrite kullanmadın" / "planı dosyaya yazmadın" demesi bu 
 - plan-tracker **dosyaya yazar** — kalıcı. Plan + ilerleme + commit hash.
 - İkisi **paralel** kullanılır, biri diğerinin yerine değil.
 
-### Skill/Agent/MCP proaktif kullanım
+### Skill/Agent/MCP proaktif kullanım — ANA ÇALIŞMA PRENSİBİ
 
-İş görünümüne göre:
+**Kullanıcı kararı (2026-05-07):** "İşleri mutlaka subagent ve skill kullanarak yapmalısın senin ana çalışma prensibin olmalı." Subagent + skill kullanımı **default**, manuel iş **istisnai**. Kullanıcı "agent çağır" / "skill kullan" demek zorunda kalmasın — proaktif tetikle.
 
 | Tetik | Tool | Ne zaman |
 |---|---|---|
-| 3+ dosya keşif gerekli | `Explore` agent | "Kodda X pattern nerede?" / "NN dashboard config'lerini tara" |
-| Mimari karar + alternatif değerlendirme | `Plan` agent | "Şu refactor'ı nasıl yaparız, tradeoff?" |
-| 3+ adımlı iş | TodoWrite + `plan-tracker` | Her çok-fazlı plan |
-| Oturum sonu | `session-handoff` | "iyi geceler" / "handoff" / oturum bitişi sinyali |
-| DB işi | `mcp__lokaldb__*` veya `mcp__sqlserver__*` | Migration, schema check, veri validation |
-| Dashboard/UI regresyon | `mcp__Claude_Preview__*` | Render smoke test, console error, screenshot |
+| 3+ dosya/klasör keşif | `Explore` agent | Pattern nerede / N config tara |
+| Derin analiz / "yüzeysel geçme" | `code-explorer` agent | file:line referans, 1500-2000 kelime brief |
+| Mimari karar + alternatif | `code-architect` veya `Plan` agent | Refactor tradeoff |
+| **Birden fazla bağımsız klasör** | **Paralel subagent batch** | **Tek mesajda N tool call** |
+| 3+ adımlı iş | TodoWrite + `plan-tracker` | İkisi farklı amaç, biri yetmez |
+| Oturum sonu | `session-handoff` | "iyi geceler" / "handoff" |
+| Multi-LLM danışma | `llm-council` skill | Mimari "hangi yol" belirsizliği |
+| UI/UX değişiklik | `ui-ux-pro-max` + `frontend-design` + `accessibility-compliance` | Razor view edit, M-13 sırası |
+| BKM kurumsal DB sorgu | `mcp__sqlserver__*` | Allowlist: master, DerinSIS*, BKMDATA, EncoreMerkez, BKM. **Mosaik DB allowlist DIŞINDA** — uygulama içi DB için MCP yerine SSMS/sqlcmd |
+| Dashboard/UI regresyon | `mcp__Claude_Preview__*` | Render smoke test, screenshot |
+| Yeni feature implement | `/feature-dev` slash | 7 fazlı guided |
+| PR review | `/review-pr` slash | Multi-agent comprehensive |
+| AI Brain push | `notebooklm` + `wiki-keeper` | Cross-project bilgi |
+| BI/dashboard işi | `anthropic-skills:bi-dashboard` | Power BI/Metabase |
+| SQL Server uzmanlık | `anthropic-skills:sql-server-uzmani` | T-SQL, SP, view, performans |
 
-Kullanıcı "skill kullan", "agent çağır" demezse bile yukarıdaki tetikler geldiğinde **sessizce** proaktif çağrılır. Overhead endişesi yoksa kullan.
+**Anti-pattern (yapma):**
+- 8 klasörü Read tool ile tek tek okumak → **subagent batch**
+- 3 bağımsız dosyayı sıralı edit → **paralel batch tool call** (tek mesajda)
+- Plan yazarken alternatifleri kafadan üretmek → `llm-council` veya `code-architect`
+- Kullanıcı "skill kullan" hatırlatmasını beklemek → proaktif
+- Manuel keşfederken context kıyısına yer almak → Explore agent + max kelime cap
+
+**Subagent prompt disiplini:**
+- Hedef + scope (file/klasör listesi) + format + max kelime cap
+- Kalite gardiyanı: "yüzeysel geçme" / "boş ise net söyle"
+- Çıktı şekli: "X paragraf, Y bölüm, max Z kelime"
+- Boş klasör veya kod yoksa subagent **sustur**, dolduruşa girme
+
+**Override:** Kullanıcı açıkça "manuel yap, agent gönderme" derse subagent durdurulur. Aksi default = subagent + skill.
+
+Detay memory: `feedback_subagent_skill_ana_prensip.md`.
 
 ---
 
