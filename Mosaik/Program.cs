@@ -33,9 +33,13 @@ builder.Services.AddSingleton<Mosaik.Services.IModuleService, Mosaik.Services.Mo
 builder.Services.AddMemoryCache();
 builder.Services.AddScoped<Mosaik.Core.Workflow.ApprovalService>();
 builder.Services.AddScoped<Mosaik.Core.Lookup.LookupService>();
+
+// Plan 14 Faz C1 — IUserDataScope implementasyonları + Registry
+builder.Services.AddScoped<Mosaik.Core.DataScope.IUserDataScope, Mosaik.Core.DataScope.SpInjectionScope>();
+builder.Services.AddScoped<Mosaik.Core.DataScope.IUserDataScope, Mosaik.Core.DataScope.ReportAccessScope>();
 builder.Services.AddScoped<Mosaik.Core.DataScope.DataScopeRegistry>();
-// IUserDataScope implementasyonları Plan 14 Faz C'de eklenecek
-// (SpInjectionScope, ReportAccessScope)
+// Faz C2 (gelecek): UserDataFilterInjector + ReportsController.Index
+// Registry'ye refactor (DRY). Şu an mevcut inline mantık çalışmaya devam ediyor.
 
 // Add Entity Framework
 builder.Services.AddDbContext<MosaikContext>(options =>

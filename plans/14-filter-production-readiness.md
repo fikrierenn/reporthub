@@ -124,7 +124,25 @@ BKM ekosisteminde "şube" her programda **farklı tablo + farklı kod sistemi** 
 
 **Faz C — `IUserDataScope` ile reportAccess deny-by-default + IsActive uyarısı (~90 dk):**
 
-**Önkoşul:** Plan 16.5 Faz B tamamlanmış olmalı (`IUserDataScope` interface + `DataScopeRegistry` mevcut).
+**Önkoşul:** Plan 16.5 Faz B tamamlanmış olmalı (`IUserDataScope` interface + `DataScopeRegistry` mevcut). ✅ TAMAM (commit Plan 16.5 Faz B).
+
+**Faz C1 ✅ TAMAM (2026-05-08, commit bekliyor):**
+- `Mosaik/Core/DataScope/SpInjectionScope.cs` — UserDataFilter SP-side enforcement (`*` magic + CSV expand + DataSourceKey eşleşme)
+- `Mosaik/Core/DataScope/ReportAccessScope.cs` — raporGrubu EF-side enforcement (deny-by-default, `*` magic, GroupId list match)
+- DI kayıt (Program.cs)
+- 11 unit test (UserDataScopeTests): SpInjection 6 + ReportAccess 4 + Registry 1
+- **Mevcut UserDataFilterInjector + ReportsController.Index dokunulmadı** — pragmatik karar (riski düşük tutma).
+
+**Tanı sorgusu sonucu (2026-05-08, sqlcli):**
+- `raporGrubu` FilterDefinition **AKTİF DEĞİL** (`IsActive=0` veya kayıt yok)
+- 2 active user var, raporGrubu kaydı 0 — backfill **GEREKSİZ**
+- Migration 35 ŞU AN yazılmıyor. raporGrubu admin GUI'den aktive edilirken Migration 32 logic'i (`*` backfill) çalıştırılmalı.
+
+**Faz C2 (gelecek, ayrı oturum, riski yüksek):**
+- `UserDataFilterInjector` registry'ye refactor (raw EF query yerine `IUserDataScope.HasAccessAsync`)
+- `ReportsController.Index` raporGrubu inline mantığı `ReportAccessScope.ListAccessibleValuesAsync` çağrısına geçir
+- 250+ test full regression
+- **DRY** kazancı, vNext modüller için altyapı temizliği. Şu an mevcut işlevsellik doğru çalıştığı için ertelendi.
 
 - **C1. `IUserDataScope` implementasyonları** (öneri #5 + 16.5 bridge):
   - `SpInjectionScope : IUserDataScope` — mevcut `UserDataFilterInjector` mantığını sarmala
