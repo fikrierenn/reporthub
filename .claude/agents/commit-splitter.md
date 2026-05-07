@@ -2,6 +2,7 @@
 name: commit-splitter
 description: Uncommitted çalışma dizinini mantıklı bucket'lara bölüp ardışık commit'ler önerir ve uygular. Kullanıcı "commit-split", "32 dosyayı böl", "uncommitted'i temizle" dediğinde veya `git status` 15 dosyayı aştığında devreye girer. Sadece önerir — her commit için kullanıcıdan onay alır, kendi başına commit etmez.
 tools: Bash, Read, Grep, Glob, Edit
+model: haiku
 ---
 
 # commit-splitter
