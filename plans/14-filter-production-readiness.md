@@ -70,7 +70,34 @@ H. **`ik` kullanıcısı `*` (tümü) atandı** — IK demosu için yeterli ama 
   - EditUser POST hatası simüle (eksik Username) → form dönüyor + filter paneli dolu + ModelState hata mesajı görünür
 - **A8. Commit:** `feat(admin): UserDataFilter diff audit + ortak form helper + ModelState (plan: 14)`
 
-**Faz B — IK sube + ik user kapsam (~60 dk):**
+**Faz B — IK sube + ik user kapsam (~60 dk) — KEŞİF TAMAM, IMPLEMENT BEKLİYOR:**
+
+**2026-05-08 keşif sonucu (memory: `project_zirve_personel_discovery.md`):**
+- IK DataSource zaten Mosaik'te kayıtlı: `Server=192.168.40.25\ZRVSQL2008;Database=BKM_GENEL;Integrated Security=true;...`
+- Canonical kaynak: `dbo.vw_PersonelDepartman` (kullanıcının kendisi yazdığı 3 firma UNION view: BKM_GENEL + BURSA_KÜLTÜR_MERKEZİ + ASİYE_BİNGÖLBALI)
+- 4 seviye hiyerarşi: Firma → Lokasyon (3) → AltLokasyon (8 mağaza/birim) → Departman (24+)
+- 272 aktif personel (BKM 232 / Bursa KM 28 / Asiye 12)
+- Aktif filtre: `Ict > 2023-12-31 OR Ict IS NULL`
+- View, boş SGK kolonlarına (`SeriNo`, `Ckn`, `Meslekilcesi`) text doldurma pattern'iyle hiyerarşi taşıyor
+
+**Aday OptionsQuery (kullanıcı kararı bekliyor):**
+
+A. **Tek seviye (en pratik):**
+```sql
+SELECT DISTINCT Id = AltLokasyon, Label = AltLokasyon
+  FROM dbo.vw_PersonelDepartman
+ WHERE AltLokasyon IS NOT NULL AND Ict IS NULL
+ ORDER BY Id;
+```
+
+B. **Hiyerarşik etiket:**
+```sql
+SELECT DISTINCT Id = AltLokasyon, Label = Lokasyon + ' / ' + AltLokasyon ...
+```
+
+C. **3 ayrı FilterDefinition:** `lokasyon/IK`, `sube/IK` (AltLokasyon), `departman/IK`
+
+**Implement edilmedi — kullanıcı "şimdilik durdur" dedi (2026-05-08).** Plan 18 (HR Sync) yazımıyla birleşik karar alınacak.
 
 **KRİTİK BİLGİ — BKM şube heterojenliği** (`memory/project_bkm_sube_heterogen.md`):
 BKM ekosisteminde "şube" her programda **farklı tablo + farklı kod sistemi** ile yaşıyor. PDKS şube kodları, IK şube kodları, satış sistemi mağaza kodları **birbirinden bağımsız**. Tek "global şube tablosu" yok. Bu yüzden:
