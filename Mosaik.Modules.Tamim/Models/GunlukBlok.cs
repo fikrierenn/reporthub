@@ -4,16 +4,12 @@ using Mosaik.Core.Domain;
 
 namespace Mosaik.Modules.Tamim.Models
 {
-    public enum BlokDurum
-    {
-        Taslak = 0,        // GM çalışanı yazmış, henüz onaylanmamış
-        Onayli = 1,        // Editor onayladı, 17:00 cron'da Tamim'e dahil olacak
-        Reddedildi = 2,    // Editor reddetti
-        Yayinda = 3        // Tamim yayınlandı (TamimBlok junction kuruldu)
-    }
-
-    // Plan 17 v2 — Genel Müdürlük çalışanlarının gün içinde girdiği duyuru/karar/uyarı.
-    // 17:00'de cron job onaylı blokları Tamim zarfına derleyip yayınlar.
+    // Plan 17 v2 (sadeleştirme 2026-05-08) — Genel Müdürlük çalışanlarının gün
+    // içinde girdiği duyuru/karar/uyarı/hadise kaydı. 17:00 cron job o günkü
+    // blokları toplayıp Tamim zarfına bağlar (TamimId set).
+    //
+    // Durum bilgisi: TamimId IS NULL = bekliyor, IS NOT NULL = yayında.
+    // Onay akışı YOK (basitlik). Editor onayı Plan 17.1'e ertelendi.
     public class GunlukBlok : BaseEntity
     {
         [Key]
@@ -45,15 +41,12 @@ namespace Mosaik.Modules.Tamim.Models
         // DictionaryValue.Id (Mosaik.Core.Lookup, Code="blokTuru")
         public int BlokTuruId { get; set; }
 
-        public BlokDurum Durum { get; set; } = BlokDurum.Taslak;
-
         public bool Acil { get; set; }
 
-        [MaxLength(500)]
-        public string? RedSebebi { get; set; }
+        // Tamim'e bağlandı mı? NULL=bekliyor, NOT NULL=yayında.
+        public int? TamimId { get; set; }
 
-        public int? OnaylayanId { get; set; }
-
-        public DateTime? OnayTarihi { get; set; }
+        // Soft-delete (yayınlanmamış blokları kaldır)
+        public bool IsActive { get; set; } = true;
     }
 }

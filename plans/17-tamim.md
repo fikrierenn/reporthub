@@ -1,10 +1,19 @@
-# Plan 17 — Tamim & Sirküler Modülü (v2 — gerçek mimari)
+# Plan 17 — Tamim & Sirküler Modülü (v2 minimal — sadeleştirilmiş)
 
-**Durum:** Faz A iskelet ✅, v1 yanlış pattern revert edildi 2026-05-08, v2 implement bekliyor
+**Durum:** Faz A iskelet ✅, v1 yanlış pattern revert ✅, Faz B v2 minimal implement ✅ 2026-05-08
 **Tier:** 3 (yeni modül + DB + UI + cron job + iş akışı)
-**Tarih:** 2026-05-08 (revize)
-**Tahmini süre:** ~8-10 saat (4 faz, oturum bölünebilir)
-**Önkoşul:** Plan 16.5 ✅ + Plan 16.6 ✅ tamamlandı, Hangfire ekleme bu plan içinde
+**Tarih:** 2026-05-08 (revize 2: minimal pattern)
+**Tahmini süre kalan:** ~5 saat (Faz C+D)
+**Önkoşul:** Plan 16.5 ✅ + Plan 16.6 ✅, Hangfire ✅ kuruldu
+
+**SADELEŞTİRME NOTU (2026-05-08, kullanıcı: "gereksiz fazla olanları kaldırabiliriz"):**
+- **TamimBlok junction kaldırıldı** — 1:N için gereksiz, `GunlukBlok.TamimId` FK doğrudan bağ
+- **TamimOkudu kaldırıldı** — mevcut `Mosaik.Models.AuditLog` (`EventType="tamim_okundu"`) kullanılır
+- **Tamim.BlokSayisi + Acil denormalized kolonları kaldırıldı** — COUNT/EXISTS ile hesaplanır
+- **GunlukBlok.Durum enum + RedSebebi/OnaylayanId/OnayTarihi kaldırıldı** — `TamimId IS NULL`=bekleyen / `IS NOT NULL`=yayında, onay akışı yok (cron otomatik)
+- **GunlukBlok.IsActive eklendi** — soft-delete
+- **`IAuditLog` interface Mosaik.Core'a eklendi** — modüller cross-csproj audit yazabilir
+- **4 entity → 2 entity** (~%50 schema sadeleşmesi)
 
 ## 1. Problem
 
@@ -83,7 +92,7 @@ ADMIN:
     → Filtreleme: tüm kullanıcılar, sadece okumayan, sadece okuyan
 ```
 
-## 4. Entity haritası
+## 4. Entity haritası (SADELEŞTİRİLMİŞ — 2 entity)
 
 ### `GunlukBlok` (ana giriş entity'si)
 ```csharp
@@ -91,59 +100,48 @@ public class GunlukBlok : BaseEntity
 {
     [Key, BindNever] public int Id { get; set; }
     [Required, MaxLength(50), BindNever] public string BlokNo { get; set; } = "";  // BLK-20260508-001 (otomatik)
-    public int OlusturanId { get; set; }              // User.UserId FK
-    [MaxLength(100)] public string DepartmanAdi { get; set; } = "";  // basit string (HR sync sonrası FK)
+    [BindNever] public int OlusturanId { get; set; }    // User.UserId cross-csproj FK
+    [Required, MaxLength(100)] public string DepartmanAdi { get; set; } = "";
     [Required, MaxLength(200)] public string Konu { get; set; } = "";
-    [Required] public string Aciklama { get; set; } = "";  // text/HTML
+    [Required] public string Aciklama { get; set; } = "";
     public DateTime BlokTarihi { get; set; } = DateTime.UtcNow.Date;
-    public int BlokTuruId { get; set; }               // Mosaik.Core.Lookup.DictionaryValue.Id
-    public BlokDurum Durum { get; set; } = BlokDurum.Taslak;
+    public int BlokTuruId { get; set; }                 // Mosaik.Core.Lookup.DictionaryValue.Id
     public bool Acil { get; set; }
-    [MaxLength(500)] public string? RedSebebi { get; set; }  // editor reddederse
-    public int? OnaylayanId { get; set; }
-    public DateTime? OnayTarihi { get; set; }
+    public int? TamimId { get; set; }                   // NULL=bekleyen, NOT NULL=yayında
+    public bool IsActive { get; set; } = true;          // soft-delete
 }
-public enum BlokDurum { Taslak = 0, Onayli = 1, Reddedildi = 2, Yayinda = 3 }
 ```
+**Durum bilgisi**: `TamimId IS NULL` = bekleyen, `IS NOT NULL` = yayında.
+**Onay akışı YOK** (cron otomatik). Editor onayı ihtiyacı doğarsa Plan 17.1.
 
 ### `Tamim` (zarf — Body yok!)
 ```csharp
 public class Tamim : BaseEntity
 {
     [Key, BindNever] public int Id { get; set; }
-    [Required, MaxLength(50), BindNever] public string TamimNo { get; set; } = "";  // TAM-20260508 (cron set)
+    [Required, MaxLength(50), BindNever] public string TamimNo { get; set; } = "";  // TAM-20260508
     [Required, MaxLength(200)] public string Baslik { get; set; } = "";  // "08 Mayıs 2026 Günlük Tamim"
-    public DateTime TamimTarihi { get; set; }         // Hangi günün tamimi
-    public DateTime YayinTarihi { get; set; }         // Cron yayın anı
-    public int BlokSayisi { get; set; }               // denormalized (tablo yansıma için)
-    public bool Acil { get; set; }                    // herhangi bir blok acil mi
+    public DateTime TamimTarihi { get; set; }    // Hangi günün tamimi
+    public DateTime YayinTarihi { get; set; }    // Cron yayın anı
+    // BlokSayisi + Acil DENORMALIZED kaldırıldı — COUNT/EXISTS ile
 }
 ```
 
-### `TamimBlok` (junction)
+**İçerik:** `GunlukBlok.TamimId` FK üzerinden bağlı bloklar (`SELECT * FROM GunlukBlok WHERE TamimId=@id ORDER BY Id`).
+
+### Okuma logu — `Mosaik.Models.AuditLog` (mevcut, ekstra tablo yok)
+
 ```csharp
-public class TamimBlok : BaseEntity
-{
-    [Key, BindNever] public int Id { get; set; }
-    public int TamimId { get; set; }
-    public int BlokId { get; set; }
-    public int SiraNo { get; set; }
-}
+await _audit.LogAsync(
+    eventType: "tamim_okundu",
+    targetType: "tamim",
+    targetKey: tamimId.ToString());
 ```
 
-### `TamimOkudu` (read log)
-```csharp
-public class TamimOkudu : BaseEntity
-{
-    [Key, BindNever] public int Id { get; set; }
-    public int TamimId { get; set; }
-    public int UserId { get; set; }                   // Mosaik User.UserId FK
-    public DateTime IlkGorulme { get; set; } = DateTime.UtcNow;  // sayfa ziyaret
-    public bool Okundu { get; set; }                  // "Okudum" buton
-    public DateTime? OkumaZamani { get; set; }
-    // Unique: (TamimId, UserId)
-}
-```
+`IAuditLog` interface (Mosaik.Core.Logging) ile cross-csproj erişim. AuditLogService implement.
+
+**"Okundu mu?" sorgusu:** `EXISTS WHERE EventType='tamim_okundu' AND TargetKey=@id AND Username=@user`
+**"Kim okumadı?" raporu:** `Users LEFT JOIN AuditLog ON ... WHERE AuditLog.AuditId IS NULL`
 
 ## 5. Faz Planı (revize)
 

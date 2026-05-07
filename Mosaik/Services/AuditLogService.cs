@@ -1,10 +1,11 @@
 using System.Text.Json;
 using Microsoft.AspNetCore.Http;
+using Mosaik.Core.Logging;
 using Mosaik.Models;
 
 namespace Mosaik.Services
 {
-    public class AuditLogService
+    public class AuditLogService : IAuditLog
     {
         private readonly MosaikContext _context;
         private readonly IHttpContextAccessor _httpContextAccessor;
@@ -48,6 +49,28 @@ namespace Mosaik.Services
 
             _context.AuditLogs.Add(log);
             await _context.SaveChangesAsync();
+        }
+
+        // Plan 17 v2 — IAuditLog cross-modül erişim. Modüller bunu çağırır.
+        public Task LogAsync(
+            string eventType,
+            string? targetType = null,
+            string? targetKey = null,
+            string? description = null,
+            string? oldValuesJson = null,
+            string? newValuesJson = null,
+            bool isSuccess = true)
+        {
+            return LogAsync(new AuditLogEntry
+            {
+                EventType = eventType,
+                TargetType = targetType,
+                TargetKey = targetKey,
+                Description = description,
+                OldValuesJson = oldValuesJson,
+                NewValuesJson = newValuesJson,
+                IsSuccess = isSuccess
+            });
         }
 
         public static string ToJson(object? value)

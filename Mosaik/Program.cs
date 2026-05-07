@@ -15,6 +15,8 @@ if (builder.Environment.IsDevelopment())
 }
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<Mosaik.Services.AuditLogService>();
+builder.Services.AddScoped<Mosaik.Core.Logging.IAuditLog>(
+    sp => sp.GetRequiredService<Mosaik.Services.AuditLogService>());
 builder.Services.AddScoped<Mosaik.Services.UserRoleSyncService>();
 builder.Services.AddScoped<Mosaik.Services.ReportGroupService>();
 builder.Services.AddScoped<Mosaik.Services.RoleManagementService>();

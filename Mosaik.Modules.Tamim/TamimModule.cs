@@ -30,12 +30,11 @@ namespace Mosaik.Modules.Tamim
                 e.Property(b => b.DepartmanAdi).HasMaxLength(100).IsRequired();
                 e.Property(b => b.Konu).HasMaxLength(200).IsRequired();
                 e.Property(b => b.Aciklama).IsRequired();
-                e.Property(b => b.RedSebebi).HasMaxLength(500);
-                e.Property(b => b.Durum).HasConversion<int>();
                 e.HasIndex(b => b.BlokNo).IsUnique();
-                e.HasIndex(b => new { b.BlokTarihi, b.Durum });
+                e.HasIndex(b => new { b.BlokTarihi, b.TamimId });  // bekleyen vs yayında
                 e.HasIndex(b => b.OlusturanId);
                 e.HasIndex(b => b.BlokTuruId);
+                e.HasIndex(b => b.TamimId);
             });
 
             mb.Entity<Models.Tamim>(e =>
@@ -46,22 +45,6 @@ namespace Mosaik.Modules.Tamim
                 e.HasIndex(t => t.TamimNo).IsUnique();
                 e.HasIndex(t => t.TamimTarihi);
                 e.HasIndex(t => t.YayinTarihi);
-            });
-
-            mb.Entity<TamimBlok>(e =>
-            {
-                e.HasKey(tb => tb.Id);
-                e.HasIndex(tb => new { tb.TamimId, tb.BlokId }).IsUnique();
-                e.HasIndex(tb => tb.TamimId);
-                e.HasIndex(tb => tb.BlokId);
-            });
-
-            mb.Entity<TamimOkudu>(e =>
-            {
-                e.HasKey(o => o.Id);
-                e.HasIndex(o => new { o.TamimId, o.UserId }).IsUnique();
-                e.HasIndex(o => o.UserId);
-                e.HasIndex(o => o.TamimId);
             });
         }
 
