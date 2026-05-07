@@ -74,6 +74,34 @@ Bu liste 5 plan dosyasi (`plans/02-06`) + Plan 14/16/16.5 + asagidaki FAZ 1-3 + 
 - [ ] **Plan 16.5 Faz C+D** — AI Core (YonetIQ providers + DikkatIQ extraction). Plan 19 Doküman öncesi zorunlu, Plan 17 Tamim için opsiyonel
 - [ ] **Plan 17 (Tamim)** — vNext modül roadmap'in ilk üyesi (~10h, tamim/ direkt port)
 
+#### IK / HR — Zirve `vw_PersonelDepartman` ile (2026-05-08 keşif sonrası)
+
+**Bağlam:** BKM Zirve `vw_PersonelDepartman` view 3 firma UNION (BKM_GENEL + BURSA_KÜLTÜR_MERKEZİ + ASİYE_BİNGÖLBALI), 4 seviye hiyerarşi (Lokasyon → AltLokasyon → Departman + Unvan), 272 aktif personel. IK DataSource zaten Mosaik'te kayıtlı. Detay: `memory/project_zirve_personel_discovery.md`.
+
+**Hızlı kazanım (Plan 18 sync'i beklemez — sadece read-only rapor/dashboard):**
+- [ ] **IK Personel Listesi raporu** — vw_PersonelDepartman üzerinden filtreli liste (Firma + Lokasyon + AltLokasyon + Departman + Unvan dropdown'ları). SP: `bkm.sp_IkPersonelListesi` (BKM_GENEL'de). FilterDefinition `sube/IK` aktive (AltLokasyon listesi).
+- [ ] **Yeni Başlayanlar raporu** — `Igt >= @BasTarih AND Ict IS NULL`, son 30/90 gün filtreli. KPI: aylık trend.
+- [ ] **İşten Ayrılanlar raporu** — `Ict BETWEEN @BasTarih AND @BitTarih`, ayrılma kodu (Icn) gruplu.
+- [ ] **Mağaza Personel Yoğunluğu raporu** — AltLokasyon × Departman pivot. Toplam personel + ortalama kıdem.
+- [ ] **İK Pano (dashboard)** — KPI: Toplam aktif (272), Son 30g yeni (20), Son 30g ayrılan (?), AltLokasyon pie, Yeni başlayanlar tablosu, Görev/Unvan dağılım bar.
+
+**Plan 14 Faz B implementasyon (durmuş):**
+- [ ] **IK FilterDefinition `(sube, IK)` aktivasyonu** — 3 OptionsQuery seçeneği hazır (tek seviye AltLokasyon / Lokasyon+AltLokasyon concat / 3 ayrı filter — `lokasyon`/`sube`/`departman` per-IK). Migration 33. Kullanıcı 8 May "şimdilik durdur" dedi.
+
+**Plan 18 HR Sync (henüz yazılmadı, büyük yatırım):**
+- [ ] **Mosaik.User entity ek kolonlar** — `ZirvePersonelNo` (UNIQUE), `Lokasyon`, `Sube` (AltLokasyon), `Departman`, `HireDate`, `Firma`. Migration NN.
+- [ ] **Hangfire entegrasyonu** — Mosaik'te yok. Daily job altyapısı.
+- [ ] **`UserSyncService`** — `vw_PersonelDepartman` → Mosaik.User insert/update (Personelno bazlı eşleşme). Yeni personel: insert. Ict NOT NULL: IsActive=0. Sube değişti: UserDataFilter güncelle.
+- [ ] **Email stratejisi karar** — view'da yok. AD lookup (`samaccountname`) / placeholder (`personelno@bkm.com.tr`) / manuel admin GUI. Kullanıcı kararı bekliyor.
+- [ ] **TC PII saklama karar** — `Vatno` raw view'da var, Mosaik'te hash mı raw mı skip mi? Güvenlik kararı.
+- [ ] **UserDataFilter otomatik atama** — sync sırasında `User.Sube` değerini `UserDataFilter (sube/IK)` olarak otomatik kayıt. Kullanıcı login → kendi şubesinin verisini görür.
+- [ ] **Plan 18 dosyası** `plans/18-hr-sync.md` yazılacak (mapping + Hangfire iskelet + email + TC + sube otomatik atama).
+
+**Bilinen riskler / dikkat:**
+- `vw_PersonelDepartman` user-managed (Zirve schema değişirse kırılır). Plan 18 öncesi backup.
+- `BKM_HEYKEL_GENEL` DB var ama view'da yok (Heykel = BURSA_KÜLTÜR_MERKEZİ tüzel kişi). Eski Heykel DB'sinin durumu netleştirilmeli.
+- View raw PII (TC, IBAN, Maaş) içeriyor — sync mapping'i finansal alanları skip etmeli.
+
 #### Trivia / housekeeping (~30 dk toplam, en kolay)
 - [x] **CSV İndir butonu commit** ✅ commit `143e1d9` (önceki oturumda yapıldı)
 - [x] **Plan 04 arsivle** ✅ `plans/archive/04-m11-v2-builder-ux-redesign.md`
