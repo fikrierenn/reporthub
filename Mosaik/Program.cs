@@ -1,3 +1,4 @@
+using Hangfire;
 using Microsoft.EntityFrameworkCore;
 using Mosaik.Models;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -56,6 +57,24 @@ builder.Services.AddDbContext<MosaikContext>(options =>
 builder.Services.AddScoped<Microsoft.EntityFrameworkCore.DbContext>(
     sp => sp.GetRequiredService<MosaikContext>());
 
+// Plan 17 v2 — Hangfire (background job altyapısı, 17:00 günlük tamim derleme cron).
+// SQL Server storage (HANGFIRE schema otomatik yaratılır), aynı DefaultConnection.
+// Dashboard /hangfire route'unda — auth filter Program.cs sonunda eklenir.
+builder.Services.AddHangfire(cfg => cfg
+    .SetDataCompatibilityLevel(Hangfire.CompatibilityLevel.Version_180)
+    .UseSimpleAssemblyNameTypeSerializer()
+    .UseRecommendedSerializerSettings()
+    .UseSqlServerStorage(builder.Configuration.GetConnectionString("DefaultConnection"),
+        new Hangfire.SqlServer.SqlServerStorageOptions
+        {
+            CommandBatchMaxTimeout = TimeSpan.FromMinutes(5),
+            SlidingInvisibilityTimeout = TimeSpan.FromMinutes(5),
+            QueuePollInterval = TimeSpan.Zero,
+            UseRecommendedIsolationLevel = true,
+            DisableGlobalLocks = true
+        }));
+builder.Services.AddHangfireServer();
+
 builder.Services.AddAuthentication(options =>
     {
         options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
@@ -104,6 +123,12 @@ app.UseRouting();
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+// Plan 17 v2 — Hangfire dashboard. Sadece admin rolü. UseAuthorization SONRASI.
+app.UseHangfireDashboard("/hangfire", new Hangfire.DashboardOptions
+{
+    Authorization = new[] { new Mosaik.Services.HangfireAdminOnlyAuth() }
+});
 
 // Plan 16.6 — Modül endpoint mapping (Areas pattern). Default route'tan
 // ÖNCE map edilmeli ki modül route'ları default'a düşmesin.
