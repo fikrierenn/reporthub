@@ -3,12 +3,11 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Mosaik.Modules.Tamim.Areas.Tamim.Controllers
 {
-    // Plan 17 Faz A — placeholder. Plan 17 v2'de gerçek controller'lar:
-    // BlokController (CRUD), TamimController (read-only + ack), AdminController (okuma raporu).
+    // /Tamim ana giriş — Tamim listesine yönlendir.
     [Area("Tamim")]
     [Authorize]
     public class HomeController : Controller
     {
-        public IActionResult Index() => View();
+        public IActionResult Index() => RedirectToAction("Index", "Tamim");
     }
 }

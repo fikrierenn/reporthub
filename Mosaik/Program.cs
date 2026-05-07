@@ -36,6 +36,8 @@ builder.Services.AddSingleton<Mosaik.Services.IModuleService, Mosaik.Services.Mo
 builder.Services.AddMemoryCache();
 builder.Services.AddScoped<Mosaik.Services.ApprovalService>();
 builder.Services.AddScoped<Mosaik.Services.LookupService>();
+builder.Services.AddScoped<Mosaik.Core.Lookup.ILookupService>(
+    sp => sp.GetRequiredService<Mosaik.Services.LookupService>());
 
 // Plan 14 Faz C1 — IUserDataScope implementasyonları + Registry
 builder.Services.AddScoped<Mosaik.Core.DataScope.IUserDataScope, Mosaik.Services.SpInjectionScope>();

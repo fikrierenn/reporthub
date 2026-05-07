@@ -1,0 +1,81 @@
+@using Mosaik.Modules.Tamim.Models
+@model List<GunlukBlok>
+@{
+    ViewData["Title"] = "Günlük Bloklar";
+    var bekleyen = ViewBag.Bekleyen as bool?;
+    var blokTuruMap = ViewBag.BlokTuruMap as Dictionary<int, string> ?? new();
+}
+
+<div class="container" style="padding:24px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+        <h1 style="margin:0;"><i class="fas fa-clipboard-list"></i> Günlük Bloklar</h1>
+        <a href="@Url.Action("Create")" class="btn primary">
+            <i class="fas fa-plus"></i> Yeni Blok
+        </a>
+    </div>
+
+    @if (TempData["Message"] != null)
+    {
+        var t = TempData["MessageType"]?.ToString();
+        <div style="padding:10px 14px; margin-bottom:14px; border-radius:6px;
+                    background:@(t == "success" ? "#dcfce7" : "#fee2e2");
+                    color:@(t == "success" ? "#166534" : "#991b1b");
+                    border:1px solid @(t == "success" ? "#86efac" : "#fca5a5");">
+            @TempData["Message"]
+        </div>
+    }
+
+    <div style="margin-bottom:14px;">
+        <a href="@Url.Action("Index")" class="btn @(bekleyen == null ? "primary" : "")"
+           style="font-size:12px; padding:4px 10px; height:auto;">Tümü</a>
+        <a href="@Url.Action("Index", new { bekleyen = true })" class="btn @(bekleyen == true ? "primary" : "")"
+           style="font-size:12px; padding:4px 10px; height:auto;">Bekleyen (Tamim'e dahil edilmemiş)</a>
+        <a href="@Url.Action("Index", new { bekleyen = false })" class="btn @(bekleyen == false ? "primary" : "")"
+           style="font-size:12px; padding:4px 10px; height:auto;">Yayındaki</a>
+    </div>
+
+    <div style="background:var(--paper, #fff); border:1px solid var(--line, #e5e7eb); border-radius:8px; overflow:hidden;">
+        <table style="width:100%; border-collapse:collapse;">
+            <thead>
+                <tr style="background:#f9fafb; text-align:left;">
+                    <th style="padding:10px 14px; border-bottom:1px solid #e5e7eb; width:140px;">Blok No</th>
+                    <th style="padding:10px 14px; border-bottom:1px solid #e5e7eb;">Konu</th>
+                    <th style="padding:10px 14px; border-bottom:1px solid #e5e7eb; width:130px;">Tür</th>
+                    <th style="padding:10px 14px; border-bottom:1px solid #e5e7eb; width:130px;">Departman</th>
+                    <th style="padding:10px 14px; border-bottom:1px solid #e5e7eb; width:110px;">Tarih</th>
+                    <th style="padding:10px 14px; border-bottom:1px solid #e5e7eb; width:110px;">Durum</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Any())
+                {
+                    <tr><td colspan="6" style="padding:30px; text-align:center; color:var(--muted, #6b7280);">Henüz blok yok.</td></tr>
+                }
+                @foreach (var b in Model)
+                {
+                    var (badgeBg, badgeFg, statusLabel) = b.TamimId.HasValue
+                        ? ("#dcfce7", "#166534", "Yayında")
+                        : ("#fef3c7", "#92400e", "Bekleyen");
+                    blokTuruMap.TryGetValue(b.BlokTuruId, out var turLabel);
+                    <tr style="border-bottom:1px solid #f3f4f6;">
+                        <td style="padding:10px 14px; font-family:monospace; font-size:12px;">@b.BlokNo</td>
+                        <td style="padding:10px 14px;">
+                            <a href="@Url.Action("Details", new { id = b.Id })" style="color:var(--accent, #f59e0b); text-decoration:none; font-weight:500;">
+                                @b.Konu
+                                @if (b.Acil) { <span style="color:#dc2626; margin-left:6px;"><i class="fas fa-exclamation-triangle"></i></span> }
+                            </a>
+                        </td>
+                        <td style="padding:10px 14px; color:var(--muted, #6b7280);">@(turLabel ?? "—")</td>
+                        <td style="padding:10px 14px; color:var(--muted, #6b7280);">@b.DepartmanAdi</td>
+                        <td style="padding:10px 14px; color:var(--muted, #6b7280);">@b.BlokTarihi.ToString("dd.MM.yyyy")</td>
+                        <td style="padding:10px 14px;">
+                            <span style="background:@badgeBg; color:@badgeFg; padding:3px 8px; border-radius:4px; font-size:12px; font-weight:500;">
+                                @statusLabel
+                            </span>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

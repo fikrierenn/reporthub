@@ -1,0 +1,71 @@
+@model Mosaik.Modules.Tamim.ViewModels.BlokFormViewModel
+@{
+    ViewData["Title"] = "Yeni Blok";
+}
+
+<div class="container" style="padding:24px; max-width:900px;">
+    <a href="@Url.Action("Index")" style="color:var(--muted, #6b7280); text-decoration:none; font-size:14px;">
+        <i class="fas fa-arrow-left"></i> Blok Listesi
+    </a>
+    <h1 style="margin:14px 0 20px;"><i class="fas fa-plus"></i> Yeni Günlük Blok</h1>
+
+    @if (!string.IsNullOrEmpty(Model.Message))
+    {
+        <div style="padding:10px 14px; margin-bottom:14px; border-radius:6px;
+                    background:@(Model.MessageType == "success" ? "#dcfce7" : "#fee2e2");
+                    color:@(Model.MessageType == "success" ? "#166534" : "#991b1b");
+                    border:1px solid @(Model.MessageType == "success" ? "#86efac" : "#fca5a5");">
+            @Model.Message
+        </div>
+    }
+
+    <form method="post" action="@Url.Action("Create")"
+          style="background:var(--paper, #fff); border:1px solid var(--line, #e5e7eb); border-radius:8px; padding:24px;">
+        @Html.AntiForgeryToken()
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+            <div class="field">
+                <label class="lab" for="DepartmanAdi">Departman <span style="color:var(--accent);">*</span></label>
+                <input type="text" id="DepartmanAdi" name="DepartmanAdi" value="@Model.DepartmanAdi" class="inp" maxlength="100" required />
+                <span asp-validation-for="DepartmanAdi" style="color:#991b1b; font-size:12px;"></span>
+            </div>
+            <div class="field">
+                <label class="lab" for="BlokTuruId">Blok Türü <span style="color:var(--accent);">*</span></label>
+                <select id="BlokTuruId" name="BlokTuruId" class="inp" required>
+                    <option value="">— Seçin —</option>
+                    @foreach (var opt in Model.BlokTuruSecenekleri)
+                    {
+                        <option value="@opt.Id" selected="@(Model.BlokTuruId == opt.Id)">@opt.Label</option>
+                    }
+                </select>
+                <span asp-validation-for="BlokTuruId" style="color:#991b1b; font-size:12px;"></span>
+            </div>
+        </div>
+
+        <div class="field">
+            <label class="lab" for="Konu">Konu <span style="color:var(--accent);">*</span></label>
+            <input type="text" id="Konu" name="Konu" value="@Model.Konu" class="inp" maxlength="200" required />
+            <span asp-validation-for="Konu" style="color:#991b1b; font-size:12px;"></span>
+        </div>
+
+        <div class="field">
+            <label class="lab" for="Aciklama">Açıklama <span style="color:var(--accent);">*</span></label>
+            <textarea id="Aciklama" name="Aciklama" class="inp" rows="10" required>@Model.Aciklama</textarea>
+            <span asp-validation-for="Aciklama" style="color:#991b1b; font-size:12px;"></span>
+        </div>
+
+        <div class="field" style="display:flex; align-items:center; gap:8px;">
+            <input type="checkbox" id="Acil" name="Acil" value="true" @(Model.Acil ? "checked" : "") />
+            <label for="Acil" style="margin:0;">⚠️ Acil — günlük tamim üst sırada görünsün</label>
+        </div>
+
+        <div style="margin-top:20px; display:flex; gap:8px;">
+            <button type="submit" class="btn primary"><i class="fas fa-save"></i> Kaydet</button>
+            <a href="@Url.Action("Index")" class="btn ghost">İptal</a>
+        </div>
+        <p style="margin-top:12px; color:var(--muted, #6b7280); font-size:13px;">
+            <i class="fas fa-info-circle"></i> Akşam <strong>17:00</strong>'de sistem o güne ait
+            tüm bekleyen blokları toplayıp günlük tamim olarak yayınlar.
+        </p>
+    </form>
+</div>

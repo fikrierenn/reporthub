@@ -1,0 +1,65 @@
+@model Mosaik.Modules.Tamim.ViewModels.BlokFormViewModel
+@{
+    ViewData["Title"] = "Blok Düzenle";
+}
+
+<div class="container" style="padding:24px; max-width:900px;">
+    <a href="@Url.Action("Details", new { id = Model.Id })" style="color:var(--muted, #6b7280); text-decoration:none; font-size:14px;">
+        <i class="fas fa-arrow-left"></i> Detay
+    </a>
+    <h1 style="margin:14px 0 6px;"><i class="fas fa-pen"></i> Blok Düzenle</h1>
+    <div style="font-family:monospace; font-size:12px; color:var(--muted, #6b7280); margin-bottom:14px;">@Model.BlokNo</div>
+
+    @if (!string.IsNullOrEmpty(Model.Message))
+    {
+        <div style="padding:10px 14px; margin-bottom:14px; border-radius:6px;
+                    background:@(Model.MessageType == "success" ? "#dcfce7" : "#fee2e2");
+                    color:@(Model.MessageType == "success" ? "#166534" : "#991b1b");
+                    border:1px solid @(Model.MessageType == "success" ? "#86efac" : "#fca5a5");">
+            @Model.Message
+        </div>
+    }
+
+    <form method="post" action="@Url.Action("Edit", new { id = Model.Id })"
+          style="background:var(--paper, #fff); border:1px solid var(--line, #e5e7eb); border-radius:8px; padding:24px;">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="Id" value="@Model.Id" />
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+            <div class="field">
+                <label class="lab" for="DepartmanAdi">Departman <span style="color:var(--accent);">*</span></label>
+                <input type="text" id="DepartmanAdi" name="DepartmanAdi" value="@Model.DepartmanAdi" class="inp" maxlength="100" required />
+            </div>
+            <div class="field">
+                <label class="lab" for="BlokTuruId">Blok Türü <span style="color:var(--accent);">*</span></label>
+                <select id="BlokTuruId" name="BlokTuruId" class="inp" required>
+                    <option value="">— Seçin —</option>
+                    @foreach (var opt in Model.BlokTuruSecenekleri)
+                    {
+                        <option value="@opt.Id" selected="@(Model.BlokTuruId == opt.Id)">@opt.Label</option>
+                    }
+                </select>
+            </div>
+        </div>
+
+        <div class="field">
+            <label class="lab" for="Konu">Konu <span style="color:var(--accent);">*</span></label>
+            <input type="text" id="Konu" name="Konu" value="@Model.Konu" class="inp" maxlength="200" required />
+        </div>
+
+        <div class="field">
+            <label class="lab" for="Aciklama">Açıklama <span style="color:var(--accent);">*</span></label>
+            <textarea id="Aciklama" name="Aciklama" class="inp" rows="10" required>@Model.Aciklama</textarea>
+        </div>
+
+        <div class="field" style="display:flex; align-items:center; gap:8px;">
+            <input type="checkbox" id="Acil" name="Acil" value="true" @(Model.Acil ? "checked" : "") />
+            <label for="Acil" style="margin:0;">⚠️ Acil</label>
+        </div>
+
+        <div style="margin-top:20px; display:flex; gap:8px;">
+            <button type="submit" class="btn primary"><i class="fas fa-save"></i> Güncelle</button>
+            <a href="@Url.Action("Details", new { id = Model.Id })" class="btn ghost">İptal</a>
+        </div>
+    </form>
+</div>

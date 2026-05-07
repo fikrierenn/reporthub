@@ -17,7 +17,8 @@ namespace Mosaik.Modules.Tamim
 
         public void ConfigureServices(IServiceCollection services)
         {
-            // Plan 17 Faz C'de service'ler eklenecek (BlokService + TamimService)
+            services.AddScoped<Services.BlokService>();
+            services.AddScoped<Services.TamimService>();
             // Plan 17 Faz D'de Hangfire RecurringJob + TamimDerleyiciJob
         }
 

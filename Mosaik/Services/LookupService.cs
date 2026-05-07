@@ -8,7 +8,7 @@ namespace Mosaik.Services
 {
     // YonetIQ LookupService port + IMemoryCache 10dk TTL.
     // Cache invalidation: CRUD sonrası otomatik flush.
-    public class LookupService
+    public class LookupService : ILookupService
     {
         private readonly MosaikContext _context;
         private readonly IMemoryCache _cache;
