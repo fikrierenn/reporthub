@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Mosaik.Models;
+using Mosaik.Modules.Circular.Services;
 using Mosaik.ViewModels;
 using System.Security.Claims;
 
@@ -11,10 +12,12 @@ namespace Mosaik.Controllers
     public class DashboardController : Controller
     {
         private readonly MosaikContext _context;
+        private readonly CircularService _tamim;
 
-        public DashboardController(MosaikContext context)
+        public DashboardController(MosaikContext context, CircularService tamim)
         {
             _context = context;
+            _tamim = tamim;
         }
 
         public async Task<IActionResult> Index()
@@ -291,6 +294,24 @@ namespace Mosaik.Controllers
                 {
                     model.DataSourceStatus = "kaynak yok";
                 }
+            }
+
+            // ---- Bugünün tamimi (Plan 17 modülü) ----
+            try
+            {
+                var todaysCircular = await _tamim.GetTodaysAsync();
+                if (todaysCircular != null)
+                {
+                    model.TodaysCircular = todaysCircular;
+                    var blocks = await _tamim.GetBlocksAsync(todaysCircular.Id);
+                    model.TodaysBlockCount = blocks.Count;
+                    model.TodaysUrgentCount = blocks.Count(b => b.IsUrgent);
+                }
+            }
+            catch (Exception ex)
+            {
+                // Circular modülü kapalıysa veya hata varsa dashboard'u kırma
+                System.Diagnostics.Debug.WriteLine($"Dashboard tamim widget hatası: {ex.Message}");
             }
 
             return View(model);

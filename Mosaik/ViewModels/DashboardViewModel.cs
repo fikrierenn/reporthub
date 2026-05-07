@@ -28,6 +28,11 @@ namespace Mosaik.ViewModels
         public string SystemStatus { get; set; } = "";
         public string SystemStatusKind { get; set; } = "ok"; // ok / warn / err
         public string DataSourceStatus { get; set; } = "";
+
+        // Bugünün tamimi (Plan 17 modülünden — varsa kart, yoksa placeholder)
+        public Mosaik.Modules.Circular.Models.Circular? TodaysCircular { get; set; }
+        public int TodaysBlockCount { get; set; }
+        public int TodaysUrgentCount { get; set; }
     }
 
     public class TopRunReportItem
