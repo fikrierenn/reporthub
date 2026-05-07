@@ -1,104 +1,25 @@
-@using Mosaik.Modules.Tamim.Models
-@model List<Mosaik.Modules.Tamim.Models.Tamim>
 @{
     ViewData["Title"] = "Tamim & Sirküler";
-    var statusFilter = ViewBag.StatusFilter as TamimStatus?;
 }
 
 <div class="container" style="padding: 24px;">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-        <h1 style="margin:0;"><i class="fas fa-bullhorn"></i> Tamim & Sirküler</h1>
-        <a href="@Url.Action("Create")" class="btn primary">
-            <i class="fas fa-plus"></i> Yeni Tamim
-        </a>
-    </div>
+    <h1 style="margin-bottom: 16px;">
+        <i class="fas fa-bullhorn"></i> Tamim & Sirküler
+    </h1>
 
-    @if (TempData["Message"] != null)
-    {
-        var t = TempData["MessageType"]?.ToString();
-        <div style="padding:10px 14px; margin-bottom:14px; border-radius:6px;
-                    background:@(t == "success" ? "#dcfce7" : "#fee2e2");
-                    color:@(t == "success" ? "#166534" : "#991b1b");
-                    border:1px solid @(t == "success" ? "#86efac" : "#fca5a5");">
-            @TempData["Message"]
-        </div>
-    }
-
-    <div style="margin-bottom:14px;">
-        <span style="color:var(--muted, #6b7280); font-size:13px;">Filtre:</span>
-        <a href="@Url.Action("Index")" class="btn @(statusFilter == null ? "primary" : "")"
-           style="font-size:12px; padding:4px 10px; height:auto;">Hepsi</a>
-        @foreach (TamimStatus s in Enum.GetValues<TamimStatus>())
-        {
-            var label = s switch
-            {
-                TamimStatus.Draft => "Taslak",
-                TamimStatus.Pending => "Onay Bekliyor",
-                TamimStatus.Approved => "Onaylandı",
-                TamimStatus.Published => "Yayında",
-                TamimStatus.Rejected => "Reddedildi",
-                TamimStatus.Archived => "Arşivlendi",
-                _ => s.ToString()
-            };
-            <a href="@Url.Action("Index", new { status = (int)s })"
-               class="btn @(statusFilter == s ? "primary" : "")"
-               style="font-size:12px; padding:4px 10px; height:auto;">@label</a>
-        }
-    </div>
-
-    <div style="background:var(--paper, #fff); border:1px solid var(--line, #e5e7eb); border-radius:8px; overflow:hidden;">
-        <table style="width:100%; border-collapse:collapse;">
-            <thead>
-                <tr style="background:#f9fafb; text-align:left;">
-                    <th style="padding:10px 14px; border-bottom:1px solid #e5e7eb;">Başlık</th>
-                    <th style="padding:10px 14px; border-bottom:1px solid #e5e7eb; width:140px;">Durum</th>
-                    <th style="padding:10px 14px; border-bottom:1px solid #e5e7eb; width:160px;">Yayın Tarihi</th>
-                    <th style="padding:10px 14px; border-bottom:1px solid #e5e7eb; width:160px;">Oluşturma</th>
-                    <th style="padding:10px 14px; border-bottom:1px solid #e5e7eb; width:100px;"></th>
-                </tr>
-            </thead>
-            <tbody>
-                @if (!Model.Any())
-                {
-                    <tr><td colspan="5" style="padding:30px; text-align:center; color:var(--muted, #6b7280);">Henüz tamim yok.</td></tr>
-                }
-                @foreach (var t in Model)
-                {
-                    var (badgeBg, badgeFg, statusLabel) = t.Status switch
-                    {
-                        TamimStatus.Draft => ("#f3f4f6", "#374151", "Taslak"),
-                        TamimStatus.Pending => ("#fef3c7", "#92400e", "Onay Bekliyor"),
-                        TamimStatus.Approved => ("#dbeafe", "#1e40af", "Onaylandı"),
-                        TamimStatus.Published => ("#dcfce7", "#166534", "Yayında"),
-                        TamimStatus.Rejected => ("#fee2e2", "#991b1b", "Reddedildi"),
-                        TamimStatus.Archived => ("#e5e7eb", "#4b5563", "Arşiv"),
-                        _ => ("#f3f4f6", "#374151", t.Status.ToString())
-                    };
-                    <tr style="border-bottom:1px solid #f3f4f6;">
-                        <td style="padding:10px 14px;">
-                            <a href="@Url.Action("Details", new { id = t.Id })" style="color:var(--accent, #f59e0b); text-decoration:none; font-weight:500;">
-                                @t.Title
-                            </a>
-                        </td>
-                        <td style="padding:10px 14px;">
-                            <span style="background:@badgeBg; color:@badgeFg; padding:3px 8px; border-radius:4px; font-size:12px; font-weight:500;">
-                                @statusLabel
-                            </span>
-                        </td>
-                        <td style="padding:10px 14px; color:var(--muted, #6b7280);">
-                            @(t.PublishDate?.ToString("dd.MM.yyyy HH:mm") ?? "—")
-                        </td>
-                        <td style="padding:10px 14px; color:var(--muted, #6b7280);">
-                            @t.CreatedAt.ToString("dd.MM.yyyy HH:mm")
-                        </td>
-                        <td style="padding:10px 14px; text-align:right;">
-                            <a href="@Url.Action("Edit", new { id = t.Id })" class="btn ghost" style="font-size:12px; padding:3px 8px; height:auto;">
-                                <i class="fas fa-pen"></i>
-                            </a>
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
+    <div style="background: var(--paper, #fff); border: 1px solid var(--line, #e5e7eb); border-radius: 8px; padding: 20px;">
+        <p>Bu modül henüz iskelet aşamasında (Plan 17 Faz A — 2026-05-08).</p>
+        <p>Plan 17 v2 ile gelecek özellikler:</p>
+        <ul>
+            <li><strong>GunlukBlok:</strong> Genel Müdürlük çalışanları gün içinde duyuru/karar/uyarı kaydı girer</li>
+            <li><strong>17:00 otomatik derleme:</strong> Hangfire cron job o günkü blokları toplayıp Tamim olarak yayınlar</li>
+            <li><strong>Tamim zarfı:</strong> TamimBlok junction ile bloklar bir günlük tamime bağlanır</li>
+            <li><strong>Okuma logu:</strong> Kim okudu, ne zaman — "görmedim" bahanesi yok</li>
+            <li><strong>Lookup:</strong> BlokTuru (Duyuru/Karar/Hadise/Uyarı) Mosaik.Core.Lookup'tan</li>
+        </ul>
+        <p style="color: var(--muted, #6b7280); font-size: 14px; margin-top: 16px;">
+            <i class="fas fa-info-circle"></i> Modül DB-driven olarak <code>AppModules</code>
+            tablosundan etkin/pasif yapılabilir (Plan 12 + 16.6).
+        </p>
     </div>
 </div>
