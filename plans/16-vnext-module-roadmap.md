@@ -181,6 +181,25 @@ Mosaik şu an %80 olgun (rapor + dashboard + user/role + audit + brand + modules
 | **26** | **NL-to-SQL / MetricEngine** | YonetIQ MetricEngine adaptasyonu | 4/5 (kavramsal) | 30-40h | Yeni (büyük) |
 | **27** | **Duyurular** (sosyal/operasyonel akış) | from-scratch + tamim/ özellik referansı | 0/5 | 12-16h | Yeni |
 | **28** | **İç İletişim / Mesajlaşma** | from-scratch (SignalR/realtime) | 0/5 | 24-30h | Yeni — gerçek zamanlı, Plan 27'den ayrı |
+| **29** | **Talep/İstek Yönetimi** | talep/ + katalog/ referansı + Plan 23 (esign) onay zinciri | 4/5 | 16-20h | **Yeni — kullanıcı 2026-05-07 ekledi** |
+| **30** | **Görev/Task Yönetimi** | YonetIQ task entity referansı + Plan 22 (toplantı kararları) cross-link | 3/5 | 20-24h | **Yeni — Plan 29 ve Plan 22 birleşim noktası** |
+
+### Plan 29 Talep + Plan 30 Görev — entegrasyon notu (kullanıcı 2026-05-07)
+
+**Talep → Görev dönüşümü** ortak akış:
+- Kullanıcı bir talep gönderir (örn. "ofis için yeni klima")
+- Onaylanan talep otomatik **göreve dönüşür** (atanan kişi, son tarih, durum takibi)
+- Talep onay zinciri (Plan 23) ile bağ — onaylanan adımda Görev tetiklenir
+
+**Toplantı kararı → Görev dönüşümü** (Plan 22 ↔ Plan 30):
+- YonetIQ'da bu pattern var: toplantı sonunda alınan her karar → atanmış göreve dönüşür
+- Calendar/Toplantı modülünde (Plan 22) "karar" entity'si Görev tablosuna FK üretir
+- Görev kaynağı: ManualEntry / FromRequest (Plan 29) / FromMeeting (Plan 22) / FromApproval (Plan 23)
+
+**Plan 30 Görev — Mosaik.Core seviyesinde mi?**
+- Karar yarına: Görev cross-modül concept (Tamim'den de görev üretilebilir, "blok yaz" görevi vb)
+- Mosaik.Core'a `ITask` abstraction yerleştirilirse her modül kendi domain'inden görev üretebilir
+- Aksi halde Plan 30 ayrı modül, Plan 29/22/23 explicit ProjectReference
 
 **Plan 17 vs Plan 27 vs Plan 28 ayrımı (kullanıcı 2026-05-08 netleştirdi):**
 

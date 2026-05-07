@@ -56,6 +56,30 @@ _Kapsam: UI metinleri, Türkçe karakter kullanımı._
 - Teknik detay **logger'a**, kullanıcıya asla.
 - Türkçe ve net: "Kullanıcı adı zaten mevcut." ✓, "User already exists." ✗.
 
+## Tek Kural — Kod %100 EN, UI %100 TR (ZORUNLU)
+
+Karar 2026-05-08 (kullanıcı): "arayüz komple türkçe teknik kodlama tarafı komple ingilizce, class domain isimleri de dahil". Hibrit pattern kaldırıldı — Core entity (User/Role/ReportCatalog) standardı **tüm modüllere** uygulanır.
+
+| Yer | Kural | Doğru | Yanlış |
+|---|---|---|---|
+| Class adı (entity, service, controller, viewmodel — **domain dahil**) | EN | `Circular`, `DailyBlock`, `BlockFile`, `CircularService` | `Tamim`, `GunlukBlok`, `BlokDosyaService` |
+| Method adı | EN + Async suffix | `CreateAsync`, `GetTodaysAsync` | `OlusturAsync`, `GetBugunkuAsync` |
+| Controller action | EN | `Index`, `Details`, `UploadFile` | `Liste`, `UploadDosya` |
+| Property / field adı (domain dahil) | EN | `Subject`, `Content`, `BlockNumber`, `FileName`, `IsUrgent` | `Konu`, `Aciklama`, `BlokNo`, `Acil` |
+| DB tablo adı | EN (PascalCase, çoğul) | `Circulars`, `DailyBlocks`, `BlockFiles` | `Tamim`, `GunlukBlok`, `BlokDosyasi` |
+| DB kolon adı | EN | `Subject`, `BlockNumber`, `IsUrgent`, `CreatedAt` | `Konu`, `BlokNo`, `Acil` |
+| Lookup `Code` değeri | camelCase EN | `blockType`, `fileType` | `blokTuru`, `dosyaTuru` |
+| Audit event type | lowercase_snake_EN | `circular_read`, `block_file_upload` | `tamim_okundu`, `blok_dosya_upload` |
+| URL slug / Area / ModuleKey | EN lowercase | `/circulars/blocks/create` | `/tamim/blok/yeni` |
+| **UI metni (cshtml label, button, alert, sidebar)** | TR (UTF-8) | `Düzenle`, `Yeni Tamim`, `Bölüm` | `Edit`, `New Circular` |
+| **DisplayName (modül adı, sidebar etiketi)** | TR | `"Tamim & Sirküler"` | `"Circular & Bulletin"` |
+
+### Net özet
+- Kod = İngilizce. **"Domain Türkçe ise TR yazılır" kuralı YOK** — `Tamim` kavramı `Circular`'a, `Blok` `Block`'a çevrilir.
+- DB/SQL = İngilizce. Tablo adları çoğul (Core pattern: `Users`, `Roles`).
+- UI metni = Türkçe (label, buton, breadcrumb metni, alert mesajı, hero başlık).
+- İstisna: ModuleKey ve Area gibi route slug'ları EN lowercase, ama UI'da gösterilen `DisplayName` TR.
+
 ## Otomasyon
 
 - `turkish-ui-normalizer` skill'i (planlı) — ASCII'leştirilmiş metinleri UTF-8'e çevirir.

@@ -113,7 +113,8 @@ public class GunlukBlok : BaseEntity
     [BindNever] public int OlusturanId { get; set; }    // User.UserId cross-csproj FK
     [Required, MaxLength(100)] public string DepartmanAdi { get; set; } = "";
     [Required, MaxLength(200)] public string Konu { get; set; } = "";
-    [Required] public string Aciklama { get; set; } = "";
+    [Required, MaxLength(500)] public string Aciklama { get; set; } = "";  // kısa özet
+    [Required] public string Icerik { get; set; } = "";  // NVARCHAR(MAX) zengin metin (AI özet kaynağı)
     public DateTime BlokTarihi { get; set; } = DateTime.UtcNow.Date;
     public int BlokTuruId { get; set; }                 // Mosaik.Core.Lookup.DictionaryValue.Id
     public bool Acil { get; set; }
@@ -153,11 +154,31 @@ await _audit.LogAsync(
 **"Okundu mu?" sorgusu:** `EXISTS WHERE EventType='tamim_okundu' AND TargetKey=@id AND Username=@user`
 **"Kim okumadı?" raporu:** `Users LEFT JOIN AuditLog ON ... WHERE AuditLog.AuditId IS NULL`
 
+## 4.5. tamim2 Derin Keşif Yansımaları (2026-05-08)
+
+İki subagent code-explorer keşfi sonrası schema + süreç kararları. Detaylı bulgu memory'de (`project_tamim_app_kesif.md`).
+
+**Schema (Faz B'ye eklenecek):**
+- `GunlukBlok.Icerik NVARCHAR(MAX) NOT NULL` — tamim2'de yok ama AI sorgular, Mosaik için zorunlu
+- Mevcut alanlar (`Konu`, `Aciklama`) yerine kullanılacak değil, ek olarak — `Konu` 200 char başlık, `Aciklama` kısa, `Icerik` zengin metin
+
+**Lookup kararı (kesin):**
+- Tamim2: 7 ayrı tablo. Mosaik.Core.Lookup tek tablo (DictionaryType+Value) ✓ — Mosaik pattern korunur
+- DictionaryValue'da Color/Icon/SiraNo metadata kontrolü (Faz B1 önkoşulu)
+
+**Reddedilen tamim2 patternleri (Mosaik'te tekrarlanmasın):**
+- Self-call AI (GET → POST localhost) → Hangfire job içi tek çağrı
+- Cache'siz Gemini → `Tamim.AiOzetJson` immutable kaydı yeter
+- Hiç yetki kontrolü → her durum geçişi action'ı `[Authorize(Roles="...")]`
+- Hardcoded password → User Secrets + cookie auth (Mosaik default)
+
+**Onaylanan tamim2 referansları:**
+- `tamim/services/cronJobs.js` — node-cron pattern (Faz D Hangfire için niyet referans)
+- `tamim/services/ai/geminiService.generateTamimSummary` — prompt yapısı (Faz F birebir)
+- `src/app/api/dashboard/stats/route.ts` — istatistik SQL (Faz I birebir port)
+- `spBlokNoOlustur` / `spTamimNoOlustur` — numara üretim formatı (BLK-YYYYMMDD-NNN, TAM-YYYYMMDD)
+
 ## 5. Faz Planı (revize 2 — fark yaratan özellikler eklendi)
-
-**KRİTİK BULGU (2026-05-08 derin keşif):** `D:/Dev/tamim/` projesinde aslında implement edilmiş kod **yok**. Sadece Prisma şeması + planlama dokümanları + boş Next.js iskeleti. Tüm "fark yaratan özellikler" (dosya ekleme, AI özet, export, bildirim) **planlama düzeyinde kalmış**. Mosaik tarafında sıfırdan yazılacak.
-
-**Memory referansı:** `project_tamim_app_keşif.md` (gelecek oturumlarda).
 
 ### Faz A — İskelet ✅ TAMAM (commit 38d6efe)
 Mevcut yapı korunuyor: `Mosaik.Modules.Tamim` csproj + `IMosaikModule` impl + boş Index sayfası.

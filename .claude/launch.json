@@ -2,9 +2,9 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "ReportPanel",
+      "name": "Mosaik",
       "runtimeExecutable": "dotnet",
-      "runtimeArgs": ["run", "--project", "ReportPanel", "--launch-profile", "http"],
+      "runtimeArgs": ["run", "--project", "Mosaik", "--launch-profile", "http"],
       "port": 5197
     }
   ]
