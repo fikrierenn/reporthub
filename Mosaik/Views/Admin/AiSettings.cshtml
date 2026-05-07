@@ -1,0 +1,181 @@
+@model List<Mosaik.Models.AiSettings>
+@{
+    Layout = "_AppLayout";
+    ViewData["Title"] = "Yapay Zeka Profilleri - Mosaik";
+    ViewData["PageTitle"] = "Yapay Zeka Profilleri";
+    var primaryEnabled = Model.Any(x => x.IsPrimary && x.IsEnabled && !string.IsNullOrEmpty(x.ApiKey));
+    var fallbackCount = Model.Count(x => x.IsEnabled && !x.IsPrimary && !string.IsNullOrEmpty(x.ApiKey));
+}
+
+@section Breadcrumb {
+    <nav class="crumbs" aria-label="Sayfa konumu">
+        <a href="/Dashboard">BKM Kitap</a>
+        <span class="sep" aria-hidden="true">/</span>
+        <a href="/Admin">Yönetim</a>
+        <span class="sep" aria-hidden="true">/</span>
+        <span class="current" aria-current="page">Yapay Zeka</span>
+    </nav>
+}
+
+@section TopActions {
+    <a href="/Admin/AiSettings/Edit" class="btn primary">
+        <i class="fas fa-plus text-[10px]"></i>
+        Yeni Profil
+    </a>
+    <a href="#" class="icon-btn" title="Yardım">
+        <i class="fas fa-circle-question"></i>
+    </a>
+}
+
+<div class="hero">
+    <h1>Yapay Zeka Profilleri</h1>
+    <div class="sub">
+        <span>Birden fazla provider tanımlanabilir — birincil başarısız olursa fallback zinciri devreye girer</span>
+        @if (primaryEnabled)
+        {
+            <span class="pill" style="background:rgba(16,185,129,.10); border-color:rgba(16,185,129,.30); color:#065f46;">
+                <span class="dot" style="background:var(--ok);"></span>Birincil aktif · @fallbackCount fallback
+            </span>
+        }
+        else
+        {
+            <span class="pill" style="background:rgba(245,158,11,.10); border-color:rgba(245,158,11,.30); color:#92400e;">
+                <span class="dot" style="background:var(--warn);"></span>Birincil profil yok / kapalı
+            </span>
+        }
+    </div>
+</div>
+
+@if (TempData["Message"] != null)
+{
+    var t = TempData["MessageType"]?.ToString();
+    <div role="alert" style="margin-bottom:18px; padding:12px 16px; border-radius:10px; font-size:13px;
+                background: @(t == "success" ? "rgba(16,185,129,0.10)" : t == "warn" ? "rgba(245,158,11,0.10)" : "rgba(220,38,38,0.10)");
+                border: 1px solid @(t == "success" ? "rgba(16,185,129,0.25)" : t == "warn" ? "rgba(245,158,11,0.30)" : "rgba(220,38,38,0.25)");
+                color: @(t == "success" ? "#065f46" : t == "warn" ? "#92400e" : "var(--accent-ink)");">
+        <i class="fas @(t == "success" ? "fa-check-circle" : t == "warn" ? "fa-triangle-exclamation" : "fa-exclamation-circle")" style="margin-right:8px;"></i>
+        @TempData["Message"]
+    </div>
+}
+
+@if (!Model.Any())
+{
+    <div style="background:var(--paper); border:1px dashed var(--line); border-radius:10px; padding:48px 24px; text-align:center; color:var(--ink-3);">
+        <i class="fas fa-wand-magic-sparkles" style="font-size:48px; opacity:.4; margin-bottom:12px;"></i>
+        <h3 style="font-size:14px; font-weight:600; color:var(--ink-1); margin:0 0 4px;">Henüz AI profili tanımlanmamış</h3>
+        <p style="margin:0; font-size:12.5px;">İlk profili oluşturmak için <a href="/Admin/AiSettings/Edit" style="color:var(--accent); font-weight:500;">yeni profil ekle</a>.</p>
+    </div>
+}
+else
+{
+    <div style="background:var(--paper); border:1px solid var(--line); border-radius:10px; overflow:hidden;">
+        <table class="dt">
+            <thead>
+                <tr>
+                    <th style="width:30px;"></th>
+                    <th>Ad</th>
+                    <th>Provider / Model</th>
+                    <th>Durum</th>
+                    <th>Öncelik</th>
+                    <th>Son Test</th>
+                    <th style="text-align:right;">İşlemler</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var p in Model)
+                {
+                    <tr>
+                        <td>
+                            @if (p.IsPrimary)
+                            {
+                                <i class="fas fa-star" style="color:var(--accent);" title="Birincil"></i>
+                            }
+                        </td>
+                        <td>
+                            <span style="font-weight:500; color:var(--ink-1);">@(p.Name ?? p.Provider)</span>
+                            @if (!string.IsNullOrEmpty(p.ApiKey))
+                            {
+                                <span style="font-size:10px; color:var(--ok); margin-left:6px;" title="Anahtar kayıtlı"><i class="fas fa-key"></i></span>
+                            }
+                            else
+                            {
+                                <span style="font-size:10px; color:var(--accent);" title="Anahtar yok"><i class="fas fa-triangle-exclamation"></i></span>
+                            }
+                        </td>
+                        <td>
+                            <span class="mono" style="font-size:11.5px;">@p.Provider</span>
+                            <span style="color:var(--ink-3);">·</span>
+                            <span class="mono" style="font-size:11.5px;">@p.Model</span>
+                        </td>
+                        <td>
+                            @if (p.IsEnabled)
+                            {
+                                <span class="status ok"><i class="fas fa-check"></i> Aktif</span>
+                            }
+                            else
+                            {
+                                <span class="status warn"><i class="fas fa-pause"></i> Kapalı</span>
+                            }
+                        </td>
+                        <td><span class="mono">@p.Priority</span></td>
+                        <td>
+                            @if (p.LastTestAt.HasValue)
+                            {
+                                <span class="ago" style="color:@(p.LastTestSuccess ? "var(--ok)" : "var(--accent)");">
+                                    <i class="fas @(p.LastTestSuccess ? "fa-circle-check" : "fa-circle-xmark")" style="margin-right:4px;"></i>
+                                    @p.LastTestAt.Value.ToLocalTime().ToString("dd.MM HH:mm")
+                                </span>
+                            }
+                            else
+                            {
+                                <span style="color:var(--ink-4); font-size:12px;">—</span>
+                            }
+                        </td>
+                        <td style="text-align:right;">
+                            <div style="display:inline-flex; gap:6px;">
+                                @if (!p.IsPrimary && p.IsEnabled && !string.IsNullOrEmpty(p.ApiKey))
+                                {
+                                    <form method="post" action="/Admin/AiSettings/SetPrimary/@p.Id" style="display:inline; margin:0;">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn ghost sm" title="Birincil yap">
+                                            <i class="fas fa-star text-[9px]"></i>
+                                            Primary
+                                        </button>
+                                    </form>
+                                }
+                                <form method="post" action="/Admin/AiSettings/Test/@p.Id" style="display:inline; margin:0;">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn ghost sm" title="Bağlantıyı test et">
+                                        <i class="fas fa-bolt text-[9px]"></i>
+                                        Test
+                                    </button>
+                                </form>
+                                <a href="/Admin/AiSettings/Edit/@p.Id" class="btn ghost sm">
+                                    <i class="fas fa-pen text-[9px]"></i>
+                                    Düzenle
+                                </a>
+                                <form method="post" action="/Admin/AiSettings/Delete/@p.Id" style="display:inline; margin:0;"
+                                      onsubmit="return confirm('@(p.Name ?? p.Provider) profilini sil?');">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn sm danger">
+                                        <i class="fas fa-trash text-[9px]"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+<div style="margin-top:14px; font-size:12px; color:var(--ink-3); max-width:880px;">
+    <strong>Fallback nasıl çalışır?</strong>
+    <ul style="margin:6px 0 0; padding-left:20px;">
+        <li>İstek geldiğinde önce <strong>birincil (⭐)</strong> profil denenir.</li>
+        <li>Birincil başarısız olursa (HTTP hata, quota dolu, key invalid vs) diğer <em>aktif</em> profiller <strong>öncelik sırasına göre</strong> (düşük → yüksek) denenir.</li>
+        <li>Test butonu sadece o profili izole ederek çalıştırır (geçici olarak diğerleri devre dışı bırakılır).</li>
+        <li>Provider değiştirsen bile diğer profiller saklı kalır — istediğin zaman birincil değiştirebilirsin.</li>
+    </ul>
+</div>

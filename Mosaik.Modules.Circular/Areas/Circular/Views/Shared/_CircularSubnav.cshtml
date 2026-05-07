@@ -1,0 +1,23 @@
+@{
+    var ctrl = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
+
+    string NavActive(string key) =>
+        ctrl.Equals(key, StringComparison.OrdinalIgnoreCase) ? "active" : "";
+}
+<nav class="subnav" aria-label="Tamim alt-navigasyonu">
+    <a href="/Circular/Circular" class="@NavActive("Circular")">
+        <i class="fas fa-bullhorn"></i>
+        <span>Tamimler</span>
+    </a>
+    <a href="/Circular/Block" class="@NavActive("Block")">
+        <i class="fas fa-clipboard-list"></i>
+        <span>Bloklarım</span>
+    </a>
+    @if (User.IsInRole("admin"))
+    {
+        <a href="/Circular/Admin/Dashboard" class="@NavActive("Admin")">
+            <i class="fas fa-chart-line"></i>
+            <span>Dashboard</span>
+        </a>
+    }
+</nav>

@@ -1,0 +1,189 @@
+@using Mosaik.Modules.Circular.Models
+@using System.Globalization
+@using System.Text.Json
+@model Circular
+@{
+    Layout = null;
+    var blocks = ViewBag.Blocks as List<DailyBlock> ?? new();
+    var fileMap = ViewBag.FileMap as Dictionary<int, List<BlockFile>> ?? new();
+    var typeMap = ViewBag.BlockTypeMap as Dictionary<int, string> ?? new();
+    var tr = new CultureInfo("tr-TR");
+
+    List<string>? aiSummary = null;
+    if (!string.IsNullOrWhiteSpace(Model.AiSummaryJson))
+    {
+        try
+        {
+            using var doc = JsonDocument.Parse(Model.AiSummaryJson);
+            if (doc.RootElement.TryGetProperty("summary", out var s) && s.ValueKind == JsonValueKind.Array)
+                aiSummary = s.EnumerateArray().Select(e => e.GetString() ?? "").Where(x => !string.IsNullOrWhiteSpace(x)).ToList();
+        }
+        catch { }
+    }
+}
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>@Model.CircularNumber — @Model.Title</title>
+    <style>
+        @@page { size: A4; margin: 18mm 16mm; }
+        * { box-sizing: border-box; }
+        body {
+            font-family: Georgia, 'Times New Roman', serif;
+            font-size: 11.5pt;
+            color: #111;
+            line-height: 1.55;
+            margin: 0;
+            padding: 0;
+        }
+        .toolbar {
+            background: #f5f5f5;
+            border-bottom: 1px solid #ddd;
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-size: 12px;
+        }
+        .toolbar .actions { display: flex; gap: 8px; }
+        .toolbar button, .toolbar a {
+            padding: 6px 14px; border: 1px solid #ccc; background: #fff;
+            border-radius: 6px; cursor: pointer; font-size: 12px;
+            text-decoration: none; color: #333;
+        }
+        .toolbar button.primary { background: #dc2626; color: #fff; border-color: #dc2626; }
+        .doc { max-width: 720px; margin: 24px auto; padding: 0 30px; }
+        @@media print {
+            .toolbar { display: none; }
+            .doc { margin: 0; max-width: none; padding: 0; }
+        }
+
+        .head-row {
+            display: flex; justify-content: space-between; align-items: flex-start;
+            border-bottom: 2px solid #111; padding-bottom: 12px; margin-bottom: 16px;
+        }
+        .head-row .num { font-family: 'Courier New', monospace; font-size: 11pt; }
+        .head-row .date { text-align: right; font-size: 10.5pt; color: #444; }
+        h1.title { font-size: 18pt; font-weight: 700; margin: 0 0 4px; letter-spacing: -.01em; }
+        .sub-meta { font-size: 10pt; color: #555; }
+
+        .ai-summary {
+            background: #f9f9f6; border-left: 3px solid #aaa;
+            padding: 12px 18px; margin: 18px 0; font-size: 10.5pt;
+        }
+        .ai-summary h3 {
+            font-size: 9pt; font-weight: 700; letter-spacing: .08em;
+            text-transform: uppercase; color: #555; margin: 0 0 8px;
+        }
+        .ai-summary ul { margin: 0; padding-left: 18px; }
+        .ai-summary li { margin-bottom: 3px; }
+
+        .blocks-title {
+            font-size: 9.5pt; font-weight: 700; letter-spacing: .08em;
+            text-transform: uppercase; color: #555;
+            border-bottom: 1px solid #ccc; padding-bottom: 6px;
+            margin: 28px 0 12px;
+        }
+        .block {
+            page-break-inside: avoid;
+            border: 1px solid #ddd; border-radius: 4px;
+            padding: 12px 16px; margin-bottom: 12px;
+        }
+        .block.urgent { border-left: 3px solid #dc2626; background: #fff7f7; }
+        .block .b-head {
+            display: flex; justify-content: space-between; align-items: center;
+            font-size: 9pt; color: #666; margin-bottom: 6px;
+        }
+        .block .b-head .urgent-tag {
+            background: #dc2626; color: #fff; padding: 1px 6px; border-radius: 3px;
+            font-size: 8.5pt; font-weight: 700; letter-spacing: .04em;
+        }
+        .block h4 { font-size: 12pt; font-weight: 600; margin: 4px 0 8px; }
+        .block .b-meta { font-size: 9.5pt; color: #555; margin-bottom: 6px; }
+        .block .b-content { font-size: 11pt; }
+        .block .b-content p { margin: 0 0 6px; }
+        .block .b-content ul, .block .b-content ol { margin: 4px 0 6px; padding-left: 22px; }
+        .files { margin-top: 8px; font-size: 9.5pt; color: #555; }
+        .files .label { font-weight: 700; }
+
+        footer {
+            margin-top: 30px; padding-top: 10px; border-top: 1px solid #ccc;
+            font-size: 9pt; color: #777; text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+<div class="toolbar">
+    <div><strong>@Model.CircularNumber</strong> — yazdırma görünümü</div>
+    <div class="actions">
+        <button class="primary" onclick="window.print()">🖨 Yazdır / PDF kaydet</button>
+        <a href="@Url.Action("Details", new { id = Model.Id })">Geri</a>
+    </div>
+</div>
+
+<div class="doc">
+
+    <div class="head-row">
+        <div>
+            <div class="num">@Model.CircularNumber</div>
+            <h1 class="title">@Model.Title</h1>
+            <div class="sub-meta">
+                Tamim Tarihi: @Model.CircularDate.ToString("dd MMMM yyyy dddd", tr) ·
+                @blocks.Count blok @if (blocks.Any(b => b.IsUrgent)) { <text>· @blocks.Count(b => b.IsUrgent) acil</text> }
+            </div>
+        </div>
+        <div class="date">
+            Yayın: @Model.PublishedAt.ToString("dd.MM.yyyy HH:mm")
+        </div>
+    </div>
+
+    @if (aiSummary != null && aiSummary.Any())
+    {
+        <div class="ai-summary">
+            <h3>Özet</h3>
+            <ul>
+                @foreach (var s in aiSummary)
+                {
+                    <li>@s</li>
+                }
+            </ul>
+        </div>
+    }
+
+    <div class="blocks-title">İçerik Blokları</div>
+
+    @foreach (var b in blocks.OrderByDescending(x => x.IsUrgent).ThenBy(x => x.Id))
+    {
+        typeMap.TryGetValue(b.BlockTypeId, out var typeLabel);
+        <div class="block @(b.IsUrgent ? "urgent" : "")">
+            <div class="b-head">
+                <span>@b.BlockNumber · @b.Department · @(typeLabel ?? "")</span>
+                @if (b.IsUrgent)
+                {
+                    <span class="urgent-tag">ACİL</span>
+                }
+            </div>
+            <h4>@b.Subject</h4>
+            <div class="b-content">@Html.Raw(b.Content)</div>
+
+            @if (fileMap.TryGetValue(b.Id, out var bf) && bf.Any())
+            {
+                <div class="files">
+                    <span class="label">Ekli dosyalar:</span>
+                    @string.Join(", ", bf.Select(f => $"{f.FileName} ({f.Extension.ToUpper()}, {(f.FileSize < 1024 * 1024 ? f.FileSize / 1024 + " KB" : (f.FileSize / 1024.0 / 1024).ToString("0.#") + " MB")})"))
+                </div>
+            }
+        </div>
+    }
+
+    <footer>
+        Bu belge @DateTime.Now.ToString("dd.MM.yyyy HH:mm") tarihinde Mosaik portalından yazdırıldı.<br>
+        @Model.CircularNumber · BKM Kitap
+    </footer>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>Mosaik.Modules.Circular</RootNamespace>
+    <AssemblyName>Mosaik.Modules.Circular</AssemblyName>
+    <AddRazorSupportForMvc>true</AddRazorSupportForMvc>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.1" />
+    <PackageReference Include="ClosedXML" Version="0.105.0" />
+    <ProjectReference Include="..\Mosaik.Core\Mosaik.Core.csproj" />
+  </ItemGroup>
+
+</Project>

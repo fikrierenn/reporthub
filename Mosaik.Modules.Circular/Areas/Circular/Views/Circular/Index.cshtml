@@ -1,0 +1,120 @@
+@using Mosaik.Modules.Circular.Models
+@using System.Globalization
+@model List<Circular>
+@{
+    ViewData["Title"] = "Tamimler";
+    ViewData["PageTitle"] = "Tamimler";
+    var tr = new CultureInfo("tr-TR");
+    var totalCount = Model.Count;
+}
+
+@section Breadcrumb {
+    <nav class="crumbs" aria-label="Sayfa konumu">
+        <a href="/Dashboard">BKM Kitap</a>
+        <span class="sep" aria-hidden="true">/</span>
+        <span class="current" aria-current="page">Tamimler</span>
+    </nav>
+}
+
+@section TopActions {
+    @if (User.IsInRole("admin"))
+    {
+        <form method="post" action="@Url.Action("CompileNow", "Admin")" style="display:inline; margin:0;"
+              onsubmit="return confirm('Bugünün pending bloklarını şimdi derleyip tamim olarak yayınla?');">
+            @Html.AntiForgeryToken()
+            <button type="submit" class="btn primary" title="Cron'u beklemeden manuel derleme">
+                <i class="fas fa-bolt text-[10px]"></i>
+                Şimdi Derle
+            </button>
+        </form>
+    }
+    <a href="#" class="icon-btn" title="Yardım">
+        <i class="fas fa-circle-question"></i>
+    </a>
+}
+
+<div class="hero">
+    <h1>Tamimler</h1>
+    <div class="sub">
+        <span class="mono">@totalCount tamim · son 30 gün</span>
+        <span class="pill"><span class="dot"></span>Bugünkü tamim 17:00'de yayınlanır</span>
+    </div>
+</div>
+
+@await Html.PartialAsync("_CircularSubnav")
+
+<div x-data="{ q: '' }">
+
+<form method="get" style="background:var(--paper); border:1px solid var(--line); border-radius:10px; padding:14px 16px; margin-bottom:18px; display:flex; gap:12px; flex-wrap:wrap; align-items:end;">
+    <div style="flex:1; min-width:240px;">
+        <label class="lab" for="tamimSearch">Arama</label>
+        <div style="position:relative;">
+            <span style="position:absolute; left:10px; top:50%; transform:translateY(-50%); color:var(--ink-4); pointer-events:none;">
+                <i class="fas fa-magnifying-glass" style="font-size:12px;"></i>
+            </span>
+            <input type="text" id="tamimSearch" name="q" x-model="q"
+                   class="inp" style="padding-left:32px;"
+                   placeholder="Tamim no, başlık veya tarih..." />
+        </div>
+    </div>
+    <div style="display:flex; gap:6px;">
+        <button type="submit" class="btn primary" title="URL'ye yansıt (paylaşılabilir link)">
+            <i class="fas fa-filter text-[10px]"></i>
+            Filtrele
+        </button>
+        <button type="button" class="btn ghost" @@click="q = ''" x-show="q" x-cloak>
+            <i class="fas fa-xmark text-[10px]"></i>
+            Temizle
+        </button>
+    </div>
+</form>
+
+@if (!Model.Any())
+{
+    <div style="background:var(--paper); border:1px dashed var(--line); border-radius:10px; padding:48px 24px; text-align:center; color:var(--ink-3);">
+        <i class="fas fa-folder-open" style="font-size:48px; opacity:.4; margin-bottom:12px;"></i>
+        <h3 style="font-size:14px; font-weight:600; color:var(--ink-1); margin:0 0 4px;">Son 30 günde yayınlanmış tamim yok</h3>
+        <p style="margin:0; font-size:12.5px;">Sistem her gün <strong>17:00</strong>'de o güne ait blokları otomatik tamim olarak yayınlar.</p>
+    </div>
+}
+else
+{
+    <div class="quick-grid">
+        @foreach (var t in Model)
+        {
+            var dateStr = t.CircularDate.ToString("dd MMM yyyy", tr);
+            var hour = t.PublishedAt.ToString("HH:mm");
+            var searchHay = $"{t.CircularNumber} {t.Title} {dateStr}".ToLowerInvariant();
+            <div class="qcard" style="position:relative;"
+                 data-search="@searchHay"
+                 x-show="!q || $el.dataset.search.includes(q.toLowerCase())"
+                 x-cloak>
+                <div class="row1">
+                    <span class="type-chip type-dash">Tamim</span>
+                    <span class="mono" style="font-size:10.5px; color:var(--ink-4); margin-left:auto;">@t.CircularNumber</span>
+                </div>
+                <a href="@Url.Action("Details", new { id = t.Id })" style="text-decoration:none; color:inherit;">
+                    <h3>@t.Title</h3>
+                    <div class="sub">
+                        <i class="fas fa-calendar" style="font-size:9px; color:var(--ink-4); margin-right:3px;"></i>
+                        @dateStr
+                    </div>
+                    <div class="meta">
+                        <span class="ago" style="font-family:'JetBrains Mono',monospace;">
+                            <i class="fas fa-clock" style="font-size:9px; color:var(--ink-4); margin-right:3px;"></i>
+                            @hour
+                        </span>
+                        <span class="run">Aç <i class="fas fa-arrow-right text-[10px]"></i></span>
+                    </div>
+                </a>
+            </div>
+        }
+    </div>
+}
+
+</div>
+
+@{
+    var footer = $"{totalCount} tamim · son 30 gün";
+}
+@await Html.PartialAsync("_FooterHint", (string?)footer)

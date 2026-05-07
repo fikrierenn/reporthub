@@ -1,0 +1,243 @@
+@using Mosaik.Modules.Circular.Models
+@using System.Globalization
+@model Circular
+@{
+    ViewData["Title"] = Model.Title;
+    var blocks = ViewBag.Blocks as List<DailyBlock> ?? new();
+    var blockTypeMap = ViewBag.BlockTypeMap as Dictionary<int, string> ?? new();
+    var fileMap = ViewBag.FileMap as Dictionary<int, List<BlockFile>> ?? new();
+    var tr = new CultureInfo("tr-TR");
+    var urgentCount = blocks.Count(b => b.IsUrgent);
+    var totalFiles = fileMap.Values.Sum(l => l.Count);
+
+    string TipKey(string? label) => (label ?? "").ToLowerInvariant() switch
+    {
+        "karar" => "type-karar",
+        "uyarı" or "uyari" => "type-uyari",
+        "bilgi" => "type-bilgi",
+        "duyuru" => "type-duyuru",
+        _ => ""
+    };
+
+    string FormatBoyut(long b) =>
+        b < 1024 ? $"{b} B"
+        : b < 1024 * 1024 ? $"{b / 1024} KB"
+        : $"{b / 1024.0 / 1024:0.#} MB";
+}
+
+@section Breadcrumb {
+    <nav class="crumbs" aria-label="Sayfa konumu">
+        <a href="/Dashboard">BKM Kitap</a>
+        <span class="sep" aria-hidden="true">/</span>
+        <a href="@Url.Action("Index")">Tamimler</a>
+        <span class="sep" aria-hidden="true">/</span>
+        <span class="current" aria-current="page">@Model.CircularNumber</span>
+    </nav>
+}
+
+@section TopActions {
+    <a href="@Url.Action("Print", new { id = Model.Id })" class="btn" target="_blank" title="Yazdırma görünümü (browser ile PDF kaydet)">
+        <i class="fas fa-print text-[10px]"></i>
+        Yazdır / PDF
+    </a>
+    <a href="@Url.Action("ExportXlsx", new { id = Model.Id })" class="btn">
+        <i class="fas fa-file-excel text-[10px]"></i>
+        Excel
+    </a>
+    @if (User.IsInRole("admin"))
+    {
+        <a href="@Url.Action("ReadingReport", "Admin", new { id = Model.Id })" class="btn">
+            <i class="fas fa-eye text-[10px]"></i>
+            Okuma Raporu
+        </a>
+    }
+    <a href="@Url.Action("Index")" class="btn">
+        <i class="fas fa-arrow-left" aria-hidden="true"></i> Liste
+    </a>
+}
+
+@if (TempData["Message"] != null)
+{
+    var t = TempData["MessageType"]?.ToString();
+    <div role="alert" style="margin-bottom:18px; padding:12px 16px; border-radius:10px; font-size:13px;
+                background: @(t == "success" ? "rgba(16,185,129,0.10)" : t == "warn" ? "rgba(245,158,11,0.10)" : "rgba(220,38,38,0.10)");
+                border: 1px solid @(t == "success" ? "rgba(16,185,129,0.25)" : t == "warn" ? "rgba(245,158,11,0.30)" : "rgba(220,38,38,0.25)");
+                color: @(t == "success" ? "#065f46" : t == "warn" ? "#92400e" : "var(--accent-ink)");">
+        <i class="fas @(t == "success" ? "fa-check-circle" : t == "warn" ? "fa-triangle-exclamation" : "fa-exclamation-circle")" style="margin-right:8px;"></i>
+        @TempData["Message"]
+    </div>
+}
+
+<article class="tamim-envelope">
+    <div class="te-no">@Model.CircularNumber · GÜNLÜK TAMİM</div>
+    <h1>@Model.Title</h1>
+    <div class="te-meta">
+        <span><i class="fas fa-calendar" aria-hidden="true"></i>Circular tarihi: @Model.CircularDate.ToString("dd MMMM yyyy dddd", tr)</span>
+        <span><i class="fas fa-paper-plane" aria-hidden="true"></i>Yayın: @Model.PublishedAt.ToString("dd MMM HH:mm", tr)</span>
+        <span><i class="fas fa-layer-group" aria-hidden="true"></i>@blocks.Count blok</span>
+        @if (totalFiles > 0)
+        {
+            <span><i class="fas fa-paperclip" aria-hidden="true"></i>@totalFiles dosya</span>
+        }
+        @if (urgentCount > 0)
+        {
+            <span style="color:var(--accent); font-weight:600;"><i class="fas fa-bolt" aria-hidden="true"></i>@urgentCount acil</span>
+        }
+    </div>
+</article>
+
+@* AI özet — Plan 17 Faz F. Üretilmişse JSON'dan parse edip listele, yoksa placeholder. *@
+@{
+    List<string>? summaryItems = null;
+    List<string>? topicItems = null;
+    if (!string.IsNullOrWhiteSpace(Model.AiSummaryJson))
+    {
+        try
+        {
+            using var doc = System.Text.Json.JsonDocument.Parse(Model.AiSummaryJson);
+            var root = doc.RootElement;
+            if (root.TryGetProperty("summary", out var sArr) && sArr.ValueKind == System.Text.Json.JsonValueKind.Array)
+            {
+                summaryItems = sArr.EnumerateArray().Select(e => e.GetString() ?? "").Where(s => !string.IsNullOrWhiteSpace(s)).ToList();
+            }
+            if (root.TryGetProperty("topics", out var tArr) && tArr.ValueKind == System.Text.Json.JsonValueKind.Array)
+            {
+                topicItems = tArr.EnumerateArray().Select(e => e.GetString() ?? "").Where(s => !string.IsNullOrWhiteSpace(s)).ToList();
+            }
+        }
+        catch { /* Bozuk JSON ise placeholder göster */ }
+    }
+    var hasSummary = summaryItems != null && summaryItems.Any();
+}
+
+<div class="ai-summary-card" aria-label="Yapay zeka özet alanı">
+    <div class="ai-head">
+        <i class="fas fa-wand-magic-sparkles" aria-hidden="true"></i>
+        <span>Yapay zekâ özeti</span>
+        @if (hasSummary)
+        {
+            <span class="ai-badge" style="background:rgba(16,185,129,.15); color:#065f46;">Hazır</span>
+            @if (Model.AiSummaryAt.HasValue)
+            {
+                <span style="font-size:11px; color:var(--ink-3); margin-left:auto;">@Model.AiSummaryAt.Value.ToLocalTime().ToString("dd MMM HH:mm", tr)</span>
+            }
+        }
+        else
+        {
+            <span class="ai-badge">Beklemede</span>
+        }
+
+        @if (User.IsInRole("admin"))
+        {
+            <form method="post" action="@Url.Action("RegenerateSummary", "Admin", new { id = Model.Id })" style="display:inline; margin-left:8px;"
+                  onsubmit="this.querySelector('button').disabled=true; this.querySelector('button').innerHTML='<i class=\'fas fa-spinner fa-spin text-[9px]\'></i> Üretiliyor...';">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn ghost sm" title="AI özetini yeniden üret">
+                    <i class="fas fa-rotate text-[9px]"></i>
+                    Yeniden Üret
+                </button>
+            </form>
+        }
+    </div>
+
+    @if (hasSummary)
+    {
+        <ul style="margin:8px 0 0; padding-left:20px; font-size:13.5px; color:var(--ink-1); line-height:1.7;">
+            @foreach (var item in summaryItems!)
+            {
+                <li>@item</li>
+            }
+        </ul>
+        @if (topicItems != null && topicItems.Any())
+        {
+            <div style="margin-top:10px; padding-top:10px; border-top:1px dashed var(--line); display:flex; flex-wrap:wrap; gap:6px; align-items:center;">
+                <span style="font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-3);">Konular:</span>
+                @foreach (var topic in topicItems)
+                {
+                    <span class="type-chip" style="background:rgba(59,130,246,.10); color:#1e40af;">@topic</span>
+                }
+            </div>
+        }
+    }
+    else
+    {
+        <p style="margin:0; font-size:13px; color:var(--ink-3);">
+            AI özet henüz üretilmedi.
+            @if (User.IsInRole("admin"))
+            {
+                <text>Üstteki "Yeniden Üret" butonu ile manuel tetikleyebilirsin (Yapay Zeka ayarları aktif olmalı).</text>
+            }
+        </p>
+    }
+</div>
+
+<div class="section-title">
+    <h2>İçerik blokları</h2>
+    <span style="font-size:12px; color:var(--ink-3);">@blocks.Count blok</span>
+</div>
+
+@if (!blocks.Any())
+{
+    <div style="background:var(--paper); border:1px solid var(--line); border-radius:10px; padding:30px; text-align:center; color:var(--ink-3);">
+        Bu tamim'e bağlı blok bulunamadı.
+    </div>
+}
+else
+{
+    <div class="blok-list">
+        @foreach (var b in blocks.OrderByDescending(x => x.IsUrgent).ThenBy(x => x.Id))
+        {
+            blockTypeMap.TryGetValue(b.BlockTypeId, out var turLabel);
+            var tipCls = TipKey(turLabel);
+            <article class="blok-item @(b.IsUrgent ? "acil" : "")">
+                <div class="bi-head">
+                    <span class="bi-no">@b.BlockNumber</span>
+                    <div style="display:flex; gap:6px; align-items:center;">
+                        @if (b.IsUrgent)
+                        {
+                            <span class="acil-pill"><i class="fas fa-bolt" aria-hidden="true"></i> IsUrgent</span>
+                        }
+                        @if (!string.IsNullOrEmpty(turLabel))
+                        {
+                            <span class="type-chip @tipCls">@turLabel</span>
+                        }
+                    </div>
+                </div>
+                <h4>@b.Subject</h4>
+                <div class="bi-icerik">@Html.Raw(b.Content)</div>
+                @if (fileMap.TryGetValue(b.Id, out var blockFiles) && blockFiles.Any())
+                {
+                    <div style="margin-top:10px; display:flex; flex-wrap:wrap; gap:6px;">
+                        @foreach (var d in blockFiles)
+                        {
+                            <a href="@Url.Action("DownloadFile", "Block", new { id = d.Id })"
+                               style="display:inline-flex; align-items:center; gap:5px; padding:5px 9px; background:var(--canvas); border:1px solid var(--line); border-radius:6px; text-decoration:none; color:var(--ink-1); font-size:12px;">
+                                <span style="font-size:9.5px; font-weight:700; padding:2px 5px; border-radius:3px; background:var(--accent); color:#fff; text-transform:uppercase;">@d.Extension</span>
+                                <span>@d.FileName</span>
+                                <span style="color:var(--ink-3); font-size:10.5px;">· @FormatBoyut(d.FileSize)</span>
+                            </a>
+                        }
+                    </div>
+                }
+                <div class="bi-meta">
+                    <span><i class="fas fa-building" aria-hidden="true"></i>@b.Department</span>
+                    <span><i class="fas fa-calendar" aria-hidden="true"></i>@b.BlockDate.ToString("dd MMM", tr)</span>
+                </div>
+            </article>
+        }
+    </div>
+}
+
+<div class="read-receipt">
+    <div class="rr-head">
+        <h3><i class="fas fa-eye" aria-hidden="true"></i>Okuma kaydı</h3>
+    </div>
+    <div style="display:flex; justify-content:space-between; align-items:center; gap:14px; flex-wrap:wrap;">
+        <div style="font-size:13px; color:var(--ink-2);">
+            Bu tamim sayfasını ziyaret ettiniz, okuma loguna otomatik kaydedildi.
+        </div>
+        <span class="ack-status acked" aria-label="Okuma kaydedildi">
+            <i class="fas fa-check-circle" aria-hidden="true"></i> Kayıt alındı
+        </span>
+    </div>
+</div>

@@ -1,0 +1,200 @@
+@using Mosaik.Modules.Circular.Models
+@using System.Globalization
+@model List<DailyBlock>
+@{
+    var isAdminView = (ViewBag.IsAdminView as bool?) ?? false;
+    ViewData["Title"] = isAdminView ? "Tüm Bloklar" : "Bloklarım";
+    ViewData["PageTitle"] = ViewData["Title"];
+    var bekleyen = ViewBag.Bekleyen as bool?;
+    var blockTypeMap = ViewBag.BlockTypeMap as Dictionary<int, string> ?? new();
+    var tr = new CultureInfo("tr-TR");
+
+    var pendingCount = Model.Count(b => !b.CircularId.HasValue);
+    var publishedCount = Model.Count - pendingCount;
+
+    string TipKey(string? label) => (label ?? "").ToLowerInvariant() switch
+    {
+        "karar" => "type-karar",
+        "uyarı" or "uyari" => "type-uyari",
+        "bilgi" => "type-bilgi",
+        "duyuru" => "type-duyuru",
+        _ => ""
+    };
+
+    string FilterClass(bool? mode) => bekleyen == mode ? "primary" : "ghost";
+}
+
+@section Breadcrumb {
+    <nav class="crumbs" aria-label="Sayfa konumu">
+        <a href="/Dashboard">BKM Kitap</a>
+        <span class="sep" aria-hidden="true">/</span>
+        <a href="@Url.Action("Index", "Circular")">Tamim</a>
+        <span class="sep" aria-hidden="true">/</span>
+        <span class="current" aria-current="page">@ViewData["Title"]</span>
+    </nav>
+}
+
+@section TopActions {
+    <a href="@Url.Action("Create")" class="btn primary">
+        <i class="fas fa-plus text-[10px]"></i>
+        Yeni Block
+    </a>
+    <a href="#" class="icon-btn" title="Yardım">
+        <i class="fas fa-circle-question"></i>
+    </a>
+}
+
+<div class="hero">
+    <h1>@ViewData["Title"]</h1>
+    <div class="sub">
+        <span class="mono">@Model.Count blok</span>
+        @if (isAdminView)
+        {
+            <span class="pill"><span class="dot"></span>Admin görünümü — tüm kullanıcılar</span>
+        }
+        else
+        {
+            <span class="pill"><span class="dot"></span>17:00'de bugünün blokları otomatik tamime alınır</span>
+        }
+    </div>
+</div>
+
+@await Html.PartialAsync("_CircularSubnav")
+
+@if (TempData["Message"] != null)
+{
+    var t = TempData["MessageType"]?.ToString();
+    <div role="alert" style="margin-bottom:18px; padding:12px 16px; border-radius:10px; font-size:13px;
+                background: @(t == "success" ? "rgba(16,185,129,0.10)" : "rgba(220,38,38,0.10)");
+                border: 1px solid @(t == "success" ? "rgba(16,185,129,0.25)" : "rgba(220,38,38,0.25)");
+                color: @(t == "success" ? "#065f46" : "var(--accent-ink)");">
+        <i class="fas @(t == "success" ? "fa-check-circle" : "fa-exclamation-circle")" style="margin-right:8px;"></i>
+        @TempData["Message"]
+    </div>
+}
+
+<div x-data="{ q: '' }">
+
+<div style="background:var(--paper); border:1px solid var(--line); border-radius:10px; padding:14px 16px; margin-bottom:14px; display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
+    <div style="flex:1; min-width:220px; position:relative;">
+        <span style="position:absolute; left:10px; top:50%; transform:translateY(-50%); color:var(--ink-4); pointer-events:none;">
+            <i class="fas fa-magnifying-glass" style="font-size:12px;"></i>
+        </span>
+        <input type="text" x-model="q"
+               class="inp" style="padding-left:32px;"
+               placeholder="Blok no, konu, departman ara..." />
+    </div>
+    <div style="display:flex; gap:6px; flex-wrap:wrap;">
+        <a href="@Url.Action("Index")" class="btn @FilterClass(null)">
+            Tümü <span class="mono" style="opacity:.65; margin-left:4px;">@Model.Count</span>
+        </a>
+        <a href="@Url.Action("Index", new { bekleyen = true })" class="btn @FilterClass(true)">
+            <i class="fas fa-hourglass-half text-[10px]"></i>
+            Bekleyen <span class="mono" style="opacity:.65; margin-left:4px;">@pendingCount</span>
+        </a>
+        <a href="@Url.Action("Index", new { bekleyen = false })" class="btn @FilterClass(false)">
+            <i class="fas fa-check text-[10px]"></i>
+            Yayında <span class="mono" style="opacity:.65; margin-left:4px;">@publishedCount</span>
+        </a>
+        <button type="button" class="btn ghost" @@click="q = ''" x-show="q" x-cloak>
+            <i class="fas fa-xmark text-[10px]"></i>
+            Temizle
+        </button>
+    </div>
+</div>
+
+@if (!Model.Any())
+{
+    <div style="background:var(--paper); border:1px dashed var(--line); border-radius:10px; padding:48px 24px; text-align:center; color:var(--ink-3);">
+        <i class="fas fa-inbox" style="font-size:48px; opacity:.4; margin-bottom:12px;"></i>
+        <h3 style="font-size:14px; font-weight:600; color:var(--ink-1); margin:0 0 4px;">Henüz blok yok</h3>
+        <p style="margin:0; font-size:12.5px;">İlk bloğu yazmak için <a href="@Url.Action("Create")" style="color:var(--accent); font-weight:500;">yeni blok ekle</a>.</p>
+    </div>
+}
+else
+{
+    <div style="background:var(--paper); border:1px solid var(--line); border-radius:10px; overflow:hidden;">
+        <table class="dt">
+            <thead>
+                <tr>
+                    <th>Blok No</th>
+                    <th>Subject</th>
+                    <th>Tür</th>
+                    @if (isAdminView)
+                    {
+                        <th>Yazan</th>
+                    }
+                    <th>Departman</th>
+                    <th>Tarih</th>
+                    <th>Durum</th>
+                    <th style="text-align:right;">İşlemler</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var b in Model)
+                {
+                    blockTypeMap.TryGetValue(b.BlockTypeId, out var turLabel);
+                    var tipCls = TipKey(turLabel);
+                    var statusOk = b.CircularId.HasValue;
+                    var searchHay = $"{b.BlockNumber} {b.Subject} {b.Department} {turLabel}".ToLowerInvariant();
+                    <tr data-search="@searchHay"
+                        x-show="!q || $el.dataset.search.includes(q.toLowerCase())"
+                        x-cloak>
+                        <td><span class="mono">@b.BlockNumber</span></td>
+                        <td>
+                            <a href="@Url.Action("Details", new { id = b.Id })" style="color:var(--ink-1); text-decoration:none; font-weight:500;">
+                                @b.Subject
+                            </a>
+                            @if (b.IsUrgent)
+                            {
+                                <span style="color:var(--accent); margin-left:6px;" title="IsUrgent">
+                                    <i class="fas fa-bolt text-[10px]"></i>
+                                </span>
+                            }
+                        </td>
+                        <td>
+                            @if (!string.IsNullOrEmpty(turLabel))
+                            {
+                                <span class="type-chip @tipCls">@turLabel</span>
+                            }
+                        </td>
+                        @if (isAdminView)
+                        {
+                            <td style="font-size:12px; color:var(--ink-3);">#@b.CreatedById</td>
+                        }
+                        <td style="font-size:12px; color:var(--ink-3);">@b.Department</td>
+                        <td><span class="ago">@b.BlockDate.ToString("dd.MM.yyyy")</span></td>
+                        <td>
+                            <span class="status @(statusOk ? "ok" : "warn")">
+                                @(statusOk ? "Yayında" : "Bekleyen")
+                            </span>
+                        </td>
+                        <td style="text-align:right;">
+                            <div style="display:inline-flex; gap:6px;">
+                                <a href="@Url.Action("Details", new { id = b.Id })" class="btn ghost sm">
+                                    <i class="fas fa-eye text-[9px]"></i>
+                                    Görüntüle
+                                </a>
+                                @if (!statusOk)
+                                {
+                                    <a href="@Url.Action("Edit", new { id = b.Id })" class="btn ghost sm">
+                                        <i class="fas fa-pen text-[9px]"></i>
+                                        Düzenle
+                                    </a>
+                                }
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@{
+    var footer = $"{Model.Count} blok · {pendingCount} bekleyen · {publishedCount} yayında";
+}
+
+</div>
+
+@await Html.PartialAsync("_FooterHint", (string?)footer)
