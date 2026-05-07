@@ -1,0 +1,115 @@
+@model List<Mosaik.Core.Lookup.DictionaryType>
+@{
+    Layout = "_AppLayout";
+    ViewData["Title"] = "Lookup Yönetimi - Mosaik";
+}
+
+@section Breadcrumb {
+    <nav class="crumbs" aria-label="Sayfa konumu">
+        <a href="/Dashboard">Ana Sayfa</a>
+        <span class="sep" aria-hidden="true">/</span>
+        <a href="/Admin">Yönetim</a>
+        <span class="sep" aria-hidden="true">/</span>
+        <span class="current" aria-current="page">Lookup</span>
+    </nav>
+}
+
+@section TopActions {
+    <a href="/Admin" class="btn ghost">
+        <i class="fas fa-arrow-left text-[10px]"></i>
+        Geri
+    </a>
+}
+
+<div class="hero">
+    <h1>Lookup Yönetimi</h1>
+    <div class="sub">
+        <span>Sistem genelinde kullanılan sabit değer listeleri</span>
+        <span class="pill"><span class="mono">@Model.Count</span> tip</span>
+    </div>
+</div>
+
+@await Html.PartialAsync("_AlertMessage", (TempData["MessageType"]?.ToString() ?? "success", TempData["Message"]?.ToString() ?? ""))
+
+@foreach (var type in Model)
+{
+    <div style="background:var(--paper); border:1px solid var(--border); border-radius:10px; margin-bottom:18px; max-width:880px;">
+        <div style="padding:14px 18px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between;">
+            <div>
+                <strong>@type.Name</strong>
+                <span class="mono" style="margin-left:8px; font-size:11px; color:var(--muted);">@type.Code</span>
+            </div>
+            <span class="mono" style="font-size:11px; color:var(--muted);">@type.Values.Count(v => v.IsActive) aktif değer</span>
+        </div>
+        <div style="padding:16px 18px;">
+            @if (!type.Values.Any())
+            {
+                <p style="color:var(--muted); font-size:13px;">Henüz değer eklenmemiş.</p>
+            }
+            else
+            {
+                <table class="dt" style="margin-bottom:14px;">
+                    <thead>
+                        <tr>
+                            <th scope="col">Kod</th>
+                            <th scope="col">Etiket</th>
+                            <th scope="col">Sıra</th>
+                            <th scope="col" style="text-align:right;">Durum</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var val in type.Values.OrderBy(v => v.DisplayOrder))
+                        {
+                            <tr>
+                                <td><span class="mono">@val.Code</span></td>
+                                <td>@val.Label</td>
+                                <td>@val.DisplayOrder</td>
+                                <td style="text-align:right;">
+                                    <form method="post" action="/Admin/LookupToggleValue" style="display:inline;">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="valueId" value="@val.Id" />
+                                        <input type="hidden" name="active" value="@(!val.IsActive ? "true" : "false")" />
+                                        <button type="submit" class="btn sm @(val.IsActive ? "danger" : "")">
+                                            @(val.IsActive ? "Pasif Et" : "Aktif Et")
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+
+            <details style="margin-top:8px;">
+                <summary style="cursor:pointer; font-size:12px; color:var(--muted); user-select:none;">+ Yeni Değer Ekle</summary>
+                <form method="post" action="/Admin/LookupAddValue" style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap; align-items:flex-end;">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="typeId" value="@type.Id" />
+                    <div class="field">
+                        <label class="lab">Kod</label>
+                        <input class="inp" type="text" name="code" placeholder="camelCase" style="width:130px;" required />
+                    </div>
+                    <div class="field">
+                        <label class="lab">Etiket</label>
+                        <input class="inp" type="text" name="label" placeholder="Türkçe görünen ad" style="width:200px;" required />
+                    </div>
+                    <div class="field">
+                        <label class="lab">Sıra</label>
+                        <input class="inp" type="number" name="displayOrder" value="@(type.Values.Any() ? type.Values.Max(v => v.DisplayOrder) + 10 : 10)" style="width:70px;" />
+                    </div>
+                    <button type="submit" class="btn primary">Ekle</button>
+                </form>
+            </details>
+        </div>
+    </div>
+}
+
+@if (!Model.Any())
+{
+    @await Html.PartialAsync("_EmptyState", new Mosaik.ViewModels.Ui.EmptyStateViewModel
+    {
+        Icon = "fa-list",
+        Title = "Lookup tipi yok",
+        Message = "DictionaryTypes tablosuna kayıt eklendiğinde burada görünür."
+    })
+}
