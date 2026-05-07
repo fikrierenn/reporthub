@@ -109,6 +109,20 @@
                             <span class="label">Genel Bakış</span>
                         </a>
                     </li>
+                    @{
+                        // Plan 16.6 — vNext modüller için ikon mapping. Yeni modül
+                        // eklendiğinde AppModule seed'inde ModuleKey + buradaki ikon.
+                        // İlerde Mosaik.Core.Module.ModuleLoader.DiscoverModules()'tan
+                        // dinamik Icon çekilebilir (AppModule.Icon kolonu eklenebilir).
+                        var moduleIcons = new Dictionary<string, string>
+                        {
+                            ["tamim"]     = "fas fa-bullhorn",
+                            ["hr"]        = "fas fa-users",
+                            ["documents"] = "fas fa-folder-open",
+                            ["calendar"]  = "fas fa-calendar-days",
+                            ["approval"]  = "fas fa-check-double"
+                        };
+                    }
                     @foreach (var module in enabledModules)
                     {
                         @if (module.ModuleKey == "reports")
@@ -125,6 +139,19 @@
                             <li>
                                 <a href="/Dashboard" class="@(IsActive("Dashboard") ? "active" : "")">
                                     <span class="icon"><i class="fas fa-gauge"></i></span>
+                                    <span class="label">@module.DisplayName</span>
+                                </a>
+                            </li>
+                        }
+                        else
+                        {
+                            // vNext modüller (Plan 16.6 extension) — ModuleKey URL prefix'i.
+                            // Tamim → /Tamim, HR → /HR vs.
+                            var icon = moduleIcons.TryGetValue(module.ModuleKey, out var ic) ? ic : "fas fa-cube";
+                            var moduleUrl = "/" + char.ToUpper(module.ModuleKey[0]) + module.ModuleKey.Substring(1);
+                            <li>
+                                <a href="@moduleUrl" class="@(IsActive(moduleUrl.TrimStart('/')) ? "active" : "")">
+                                    <span class="icon"><i class="@icon"></i></span>
                                     <span class="label">@module.DisplayName</span>
                                 </a>
                             </li>
