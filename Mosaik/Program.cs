@@ -99,6 +99,10 @@ app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 
+// Plan 16.6 — Modül endpoint mapping (Areas pattern). Default route'tan
+// ÖNCE map edilmeli ki modül route'ları default'a düşmesin.
+Mosaik.Core.Module.ModuleLoader.MapAll(app);
+
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Dashboard}/{action=Index}/{id?}");

@@ -10,6 +10,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Mosaik.Core\Mosaik.Core.csproj" />
+    <!-- Plan 16.6 modül referansları — yeni vNext modüller burada listelenir -->
+    <ProjectReference Include="..\Mosaik.Modules.Tamim\Mosaik.Modules.Tamim.csproj" />
   </ItemGroup>
 
   <ItemGroup>
