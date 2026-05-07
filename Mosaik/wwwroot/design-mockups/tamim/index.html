@@ -1,0 +1,1035 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tamim Modülü — UI Mockup</title>
+<link rel="stylesheet" href="/assets/css/tokens.css">
+<link rel="stylesheet" href="/assets/css/components.css">
+<link rel="stylesheet" href="/assets/css/utilities.css">
+<link rel="stylesheet" href="/assets/css/app-shell.css">
+<link rel="stylesheet" href="/assets/css/components-tamim.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.snow.css" rel="stylesheet">
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+<style>
+  /* Mockup chrome — yalnızca mockup scaffold, üretim kodu değil */
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--canvas); color: var(--ink-1); margin: 0; }
+  .mockup-page { max-width: 1180px; margin: 0 auto; padding: 28px 32px; border-bottom: 4px solid var(--accent); }
+  .mockup-page + .mockup-page { margin-top: 32px; }
+  .mockup-label { position: sticky; top: 0; background: var(--ink-0); color: white; padding: 8px 14px; font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; z-index: 10; }
+  .mockup-nav { position: fixed; top: 12px; right: 12px; background: var(--paper); border: 1px solid var(--line); border-radius: 10px; padding: 10px; z-index: 50; box-shadow: var(--shadow-md); font-size: 12px; }
+  .mockup-nav a { display: block; padding: 4px 10px; color: var(--ink-2); text-decoration: none; border-radius: 6px; }
+  .mockup-nav a:hover { background: var(--line-2); color: var(--ink-0); }
+  /* Quill editor — form view'a özel */
+  #editor-container { min-height: 240px; background: var(--paper); border-radius: 0 0 8px 8px; }
+  .ql-toolbar.ql-snow { border-radius: 8px 8px 0 0; border-color: var(--line); }
+  .ql-container.ql-snow { border-color: var(--line); border-radius: 0 0 8px 8px; }
+</style>
+</head>
+<body>
+
+<nav class="mockup-nav" aria-label="Ekranlar arası gezinti">
+  <strong style="display:block; padding:4px 10px; color:var(--ink-0); border-bottom:1px solid var(--line); margin-bottom:4px;">Ekranlar</strong>
+  <a href="#tamim-index">Tamim Listesi</a>
+  <a href="#tamim-detail">Tamim Detay</a>
+  <a href="#blok-index">Blok Listesi</a>
+  <a href="#blok-create">Blok Oluştur</a>
+  <a href="#blok-detail">Blok Detay</a>
+  <a href="#okuma-raporu">Okuma Raporu</a>
+  <a href="#dashboard">Dashboard</a>
+</nav>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════════
+     1. TAMİM LİSTESİ — kart + liste toggle
+     ═══════════════════════════════════════════════════════════════════════════════ -->
+<div class="mockup-label" id="tamim-index">1. Tamim Listesi — /Tamim/Tamim/Index</div>
+<div class="mockup-page tamim-scope" x-data="{ mode: 'card' }">
+
+  <nav class="crumbs" aria-label="Sayfa konumu">
+    <a href="/Dashboard">BKM Kitap</a>
+    <span class="sep" aria-hidden="true">/</span>
+    <span class="current" aria-current="page">Tamimler</span>
+  </nav>
+
+  <div class="hero">
+    <h1>Tamimler</h1>
+    <div class="sub">
+      <span>Bağlayıcı kararlar, politikalar, prosedürler — son 30 gün</span>
+      <span class="pill"><span class="dot" aria-hidden="true"></span>Bugünkü tamim 17:00'de yayınlanır</span>
+    </div>
+  </div>
+
+  <!-- Filtre çubuğu + görünüm toggle -->
+  <div class="filter-bar">
+    <!-- Filtre segmenti -->
+    <div class="seg-ctrl" role="group" aria-label="Tamim filtresi">
+      <button aria-pressed="true" type="button">Tümü <span class="count">23</span></button>
+      <button aria-pressed="false" type="button">Okumadıklarım <span class="count" style="color:var(--accent);">3</span></button>
+      <button aria-pressed="false" type="button">Acil <span class="count">2</span></button>
+    </div>
+    <!-- Arama -->
+    <div class="fb-search">
+      <span class="ico" aria-hidden="true"><i class="fas fa-search"></i></span>
+      <label class="sr-only" for="tamim-search">Tamim ara</label>
+      <input id="tamim-search" type="search" class="inp" placeholder="Tamim no, başlık veya içerik ara…">
+    </div>
+    <!-- Kart / Liste toggle -->
+    <div class="seg-ctrl" role="group" aria-label="Görünüm seçimi">
+      <button
+        type="button"
+        :aria-pressed="mode === 'card' ? 'true' : 'false'"
+        @click="mode = 'card'"
+      ><i class="fas fa-grip" aria-hidden="true"></i> Kart <span class="count">23</span></button>
+      <button
+        type="button"
+        :aria-pressed="mode === 'list' ? 'true' : 'false'"
+        @click="mode = 'list'"
+      ><i class="fas fa-list" aria-hidden="true"></i> Liste <span class="count">23</span></button>
+    </div>
+  </div>
+
+  <!-- Kart görünümü -->
+  <div x-show="mode === 'card'" x-cloak class="tamim-grid" role="list">
+
+    <a href="#tamim-detail" class="tamim-card unread" role="listitem" aria-label="TAM-20260508 — 08 Mayıs 2026 Günlük Tamim, okunmadı">
+      <div class="tc-head">
+        <span class="tc-no">TAM-20260508</span>
+        <span class="badge-yeni"><i class="fas fa-clock" aria-hidden="true"></i><span>Yeni</span></span>
+      </div>
+      <h3>08 Mayıs 2026 — Günlük Tamim</h3>
+      <div class="tc-meta">
+        <span><i class="fas fa-calendar" aria-hidden="true"></i>08 May 2026</span>
+        <span><i class="fas fa-layer-group" aria-hidden="true"></i>5 blok</span>
+        <span class="tc-acil"><i class="fas fa-bolt" aria-hidden="true"></i>1 acil</span>
+      </div>
+      <div class="tc-footer">
+        <span><i class="fas fa-clock" style="margin-right:4px; color:var(--ink-4);" aria-hidden="true"></i>17:00'de yayınlandı</span>
+        <span style="color:var(--accent); font-weight:600;" aria-label="Henüz okunmadı">Henüz okumadınız →</span>
+      </div>
+    </a>
+
+    <a href="#tamim-detail" class="tamim-card" role="listitem" aria-label="TAM-20260507 — 07 Mayıs 2026 Günlük Tamim, okundu">
+      <div class="tc-head">
+        <span class="tc-no">TAM-20260507</span>
+        <span class="badge-okundu"><i class="fas fa-check" aria-hidden="true"></i><span>Okundu</span></span>
+      </div>
+      <h3>07 Mayıs 2026 — Günlük Tamim</h3>
+      <div class="tc-meta">
+        <span><i class="fas fa-calendar" aria-hidden="true"></i>07 May 2026</span>
+        <span><i class="fas fa-layer-group" aria-hidden="true"></i>3 blok</span>
+      </div>
+      <div class="tc-footer">
+        <span><i class="fas fa-clock" style="margin-right:4px; color:var(--ink-4);" aria-hidden="true"></i>17:00'de yayınlandı</span>
+        <span style="color:var(--ink-3);">Dün 17:42 okudunuz</span>
+      </div>
+    </a>
+
+    <a href="#tamim-detail" class="tamim-card" role="listitem" aria-label="TAM-20260506 — 06 Mayıs 2026 Günlük Tamim, okundu">
+      <div class="tc-head">
+        <span class="tc-no">TAM-20260506</span>
+        <span class="badge-okundu"><i class="fas fa-check" aria-hidden="true"></i><span>Okundu</span></span>
+      </div>
+      <h3>06 Mayıs 2026 — Günlük Tamim</h3>
+      <div class="tc-meta">
+        <span><i class="fas fa-calendar" aria-hidden="true"></i>06 May 2026</span>
+        <span><i class="fas fa-layer-group" aria-hidden="true"></i>4 blok</span>
+        <span class="tc-acil"><i class="fas fa-bolt" aria-hidden="true"></i>1 acil</span>
+      </div>
+      <div class="tc-footer">
+        <span><i class="fas fa-clock" style="margin-right:4px; color:var(--ink-4);" aria-hidden="true"></i>17:00'de yayınlandı</span>
+        <span style="color:var(--ink-3);">06 May 18:12 okudunuz</span>
+      </div>
+    </a>
+
+    <a href="#tamim-detail" class="tamim-card" role="listitem" aria-label="TAM-20260505 — 05 Mayıs 2026 Günlük Tamim, okundu">
+      <div class="tc-head">
+        <span class="tc-no">TAM-20260505</span>
+        <span class="badge-okundu"><i class="fas fa-check" aria-hidden="true"></i><span>Okundu</span></span>
+      </div>
+      <h3>05 Mayıs 2026 — Günlük Tamim</h3>
+      <div class="tc-meta">
+        <span><i class="fas fa-calendar" aria-hidden="true"></i>05 May 2026</span>
+        <span><i class="fas fa-layer-group" aria-hidden="true"></i>2 blok</span>
+      </div>
+      <div class="tc-footer">
+        <span><i class="fas fa-clock" style="margin-right:4px; color:var(--ink-4);" aria-hidden="true"></i>17:00'de yayınlandı</span>
+        <span style="color:var(--ink-3);">05 May 17:08 okudunuz</span>
+      </div>
+    </a>
+
+  </div>
+
+  <!-- Liste görünümü -->
+  <div x-show="mode === 'list'" x-cloak class="tamim-list-wrap" role="region" aria-label="Tamim listesi tablo görünümü">
+    <table class="dt" aria-label="Tamimler">
+      <thead>
+        <tr>
+          <th scope="col">Tamim No</th>
+          <th scope="col">Başlık</th>
+          <th scope="col">Tarih</th>
+          <th scope="col">Blok</th>
+          <th scope="col">Acil</th>
+          <th scope="col">Okuma</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="mono" style="font-size:11.5px; font-weight:700; color:var(--ink-2);">TAM-20260508</td>
+          <td><a href="#tamim-detail" style="color:var(--ink-0); font-weight:600; text-decoration:none;">08 Mayıs 2026 — Günlük Tamim</a></td>
+          <td style="white-space:nowrap; color:var(--ink-3);">08 May 2026</td>
+          <td style="text-align:center; font-variant-numeric:tabular-nums;">5</td>
+          <td style="text-align:center;"><i class="fas fa-bolt" style="color:var(--accent);" aria-label="Acil"></i></td>
+          <td><span class="dt status err"><i class="fas fa-clock" aria-hidden="true"></i> Yeni</span></td>
+        </tr>
+        <tr>
+          <td class="mono" style="font-size:11.5px; font-weight:700; color:var(--ink-2);">TAM-20260507</td>
+          <td><a href="#tamim-detail" style="color:var(--ink-0); font-weight:500; text-decoration:none;">07 Mayıs 2026 — Günlük Tamim</a></td>
+          <td style="white-space:nowrap; color:var(--ink-3);">07 May 2026</td>
+          <td style="text-align:center; font-variant-numeric:tabular-nums;">3</td>
+          <td style="text-align:center; color:var(--ink-4);">—</td>
+          <td><span class="dt status ok"><i class="fas fa-check" aria-hidden="true"></i> Okundu</span></td>
+        </tr>
+        <tr>
+          <td class="mono" style="font-size:11.5px; font-weight:700; color:var(--ink-2);">TAM-20260506</td>
+          <td><a href="#tamim-detail" style="color:var(--ink-0); font-weight:500; text-decoration:none;">06 Mayıs 2026 — Günlük Tamim</a></td>
+          <td style="white-space:nowrap; color:var(--ink-3);">06 May 2026</td>
+          <td style="text-align:center; font-variant-numeric:tabular-nums;">4</td>
+          <td style="text-align:center;"><i class="fas fa-bolt" style="color:var(--accent);" aria-label="Acil"></i></td>
+          <td><span class="dt status ok"><i class="fas fa-check" aria-hidden="true"></i> Okundu</span></td>
+        </tr>
+        <tr>
+          <td class="mono" style="font-size:11.5px; font-weight:700; color:var(--ink-2);">TAM-20260505</td>
+          <td><a href="#tamim-detail" style="color:var(--ink-0); font-weight:500; text-decoration:none;">05 Mayıs 2026 — Günlük Tamim</a></td>
+          <td style="white-space:nowrap; color:var(--ink-3);">05 May 2026</td>
+          <td style="text-align:center; font-variant-numeric:tabular-nums;">2</td>
+          <td style="text-align:center; color:var(--ink-4);">—</td>
+          <td><span class="dt status ok"><i class="fas fa-check" aria-hidden="true"></i> Okundu</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════════
+     2. TAMİM DETAY
+     ═══════════════════════════════════════════════════════════════════════════════ -->
+<div class="mockup-label" id="tamim-detail">2. Tamim Detay — /Tamim/Tamim/Details/123</div>
+<div class="mockup-page tamim-scope">
+
+  <nav class="crumbs" aria-label="Sayfa konumu">
+    <a href="/Dashboard">BKM Kitap</a>
+    <span class="sep" aria-hidden="true">/</span>
+    <a href="/Tamim/Tamim">Tamimler</a>
+    <span class="sep" aria-hidden="true">/</span>
+    <span class="current" aria-current="page">TAM-20260508</span>
+  </nav>
+
+  <div class="top-actions">
+    <a href="#" class="btn"><i class="fas fa-print" aria-hidden="true"></i> Yazdır</a>
+    <a href="#" class="btn"><i class="fas fa-file-pdf" aria-hidden="true"></i> PDF</a>
+    <a href="#" class="btn"><i class="fas fa-file-excel" aria-hidden="true"></i> Excel</a>
+  </div>
+  <div style="clear:both;"></div>
+
+  <!-- Zarf -->
+  <div class="tamim-envelope">
+    <div class="env-no">TAM-20260508 · GÜNLÜK TAMİM</div>
+    <h1>08 Mayıs 2026 — Günlük Tamim</h1>
+    <div class="env-meta">
+      <span><i class="fas fa-calendar" aria-hidden="true"></i>Tamim tarihi: 08 May 2026 Cuma</span>
+      <span><i class="fas fa-paper-plane" aria-hidden="true"></i>Yayın: 08 May 17:00</span>
+      <span><i class="fas fa-layer-group" aria-hidden="true"></i>5 blok</span>
+      <span style="color:var(--accent); font-weight:600;"><i class="fas fa-bolt" aria-hidden="true"></i>1 acil</span>
+    </div>
+  </div>
+
+  <!-- AI özet -->
+  <div class="ai-summary-card" role="complementary" aria-label="Yapay zekâ özeti">
+    <div class="asc-head">
+      <i class="fas fa-wand-magic-sparkles" aria-hidden="true"></i>
+      <span>Yapay zekâ özeti</span>
+      <span class="asc-badge">Gemini Pro</span>
+    </div>
+    <ul>
+      <li>İK politika güncellemesi: 1 Haziran'dan itibaren tüm izin talepleri portal üzerinden yapılacak.</li>
+      <li>Acil — Heykel mağaza POS sistemi 09 Mayıs 09:00–10:00 arası bakımda.</li>
+      <li>Muhtasar beyan son tarih hatırlatması: 26 Mayıs 23:59.</li>
+      <li>KVKK eğitimi katılım zorunluluğu — bu hafta sonuna kadar tamamlanmalı.</li>
+      <li>Ay sonu kapanış disiplini — kasiyer prosedürü madde 3.2 değişti.</li>
+    </ul>
+    <div class="asc-footer">
+      <span>5 saniyede tüm tamim — özet 08 May 17:01'de üretildi</span>
+      <button type="button"><i class="fas fa-rotate" aria-hidden="true"></i> Yeniden üret</button>
+    </div>
+  </div>
+
+  <!-- Blok listesi -->
+  <div class="section-title"><h2>İçerik blokları</h2></div>
+  <div class="blok-list">
+
+    <div class="blok-item blok-acil blok-uyari">
+      <div class="bi-head">
+        <span class="bi-no">BLK-20260508-003</span>
+        <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
+          <span class="bi-acil-pill"><i class="fas fa-bolt" aria-hidden="true"></i> Acil</span>
+          <span class="type-chip type-uyari">Uyarı</span>
+        </div>
+      </div>
+      <h4>Heykel Mağaza POS Bakım Çalışması</h4>
+      <p class="bi-desc">09 Mayıs Cumartesi 09:00–10:00 arası planlı kesinti.</p>
+      <div class="bi-body">
+        Heykel mağaza POS sistemleri 09 Mayıs 2026 Cumartesi günü 09:00–10:00 saatleri arasında bakım nedeniyle kapalı olacaktır. Bu süre zarfında satış işlemleri manuel kayıt ile yapılacak, sistem aktif olduğunda toplu giriş yapılmalıdır. Mağaza müdürleri bilgilendirilmiştir.
+      </div>
+      <div class="file-list">
+        <a href="#" class="file-pill" aria-label="PDF dosyası: POS-Manuel-Kayit-Talimat.pdf, 142 KB">
+          <span class="fp-ext pdf" aria-hidden="true">PDF</span>
+          <span>POS-Manuel-Kayit-Talimat.pdf</span>
+          <span class="fp-size">142 KB</span>
+        </a>
+      </div>
+      <div class="bi-meta">
+        <span><i class="fas fa-user" aria-hidden="true"></i>Bilgi İşlem · Murat Demir</span>
+        <span><i class="fas fa-clock" aria-hidden="true"></i>14:23 oluşturuldu</span>
+      </div>
+    </div>
+
+    <div class="blok-item blok-karar">
+      <div class="bi-head">
+        <span class="bi-no">BLK-20260508-001</span>
+        <span class="type-chip type-karar">Karar</span>
+      </div>
+      <h4>İzin Talep Süreci 1 Haziran'dan İtibaren Portal Üzerinden</h4>
+      <p class="bi-desc">İK politika değişikliği — yıllık/mazaret/saatlik tüm izin talepleri.</p>
+      <div class="bi-body">
+        1 Haziran 2026 itibarıyla manuel izin formu kullanımı sona erecektir. Tüm yıllık izin, mazeret izni ve saatlik izin talepleri Mosaik İK portalı üzerinden yapılacak, müdür onayı dijital olarak alınacaktır. Geçiş sonrası kağıt formlar reddedilecektir.
+      </div>
+      <div class="file-list">
+        <a href="#" class="file-pill" aria-label="PDF dosyası: Izin-Talep-Klavuzu-v2.pdf, 1.2 MB">
+          <span class="fp-ext pdf" aria-hidden="true">PDF</span>
+          <span>Izin-Talep-Klavuzu-v2.pdf</span>
+          <span class="fp-size">1.2 MB</span>
+        </a>
+        <a href="#" class="file-pill" aria-label="DOCX dosyası: Yeni-Sureç-Akış.docx, 48 KB">
+          <span class="fp-ext docx" aria-hidden="true">DOCX</span>
+          <span>Yeni-Sureç-Akış.docx</span>
+          <span class="fp-size">48 KB</span>
+        </a>
+      </div>
+      <div class="bi-meta">
+        <span><i class="fas fa-user" aria-hidden="true"></i>İnsan Kaynakları · Ayşe Demir</span>
+        <span><i class="fas fa-clock" aria-hidden="true"></i>10:42 oluşturuldu</span>
+      </div>
+    </div>
+
+    <div class="blok-item blok-bilgi">
+      <div class="bi-head">
+        <span class="bi-no">BLK-20260508-002</span>
+        <span class="type-chip type-bilgi">Bilgi</span>
+      </div>
+      <h4>Muhtasar Beyan — Son Tarih 26 Mayıs</h4>
+      <p class="bi-desc">Mayıs ayı muhtasar ve prim hizmet beyannamesi hatırlatması.</p>
+      <div class="bi-body">
+        Mayıs 2026 dönemi muhtasar ve prim hizmet beyannamesi son verme tarihi 26 Mayıs 2026 Salı, saat 23:59'dur.
+      </div>
+      <div class="bi-meta">
+        <span><i class="fas fa-user" aria-hidden="true"></i>Mali İşler · Ahmet Yılmaz</span>
+        <span><i class="fas fa-clock" aria-hidden="true"></i>11:08 oluşturuldu</span>
+      </div>
+    </div>
+
+    <div class="blok-item blok-duyuru">
+      <div class="bi-head">
+        <span class="bi-no">BLK-20260508-004</span>
+        <span class="type-chip type-duyuru">Duyuru</span>
+      </div>
+      <h4>KVKK Eğitimi — Bu Hafta Sonuna Kadar Tamamlanmalı</h4>
+      <p class="bi-desc">Online eğitim modülü zorunludur, sertifika verilecektir.</p>
+      <div class="bi-body">
+        Kişisel Verilerin Korunması Kanunu kapsamında tüm personelin online KVKK eğitimini 11 Mayıs 2026 Pazar günü mesai bitimine kadar tamamlaması zorunludur.
+      </div>
+      <div class="bi-meta">
+        <span><i class="fas fa-user" aria-hidden="true"></i>Hukuk · Hukuk Müşaviri</span>
+        <span><i class="fas fa-clock" aria-hidden="true"></i>13:14 oluşturuldu</span>
+      </div>
+    </div>
+
+    <div class="blok-item">
+      <div class="bi-head">
+        <span class="bi-no">BLK-20260508-005</span>
+        <span class="type-chip type-prosedur">Prosedür</span>
+      </div>
+      <h4>Ay Sonu Kapanış — Kasiyer Prosedürü Madde 3.2 Değişti</h4>
+      <p class="bi-desc">Para sayım protokolünde güncelleme.</p>
+      <div class="bi-body">
+        Ay sonu kapanış prosedürü madde 3.2 (kasiyer para sayım) güncellendi. Bu uygulama 31 Mayıs 2026'dan itibaren zorunludur.
+      </div>
+      <div class="file-list">
+        <a href="#" class="file-pill" aria-label="XLSX dosyası: Sayim-Sablonu-v2026-05.xlsx, 22 KB">
+          <span class="fp-ext xlsx" aria-hidden="true">XLSX</span>
+          <span>Sayim-Sablonu-v2026-05.xlsx</span>
+          <span class="fp-size">22 KB</span>
+        </a>
+      </div>
+      <div class="bi-meta">
+        <span><i class="fas fa-user" aria-hidden="true"></i>Operasyon · Selim Aydın</span>
+        <span><i class="fas fa-clock" aria-hidden="true"></i>15:50 oluşturuldu</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Okuma kaydı -->
+  <div class="read-receipt" role="region" aria-label="Okuma kaydı">
+    <div class="rr-head">
+      <h3><i class="fas fa-eye" aria-hidden="true"></i> Okuma kaydı</h3>
+    </div>
+    <div class="rr-body">
+      <div class="rr-info">
+        Bu tamim sayfasını ziyaret ettiniz, okuma loguna otomatik kaydedildi.
+        <small>Saat 18:42'de görüntülendi · IP 10.0.12.87</small>
+      </div>
+      <button class="ack-btn acked" type="button" aria-pressed="true">
+        <i class="fas fa-check-circle" aria-hidden="true"></i> Okudum, anladım
+      </button>
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════════
+     3. BLOK LİSTESİ
+     ═══════════════════════════════════════════════════════════════════════════════ -->
+<div class="mockup-label" id="blok-index">3. Blok Listesi — /Tamim/Blok/Index (oluşturucu)</div>
+<div class="mockup-page tamim-scope">
+
+  <nav class="crumbs" aria-label="Sayfa konumu">
+    <a href="/Dashboard">BKM Kitap</a>
+    <span class="sep" aria-hidden="true">/</span>
+    <a href="/Tamim">Tamim</a>
+    <span class="sep" aria-hidden="true">/</span>
+    <span class="current" aria-current="page">Bloklarım</span>
+  </nav>
+
+  <div class="top-actions">
+    <a href="#blok-create" class="btn primary"><i class="fas fa-plus" aria-hidden="true"></i> Yeni Blok</a>
+  </div>
+  <div style="clear:both;"></div>
+
+  <div class="hero">
+    <h1>Bloklarım</h1>
+    <div class="sub">
+      <span>Bugünün ve son 7 günün bloklarını görüntüle, düzenle</span>
+      <span class="pill" style="background:rgba(245,158,11,.10); border-color:rgba(245,158,11,.30); color:#92400e;">
+        <i class="fas fa-clock" style="font-size:10px;" aria-hidden="true"></i>
+        17:00'de bugünün bloklarını derlemek üzere
+      </span>
+    </div>
+  </div>
+
+  <div class="kpi-grid" role="list" aria-label="Blok istatistikleri">
+    <div class="kpi-card k-red" role="listitem">
+      <div class="head">
+        <span class="label">Bugün</span>
+        <div class="ico" aria-hidden="true"><i class="fas fa-calendar-day"></i></div>
+      </div>
+      <div class="value">2</div>
+      <div class="delta" style="color:var(--ink-3);">17:00'de yayınlanacak</div>
+    </div>
+    <div class="kpi-card k-warn" role="listitem">
+      <div class="head">
+        <span class="label">Bekleyen</span>
+        <div class="ico" aria-hidden="true"><i class="fas fa-hourglass-half"></i></div>
+      </div>
+      <div class="value">2</div>
+      <div class="delta" style="color:var(--warning);">Henüz tamime girmedi</div>
+    </div>
+    <div class="kpi-card k-green" role="listitem">
+      <div class="head">
+        <span class="label">Bu Hafta</span>
+        <div class="ico" aria-hidden="true"><i class="fas fa-check-double"></i></div>
+      </div>
+      <div class="value">8</div>
+      <div class="delta up"><i class="fas fa-arrow-up" aria-hidden="true"></i> 3 dünden çok</div>
+    </div>
+    <div class="kpi-card k-ink" role="listitem">
+      <div class="head">
+        <span class="label">Acil Bloklar</span>
+        <div class="ico" aria-hidden="true"><i class="fas fa-bolt"></i></div>
+      </div>
+      <div class="value">1</div>
+      <div class="delta" style="color:var(--ink-3);">Bu hafta</div>
+    </div>
+  </div>
+
+  <div class="section-title" style="margin-top:24px;">
+    <h2>Bugün</h2>
+    <span style="font-size:12px; color:var(--ink-3);">2 blok</span>
+  </div>
+
+  <div class="blok-list">
+    <div class="blok-item blok-acil blok-uyari">
+      <div class="bi-head">
+        <span class="bi-no">BLK-20260508-003 · BEKLİYOR</span>
+        <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
+          <span class="bi-acil-pill"><i class="fas fa-bolt" aria-hidden="true"></i> Acil</span>
+          <span class="type-chip type-uyari">Uyarı</span>
+          <a href="#blok-create" class="btn ghost" style="height:28px; padding:0 8px; font-size:12px;" aria-label="Düzenle: Heykel Mağaza POS Bakım Çalışması">
+            <i class="fas fa-pen" aria-hidden="true"></i>
+          </a>
+        </div>
+      </div>
+      <h4>Heykel Mağaza POS Bakım Çalışması</h4>
+      <p class="bi-desc">09 Mayıs Cumartesi 09:00–10:00 arası planlı kesinti.</p>
+      <div class="bi-meta">
+        <span><i class="fas fa-clock" aria-hidden="true"></i>14:23'de oluşturuldu · 17:00'de yayınlanacak</span>
+        <span><i class="fas fa-paperclip" aria-hidden="true"></i>1 dosya</span>
+      </div>
+    </div>
+
+    <div class="blok-item blok-bilgi">
+      <div class="bi-head">
+        <span class="bi-no">BLK-20260508-002 · BEKLİYOR</span>
+        <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
+          <span class="type-chip type-bilgi">Bilgi</span>
+          <a href="#blok-create" class="btn ghost" style="height:28px; padding:0 8px; font-size:12px;" aria-label="Düzenle: Muhtasar Beyan">
+            <i class="fas fa-pen" aria-hidden="true"></i>
+          </a>
+        </div>
+      </div>
+      <h4>Muhtasar Beyan — Son Tarih 26 Mayıs</h4>
+      <p class="bi-desc">Mayıs ayı muhtasar ve prim hizmet beyannamesi hatırlatması.</p>
+      <div class="bi-meta">
+        <span><i class="fas fa-clock" aria-hidden="true"></i>11:08'de oluşturuldu · 17:00'de yayınlanacak</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-title" style="margin-top:24px;">
+    <h2>Dün</h2>
+    <span style="font-size:12px; color:var(--ink-3);">3 blok yayınlandı</span>
+  </div>
+
+  <div class="blok-list">
+    <div class="blok-item blok-karar">
+      <div class="bi-head">
+        <span class="bi-no">BLK-20260507-002 · YAYINDA</span>
+        <span class="type-chip type-karar">Karar</span>
+      </div>
+      <h4>Yıllık İzin Devir Kuralları — 31 Aralık Son Tarih</h4>
+      <p class="bi-desc">Yeni mali yıla devredilemeyecek izinler.</p>
+      <div class="bi-meta">
+        <span><i class="fas fa-eye" aria-hidden="true"></i>Tamim TAM-20260507'de yayınlandı</span>
+        <span><i class="fas fa-users" aria-hidden="true"></i>34 kişi okudu</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════════
+     4. BLOK OLUŞTUR / DÜZENLE
+     ═══════════════════════════════════════════════════════════════════════════════ -->
+<div class="mockup-label" id="blok-create">4. Blok Oluştur — /Tamim/Blok/Create</div>
+<div class="mockup-page tamim-scope">
+
+  <nav class="crumbs" aria-label="Sayfa konumu">
+    <a href="/Dashboard">BKM Kitap</a>
+    <span class="sep" aria-hidden="true">/</span>
+    <a href="/Tamim">Tamim</a>
+    <span class="sep" aria-hidden="true">/</span>
+    <a href="/Tamim/Blok">Bloklarım</a>
+    <span class="sep" aria-hidden="true">/</span>
+    <span class="current" aria-current="page">Yeni Blok</span>
+  </nav>
+
+  <div class="top-actions">
+    <a href="#blok-index" class="btn"><i class="fas fa-xmark" aria-hidden="true"></i> İptal</a>
+    <button class="btn primary" type="submit" form="blok-form"><i class="fas fa-save" aria-hidden="true"></i> Kaydet</button>
+  </div>
+  <div style="clear:both;"></div>
+
+  <div class="hero">
+    <h1>Yeni Blok</h1>
+    <div class="sub">
+      <span>Bugünün tamimine eklenecek karar/uyarı/duyuru gir</span>
+      <span class="pill" style="background:rgba(220,38,38,.06); border-color:rgba(220,38,38,.20); color:var(--accent-ink);">
+        <i class="fas fa-circle-exclamation" style="font-size:10px;" aria-hidden="true"></i>
+        Tamim bağlayıcıdır — kayıt yasal kanıt olur
+      </span>
+    </div>
+  </div>
+
+  <form id="blok-form" novalidate>
+
+    <div class="blok-section">
+      <div class="bs-head">
+        <i class="fas fa-pen-to-square" aria-hidden="true"></i>
+        Blok bilgileri
+      </div>
+      <div class="bs-body">
+
+        <div style="display:grid; grid-template-columns:140px 1fr; gap:14px; margin-bottom:14px;">
+          <div class="field" style="margin-bottom:0;">
+            <label class="lab" for="blok-tur">Blok Türü <span style="color:var(--accent);" aria-label="zorunlu">*</span></label>
+            <select class="inp" id="blok-tur" required>
+              <option>Duyuru</option>
+              <option>Karar</option>
+              <option selected>Uyarı</option>
+              <option>Bilgi</option>
+              <option>Prosedür</option>
+            </select>
+          </div>
+          <div class="field" style="margin-bottom:0;">
+            <label class="lab" for="blok-konu">Konu <span style="color:var(--accent);" aria-label="zorunlu">*</span></label>
+            <input type="text" class="inp" id="blok-konu" value="Heykel Mağaza POS Bakım Çalışması" placeholder="Blok başlığı (max 200 karakter)" required maxlength="200">
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="lab" for="blok-aciklama">Açıklama (kısa özet) <span style="color:var(--accent);" aria-label="zorunlu">*</span></label>
+          <input type="text" class="inp" id="blok-aciklama" value="09 Mayıs Cumartesi 09:00–10:00 arası planlı kesinti." placeholder="Tek cümlede ne diyeceğin (max 500 karakter)" required maxlength="500">
+        </div>
+
+        <div class="field">
+          <label class="lab" for="editor-container">Detaylı içerik <span style="color:var(--accent);" aria-label="zorunlu">*</span></label>
+          <div style="border:1px solid var(--line); border-radius:8px; overflow:hidden;">
+            <div id="editor-container">
+              <p>Heykel mağaza POS sistemleri <strong>09 Mayıs 2026 Cumartesi</strong> günü <strong>09:00–10:00</strong> saatleri arasında bakım nedeniyle kapalı olacaktır.</p>
+            </div>
+          </div>
+          <p style="font-size:11px; color:var(--ink-3); margin-top:6px; margin-bottom:0;">
+            <i class="fas fa-info-circle" aria-hidden="true"></i>
+            Yapay zekâ bu içerikten tamim özetini akşam üretecek
+          </p>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:14px;">
+          <div class="field" style="margin-bottom:0;">
+            <label class="lab" for="blok-dept">Departman</label>
+            <input type="text" class="inp" id="blok-dept" value="Bilgi İşlem" disabled aria-describedby="blok-dept-hint">
+            <p id="blok-dept-hint" style="font-size:11px; color:var(--ink-3); margin-top:4px; margin-bottom:0;">Otomatik — kullanıcının departmanı</p>
+          </div>
+          <div class="field" style="margin-bottom:0;">
+            <label class="lab" for="blok-tarih">Blok tarihi</label>
+            <input type="date" class="inp" id="blok-tarih" value="2026-05-08" aria-describedby="blok-tarih-hint">
+            <p id="blok-tarih-hint" style="font-size:11px; color:var(--ink-3); margin-top:4px; margin-bottom:0;">Hangi günün tamimine girecek</p>
+          </div>
+        </div>
+
+        <div class="field" style="margin-bottom:0;">
+          <label style="display:flex; align-items:center; gap:6px; cursor:pointer; font-size:13px; color:var(--ink-1);">
+            <input type="checkbox" checked style="margin:0; width:16px; height:16px; accent-color:var(--accent);">
+            <i class="fas fa-bolt" style="color:var(--accent);" aria-hidden="true"></i>
+            Acil — kırmızı vurgu, AI özette başa al, push bildirim
+          </label>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Dosyalar -->
+    <div class="blok-section">
+      <div class="bs-head">
+        <i class="fas fa-paperclip" aria-hidden="true"></i>
+        Ekli dosyalar
+        <span style="font-size:11px; color:var(--ink-3); font-weight:400; margin-left:8px;">PDF, DOCX, XLSX, JPG, PNG — max 10 MB</span>
+      </div>
+      <div class="bs-body">
+        <div class="drop-area" role="button" tabindex="0" aria-label="Dosya yüklemek için tıkla veya sürükle bırak">
+          <span class="da-icon"><i class="fas fa-cloud-arrow-up" aria-hidden="true"></i></span>
+          <span class="da-title">Dosyaları sürükle bırak veya seçmek için tıkla</span>
+          <span class="da-sub">Birden fazla dosya seçebilirsin</span>
+        </div>
+
+        <div style="margin-top:12px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 12px; background:var(--canvas); border-radius:8px;">
+            <div style="display:flex; align-items:center; gap:10px;">
+              <span class="fp-ext pdf" style="font-size:10px; font-weight:700; padding:3px 6px; border-radius:3px;" aria-hidden="true">PDF</span>
+              <span style="font-size:13px; color:var(--ink-1); font-weight:500;">POS-Manuel-Kayit-Talimat.pdf</span>
+              <span style="font-size:11px; color:var(--ink-3);">142 KB</span>
+            </div>
+            <button class="btn ghost" type="button" style="color:var(--accent); height:32px;" aria-label="Dosyayı kaldır: POS-Manuel-Kayit-Talimat.pdf">
+              <i class="fas fa-trash" aria-hidden="true"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="max-width:880px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+      <p style="font-size:11.5px; color:var(--ink-3); margin:0;">
+        <i class="fas fa-circle-info" aria-hidden="true"></i>
+        Saat 17:00'de otomatik tamime alınır — sonra düzenleme imkânı yok
+      </p>
+      <div style="display:flex; gap:8px;">
+        <button class="btn" type="button"><i class="fas fa-floppy-disk" aria-hidden="true"></i> Taslak kaydet</button>
+        <button class="btn primary" type="submit"><i class="fas fa-paper-plane" aria-hidden="true"></i> Kaydet ve yayına gönder</button>
+      </div>
+    </div>
+
+  </form>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════════
+     5. BLOK DETAY
+     ═══════════════════════════════════════════════════════════════════════════════ -->
+<div class="mockup-label" id="blok-detail">5. Blok Detay — /Tamim/Blok/Details/123</div>
+<div class="mockup-page tamim-scope">
+
+  <nav class="crumbs" aria-label="Sayfa konumu">
+    <a href="/Dashboard">BKM Kitap</a>
+    <span class="sep" aria-hidden="true">/</span>
+    <a href="/Tamim/Blok">Bloklarım</a>
+    <span class="sep" aria-hidden="true">/</span>
+    <span class="current" aria-current="page">BLK-20260508-003</span>
+  </nav>
+
+  <div class="top-actions">
+    <a href="#blok-create" class="btn"><i class="fas fa-pen" aria-hidden="true"></i> Düzenle</a>
+    <a href="#" class="btn" style="color:var(--accent);" aria-label="Sil: BLK-20260508-003"><i class="fas fa-trash" aria-hidden="true"></i> Sil</a>
+  </div>
+  <div style="clear:both;"></div>
+
+  <div class="tamim-envelope">
+    <div class="env-no">BLK-20260508-003 · ACİL · UYARI</div>
+    <h1>Heykel Mağaza POS Bakım Çalışması</h1>
+    <div class="env-meta">
+      <span><i class="fas fa-calendar" aria-hidden="true"></i>08 May 2026</span>
+      <span><i class="fas fa-user" aria-hidden="true"></i>Bilgi İşlem · Murat Demir</span>
+      <span><i class="fas fa-clock" aria-hidden="true"></i>14:23 oluşturuldu · 14:31 düzenlendi</span>
+      <span style="color:var(--warning);"><i class="fas fa-hourglass-half" aria-hidden="true"></i>17:00'de yayına alınacak</span>
+    </div>
+  </div>
+
+  <div style="background:var(--paper); border:1px solid var(--line); border-radius:10px; padding:22px 28px; margin-bottom:18px;">
+    <p style="font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-3); margin:0 0 8px;">Açıklama</p>
+    <p style="font-size:13.5px; color:var(--ink-1); margin:0 0 18px;">09 Mayıs Cumartesi 09:00–10:00 arası planlı kesinti.</p>
+
+    <p style="font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-3); margin:0 0 8px;">Detaylı içerik</p>
+    <div style="font-size:14px; color:var(--ink-0); line-height:1.7;">
+      <p>Heykel mağaza POS sistemleri <strong>09 Mayıs 2026 Cumartesi</strong> günü <strong>09:00–10:00</strong> saatleri arasında bakım nedeniyle kapalı olacaktır.</p>
+      <ul style="padding-left:24px;">
+        <li>Satış işlemleri manuel kayıt ile yapılacak</li>
+        <li>Kasa kapanışı için ayrı şablon kullanılacak</li>
+        <li>Sistem aktif olduğunda toplu giriş yapılacak</li>
+      </ul>
+      <p>Mağaza müdürleri <em>bilgilendirilmiştir</em>.</p>
+    </div>
+
+    <div style="margin-top:20px; padding-top:18px; border-top:1px solid var(--line);">
+      <p style="font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-3); margin:0 0 10px;">Ekli dosyalar (1)</p>
+      <a href="#" class="file-pill" aria-label="PDF dosyası: POS-Manuel-Kayit-Talimat.pdf, 142 KB">
+        <span class="fp-ext pdf" aria-hidden="true">PDF</span>
+        <span>POS-Manuel-Kayit-Talimat.pdf</span>
+        <span class="fp-size">142 KB</span>
+      </a>
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════════
+     6. OKUMA RAPORU
+     ═══════════════════════════════════════════════════════════════════════════════ -->
+<div class="mockup-label" id="okuma-raporu">6. Okuma Raporu — /Tamim/Admin/OkumaRaporu/123</div>
+<div class="mockup-page tamim-scope">
+
+  <nav class="crumbs" aria-label="Sayfa konumu">
+    <a href="/Dashboard">BKM Kitap</a>
+    <span class="sep" aria-hidden="true">/</span>
+    <a href="/Tamim/Admin">Tamim Yönetim</a>
+    <span class="sep" aria-hidden="true">/</span>
+    <span class="current" aria-current="page">Okuma Raporu — TAM-20260508</span>
+  </nav>
+
+  <div class="top-actions">
+    <a href="#" class="btn"><i class="fas fa-file-csv" aria-hidden="true"></i> CSV İndir</a>
+    <a href="#" class="btn"><i class="fas fa-file-excel" aria-hidden="true"></i> Excel İndir</a>
+    <a href="#" class="btn primary"><i class="fas fa-bell" aria-hidden="true"></i> Okumayanları hatırlat</a>
+  </div>
+  <div style="clear:both;"></div>
+
+  <div class="hero">
+    <h1>Okuma Raporu</h1>
+    <div class="sub"><span>TAM-20260508 · 08 Mayıs 2026 — Günlük Tamim</span></div>
+  </div>
+
+  <div class="kpi-grid" role="list" aria-label="Okuma istatistikleri">
+    <div class="kpi-card k-ink" role="listitem">
+      <div class="head"><span class="label">Toplam Aktif</span><div class="ico" aria-hidden="true"><i class="fas fa-users"></i></div></div>
+      <div class="value">142</div>
+    </div>
+    <div class="kpi-card k-green" role="listitem">
+      <div class="head"><span class="label">Okuyan</span><div class="ico" aria-hidden="true"><i class="fas fa-eye"></i></div></div>
+      <div class="value">98</div>
+      <div class="delta up">%69 SeenRate</div>
+    </div>
+    <div class="kpi-card k-warn" role="listitem">
+      <div class="head"><span class="label">Ack'leyen</span><div class="ico" aria-hidden="true"><i class="fas fa-check-double"></i></div></div>
+      <div class="value">76</div>
+      <div class="delta" style="color:var(--warning);">%53 AckRate</div>
+    </div>
+    <div class="kpi-card k-red" role="listitem">
+      <div class="head"><span class="label">Okumayan</span><div class="ico" aria-hidden="true"><i class="fas fa-eye-slash"></i></div></div>
+      <div class="value">44</div>
+      <div class="delta down">%31 — hatırlatma gerekir</div>
+    </div>
+  </div>
+
+  <div class="filter-bar" style="margin-top:18px;">
+    <div class="seg-ctrl" role="group" aria-label="Kullanıcı filtresi">
+      <button type="button" aria-pressed="false">Tümü <span class="count">142</span></button>
+      <button type="button" aria-pressed="false">Okuyan <span class="count">98</span></button>
+      <button type="button" aria-pressed="true">Okumayan <span class="count">44</span></button>
+      <button type="button" aria-pressed="false">Ack <span class="count">76</span></button>
+    </div>
+    <div class="fb-search">
+      <span class="ico" aria-hidden="true"><i class="fas fa-search"></i></span>
+      <label class="sr-only" for="okuma-search">Kullanıcı, departman veya mağaza ara</label>
+      <input id="okuma-search" type="search" class="inp" placeholder="Kullanıcı, departman veya mağaza ara…">
+    </div>
+    <div class="field" style="margin-bottom:0; min-width:160px;">
+      <label class="sr-only" for="dept-filter">Departman filtresi</label>
+      <select class="inp" id="dept-filter" style="height:34px;">
+        <option>Tüm departmanlar</option>
+        <option>Bilgi İşlem</option>
+        <option>İK</option>
+        <option>Mali İşler</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="tamim-list-wrap">
+    <table class="ok-tbl" aria-label="Okuma durumu listesi">
+      <thead>
+        <tr>
+          <th scope="col" style="width:30px;"><label class="sr-only" for="select-all">Tümünü seç</label><input type="checkbox" id="select-all" aria-label="Tümünü seç"></th>
+          <th scope="col">Ad Soyad</th>
+          <th scope="col">Kullanıcı</th>
+          <th scope="col">Departman</th>
+          <th scope="col">Lokasyon</th>
+          <th scope="col">Durum</th>
+          <th scope="col">Okuma anı</th>
+          <th scope="col">Ack</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><input type="checkbox" aria-label="Ahmet Yılmaz seç"></td>
+          <td>Ahmet Yılmaz</td>
+          <td class="mono" style="font-size:12px;">ahmety</td>
+          <td>Mali İşler</td>
+          <td>Genel Müdürlük</td>
+          <td><span class="st-okumadi"><i class="fas fa-clock" aria-hidden="true"></i><span>Okumadı</span></span></td>
+          <td>—</td>
+          <td>—</td>
+        </tr>
+        <tr>
+          <td><input type="checkbox" aria-label="Emine Kara seç"></td>
+          <td>Emine Kara</td>
+          <td class="mono" style="font-size:12px;">eminek</td>
+          <td>İK</td>
+          <td>Genel Müdürlük</td>
+          <td><span class="st-okumadi"><i class="fas fa-clock" aria-hidden="true"></i><span>Okumadı</span></span></td>
+          <td>—</td>
+          <td>—</td>
+        </tr>
+        <tr>
+          <td><input type="checkbox" aria-label="Murat Demir seç"></td>
+          <td>Murat Demir</td>
+          <td class="mono" style="font-size:12px;">muratd</td>
+          <td>Bilgi İşlem</td>
+          <td>Genel Müdürlük</td>
+          <td><span class="st-okundu"><i class="fas fa-check" aria-hidden="true"></i><span>Okudu</span></span></td>
+          <td>17:42</td>
+          <td><i class="fas fa-check" style="color:var(--ok);" aria-label="Onayladı"></i></td>
+        </tr>
+        <tr>
+          <td><input type="checkbox" aria-label="Ayşe Şahin seç"></td>
+          <td>Ayşe Şahin</td>
+          <td class="mono" style="font-size:12px;">ayseh</td>
+          <td>Operasyon</td>
+          <td>Heykel Mağaza</td>
+          <td><span class="st-okumadi"><i class="fas fa-clock" aria-hidden="true"></i><span>Okumadı</span></span></td>
+          <td>—</td>
+          <td>—</td>
+        </tr>
+        <tr>
+          <td><input type="checkbox" aria-label="Selim Aydın seç"></td>
+          <td>Selim Aydın</td>
+          <td class="mono" style="font-size:12px;">selima</td>
+          <td>Operasyon</td>
+          <td>Genel Müdürlük</td>
+          <td><span class="st-okundu"><i class="fas fa-check" aria-hidden="true"></i><span>Okudu</span></span></td>
+          <td>18:14</td>
+          <td><i class="fas fa-check" style="color:var(--ok);" aria-label="Onayladı"></i></td>
+        </tr>
+        <tr>
+          <td><input type="checkbox" aria-label="Hasan Kılıç seç"></td>
+          <td>Hasan Kılıç</td>
+          <td class="mono" style="font-size:12px;">hasank</td>
+          <td>Satış</td>
+          <td>FSM Mağaza</td>
+          <td><span class="st-okumadi"><i class="fas fa-clock" aria-hidden="true"></i><span>Okumadı</span></span></td>
+          <td>—</td>
+          <td>—</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div style="margin-top:14px; display:flex; justify-content:space-between; align-items:center; font-size:12px; color:var(--ink-3); flex-wrap:wrap; gap:8px;">
+    <span role="status" aria-live="polite">1–6 / 44 kayıt gösteriliyor</span>
+    <nav aria-label="Sayfalama">
+      <div style="display:flex; gap:6px;">
+        <button class="btn" style="height:30px; padding:0 10px;" disabled aria-label="Önceki sayfa"><i class="fas fa-angle-left" aria-hidden="true"></i></button>
+        <button class="btn primary" style="height:30px; padding:0 10px;" aria-label="Sayfa 1, aktif sayfa" aria-current="page">1</button>
+        <button class="btn" style="height:30px; padding:0 10px;" aria-label="Sayfa 2">2</button>
+        <button class="btn" style="height:30px; padding:0 10px;" aria-label="Sayfa 3">3</button>
+        <button class="btn" style="height:30px; padding:0 10px;" aria-label="Sonraki sayfa"><i class="fas fa-angle-right" aria-hidden="true"></i></button>
+      </div>
+    </nav>
+  </div>
+
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════════
+     7. ADMİN DASHBOARD
+     ═══════════════════════════════════════════════════════════════════════════════ -->
+<div class="mockup-label" id="dashboard">7. Tamim Dashboard — /Tamim/Admin/Dashboard</div>
+<div class="mockup-page tamim-scope">
+
+  <nav class="crumbs" aria-label="Sayfa konumu">
+    <a href="/Dashboard">BKM Kitap</a>
+    <span class="sep" aria-hidden="true">/</span>
+    <a href="/Tamim/Admin">Tamim Yönetim</a>
+    <span class="sep" aria-hidden="true">/</span>
+    <span class="current" aria-current="page">Dashboard</span>
+  </nav>
+
+  <div class="hero">
+    <h1>Tamim Dashboard</h1>
+    <div class="sub"><span>Son 30 gün — okuma oranları, departman katılımı, gecikme</span></div>
+  </div>
+
+  <div class="kpi-grid" role="list" aria-label="Dashboard istatistikleri">
+    <div class="kpi-card k-green" role="listitem">
+      <div class="head"><span class="label">SeenRate (30g)</span><div class="ico" aria-hidden="true"><i class="fas fa-eye"></i></div></div>
+      <div class="value">%89</div>
+      <div class="delta up"><i class="fas fa-arrow-up" aria-hidden="true"></i> %3 önceki aydan</div>
+    </div>
+    <div class="kpi-card k-warn" role="listitem">
+      <div class="head"><span class="label">AckRate (30g)</span><div class="ico" aria-hidden="true"><i class="fas fa-check-double"></i></div></div>
+      <div class="value">%71</div>
+      <div class="delta down"><i class="fas fa-arrow-down" aria-hidden="true"></i> %2 önceki aydan</div>
+    </div>
+    <div class="kpi-card k-ink" role="listitem">
+      <div class="head"><span class="label">Yayınlanan Tamim</span><div class="ico" aria-hidden="true"><i class="fas fa-paper-plane"></i></div></div>
+      <div class="value">22</div>
+      <div class="delta" style="color:var(--ink-3);">Cumartesi/Pazar hariç</div>
+    </div>
+    <div class="kpi-card k-red" role="listitem">
+      <div class="head"><span class="label">Eksik Departman</span><div class="ico" aria-hidden="true"><i class="fas fa-triangle-exclamation"></i></div></div>
+      <div class="value">2</div>
+      <div class="delta down">Bugün giriş yapmadı</div>
+    </div>
+  </div>
+
+  <div class="section-title" style="margin-top:24px;"><h2>Departman Katılımı (son 30 gün)</h2></div>
+  <div class="tamim-list-wrap">
+    <table class="ok-tbl" aria-label="Departman katılım oranları">
+      <thead>
+        <tr>
+          <th scope="col">Departman</th>
+          <th scope="col">Blok Sayısı</th>
+          <th scope="col">Giriş Gün Oranı</th>
+          <th scope="col" style="width:40%;">Trend</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>İnsan Kaynakları</td>
+          <td style="font-variant-numeric:tabular-nums;">14</td>
+          <td><span style="color:var(--ok); font-weight:600;">%64</span></td>
+          <td>
+            <div class="prog-cell" aria-label="64 yüzde">
+              <div class="prog-bar"><div class="prog-fill" style="width:64%;"></div></div>
+              <span class="sr-only">64%</span>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td>Mali İşler</td>
+          <td style="font-variant-numeric:tabular-nums;">9</td>
+          <td><span style="color:var(--warning); font-weight:600;">%41</span></td>
+          <td>
+            <div class="prog-cell" aria-label="41 yüzde">
+              <div class="prog-bar"><div class="prog-fill warn" style="width:41%;"></div></div>
+              <span class="sr-only">41%</span>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td>Bilgi İşlem</td>
+          <td style="font-variant-numeric:tabular-nums;">6</td>
+          <td><span style="color:var(--warning); font-weight:600;">%27</span></td>
+          <td>
+            <div class="prog-cell" aria-label="27 yüzde">
+              <div class="prog-bar"><div class="prog-fill warn" style="width:27%;"></div></div>
+              <span class="sr-only">27%</span>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td>Operasyon</td>
+          <td style="font-variant-numeric:tabular-nums;">12</td>
+          <td><span style="color:var(--ok); font-weight:600;">%55</span></td>
+          <td>
+            <div class="prog-cell" aria-label="55 yüzde">
+              <div class="prog-bar"><div class="prog-fill" style="width:55%;"></div></div>
+              <span class="sr-only">55%</span>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td>Hukuk</td>
+          <td style="font-variant-numeric:tabular-nums;">3</td>
+          <td><span style="color:var(--accent); font-weight:600;">%14</span></td>
+          <td>
+            <div class="prog-cell" aria-label="14 yüzde">
+              <div class="prog-bar"><div class="prog-fill danger" style="width:14%;"></div></div>
+              <span class="sr-only">14%</span>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js"></script>
+<script>
+(function () {
+  const el = document.getElementById('editor-container');
+  if (!el) return;
+  new Quill('#editor-container', {
+    theme: 'snow',
+    modules: {
+      toolbar: [
+        [{ header: [2, 3, false] }],
+        ['bold', 'italic', 'underline'],
+        [{ list: 'ordered' }, { list: 'bullet' }],
+        ['link'],
+        ['clean']
+      ]
+    },
+    placeholder: 'Tamimin tam metnini buraya yaz…'
+  });
+}());
+</script>
+
+</body>
+</html>

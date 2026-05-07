@@ -1,0 +1,24 @@
+@*
+    UI Standart partial — _FormActionRow
+    Kullanım:
+      @await Html.PartialAsync("_FormActionRow", new FormActionRowViewModel {
+          BackUrl = "/Admin?tab=users",
+          SubmitText = "Kullanıcı Kaydet"
+      })
+    Detay: .claude/rules/ui-patterns.md §8
+*@
+@using Mosaik.ViewModels.Ui
+@model FormActionRowViewModel
+
+<div style="display:flex; align-items:center; justify-content:space-between;
+            max-width:@Model.MaxWidth; padding:14px 20px;
+            background:var(--paper); border:1px solid var(--line); border-radius:10px;">
+    <a href="@Model.BackUrl" class="btn ghost">
+        <i class="fas fa-arrow-left text-[10px]" aria-hidden="true"></i>
+        @Model.BackText
+    </a>
+    <button type="submit" class="btn primary">
+        <i class="fas @Model.SubmitIcon text-[10px]" aria-hidden="true"></i>
+        @Model.SubmitText
+    </button>
+</div>

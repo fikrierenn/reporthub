@@ -1,0 +1,62 @@
+@*
+    UI Standart partial — _FilterBar
+    Kullanım:
+      @await Html.PartialAsync("_FilterBar", new FilterBarViewModel {
+          SearchPlaceholder = "Rapor adı, açıklama...",
+          SearchValue = Model.SearchTerm,
+          Selects = new List<FilterBarSelect> {
+              new() { ParamName = "group", Label = "Grup", Options = ... }
+          }
+      })
+    Notlar:
+      - x-data scope dış view'da olmalı: <div x-data="{ q: '@Model.SearchTerm' }">...filterBar...</div>
+      - Form GET, URL state için; Alpine x-model anlık client-side filter için
+    Detay: .claude/rules/ui-patterns.md §4
+*@
+@using Mosaik.ViewModels.Ui
+@model FilterBarViewModel
+
+<form method="get" action="@Model.FormAction"
+      style="background:var(--paper); border:1px solid var(--line); border-radius:10px;
+             padding:14px 16px; margin-bottom:18px; display:flex; gap:12px;
+             flex-wrap:wrap; align-items:end;">
+
+    <div style="flex:1; min-width:240px;">
+        <label class="lab" for="filterSearch">Arama</label>
+        <div style="position:relative;">
+            <span style="position:absolute; left:10px; top:50%; transform:translateY(-50%);
+                         color:var(--ink-4); pointer-events:none;">
+                <i class="fas fa-magnifying-glass" style="font-size:12px;" aria-hidden="true"></i>
+            </span>
+            <input type="text" id="filterSearch" name="@Model.SearchParamName"
+                   value="@Model.SearchValue" x-model="q"
+                   class="inp" style="padding-left:32px;"
+                   placeholder="@Model.SearchPlaceholder" />
+        </div>
+    </div>
+
+    @foreach (var sel in Model.Selects)
+    {
+        <div style="min-width:180px;">
+            <label class="lab" for="filter-@sel.ParamName">@sel.Label</label>
+            <select id="filter-@sel.ParamName" name="@sel.ParamName" class="inp">
+                <option value="">Tümü</option>
+                @foreach (var opt in sel.Options)
+                {
+                    <option value="@opt.Value" selected="@(sel.SelectedValue == opt.Value)">@opt.Text</option>
+                }
+            </select>
+        </div>
+    }
+
+    <div style="display:flex; gap:6px;">
+        <button type="submit" class="btn primary" title="URL'ye yansıt (paylaşılabilir link)">
+            <i class="fas fa-filter text-[10px]" aria-hidden="true"></i>
+            Filtrele
+        </button>
+        <button type="button" class="btn ghost" @@click="q = ''" x-show="q" x-cloak>
+            <i class="fas fa-xmark text-[10px]" aria-hidden="true"></i>
+            Temizle
+        </button>
+    </div>
+</form>
