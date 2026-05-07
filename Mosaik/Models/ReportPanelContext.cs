@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Mosaik.Core.Workflow;
 
 namespace Mosaik.Models
 {
@@ -23,6 +24,11 @@ namespace Mosaik.Models
         public DbSet<FilterDefinition> FilterDefinitions { get; set; }
         public DbSet<BrandSettings> BrandSettings { get; set; }
         public DbSet<AppModule> AppModules { get; set; }
+
+        // Plan 16.5 Faz A — Workflow primitives
+        public DbSet<ApprovalRequest> ApprovalRequests { get; set; }
+        public DbSet<ApprovalStep> ApprovalSteps { get; set; }
+        public DbSet<StatusTransition> StatusTransitions { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -251,6 +257,42 @@ namespace Mosaik.Models
                 entity.Property(e => e.ModuleKey).HasMaxLength(50).IsRequired();
                 entity.Property(e => e.DisplayName).HasMaxLength(100).IsRequired();
                 entity.HasIndex(e => e.ModuleKey).IsUnique();
+            });
+
+            // Plan 16.5 Faz A — Workflow primitives
+            modelBuilder.Entity<ApprovalRequest>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.EntityType).HasMaxLength(50).IsRequired();
+                entity.Property(e => e.Subject).HasMaxLength(200);
+                entity.Property(e => e.Description).HasMaxLength(1000);
+                entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+                entity.HasIndex(e => new { e.EntityType, e.EntityId });
+                entity.HasIndex(e => e.Status);
+            });
+
+            modelBuilder.Entity<ApprovalStep>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.ApproverRole).HasMaxLength(50);
+                entity.Property(e => e.Comment).HasMaxLength(500);
+                entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+                entity.HasOne(s => s.Request)
+                      .WithMany(r => r.Steps)
+                      .HasForeignKey(s => s.RequestId)
+                      .OnDelete(DeleteBehavior.Cascade);
+                entity.HasIndex(e => new { e.RequestId, e.StepOrder });
+                entity.HasIndex(e => e.Status);
+            });
+
+            modelBuilder.Entity<StatusTransition>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.EntityType).HasMaxLength(50).IsRequired();
+                entity.Property(e => e.FromStatus).HasMaxLength(30).IsRequired();
+                entity.Property(e => e.ToStatus).HasMaxLength(30).IsRequired();
+                entity.Property(e => e.AllowedRoles).HasMaxLength(200);
+                entity.HasIndex(e => new { e.EntityType, e.FromStatus, e.ToStatus }).IsUnique();
             });
 
             base.OnModelCreating(modelBuilder);
