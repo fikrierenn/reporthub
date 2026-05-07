@@ -153,7 +153,11 @@ await _audit.LogAsync(
 **"Okundu mu?" sorgusu:** `EXISTS WHERE EventType='tamim_okundu' AND TargetKey=@id AND Username=@user`
 **"Kim okumadı?" raporu:** `Users LEFT JOIN AuditLog ON ... WHERE AuditLog.AuditId IS NULL`
 
-## 5. Faz Planı (revize)
+## 5. Faz Planı (revize 2 — fark yaratan özellikler eklendi)
+
+**KRİTİK BULGU (2026-05-08 derin keşif):** `D:/Dev/tamim/` projesinde aslında implement edilmiş kod **yok**. Sadece Prisma şeması + planlama dokümanları + boş Next.js iskeleti. Tüm "fark yaratan özellikler" (dosya ekleme, AI özet, export, bildirim) **planlama düzeyinde kalmış**. Mosaik tarafında sıfırdan yazılacak.
+
+**Memory referansı:** `project_tamim_app_keşif.md` (gelecek oturumlarda).
 
 ### Faz A — İskelet ✅ TAMAM (commit 38d6efe)
 Mevcut yapı korunuyor: `Mosaik.Modules.Tamim` csproj + `IMosaikModule` impl + boş Index sayfası.
@@ -204,6 +208,60 @@ Mevcut yapı korunuyor: `Mosaik.Modules.Tamim` csproj + `IMosaikModule` impl + b
   - Filter: tümü / okuyan / okumayan
   - Export CSV (opsiyonel)
 - D5. Sidebar bildirim badge entegrasyonu
+
+### Faz E — Dosya Ekleme (~3h) ⭐ Yüksek değer
+- E1. `BlokDosyasi` entity (`Mosaik.Modules.Tamim/Models/`)
+  - BlokId FK, DosyaAdi, DosyaYolu (server path), DosyaTuru (uzantı), MimeType, Boyut, YuklemeTarihi, IsActive
+- E2. `DosyaTuru` lookup (Mosaik.Core.Lookup üzerinden, Migration 39 ek): `pdf, docx, xlsx, jpg, png, txt`. Her tür için mimeType + maxBoyutMB.
+- E3. Modül-içi migration `02_AddBlokDosyalari.sql`
+- E4. `BlokDosyaService` — upload validation (whitelist + max 10MB), sanitize filename, GUID-based klasör pattern (`/wwwroot/uploads/bloklar/{yyyy}/{MM}/{guid}.{uzantı}`)
+- E5. `BlokController.UploadDosya` (POST, [Authorize]) + `DownloadDosya` (GET, yetki kontrolü)
+- E6. Blok Create/Edit view'ında multi-file input (HTML5 `<input type="file" multiple>`)
+- E7. Blok Details view'ında dosya listesi (icon + tıklanabilir indirme link)
+- E8. Tamim Details view'ında bağlı blokların dosyaları toplu görünür
+
+### Faz F — AI Özet (~4h)
+- F1. **Plan 16.5 Faz C+D AI Core önkoşulu** — şu an yok, ilk yapılmalı (YonetIQ AiProviderService + PromptEngine)
+- F2. AI Core hazır olduğunda: `TamimAiOzetService` (PromptEngine ile)
+  - Girdi: Tamim'e bağlı `GunlukBlok[]` (Konu + Aciklama'lar)
+  - Çıktı: 5 maddelik kurum-içi özet (paragraf veya bullet)
+- F3. `Tamim.AiOzetJson` (NVARCHAR(MAX)) kolonu ekle (Migration 03)
+- F4. Tamim Details sayfası başında **AI özet kartı** (önyukar görünüm — "5 saniyede tamamı")
+- F5. Admin "Yeniden Üret" buton (önyaklaşık değişimde)
+- F6. Maliyet kontrolü: cache TTL 24h (özet bir kez üretilir, değişmiyor zaten — çünkü Tamim immutable)
+
+### Faz G — Export PDF/Excel (~3h)
+- G1. **PuppeteerSharp** veya **IronPDF** (NuGet) — Razor → HTML → PDF
+- G2. **ClosedXML** zaten Mosaik.csproj'da kurulu (Excel export için)
+- G3. Endpoint'ler:
+  - `GET /Tamim/Tamim/{id}/Export?format=pdf` → tam tamim PDF (zarf + bloklar + AI özet)
+  - `GET /Tamim/Tamim/{id}/Export?format=excel` → blok listesi tablosu
+  - `GET /Tamim/Admin/{id}/OkumayanlariExport` → kim okumadı CSV/Excel
+- G4. Print-friendly Razor view (`Views/Tamim/Print.cshtml`) — sade, başlık+bloklar+sayfa numarası
+- G5. Audit log: `tamim_export_pdf` event (kim ne zaman çıktı aldı)
+
+### Faz H — Bildirim Sistemi (~3h)
+- H1. `Bildirim` entity (modül-içi VEYA Mosaik.Core'a — cross-modül kullanım için Core öneri)
+  - UserId FK, Baslik, Mesaj, BildirimTuru (lookup), TargetUrl, Okundu, OlusturmaTarihi
+- H2. Migration: `Bildirim` tablosu + index `(UserId, Okundu, OlusturmaTarihi)`
+- H3. `IBildirimService` (Mosaik.Core.Notification) — cross-modül abstraction (HR, Approval da kullanır)
+- H4. Sidebar bildirim badge (okunmamış sayısı, polling 60sn veya SignalR)
+- H5. Cron 17:00 sonrası: yeni Tamim yayınlandığında **tüm aktif kullanıcılara** Bildirim insert
+- H6. E-posta entegrasyonu (opsiyonel Plan 17.1): `SmtpClient` veya `MailKit` — Tamim acil ise email gönder
+- H7. Hatırlatma cron 09:00: önceki gün Tamim'i okumayanlara in-app bildirim (Hatırlatma Bildirimi)
+
+### Faz I — İstatistik Dashboard (~2h)
+- I1. `TamimDashboardController` (Mosaik.Modules.Tamim) — Admin-only
+- I2. Metrikler (Mosaik mevcut Dashboard motoru kullanılır):
+  - **SeenRate**: Aktif kullanıcılar arasında kaç kişi tamim'e en az 1 kez baktı (AuditLog `tamim_okundu` distinct UserId / Toplam aktif user)
+  - **AckRate**: Açık ack varsa (Plan 17.x'te `TamimOkudu.Okundu=1` opsiyonel)
+  - **Departman bazı giriş tamamlama oranı**: Hangi departmanlar her gün blok yazıyor
+  - **Eksik giriş**: Bugün blok yazmamış departmanlar
+  - **Onay bekleyen tamim sayısı** (mevcut sistemde editor onay yok, bu metrik şu an 0)
+- I3. Chart.js 4 zaten kurulu — mevcut dashboard builder pattern
+- I4. `/Tamim/Admin/Dashboard` route, sidebar admin menüsünde
+
+**Faz E-I toplam:** ~15h. Faz D + E-I birleşik **Plan 17 Faz 2** (~17h, 2-3 oturum) olarak planlanabilir. Faz F (AI Özet) Plan 16.5 Faz C+D (AI Core) bağımlı — onlar bitmeden başlanamaz.
 
 ## 6. Mimari kararlar
 

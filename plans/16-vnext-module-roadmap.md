@@ -179,11 +179,18 @@ Mosaik şu an %80 olgun (rapor + dashboard + user/role + audit + brand + modules
 | **24** | **Form/Anket Builder** | from-scratch | 0/5 | 24-32h | En son |
 | **25** | **Sözleşme/Yükümlülük (legal/finance)** | DikkatIQ/ (full domain) | 5/5 | 20-24h | Yeni |
 | **26** | **NL-to-SQL / MetricEngine** | YonetIQ MetricEngine adaptasyonu | 4/5 (kavramsal) | 30-40h | Yeni (büyük) |
-| **27** | **İç İletişim / Duyuru Akışı** | from-scratch + meet/ NLP referans | 0/5 | 16-20h | Yeni — Plan 17 ayrımı (Tamim bağlayıcı, bu modül informal) |
+| **27** | **Duyurular** (sosyal/operasyonel akış) | from-scratch + tamim/ özellik referansı | 0/5 | 12-16h | Yeni |
+| **28** | **İç İletişim / Mesajlaşma** | from-scratch (SignalR/realtime) | 0/5 | 24-30h | Yeni — gerçek zamanlı, Plan 27'den ayrı |
 
-**Plan 17 vs Plan 27 ayrımı (kullanıcı kararı 2026-05-08):**
-- **Plan 17 Tamim** = bağlayıcı, kalıcı, "haberim yoktu" diyilemeyecek konular (politika/prosedür/uyumluluk/karar). Okuma logu yasal kanıt. Default herkes erişir.
-- **Plan 27 İç İletişim** = sosyal/operasyonel/geçici (doğum günü, klima arızası, toplantı çağrısı, yeni personel kutlama, mağaza arası bilgi paylaşımı). Bağlayıcı değil, ack zorunlu değil, kısa ömürlü. Filtreli akış (departman/mağaza/ilgi bazlı kanal). WhatsApp grup yerine.
+**Plan 17 vs Plan 27 vs Plan 28 ayrımı (kullanıcı 2026-05-08 netleştirdi):**
+
+| Modül | Tip | Bağlayıcı | Özellikler |
+|---|---|---|---|
+| **Plan 17 Tamim** | Resmi günlük tamim | ✅ Yasal kanıt | Politika/prosedür/uyumluluk/karar. 17:00 cron derleme. AuditLog "tamim_okundu". Dosya ekleme + AI özet + Export PDF/Excel + Bildirim + Dashboard (Faz E-I). |
+| **Plan 27 Duyurular** | Sosyal/operasyonel akış | ❌ Bağlayıcı değil | Doğum günü kutlaması, geçici hadise (klima arızası), kampanya başlangıcı, yeni personel duyurusu, etkinlik bilgilendirme. Bağlayıcı değil, ack zorunlu değil, daha kısa ömürlü. Tamim'in dosya/bildirim/export özellikleri reuse. |
+| **Plan 28 İç İletişim** | Mesajlaşma / sohbet | — | Gerçek zamanlı (SignalR). WhatsApp/Slack grup yerine. Departman kanalları, doğrudan mesaj, mağaza-içi koordinasyon. Tamim'den ortak altyapı yok. |
+
+**Kritik:** `D:/Dev/tamim/` projesinde fark yaratan özellikler (dosya ekleme, AI özet, çıktı, bildirim, dashboard) **planlanmış ama hiç implement edilmemiş**. Mosaik tarafında sıfırdan yazılacak. Sadece Prisma şeması + organizasyon dokümanları referans değer taşıyor.
 
 **Sıralama gerekçesi:**
 1. Tamim — düşük effort, yüksek görünür değer (kullanıcılar hemen kullanır)
