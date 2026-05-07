@@ -169,7 +169,8 @@ Mosaik şu an %80 olgun (rapor + dashboard + user/role + audit + brand + modules
 | # | Modül | Kaynak | Reuse | Effort | Plan |
 |---|---|---|---|---|---|
 | **17** | **Tamim/Sirküler** | tamim/ (direkt port) | 5/5 | 8-12h | Yeni |
-| **18** | **HR Sync + User alanları** | hrrepo/ + hrreport/ | 4/5 | 12-16h | **Plan 16 (mevcut)** |
+| **18A** | **IK Quick Reports + Dashboard** (read-only, view-driven, hızlı kazanım) | Zirve `vw_PersonelDepartman` (3 firma UNION + 4 seviye hiyerarşi, 272 aktif) | 5/5 | 4-6h | Yeni |
+| **18B** | **HR Sync + User alanları** (User provisioning, Hangfire job, AD lookup) | vw_PersonelDepartman + hrrepo/ + hrreport/ AD pattern | 4/5 | 16-24h | **Plan 18 (yeni)** |
 | **19** | **Doküman Yönetimi** | katalog/ + DikkatIQ AI extraction | 4.5/5 | 16-20h | Yeni |
 | **20** | **KPI/Forecast Widget** | cashflow/ (entity + SP) + Tower (KPI logic) | 4/5 | 12-16h | Yeni |
 | **21** | **Audit/Risk/DOF** | BkmArgus/ (entity + scoring) | 4/5 | 24-32h | Yeni (büyük) |
@@ -181,13 +182,14 @@ Mosaik şu an %80 olgun (rapor + dashboard + user/role + audit + brand + modules
 
 **Sıralama gerekçesi:**
 1. Tamim — düşük effort, yüksek görünür değer (kullanıcılar hemen kullanır)
-2. HR Sync — temel altyapı, diğer modüller User alanlarına bağımlı (Phone, Sube, ManagerId)
-3. Doküman — orta effort, AI extraction zaten tasarlanmış
-4. KPI Widget — dashboard motoru zaten var, **modül değil widget tipi**
-5. Audit — büyük ama BkmArgus entity'leri 70% port edilebilir
-6. Calendar — NLP bonus
-7. Approval — pattern olgun, business logic tasarımı gerek
-8. Form — en sonda, builder UI gerekli
+2. **18A IK Quick Reports** — 4-6h hızlı kazanım, mevcut Mosaik rapor pipeline'ı (SP+ReportCatalog+DashboardConfig). Plan 18B sync'i beklemez. Kullanıcının `vw_PersonelDepartman` view'ı canonical, 272 aktif personel. Bağlam: `memory/project_zirve_personel_discovery.md`.
+3. **18B HR Sync** — User provisioning için Hangfire + Mosaik.User ek kolonlar + Email/TC kararları. 18A'dan sonra (read-only önce, write sonra).
+4. Doküman — orta effort, AI extraction zaten tasarlanmış
+5. KPI Widget — dashboard motoru zaten var, **modül değil widget tipi**
+6. Audit — büyük ama BkmArgus entity'leri 70% port edilebilir
+7. Calendar — NLP bonus
+8. Approval — pattern olgun, business logic tasarımı gerek
+9. Form — en sonda, builder UI gerekli
 
 ---
 
