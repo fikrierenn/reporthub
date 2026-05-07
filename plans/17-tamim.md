@@ -6,6 +6,16 @@
 **Tahmini süre kalan:** ~5 saat (Faz C+D)
 **Önkoşul:** Plan 16.5 ✅ + Plan 16.6 ✅, Hangfire ✅ kuruldu
 
+**KAVRAM NETLEŞMESİ (2026-05-08, kullanıcı: "iç iletişim ile tamimi karıştırıyorsun"):**
+
+**Tamim NEDİR:** Bağlayıcı, kalıcı, "haberim yoktu" diyilemeyecek konular. Politika/prosedür/uyumluluk/karar dokümanları. Okuma logu yasal kanıt değerinde.
+
+**Tamim NE DEĞİLDİR:** Sosyal duyuru (doğum günü, yeni personel kutlama), geçici operasyonel hadise (asansör arızası, klima sorunu), iç iletişim (toplantı çağrısı, kahvaltı duyurusu), informal mesajlaşma. Bunlar için **ayrı modül** (Plan 27 — İç İletişim / Duyuru Akışı) gerekli.
+
+**Hedefleme:** Tamim default = TÜM kullanıcılar (bağlayıcı, herkesi etkiler). Hedefleme istisna (müdür-only politika gibi nadir durum) — Faz E opsiyonel kapsam, çoğu kullanım gerek duymaz.
+
+---
+
 **SADELEŞTİRME NOTU (2026-05-08, kullanıcı: "gereksiz fazla olanları kaldırabiliriz"):**
 - **TamimBlok junction kaldırıldı** — 1:N için gereksiz, `GunlukBlok.TamimId` FK doğrudan bağ
 - **TamimOkudu kaldırıldı** — mevcut `Mosaik.Models.AuditLog` (`EventType="tamim_okundu"`) kullanılır

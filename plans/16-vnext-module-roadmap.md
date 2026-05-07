@@ -179,6 +179,11 @@ Mosaik şu an %80 olgun (rapor + dashboard + user/role + audit + brand + modules
 | **24** | **Form/Anket Builder** | from-scratch | 0/5 | 24-32h | En son |
 | **25** | **Sözleşme/Yükümlülük (legal/finance)** | DikkatIQ/ (full domain) | 5/5 | 20-24h | Yeni |
 | **26** | **NL-to-SQL / MetricEngine** | YonetIQ MetricEngine adaptasyonu | 4/5 (kavramsal) | 30-40h | Yeni (büyük) |
+| **27** | **İç İletişim / Duyuru Akışı** | from-scratch + meet/ NLP referans | 0/5 | 16-20h | Yeni — Plan 17 ayrımı (Tamim bağlayıcı, bu modül informal) |
+
+**Plan 17 vs Plan 27 ayrımı (kullanıcı kararı 2026-05-08):**
+- **Plan 17 Tamim** = bağlayıcı, kalıcı, "haberim yoktu" diyilemeyecek konular (politika/prosedür/uyumluluk/karar). Okuma logu yasal kanıt. Default herkes erişir.
+- **Plan 27 İç İletişim** = sosyal/operasyonel/geçici (doğum günü, klima arızası, toplantı çağrısı, yeni personel kutlama, mağaza arası bilgi paylaşımı). Bağlayıcı değil, ack zorunlu değil, kısa ömürlü. Filtreli akış (departman/mağaza/ilgi bazlı kanal). WhatsApp grup yerine.
 
 **Sıralama gerekçesi:**
 1. Tamim — düşük effort, yüksek görünür değer (kullanıcılar hemen kullanır)
