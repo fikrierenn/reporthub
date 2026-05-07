@@ -1,9 +1,12 @@
 @using System.Security.Claims
 @inject Mosaik.Services.IBrandService BrandService
 @inject Mosaik.Services.IModuleService ModuleService
+@inject Mosaik.Modules.Circular.Services.CircularService CircularService
 @{
     var brand = await BrandService.GetAsync();
     var enabledModules = await ModuleService.GetEnabledAsync();
+    Mosaik.Modules.Circular.Models.Circular? todaysCircular = null;
+    try { todaysCircular = await CircularService.GetTodaysAsync(); } catch { /* modül kapalı */ }
     var isAuthenticated = User?.Identity?.IsAuthenticated ?? false;
     var userName = isAuthenticated ? User?.Identity?.Name ?? "" : "";
     var fullName = isAuthenticated
@@ -52,6 +55,7 @@
     <link href="~/assets/css/legacy.css" rel="stylesheet" asp-append-version="true">
     <link href="~/assets/css/utilities.css" rel="stylesheet" asp-append-version="true">
     <link href="~/assets/css/app-shell.css" rel="stylesheet" asp-append-version="true">
+    <link href="~/assets/css/components-tamim.css" rel="stylesheet" asp-append-version="true">
 
     @* M-13 Plan 04 (28 Nisan 2026): Alpine.js + htmx CDN-only entegrasyon. Build step yok.
        Alpine = client state (toggle/modal/form), htmx = server-driven swap (SP preview, list refresh).
@@ -116,7 +120,7 @@
                         // dinamik Icon çekilebilir (AppModule.Icon kolonu eklenebilir).
                         var moduleIcons = new Dictionary<string, string>
                         {
-                            ["tamim"]     = "fas fa-bullhorn",
+                            ["circular"]     = "fas fa-bullhorn",
                             ["hr"]        = "fas fa-users",
                             ["documents"] = "fas fa-folder-open",
                             ["calendar"]  = "fas fa-calendar-days",
@@ -136,23 +140,25 @@
                         }
                         else if (module.ModuleKey == "dashboards")
                         {
-                            <li>
-                                <a href="/Dashboard" class="@(IsActive("Dashboard") ? "active" : "")">
-                                    <span class="icon"><i class="fas fa-gauge"></i></span>
-                                    <span class="label">@module.DisplayName</span>
-                                </a>
-                            </li>
+                            // "Genel Bakış" zaten /Dashboard'a gidiyor (yukarıdaki hardcoded link).
+                            // Modül-listesindeki "Panolar" duplicate — atla.
+                            continue;
                         }
                         else
                         {
                             // vNext modüller (Plan 16.6 extension) — ModuleKey URL prefix'i.
-                            // Tamim → /Tamim, HR → /HR vs.
+                            // Circular → /Circular, HR → /HR vs.
                             var icon = moduleIcons.TryGetValue(module.ModuleKey, out var ic) ? ic : "fas fa-cube";
                             var moduleUrl = "/" + char.ToUpper(module.ModuleKey[0]) + module.ModuleKey.Substring(1);
+                            var showTamimBadge = module.ModuleKey == "circular" && todaysCircular != null;
                             <li>
                                 <a href="@moduleUrl" class="@(IsActive(moduleUrl.TrimStart('/')) ? "active" : "")">
                                     <span class="icon"><i class="@icon"></i></span>
                                     <span class="label">@module.DisplayName</span>
+                                    @if (showTamimBadge)
+                                    {
+                                        <span class="badge" style="background:var(--accent); color:#fff;" aria-label="Bugünün tamimi yayınlandı">Yeni</span>
+                                    }
                                 </a>
                             </li>
                         }
