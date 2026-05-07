@@ -32,6 +32,11 @@ builder.Services.AddScoped<Mosaik.Services.StoredProcedureExecutor>();
 builder.Services.AddSingleton<Mosaik.Services.IBrandService, Mosaik.Services.BrandSettingsService>();
 builder.Services.AddSingleton<Mosaik.Services.IModuleService, Mosaik.Services.ModuleService>();
 
+// Plan 17 Faz F — AI özet altyapısı (Groq/Gemini provider, runtime config Admin'den)
+builder.Services.AddHttpClient("ai");
+builder.Services.AddScoped<Mosaik.Core.Ai.IAiSettingsProvider, Mosaik.Services.AiSettingsProvider>();
+builder.Services.AddScoped<Mosaik.Core.Ai.IAiSummaryProvider, Mosaik.Services.AiSummaryProvider>();
+
 // Plan 16.5 Faz A+B — Mosaik.Core
 builder.Services.AddMemoryCache();
 builder.Services.AddScoped<Mosaik.Services.ApprovalService>();
@@ -141,5 +146,17 @@ Mosaik.Core.Module.ModuleLoader.MapAll(app);
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Dashboard}/{action=Index}/{id?}");
+
+// Plan 17 Faz D — Günlük tamim derleme cron (her gün 17:00 Europe/Istanbul).
+// Bugünün pending bloklarını topla → tek Circular zarfı altında yayınla.
+RecurringJob.AddOrUpdate<Mosaik.Modules.Circular.Services.CompileCircularJob>(
+    recurringJobId: "circular-compile-daily",
+    methodCall: job => job.ExecuteAsync(null),
+    cronExpression: "0 17 * * *",
+    options: new RecurringJobOptions
+    {
+        TimeZone = TimeZoneInfo.FindSystemTimeZoneById(
+            OperatingSystem.IsWindows() ? "Turkey Standard Time" : "Europe/Istanbul")
+    });
 
 app.Run();

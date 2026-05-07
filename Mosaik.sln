@@ -9,7 +9,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mosaik.Tests", "Mosaik.Test
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mosaik.Core", "Mosaik.Core\Mosaik.Core.csproj", "{8A6694E1-9E4F-4DA9-B811-03B46F44197F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mosaik.Modules.Tamim", "Mosaik.Modules.Tamim\Mosaik.Modules.Tamim.csproj", "{42B25D04-27BA-4461-BB30-E894378DC90B}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mosaik.Modules.Circular", "Mosaik.Modules.Circular\Mosaik.Modules.Circular.csproj", "{42B25D04-27BA-4461-BB30-E894378DC90B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
