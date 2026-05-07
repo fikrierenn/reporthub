@@ -1,9 +1,10 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Mosaik.Core.Domain;
+using Mosaik.Core.Lookup;
 using Mosaik.Models;
 
-namespace Mosaik.Core.Lookup
+namespace Mosaik.Services
 {
     // YonetIQ LookupService port + IMemoryCache 10dk TTL.
     // Cache invalidation: CRUD sonrası otomatik flush.

@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Mosaik.Core.Domain;
 using Mosaik.Core.Workflow;
 using Mosaik.Models;
+using Mosaik.Services;
 
 namespace Mosaik.Tests;
 

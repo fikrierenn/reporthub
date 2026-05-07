@@ -1,7 +1,8 @@
 using Microsoft.EntityFrameworkCore;
+using Mosaik.Core.DataScope;
 using Mosaik.Models;
 
-namespace Mosaik.Core.DataScope
+namespace Mosaik.Services
 {
     // SP parametre enjeksiyonu için scope (mevcut UserDataFilterInjector pattern'i).
     // Plan 14 Faz C1: interface implementasyonu + DI kayıt. Mevcut Injector

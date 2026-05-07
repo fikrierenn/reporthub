@@ -1,7 +1,8 @@
 using Microsoft.EntityFrameworkCore;
+using Mosaik.Core.DataScope;
 using Mosaik.Models;
 
-namespace Mosaik.Core.DataScope
+namespace Mosaik.Services
 {
     // Rapor erişim filtresi (raporGrubu — Plan 07 Faz 7).
     // ReportCatalog.ReportGroups join üzerinden EF-side filter.

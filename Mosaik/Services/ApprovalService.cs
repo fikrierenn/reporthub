@@ -1,8 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using Mosaik.Core.Domain;
+using Mosaik.Core.Workflow;
 using Mosaik.Models;
 
-namespace Mosaik.Core.Workflow
+namespace Mosaik.Services
 {
     // YonetIQ port — generic onay servisi. EntityType+EntityId ile herhangi
     // bir entity için onay isteği oluşturur, sıradaki onayçıyı bulur, karar uygular.

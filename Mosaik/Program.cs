@@ -31,15 +31,20 @@ builder.Services.AddSingleton<Mosaik.Services.IModuleService, Mosaik.Services.Mo
 
 // Plan 16.5 Faz A+B — Mosaik.Core
 builder.Services.AddMemoryCache();
-builder.Services.AddScoped<Mosaik.Core.Workflow.ApprovalService>();
-builder.Services.AddScoped<Mosaik.Core.Lookup.LookupService>();
+builder.Services.AddScoped<Mosaik.Services.ApprovalService>();
+builder.Services.AddScoped<Mosaik.Services.LookupService>();
 
 // Plan 14 Faz C1 — IUserDataScope implementasyonları + Registry
-builder.Services.AddScoped<Mosaik.Core.DataScope.IUserDataScope, Mosaik.Core.DataScope.SpInjectionScope>();
-builder.Services.AddScoped<Mosaik.Core.DataScope.IUserDataScope, Mosaik.Core.DataScope.ReportAccessScope>();
+builder.Services.AddScoped<Mosaik.Core.DataScope.IUserDataScope, Mosaik.Services.SpInjectionScope>();
+builder.Services.AddScoped<Mosaik.Core.DataScope.IUserDataScope, Mosaik.Services.ReportAccessScope>();
 builder.Services.AddScoped<Mosaik.Core.DataScope.DataScopeRegistry>();
 // Faz C2 (gelecek): UserDataFilterInjector + ReportsController.Index
 // Registry'ye refactor (DRY). Şu an mevcut inline mantık çalışmaya devam ediyor.
+
+// Plan 16.6 — Modular Monolith. ModuleLoader Mosaik.Modules.* assembly'lerini
+// tarar, IMosaikModule implementasyonlarını DI + ModelBuilder + endpoint'lere
+// register eder. Şu an modül yok — Plan 17+ Tamim ilk modül olacak.
+Mosaik.Core.Module.ModuleLoader.RegisterAll(builder.Services);
 
 // Add Entity Framework
 builder.Services.AddDbContext<MosaikContext>(options =>
