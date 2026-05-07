@@ -50,6 +50,12 @@ Mosaik.Core.Module.ModuleLoader.RegisterAll(builder.Services);
 builder.Services.AddDbContext<MosaikContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+// Plan 16.6 — Modüller MosaikContext'e direkt referans veremez (cross-csproj
+// dairesel bağımlılık). Bunun yerine DbContext base'i resolve edip Set<T>() ile
+// erişirler. Aynı MosaikContext instance'ı (scoped lifetime).
+builder.Services.AddScoped<Microsoft.EntityFrameworkCore.DbContext>(
+    sp => sp.GetRequiredService<MosaikContext>());
+
 builder.Services.AddAuthentication(options =>
     {
         options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;

@@ -325,6 +325,11 @@ namespace Mosaik.Models
                 entity.HasIndex(e => new { e.TypeId, e.IsActive, e.DisplayOrder });
             });
 
+            // Plan 16.6 — Her vNext modül kendi entity'lerini ConfigureModelBuilder
+            // metodu içinde kayıt eder. ModuleLoader assembly'leri tarar, sırayla
+            // çağırır. Tamim, HR, Documents vs. burada aynı modelBuilder'a entity ekler.
+            Mosaik.Core.Module.ModuleLoader.ApplyToModelBuilder(modelBuilder);
+
             base.OnModelCreating(modelBuilder);
         }
     }

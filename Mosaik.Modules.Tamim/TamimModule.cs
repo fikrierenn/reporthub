@@ -3,14 +3,12 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Mosaik.Core.Module;
+using Mosaik.Modules.Tamim.Models;
+using Mosaik.Modules.Tamim.Services;
 
 namespace Mosaik.Modules.Tamim
 {
-    // Plan 17 Faz A — Tamim modülü iskelet. ModuleLoader bu sınıfı bulur,
-    // ConfigureServices + ConfigureModelBuilder + MapEndpoints çağrıları yapılır.
-    //
-    // Faz A: sadece Index sayfası (placeholder).
-    // Faz B+: entity (Tamim, TamimReadLog), CRUD, onay akışı.
+    // Plan 17 Faz B — Tamim modülü. Faz A iskelet üzerine entity + service + CRUD.
     public class TamimModule : IMosaikModule
     {
         public string ModuleKey => "tamim";
@@ -21,12 +19,30 @@ namespace Mosaik.Modules.Tamim
 
         public void ConfigureServices(IServiceCollection services)
         {
-            // Faz B+: services.AddScoped<ITamimService, TamimService>();
+            services.AddScoped<TamimService>();
         }
 
-        public void ConfigureModelBuilder(ModelBuilder modelBuilder)
+        public void ConfigureModelBuilder(ModelBuilder mb)
         {
-            // Faz B+: modelBuilder.Entity<Tamim>(...) + Entity<TamimReadLog>(...)
+            mb.Entity<Models.Tamim>(e =>
+            {
+                e.HasKey(t => t.Id);
+                e.Property(t => t.Title).HasMaxLength(200).IsRequired();
+                e.Property(t => t.Body).IsRequired();
+                e.Property(t => t.Status).HasConversion<int>();
+                // CreatedAt DEFAULT migration script'inde tanımlı (GETUTCDATE())
+                e.HasIndex(t => t.Status);
+                e.HasIndex(t => new { t.Status, t.PublishDate });
+                e.HasIndex(t => t.CreatedById);
+            });
+
+            mb.Entity<TamimReadLog>(e =>
+            {
+                e.HasKey(r => r.Id);
+                // CreatedAt + ReadAt DEFAULT migration script'inde
+                e.HasIndex(r => new { r.TamimId, r.UserId }).IsUnique();
+                e.HasIndex(r => r.TamimId);
+            });
         }
 
         public void MapEndpoints(IEndpointRouteBuilder endpoints)
