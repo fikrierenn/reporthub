@@ -36,7 +36,7 @@ Uygulamanin merkezi SQL sunucuya baglanmasi icin `appsettings.json` dosyasi ayar
 
 Sunucuda `C:\Apps\ReportHub\appsettings.json` icinde:
 ```
-"DefaultConnection": "Server=MERKEZ_SQL;Database=PortalHUB;User Id=XXX;Password=YYY;TrustServerCertificate=true;"
+"DefaultConnection": "Server=MERKEZ_SQL;Database=Mosaik;User Id=XXX;Password=YYY;TrustServerCertificate=true;"
 ```
 
 ## 4) Port ayari (uygulama hangi porttan acilacak?)
