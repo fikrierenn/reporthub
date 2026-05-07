@@ -70,19 +70,30 @@ H. **`ik` kullanıcısı `*` (tümü) atandı** — IK demosu için yeterli ama 
   - EditUser POST hatası simüle (eksik Username) → form dönüyor + filter paneli dolu + ModelState hata mesajı görünür
 - **A8. Commit:** `feat(admin): UserDataFilter diff audit + ortak form helper + ModelState (plan: 14)`
 
-**Faz B — IK sube + ik user kapsam (~45 dk):**
+**Faz B — IK sube + ik user kapsam (~60 dk):**
 
-- **B1. BKM_GENEL DB keşfi** (öneri #9) — Faz A çalışırken paralel subagent ile:
-  ```sql
-  SELECT name, OBJECT_SCHEMA_NAME(object_id)+'.'+name AS qname
-    FROM BKM_GENEL.sys.tables
-   WHERE name LIKE '%Sube%' OR name LIKE '%Magaza%' OR name LIKE '%Personel%'
-  ```
-  + örnek satır + kolon listesi. Faz A bitiminde Faz B blocker'ı kalmaz.
-- **B2. IK sube FilterDefinition.OptionsQuery** yaz — `bkm.SubeListe` veya benzeri tablodan `Id, AdiUnvan` döner
-- **B3. Migration 33** — IK sube FilterDefinition güncelle, IsActive=1, OptionsQuery dolu
-- **B4. ik kullanıcısı kapsam daraltma** — admin GUI'den (plan dışı manuel adım, smoke test'in parçası)
-- **B5. Smoke test:** ik login → `/Reports/Run/{ikRapor}` → sadece atanmış şubeler dönmeli
+**KRİTİK BİLGİ — BKM şube heterojenliği** (`memory/project_bkm_sube_heterogen.md`):
+BKM ekosisteminde "şube" her programda **farklı tablo + farklı kod sistemi** ile yaşıyor. PDKS şube kodları, IK şube kodları, satış sistemi mağaza kodları **birbirinden bağımsız**. Tek "global şube tablosu" yok. Bu yüzden:
+- `FilterDefinition (FilterKey="sube", DataSourceKey="IK")` ayrı satır
+- `FilterDefinition (FilterKey="sube", DataSourceKey="PDKS")` ayrı satır
+- `FilterDefinition (FilterKey="sube", DataSourceKey="DER")` ayrı satır
+- Her birinin OptionsQuery farklı, kullanıcının atadığı değerler birbirine uymaz
+
+- **B1. BKM_GENEL DB keşfi** (subagent paralel — Faz A çalışırken):
+  - Subagent prompt: "BKM_GENEL DB'sinde IK için şube/personel master tablolarını bul. Aday tablo adları + kolon listesi + 5 örnek satır + öneri (hangi tablo IK sube canonical) + kısa rapor"
+  - Subagent kullanımı zorunlu (ana çalışma prensibi)
+  - Aday sorgular:
+    ```sql
+    SELECT name, OBJECT_SCHEMA_NAME(object_id)+'.'+name AS qname
+      FROM BKM_GENEL.sys.tables
+     WHERE name LIKE '%Sube%' OR name LIKE '%Magaza%' OR name LIKE '%Personel%' OR name LIKE '%Birim%';
+    ```
+  - **Asla varsayma:** Tablo adı/kolon adı tahmini yapma, gerçek schema'yı subagent ile doğrula
+- **B2. IK sube FilterDefinition.OptionsQuery** yaz — kanonik `(Id, Label)` projection, BKM_GENEL DB üzerinden
+- **B3. Migration 33** — IK sube FilterDefinition güncelle, IsActive=1, OptionsQuery dolu, DataSourceKey="IK"
+- **B4. PDKS ve IK arası mapping kontrolü:** ik kullanıcısı PDKS Pano açtığında PDKS sube ID'leri kullanılıyor. IK rapor için IK sube ID'leri. **Aynı kullanıcı için iki ayrı UserDataFilter satırı**. Kullanıcı bunu fark etmeli — admin GUI EditUser sayfasında DataSource sütunu zaten ayrı (`_AdminUserDataFilterPanel.cshtml`), test et.
+- **B5. ik kullanıcısı kapsam daraltma** — admin GUI'den iki ayrı atama (PDKS sube + IK sube). Plan dışı manuel adım, smoke test parçası.
+- **B6. Smoke test:** ik login → PDKS Pano → sadece atanmış PDKS şubeleri. IK rapor → sadece atanmış IK şubeleri. **Kross-domain karışmamalı** (IK şube ID'si PDKS sorgusuna gitmemeli).
 
 **Faz C — `IUserDataScope` ile reportAccess deny-by-default + IsActive uyarısı (~90 dk):**
 
