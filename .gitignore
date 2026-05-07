@@ -29,6 +29,9 @@
 # Per-user Claude Code permissions (not shared)
 .claude/settings.local.json
 
+# sqlcli local connection config (plain-text password — not shared)
+sqlcli.json
+
 # Claude scheduled tasks runtime lock (PID kaydı, oturum bazlı)
 .claude/scheduled_tasks.lock
 

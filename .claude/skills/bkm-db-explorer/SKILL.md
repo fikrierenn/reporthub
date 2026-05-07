@@ -30,7 +30,19 @@ description: BKM kurumsal veritabanlarında (DerinSIS*, BKMDATA, EncoreMerkez, B
 | **EncoreMerkez** | EncoreMerkez | muhasebe/finans tahmini |
 | **Mosaik** | Mosaik DB | uygulama metadata + UserDataFilter (allowlist DIŞINDA — MCP yerine SSMS) |
 
-**MCP allowlist:** master, DerinSIS{,BkmCrm,BkmWeb}, BKMDATA, EncoreMerkez, BKM. Mosaik DB allowlist'te **yok** — uygulama içi DB için MCP kullanma, SSMS/sqlcmd lazım.
+**MCP allowlist:** master, DerinSIS{,BkmCrm,BkmWeb}, BKMDATA, EncoreMerkez, BKM. Mosaik DB + IK Zirve DB + diğer kurumsal DB'ler allowlist'te **yok**.
+
+**Allowlist dışı DB'ler için sqlcli kullan** (`D:/Dev/sqlcli/`):
+```bash
+cd D:/Dev/sqlcli
+dotnet run -- query "SELECT ..." --conn "Server=...;Database=...;..."
+# veya sqlcli.json (parent dizinde aranır, D:/Dev/reporthub/sqlcli.json gitignored)
+dotnet run -- query "SELECT ..."
+# Mosaik connection sqlcli.json'da, alternatif DB için --conn override
+dotnet run -- query "..." --conn "Server=ZirveServer;Database=ZirveDB;..."
+```
+
+sqlcli read-only varsayılan **DEĞİL** — `query` komutu UPDATE/INSERT/DELETE de çalıştırır. **Sadece SELECT için kullan**, mutasyon migration'ı için ayrı migration dosyası yaz + kullanıcı onayı + sql-migration-writer skill'ine bak.
 
 ## Tipik keşif workflow
 
