@@ -183,4 +183,86 @@ public class OrgChartServiceTests
         Assert.NotNull(byTrim);
         Assert.Equal("MGR", byTrim!.Code);
     }
+
+    // ============================================================
+    // Faz B — Reorder + Import testleri
+    // ============================================================
+
+    [Fact]
+    public async Task ReorderAsync_ChangesParentAndDisplayOrder()
+    {
+        await using var ctx = NewContext(nameof(ReorderAsync_ChangesParentAndDisplayOrder));
+        var svc = NewService(ctx);
+        var ceo = (await svc.CreateAsync("CEO", "Genel Müdür", null, 0, null, "admin")).Data!;
+        var cfo = (await svc.CreateAsync("CFO", "Mali", null, 1, null, "admin")).Data!;
+        var acc = (await svc.CreateAsync("ACC", "Muhasebe", ceo.Id, 1, null, "admin")).Data!;
+
+        // CFO'yu CEO altına taşı, CFO ilk, ACC ikinci olacak şekilde sırala
+        var result = await svc.ReorderAsync(cfo.Id, ceo.Id, new[] { cfo.Id, acc.Id }, "admin");
+
+        Assert.True(result.IsSuccess);
+        var reloadedCfo = await svc.GetByIdAsync(cfo.Id);
+        var reloadedAcc = await svc.GetByIdAsync(acc.Id);
+        Assert.Equal(ceo.Id, reloadedCfo!.ParentPositionId);
+        Assert.Equal(1, reloadedCfo.DisplayOrder);
+        Assert.Equal(2, reloadedAcc!.DisplayOrder);
+    }
+
+    [Fact]
+    public async Task ReorderAsync_CycleAttempt_Fails()
+    {
+        await using var ctx = NewContext(nameof(ReorderAsync_CycleAttempt_Fails));
+        var svc = NewService(ctx);
+        var ceo = (await svc.CreateAsync("CEO", "Genel Müdür", null, 0, null, "admin")).Data!;
+        var cfo = (await svc.CreateAsync("CFO", "Mali", ceo.Id, 1, null, "admin")).Data!;
+
+        // CEO'yu CFO altına taşımak döngü oluşturur
+        var result = await svc.ReorderAsync(ceo.Id, cfo.Id, new[] { ceo.Id }, "admin");
+
+        Assert.False(result.IsSuccess);
+        Assert.Contains("döngü", result.Message);
+    }
+
+    [Fact]
+    public async Task ReorderAsync_ToRoot_SetsParentNull()
+    {
+        await using var ctx = NewContext(nameof(ReorderAsync_ToRoot_SetsParentNull));
+        var svc = NewService(ctx);
+        var ceo = (await svc.CreateAsync("CEO", "Genel Müdür", null, 0, null, "admin")).Data!;
+        var cfo = (await svc.CreateAsync("CFO", "Mali", ceo.Id, 1, null, "admin")).Data!;
+
+        var result = await svc.ReorderAsync(cfo.Id, null, new[] { ceo.Id, cfo.Id }, "admin");
+
+        Assert.True(result.IsSuccess);
+        var reloaded = await svc.GetByIdAsync(cfo.Id);
+        Assert.Null(reloaded!.ParentPositionId);
+    }
+
+    [Fact]
+    public async Task ImportFromZirveCodeAsync_NewCode_Succeeds()
+    {
+        await using var ctx = NewContext(nameof(ImportFromZirveCodeAsync_NewCode_Succeeds));
+        var svc = NewService(ctx);
+
+        var result = await svc.ImportFromZirveCodeAsync("SATIŞ DANIŞMANI", "admin");
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal("SATIŞ DANIŞMANI", result.Data!.Code);
+        Assert.Null(result.Data.ParentPositionId);
+        // Title Case Türkçe — "Satış Danışmanı" beklenir
+        Assert.Equal("Satış Danışmanı", result.Data.Title);
+    }
+
+    [Fact]
+    public async Task ImportFromZirveCodeAsync_DuplicateCode_Fails()
+    {
+        await using var ctx = NewContext(nameof(ImportFromZirveCodeAsync_DuplicateCode_Fails));
+        var svc = NewService(ctx);
+        await svc.CreateAsync("SATIŞ DANIŞMANI", "Satış Danışmanı", null, 0, null, "admin");
+
+        var result = await svc.ImportFromZirveCodeAsync("SATIŞ DANIŞMANI", "admin");
+
+        Assert.False(result.IsSuccess);
+        Assert.Contains("zaten Mosaik", result.Message);
+    }
 }

@@ -1,0 +1,517 @@
+@model Mosaik.ViewModels.AdminOrgChartViewModel
+@using Mosaik.Core.Domain
+@using System.Text.Json
+@{
+    Layout = "_AppLayout";
+    ViewData["Title"] = "Organizasyon Şeması — Mosaik";
+    ViewData["PageTitle"] = "Organizasyon Şeması";
+
+    var byParent = Model.Positions.ToLookup(p => p.ParentPositionId);
+    var roots = byParent[null].OrderBy(p => p.DisplayOrder).ThenBy(p => p.Title).ToList();
+    var totalCount = Model.Positions.Count;
+    var unknownCount = Model.UnknownZirveCodes.Count;
+    var view = Model.CurrentView;
+
+    // D3 için tree data — recursive object (synthetic root altında gerçek root'lar).
+    object BuildNode(OrgPosition p)
+    {
+        var children = byParent[p.Id].OrderBy(c => c.DisplayOrder).ThenBy(c => c.Title)
+            .Select(c => BuildNode(c)).ToList();
+        return new { id = p.Id, code = p.Code, title = p.Title, isActive = p.IsActive, children };
+    }
+    var treeData = new {
+        id = 0,
+        code = "ROOT",
+        title = "Mosaik",
+        isActive = true,
+        children = roots.Select(r => BuildNode(r)).ToList()
+    };
+    var treeJson = JsonSerializer.Serialize(treeData);
+
+    // Sağ-tık modalı için flat pozisyon listesi (id + code + title).
+    var flatPositions = Model.Positions
+        .OrderBy(p => p.Title)
+        .Select(p => new { id = p.Id, code = p.Code, title = p.Title, isActive = p.IsActive })
+        .ToList();
+    var flatJson = JsonSerializer.Serialize(flatPositions);
+}
+
+
+@section Breadcrumb {
+    <nav class="crumbs" aria-label="Sayfa konumu">
+        <a href="/Admin">Yönetim</a>
+        <span aria-hidden="true">/</span>
+        <span aria-current="page">Organizasyon Şeması</span>
+    </nav>
+}
+
+@section TopActions {
+    <a href="/Admin/CreatePosition" class="btn primary">
+        <i class="fas fa-plus text-[10px]" aria-hidden="true"></i>
+        Yeni Görev
+    </a>
+    <a href="#" class="icon-btn" title="Yardım: Görevleri sürükleyerek hiyerarşiyi düzenleyebilirsiniz.">
+        <i class="fas fa-circle-question"></i>
+    </a>
+}
+
+<div class="hero">
+    <h1>Organizasyon Şeması</h1>
+    <p class="sub">
+        <span class="mono">@totalCount görev</span>
+        @if (view == "list")
+        {
+            <span class="pill"><span class="dot"></span>Sürükle-bırak ile hiyerarşi düzenlenebilir</span>
+        }
+        else
+        {
+            <span class="pill" style="background:#e0f2fe; color:#0369a1;">
+                <i class="fas fa-eye text-[9px]" aria-hidden="true"></i>
+                Görünüm modu — düzenlemek için Liste'ye geçin
+            </span>
+        }
+        @if (unknownCount > 0)
+        {
+            <span class="pill" style="background:#fef3c7; color:#92400e;">
+                <i class="fas fa-triangle-exclamation text-[9px]" aria-hidden="true"></i>
+                @unknownCount Zirve unvanı içe aktarılmamış
+            </span>
+        }
+    </p>
+</div>
+
+@await Html.PartialAsync("_AdminSubnav")
+
+@* Görünüm seçici *@
+<div role="tablist" aria-label="Görünüm seçici" style="display:flex; gap:6px; margin: 14px 0;">
+    @{
+        (string Key, string Label, string Icon)[] views = new[] {
+            ("list",       "Liste",         "fa-list-ul"),
+            ("tree",       "Klasik Tree",   "fa-sitemap"),
+            ("horizontal", "Yatay Tree",    "fa-diagram-project")
+        };
+    }
+    @foreach (var v in views)
+    {
+        var isActive = view == v.Key;
+        <a role="tab" aria-selected="@(isActive ? "true" : "false")"
+           href="?view=@v.Key"
+           class="btn @(isActive ? "primary" : "ghost") sm">
+            <i class="fas @v.Icon text-[10px]" aria-hidden="true"></i>
+            @v.Label
+        </a>
+    }
+    @if (view != "list")
+    {
+        <button type="button" id="oc-export-btn" class="btn ghost sm" style="margin-left:auto;" title="Mevcut görünümü PNG olarak indir">
+            <i class="fas fa-image text-[10px]" aria-hidden="true"></i>
+            PNG indir
+        </button>
+    }
+</div>
+
+@* Reorder + import için sayfa düzeyinde antiforgery token. *@
+<form id="oc-antiforgery" style="display:none;">@Html.AntiForgeryToken()</form>
+
+@* Tüm pozisyonları client'a inline JSON olarak ver (sağ-tık modalı için). *@
+<script id="oc-flat-data" type="application/json">@Html.Raw(flatJson)</script>
+
+@* Sağ-tık "Üst görevi değiştir" modalı — Alpine.js *@
+<div x-data="ocMoveModal()"
+     x-show="open"
+     x-cloak
+     @@oc-open-move.window="openFor($event.detail.id, $event.detail.title)"
+     @@keydown.escape.window="cancel()"
+     style="position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:9999;
+            display:flex; align-items:center; justify-content:center;">
+    <div @@click.outside="cancel()"
+         style="background:#fff; border-radius:10px; padding:20px;
+                width:min(520px, 90vw); max-height:80vh; display:flex; flex-direction:column; gap:12px;
+                box-shadow:0 12px 40px rgba(0,0,0,0.18);">
+        <h3 style="margin:0; font-size:16px;">
+            <i class="fas fa-arrows-up-down-left-right" aria-hidden="true"></i>
+            Üst görevi değiştir
+        </h3>
+        <p style="margin:0; font-size:13px; color:var(--ink-mute);">
+            <strong x-text="draggedTitle"></strong> görevini hangi görevin altına taşımak istiyorsun?
+        </p>
+        <input type="text" class="inp" placeholder="Görev ara…" x-model="search"
+               @@keydown.enter.prevent style="margin:0;" />
+        <div style="overflow:auto; max-height:50vh; border:1px solid var(--line); border-radius:8px;">
+            <ul style="list-style:none; padding:0; margin:0;">
+                <li @@click="setRoot()"
+                    style="padding:10px 14px; cursor:pointer; border-bottom:1px solid var(--line);
+                           font-style:italic; color:var(--ink-mute);"
+                    :style="newParentId === null ? 'background:#ecfdf5;' : ''">
+                    <i class="fas fa-house" aria-hidden="true"></i>
+                    Üst Düzey (kök) — kimseye bağlama
+                </li>
+                <template x-for="p in filtered()" :key="p.id">
+                    <li @@click="newParentId = p.id"
+                        :style="newParentId === p.id ? 'background:#ecfdf5;' : ''"
+                        style="padding:8px 14px; cursor:pointer; border-bottom:1px solid var(--line); font-size:13px;">
+                        <span x-text="p.title" style="font-weight:500;"></span>
+                        <span class="mono" x-text="p.code" style="font-size:11px; color:var(--ink-mute); margin-left:8px;"></span>
+                        <span x-show="!p.isActive" class="pill" style="background:var(--line); margin-left:6px; font-size:10px;">Pasif</span>
+                    </li>
+                </template>
+                <li x-show="filtered().length === 0" style="padding:14px; text-align:center; color:var(--ink-mute); font-size:12px;">
+                    Eşleşen görev yok.
+                </li>
+            </ul>
+        </div>
+        <div style="display:flex; justify-content:space-between; gap:8px;">
+            <button type="button" class="btn ghost" @@click="cancel()">İptal</button>
+            <button type="button" class="btn primary" @@click="save()" :disabled="saving"
+                    x-text="saving ? 'Kaydediliyor…' : 'Taşı'"></button>
+        </div>
+    </div>
+</div>
+
+<script>
+function ocMoveModal() {
+    return {
+        open: false,
+        draggedId: null,
+        draggedTitle: '',
+        newParentId: null,
+        search: '',
+        saving: false,
+        positions() {
+            try { return JSON.parse(document.getElementById('oc-flat-data').textContent); }
+            catch { return []; }
+        },
+        filtered() {
+            const q = this.search.trim().toLocaleLowerCase('tr');
+            const all = this.positions().filter(p => p.id !== this.draggedId);
+            if (!q) return all;
+            return all.filter(p =>
+                p.title.toLocaleLowerCase('tr').includes(q) ||
+                p.code.toLocaleLowerCase('tr').includes(q)
+            );
+        },
+        openFor(id, title) {
+            this.draggedId = parseInt(id, 10);
+            this.draggedTitle = title || '';
+            this.newParentId = null;
+            this.search = '';
+            this.open = true;
+        },
+        setRoot() { this.newParentId = null; },
+        cancel() { this.open = false; },
+        async save() {
+            if (this.saving) return;
+            this.saving = true;
+            const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+            try {
+                const res = await fetch('/Admin/OrgChartReorder', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': token,
+                        'X-Requested-With': 'fetch'
+                    },
+                    body: JSON.stringify({
+                        positionId: this.draggedId,
+                        newParentId: this.newParentId,
+                        siblingOrderIds: []
+                    })
+                });
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok) {
+                    alert('Taşıma başarısız: ' + (data.message || 'Hata'));
+                    this.saving = false;
+                    return;
+                }
+                window.location.reload();
+            } catch (e) {
+                alert('Ağ hatası: ' + e.message);
+                this.saving = false;
+            }
+        }
+    };
+}
+
+// Sağ-tık handler — hem .oc-node (liste) hem .node (OrgChart.js) için
+document.addEventListener('contextmenu', (e) => {
+    const liNode = e.target.closest('li.oc-node');
+    const ocNode = e.target.closest('#oc-d3 .node');
+    let id, title;
+    if (liNode) {
+        id = liNode.dataset.id;
+        title = liNode.querySelector('.oc-title')?.textContent?.trim();
+    } else if (ocNode) {
+        id = ocNode.id;
+        title = ocNode.querySelector('.title')?.textContent?.trim();
+    } else {
+        return;
+    }
+    if (!id || id === '0') return;
+    e.preventDefault();
+    // Alpine root'unda x-data="ocMoveModal()" — global event ile aç
+    window.dispatchEvent(new CustomEvent('oc-open-move', { detail: { id, title } }));
+});
+</script>
+
+@if (!string.IsNullOrWhiteSpace(Model.Message))
+{
+    @await Html.PartialAsync("_AlertMessage", (Model.MessageType ?? "success", Model.Message))
+}
+
+@if (!string.IsNullOrWhiteSpace(Model.ZirveDiscoveryError))
+{
+    <div role="alert" style="margin-bottom:14px; padding:10px 14px; border-radius:8px;
+                              background:#fef3c7; color:#92400e; border:1px solid #fcd34d;">
+        <i class="fas fa-triangle-exclamation" aria-hidden="true"></i>
+        Zirve canlı keşif başarısız: @Model.ZirveDiscoveryError
+    </div>
+}
+
+<div style="display:grid; grid-template-columns: 1fr 320px; gap:18px; align-items:start;">
+
+    @* === SOL: Görünüm — list (SortableJS) veya tree/horizontal (jQuery OrgChart.js, dahili drag-drop) === *@
+    <div style="background:var(--paper); border:1px solid var(--line); border-radius:10px; padding:18px;">
+        <div id="oc-status" style="font-size:12px; color:var(--ink-mute); margin-bottom:10px; min-height:18px;"></div>
+
+        @if (totalCount == 0)
+        {
+            <div style="text-align:center; padding:40px; border:2px dashed var(--line); border-radius:10px;">
+                <i class="fas fa-folder-open" style="font-size:48px; color:var(--ink-mute);" aria-hidden="true"></i>
+                <h3 style="margin-top:10px;">Henüz görev tanımlı değil</h3>
+                <p style="color:var(--ink-mute);">Migration 40 seed çalıştırılmamış olabilir veya tüm görevler silinmiş.</p>
+            </div>
+        }
+        else if (view == "list")
+        {
+            <ul id="oc-root" class="oc-children" data-parent-id="">
+                @foreach (var root in roots)
+                {
+                    @await Html.PartialAsync("_OrgChartNode", (root, byParent))
+                }
+            </ul>
+        }
+        else
+        {
+            <div id="oc-d3" data-mode="@view" style="overflow:auto; min-height:500px;"></div>
+            <script id="oc-tree-data" type="application/json">@Html.Raw(treeJson)</script>
+        }
+    </div>
+
+    @* === SAĞ: Tanımsız Zirve unvanları widget === *@
+    <aside style="background:var(--paper); border:1px solid var(--line); border-radius:10px; padding:16px;">
+        <h3 style="margin:0 0 4px 0; font-size:14px;">
+            <i class="fas fa-cloud-arrow-down" aria-hidden="true"></i>
+            Zirve'den İçe Aktarılmamış
+        </h3>
+        <p style="font-size:12px; color:var(--ink-mute); margin:0 0 12px 0;">
+            Zirve'de aktif personeli olan ama Mosaik'te tanımsız unvanlar.
+        </p>
+
+        @if (Model.UnknownZirveCodes.Count == 0)
+        {
+            <div style="font-size:12px; color:var(--ink-mute); padding:12px; text-align:center;
+                        border:1px dashed var(--line); border-radius:8px;">
+                <i class="fas fa-check-circle" style="color:#16a34a;" aria-hidden="true"></i>
+                Tüm Zirve unvanları içe aktarılmış.
+            </div>
+        }
+        else
+        {
+            <ul style="list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:6px; max-height:400px; overflow-y:auto;">
+                @foreach (var code in Model.UnknownZirveCodes)
+                {
+                    <li style="display:flex; align-items:center; justify-content:space-between; gap:8px;
+                               padding:6px 10px; background:#f9fafb; border-radius:6px; border:1px solid var(--line);">
+                        <span class="mono" style="font-size:11.5px; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"
+                              title="@code">@code</span>
+                        <form method="post" action="/Admin/ImportZirvePosition" style="margin:0;">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="code" value="@code" />
+                            <button type="submit" class="btn sm primary" title="İçe aktar">
+                                <i class="fas fa-plus text-[9px]" aria-hidden="true"></i>
+                            </button>
+                        </form>
+                    </li>
+                }
+            </ul>
+        }
+    </aside>
+</div>
+
+<style>
+    .oc-children { list-style: none; padding-left: 0; margin: 0; min-height: 8px; }
+    .oc-children .oc-children {
+        padding-left: 22px; border-left: 1px dashed var(--line);
+        margin-left: 12px; margin-top: 4px;
+        min-height: 14px;
+    }
+    /* Boş alt ağaç: belirgin "buraya bırak" hedefi */
+    .oc-children:empty {
+        min-height: 28px; margin-top: 6px;
+        border: 1.5px dashed transparent;
+        border-radius: 6px;
+        transition: background 120ms, border-color 120ms;
+    }
+    /* Drag sırasında boş ul'lara hover → görünür hedef */
+    body.oc-dragging .oc-children:empty {
+        border-color: #cbd5e1;
+        background: #f8fafc;
+    }
+    body.oc-dragging .oc-children:empty::before {
+        content: "buraya bırak";
+        display: block;
+        text-align: center;
+        font-size: 11px;
+        color: #94a3b8;
+        line-height: 24px;
+    }
+    .oc-node { margin: 4px 0; }
+    .oc-row {
+        display: flex; align-items: center; gap: 10px;
+        padding: 8px 12px;
+        background: #fff; border: 1px solid var(--line); border-radius: 8px;
+        cursor: default;
+        transition: background 120ms, border-color 120ms;
+    }
+    .oc-row[data-active="0"] { opacity: 0.6; background: #f9fafb; }
+    /* Drop hedefi parent satırı vurgu */
+    .oc-node.oc-drop-target > .oc-row {
+        background: #ecfdf5;
+        border-color: #10b981;
+    }
+    .oc-grip { cursor: grab; color: var(--ink-mute); padding: 0 4px; }
+    .oc-grip:active { cursor: grabbing; }
+    .oc-title { font-size: 13px; font-weight: 500; flex: 1; }
+    .oc-code { font-size: 11px; color: var(--ink-mute); }
+    .oc-actions { display: flex; gap: 6px; align-items: center; }
+    .oc-row.sortable-ghost { opacity: 0.4; background: #fef3c7; }
+    .oc-row.sortable-chosen { box-shadow: 0 2px 8px rgba(0,0,0,0.12); }
+</style>
+
+@* OrgChart.js (dabeng/OrgChart, jQuery v5.0.0) drag-drop dahili klasik kutucuklu organigram. *@
+<style>
+    #oc-d3 .orgchart { background: transparent; }
+    #oc-d3 .orgchart > ul > li > .nodes::before { border-color: #cbd5e1; }
+    #oc-d3 .orgchart .lines .topLine { border-color: #cbd5e1; }
+    #oc-d3 .orgchart .lines .rightLine,
+    #oc-d3 .orgchart .lines .leftLine,
+    #oc-d3 .orgchart .lines .downLine { border-color: #cbd5e1; }
+    /* Node 220px — Türkçe unvanların sığması için */
+    #oc-d3 .orgchart .node { width: 220px; }
+    #oc-d3 .orgchart .node .title {
+        background: #b91c1c;
+        white-space: normal; line-height: 1.25; height: auto; min-height: 28px;
+        padding: 4px 22px;
+        text-align: center;
+    }
+    #oc-d3 .orgchart .node .content {
+        color: #64748b; border-color: var(--line);
+        white-space: normal; height: auto; min-height: 22px;
+        padding: 4px 8px;
+        font-size: 11px; font-family: ui-monospace, SFMono-Regular, monospace;
+        text-align: center;
+    }
+    #oc-d3 .orgchart .oc-inactive .title { background: #94a3b8; }
+    #oc-d3 .orgchart .oc-inactive .content { opacity: 0.65; }
+    #oc-d3 .orgchart .node.allowedDrop { box-shadow: 0 0 0 3px #10b981; }
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@@1.15.6/Sortable.min.js"></script>
+<script>
+(function () {
+    const status = document.getElementById('oc-status');
+    const showStatus = (msg, isError) => {
+        status.textContent = msg;
+        status.style.color = isError ? '#b91c1c' : 'var(--ink-mute)';
+        if (!isError) setTimeout(() => { if (status.textContent === msg) status.textContent = ''; }, 2500);
+    };
+
+    const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+    if (!token) { console.warn('AntiForgeryToken bulunamadı; reorder devre dışı.'); return; }
+
+    const reorder = async (positionId, newParentId, siblingOrderIds) => {
+        showStatus('Sıralama kaydediliyor…');
+        try {
+            const res = await fetch('/Admin/OrgChartReorder', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': token,
+                    'X-Requested-With': 'fetch'
+                },
+                body: JSON.stringify({ positionId, newParentId, siblingOrderIds })
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) {
+                showStatus(data.message || 'Hata oluştu.', true);
+                return false;
+            }
+            showStatus(data.message || 'Kaydedildi.');
+            return true;
+        } catch (e) {
+            showStatus('Ağ hatası: ' + e.message, true);
+            return false;
+        }
+    };
+
+    let dropTarget = null;
+    const clearDropTarget = () => {
+        if (dropTarget) { dropTarget.classList.remove('oc-drop-target'); dropTarget = null; }
+    };
+
+    const initSortable = (ul) => {
+        new Sortable(ul, {
+            group: 'oc-tree',
+            animation: 150,
+            handle: '.oc-grip',
+            ghostClass: 'sortable-ghost',
+            chosenClass: 'sortable-chosen',
+            fallbackOnBody: true,
+            invertSwap: true,
+            emptyInsertThreshold: 24,
+            onStart: () => { document.body.classList.add('oc-dragging'); },
+            onMove: (evt) => {
+                clearDropTarget();
+                const targetUl = evt.to;
+                if (targetUl && targetUl.classList.contains('oc-children')) {
+                    const parentLi = targetUl.closest('li.oc-node');
+                    if (parentLi) {
+                        parentLi.classList.add('oc-drop-target');
+                        dropTarget = parentLi;
+                    }
+                }
+                return true;
+            },
+            onEnd: async (evt) => {
+                document.body.classList.remove('oc-dragging');
+                clearDropTarget();
+                const li = evt.item;
+                const positionId = parseInt(li.dataset.id, 10);
+                const parentUl = li.parentElement;
+                const parentRaw = parentUl?.dataset?.parentId;
+                const newParentId = parentRaw && parentRaw !== '' ? parseInt(parentRaw, 10) : null;
+                const siblings = Array.from(parentUl.children)
+                    .filter(c => c.tagName === 'LI' && c.dataset.id)
+                    .map(c => parseInt(c.dataset.id, 10));
+                const ok = await reorder(positionId, newParentId, siblings);
+                if (!ok) {
+                    // Hata olursa sayfayı yenile (kullanıcı son state'i görsün)
+                    setTimeout(() => location.reload(), 1500);
+                }
+            }
+        });
+    };
+
+    document.querySelectorAll('ul.oc-children').forEach(initSortable);
+})();
+</script>
+
+@if (view != "list")
+{
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/orgchart@@5.0.0/dist/css/jquery.orgchart.min.css">
+<script src="https://cdn.jsdelivr.net/npm/jquery@@3.7.1/dist/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@@1.4.1/dist/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/json-digger@@2.0.2/dist/json-digger.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/orgchart@@5.0.0/dist/js/jquery.orgchart.min.js"></script>
+<script src="~/assets/js/org-chart-render.js" asp-append-version="true"></script>
+}

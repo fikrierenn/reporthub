@@ -1,3 +1,5 @@
+using System.Data;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Mosaik.Core.Domain;
 using Mosaik.Models;
@@ -156,6 +158,159 @@ namespace Mosaik.Services
 
             _logger.LogInformation("OrgPosition deleted id={Id} by={By}", id, deletedBy);
             return ServiceResult.Ok("Görev silindi.");
+        }
+
+        public async Task<ServiceResult> ReorderAsync(int positionId, int? newParentId, int[] siblingOrderIds, string updatedBy)
+        {
+            var position = await Positions.FirstOrDefaultAsync(p => p.Id == positionId);
+            if (position == null) return ServiceResult.Failure("Görev bulunamadı.");
+
+            if (newParentId.HasValue)
+            {
+                if (newParentId.Value == positionId)
+                    return ServiceResult.Failure("Görev kendisinin altına alınamaz.");
+
+                if (!await Positions.AnyAsync(p => p.Id == newParentId.Value))
+                    return ServiceResult.Failure("Hedef üst görev bulunamadı.");
+
+                if (await CreatesCycleAsync(positionId, newParentId.Value))
+                    return ServiceResult.Failure("Bu taşıma döngü oluşturur.");
+            }
+
+            siblingOrderIds ??= Array.Empty<int>();
+            if (siblingOrderIds.Length > 0)
+            {
+                if (!siblingOrderIds.Contains(positionId))
+                    return ServiceResult.Failure("Kardeş sıralama listesi taşınan görevi içermiyor.");
+                if (siblingOrderIds.Distinct().Count() != siblingOrderIds.Length)
+                    return ServiceResult.Failure("Kardeş sıralama listesinde tekrar eden ID var.");
+            }
+
+            position.ParentPositionId = newParentId;
+            position.UpdatedBy = updatedBy;
+            position.UpdatedAt = DateTime.UtcNow;
+
+            if (siblingOrderIds.Length > 0)
+            {
+                var siblings = await Positions.Where(p => siblingOrderIds.Contains(p.Id)).ToListAsync();
+                var siblingMap = siblings.ToDictionary(p => p.Id);
+
+                // Tüm kardeşler newParentId altında olmalı (taşınan zaten yeni parent'ı aldı, diğerleri zaten aynı parent altında olmalı).
+                foreach (var sibling in siblings)
+                {
+                    if (sibling.Id == positionId) continue;
+                    if (sibling.ParentPositionId != newParentId)
+                        return ServiceResult.Failure("Kardeş listesi farklı parent altında ID içeriyor.");
+                }
+
+                for (int i = 0; i < siblingOrderIds.Length; i++)
+                {
+                    if (!siblingMap.TryGetValue(siblingOrderIds[i], out var sibling)) continue;
+                    sibling.DisplayOrder = i + 1;
+                    if (sibling.Id != positionId)
+                    {
+                        sibling.UpdatedBy = updatedBy;
+                        sibling.UpdatedAt = DateTime.UtcNow;
+                    }
+                }
+            }
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "OrgChartService.ReorderAsync id={Id} newParent={Parent}", positionId, newParentId);
+                return ServiceResult.Failure("Sıralama kaydedilemedi.");
+            }
+
+            return ServiceResult.Ok("Sıralama güncellendi.");
+        }
+
+        public async Task<ServiceResult<OrgPosition>> ImportFromZirveCodeAsync(string code, string createdBy)
+        {
+            if (string.IsNullOrWhiteSpace(code))
+                return ServiceResult<OrgPosition>.Failure("Unvan kodu zorunludur.");
+
+            var trimmed = code.Trim();
+            if (await Positions.AnyAsync(p => p.Code == trimmed))
+                return ServiceResult<OrgPosition>.Failure("Bu unvan zaten Mosaik'te tanımlı.");
+
+            // Title Case: tüm kelimeleri büyük başlat, geri kalanı küçük (Türkçe destekli)
+            var ti = System.Globalization.CultureInfo.GetCultureInfo("tr-TR").TextInfo;
+            var title = ti.ToTitleCase(trimmed.ToLower(System.Globalization.CultureInfo.GetCultureInfo("tr-TR")));
+
+            var position = new OrgPosition
+            {
+                Code = trimmed,
+                Title = title,
+                ParentPositionId = null,
+                DisplayOrder = 9999,
+                IsActive = true,
+                CreatedBy = createdBy
+            };
+
+            Positions.Add(position);
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "OrgChartService.ImportFromZirveCodeAsync code={Code}", trimmed);
+                return ServiceResult<OrgPosition>.Failure("İçe aktarma sırasında hata oluştu.");
+            }
+
+            return ServiceResult<OrgPosition>.Ok(position, "Unvan içe aktarıldı.");
+        }
+
+        public async Task<(List<string> unknownCodes, string? error)> GetUnknownZirveCodesAsync()
+        {
+            var ds = await _context.DataSources.AsNoTracking()
+                .FirstOrDefaultAsync(d => d.DataSourceKey == "IK" && d.IsActive);
+            if (ds == null)
+                return (new List<string>(), "IK DataSource tanımlı değil veya pasif.");
+            if (string.IsNullOrWhiteSpace(ds.ConnString))
+                return (new List<string>(), "IK DataSource bağlantı bilgisi boş.");
+
+            var existing = await Positions.AsNoTracking()
+                .Select(p => p.Code).ToListAsync();
+            var existingSet = existing.Select(c => c.Trim().ToUpperInvariant()).ToHashSet();
+
+            var zirve = new List<string>();
+            try
+            {
+                await using var conn = new SqlConnection(ds.ConnString);
+                await conn.OpenAsync();
+                using var cmd = new SqlCommand(
+                    @"SELECT DISTINCT LTRIM(RTRIM(Unvan)) AS Unvan
+                      FROM dbo.vw_PersonelDepartman
+                      WHERE Ict IS NULL AND Unvan IS NOT NULL AND LTRIM(RTRIM(Unvan)) <> ''",
+                    conn) { CommandType = CommandType.Text, CommandTimeout = 30 };
+                using var reader = await cmd.ExecuteReaderAsync();
+                while (await reader.ReadAsync())
+                {
+                    var u = reader.GetString(0);
+                    if (!string.IsNullOrWhiteSpace(u)) zirve.Add(u);
+                }
+            }
+            catch (SqlException ex)
+            {
+                _logger.LogError(ex, "OrgChartService.GetUnknownZirveCodesAsync — SQL hatası ds={Ds}", ds.DataSourceKey);
+                return (new List<string>(), "Zirve'ye erişilemedi. Lütfen sistem yöneticisine bildirin.");
+            }
+            catch (InvalidOperationException ex)
+            {
+                _logger.LogError(ex, "OrgChartService.GetUnknownZirveCodesAsync — bağlantı yapılandırma hatası");
+                return (new List<string>(), "Zirve bağlantı yapılandırması hatalı. Lütfen sistem yöneticisine bildirin.");
+            }
+
+            var unknown = zirve
+                .Where(u => !existingSet.Contains(u.Trim().ToUpperInvariant()))
+                .OrderBy(u => u)
+                .ToList();
+            return (unknown, null);
         }
 
         // True dönerse: candidateParent positionId'nin alt-ağacında — atama cycle yaratır.

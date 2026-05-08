@@ -1,0 +1,148 @@
+@model Mosaik.ViewModels.AdminOrgPositionFormViewModel
+@{
+    Layout = "_AppLayout";
+    var isCreate = Model.IsCreate;
+    ViewData["Title"] = (isCreate ? "Yeni Görev" : "Görev Düzenle") + " — Mosaik";
+    ViewData["PageTitle"] = isCreate ? "Yeni Görev" : "Görev Düzenle";
+
+    var actionUrl = isCreate ? "/Admin/CreatePosition" : $"/Admin/EditPosition/{Model.Id}";
+}
+
+@section Breadcrumb {
+    <nav class="crumbs" aria-label="Sayfa konumu">
+        <a href="/Admin">Yönetim</a>
+        <span aria-hidden="true">/</span>
+        <a href="/Admin/OrgChart">Organizasyon Şeması</a>
+        <span aria-hidden="true">/</span>
+        <span aria-current="page">@(isCreate ? "Yeni Görev" : Model.Title)</span>
+    </nav>
+}
+
+@section TopActions {
+    <a href="/Admin/OrgChart" class="btn">İptal</a>
+}
+
+<div class="hero">
+    <h1>@(isCreate ? "Yeni Görev" : Model.Title)</h1>
+    <p class="sub">
+        @if (isCreate)
+        {
+            <span>Yeni bir organizasyon görevi tanımlayın. Kod alanı Zirve `Unvan` ile eşleşir.</span>
+        }
+        else
+        {
+            <span class="mono">@Model.Code</span>
+            <span class="pill"><span class="dot"></span>Görev tanımı</span>
+        }
+    </p>
+</div>
+
+@if (!string.IsNullOrWhiteSpace(Model.Message))
+{
+    @await Html.PartialAsync("_AlertMessage", (Model.MessageType ?? "error", Model.Message))
+}
+
+<form method="post" action="@actionUrl" autocomplete="off">
+    @Html.AntiForgeryToken()
+
+    <div style="background:var(--paper); border:1px solid var(--line); border-radius:10px;
+                max-width:720px; margin-bottom:18px; padding:20px;">
+
+        <div class="field">
+            <label class="lab" for="Code">Kod (Zirve eşleşme anahtarı) <span style="color:#b91c1c;">*</span></label>
+            @if (isCreate)
+            {
+                <input class="inp" type="text" id="Code" name="Code" value="@Model.Code"
+                       maxlength="100" required
+                       placeholder="Örn: SATIŞ DANIŞMANI" />
+                <p style="font-size:11px; color:var(--ink-mute); margin-top:4px;">
+                    Zirve `vw_PersonelDepartman.Unvan` değeriyle birebir aynı olmalı (büyük harf, Türkçe karakter dahil).
+                </p>
+            }
+            else
+            {
+                <input class="inp" type="text" id="Code" value="@Model.Code" disabled
+                       style="background:#f9fafb; cursor:not-allowed;" />
+                <p style="font-size:11px; color:var(--ink-mute); margin-top:4px;">
+                    Kod değiştirilemez (Zirve eşleşmesi bozulur). Yeni kod gerekiyorsa bu görevi silip yeniden ekleyin.
+                </p>
+            }
+        </div>
+
+        <div class="field">
+            <label class="lab" for="Title">Başlık <span style="color:#b91c1c;">*</span></label>
+            <input class="inp" type="text" id="Title" name="Title" value="@Model.Title"
+                   maxlength="150" required />
+            <p style="font-size:11px; color:var(--ink-mute); margin-top:4px;">
+                Görsel etiket. Title Case Türkçe (örn: "Satış Danışmanı").
+            </p>
+        </div>
+
+        <div class="field">
+            <label class="lab" for="ParentPositionId">Bağlı Olduğu Görev</label>
+            <select class="inp" id="ParentPositionId" name="ParentPositionId">
+                <option value="">— Üst Düzey (kök) —</option>
+                @foreach (var p in Model.AvailableParents.OrderBy(x => x.Title))
+                {
+                    if (Model.ParentPositionId == p.Id)
+                    {
+                        <option value="@p.Id" selected>@p.Title (@p.Code)</option>
+                    }
+                    else
+                    {
+                        <option value="@p.Id">@p.Title (@p.Code)</option>
+                    }
+                }
+            </select>
+            <p style="font-size:11px; color:var(--ink-mute); margin-top:4px;">
+                Drag-drop ile de değiştirilebilir. Döngü oluşturan atamalar reddedilir.
+            </p>
+        </div>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:14px;">
+            <div class="field">
+                <label class="lab" for="DisplayOrder">Sıra</label>
+                <input class="inp" type="number" id="DisplayOrder" name="DisplayOrder"
+                       value="@Model.DisplayOrder" min="0" max="9999" />
+                <p style="font-size:11px; color:var(--ink-mute); margin-top:4px;">
+                    Aynı parent altında küçükten büyüğe sıralanır.
+                </p>
+            </div>
+
+            <div class="field">
+                <label class="lab" for="IsActive">Durum</label>
+                <select class="inp" id="IsActive" name="IsActive">
+                    @if (Model.IsActive)
+                    {
+                        <option value="true" selected>Aktif</option>
+                        <option value="false">Pasif</option>
+                    }
+                    else
+                    {
+                        <option value="true">Aktif</option>
+                        <option value="false" selected>Pasif</option>
+                    }
+                </select>
+            </div>
+        </div>
+
+        <div class="field">
+            <label class="lab" for="Description">Açıklama</label>
+            <textarea class="inp" id="Description" name="Description" rows="3" maxlength="500"
+                      placeholder="Görev tanımı, sorumluluklar, opsiyonel.">@Model.Description</textarea>
+        </div>
+    </div>
+
+    <div style="display:flex; align-items:center; justify-content:space-between;
+                max-width:720px; padding:14px 20px;
+                background:var(--paper); border:1px solid var(--line); border-radius:10px;">
+        <a href="/Admin/OrgChart" class="btn ghost">
+            <i class="fas fa-arrow-left text-[10px]" aria-hidden="true"></i>
+            Geri Dön
+        </a>
+        <button type="submit" class="btn primary">
+            <i class="fas fa-save text-[10px]" aria-hidden="true"></i>
+            @(isCreate ? "Görevi Oluştur" : "Değişiklikleri Kaydet")
+        </button>
+    </div>
+</form>

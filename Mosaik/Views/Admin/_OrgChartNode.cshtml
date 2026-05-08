@@ -1,0 +1,42 @@
+@*
+    Plan 20 Faz B — Tek bir OrgPosition node'u + alt ağacını render eder.
+    Recursive: kendine partial olarak çağırır.
+    Model: (OrgPosition Position, ILookup<int?, OrgPosition> ByParent)
+*@
+@using Mosaik.Core.Domain
+@model (OrgPosition Position, ILookup<int?, OrgPosition> ByParent)
+@{
+    var p = Model.Position;
+    var children = Model.ByParent[p.Id].OrderBy(c => c.DisplayOrder).ThenBy(c => c.Title).ToList();
+}
+
+<li data-id="@p.Id" class="oc-node">
+    <div class="oc-row" data-active="@(p.IsActive ? "1" : "0")">
+        <span class="oc-grip" title="Sürükle"><i class="fas fa-grip-vertical" aria-hidden="true"></i></span>
+        <span class="oc-title">@p.Title</span>
+        <span class="oc-code mono">@p.Code</span>
+        @if (!p.IsActive)
+        {
+            <span class="pill" style="background:var(--line); color:var(--ink-mute);">Pasif</span>
+        }
+        <span class="oc-actions">
+            <a href="/Admin/EditPosition/@p.Id" class="btn ghost sm" title="Düzenle">
+                <i class="fas fa-pen text-[9px]" aria-hidden="true"></i>
+                Düzenle
+            </a>
+            <form method="post" action="/Admin/DeletePosition/@p.Id" style="display:inline;"
+                  onsubmit="return confirm('&quot;@p.Title&quot; silinsin mi? Alt görevler varsa silinmez.');">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn sm danger" title="Sil">
+                    <i class="fas fa-trash text-[9px]" aria-hidden="true"></i>
+                </button>
+            </form>
+        </span>
+    </div>
+    <ul class="oc-children" data-parent-id="@p.Id">
+        @foreach (var child in children)
+        {
+            @await Html.PartialAsync("_OrgChartNode", (child, Model.ByParent))
+        }
+    </ul>
+</li>
