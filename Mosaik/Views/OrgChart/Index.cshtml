@@ -269,46 +269,7 @@ document.addEventListener('click', (e) => {
 });
 </script>
 
-<style>
-    .oc-pub-children { list-style: none; padding-left: 0; margin: 0; }
-    .oc-pub-children .oc-pub-children { padding-left: 22px; border-left: 1px dashed var(--line); margin-left: 12px; margin-top: 4px; }
-    .oc-pub-node { margin: 4px 0; }
-    .oc-pub-row {
-        display: flex; align-items: center; gap: 10px;
-        padding: 8px 12px;
-        background: #fff; border: 1px solid var(--line); border-radius: 8px;
-        cursor: pointer; transition: background 120ms;
-    }
-    .oc-pub-row:hover { background: #f8fafc; }
-    .oc-pub-title { font-size: 13px; font-weight: 500; flex: 1; }
-    .oc-pub-code { font-size: 11px; color: var(--ink-mute); }
-    .oc-pub-count {
-        background: #b91c1c; color: #fff;
-        font-size: 11px; font-weight: 600;
-        padding: 2px 8px; border-radius: 999px;
-        min-width: 22px; text-align: center;
-    }
-
-    /* OrgChart.js node renkleri (tree/horizontal mod) */
-    #oc-d3 .orgchart { background: transparent; }
-    #oc-d3 .orgchart .node { width: 220px; cursor: pointer; }
-    #oc-d3 .orgchart .node .title {
-        background: #b91c1c;
-        white-space: normal; line-height: 1.25; height: auto; min-height: 28px;
-        padding: 4px 22px;
-    }
-    #oc-d3 .orgchart .node .content {
-        color: #64748b; border-color: var(--line);
-        white-space: normal; height: auto; min-height: 22px;
-        padding: 4px 8px; font-size: 11px;
-        font-family: ui-monospace, SFMono-Regular, monospace;
-    }
-    #oc-d3 .orgchart > ul > li > .nodes::before { border-color: #cbd5e1; }
-    #oc-d3 .orgchart .lines .topLine,
-    #oc-d3 .orgchart .lines .rightLine,
-    #oc-d3 .orgchart .lines .leftLine,
-    #oc-d3 .orgchart .lines .downLine { border-color: #cbd5e1; }
-</style>
+@* CSS: wwwroot/assets/css/org-chart.css (layout'a link'li) *@
 
 @if (view != "list")
 {
