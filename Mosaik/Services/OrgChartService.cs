@@ -1,6 +1,7 @@
 using System.Data;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using Mosaik.Core.Domain;
 using Mosaik.Models;
 
@@ -11,11 +12,16 @@ namespace Mosaik.Services
     public class OrgChartService : IOrgChartService
     {
         private readonly MosaikContext _context;
+        private readonly IMemoryCache _cache;
         private readonly ILogger<OrgChartService> _logger;
 
-        public OrgChartService(MosaikContext context, ILogger<OrgChartService> logger)
+        private const string CacheKeyIncumbents = "OrgChart:Incumbents";
+        private static readonly TimeSpan IncumbentsTtl = TimeSpan.FromMinutes(5);
+
+        public OrgChartService(MosaikContext context, IMemoryCache cache, ILogger<OrgChartService> logger)
         {
             _context = context;
+            _cache = cache;
             _logger = logger;
         }
 
@@ -311,6 +317,94 @@ namespace Mosaik.Services
                 .OrderBy(u => u)
                 .ToList();
             return (unknown, null);
+        }
+
+        public async Task<OrgChartWithIncumbents> GetChartWithIncumbentsAsync()
+        {
+            // Cache hit
+            if (_cache.TryGetValue<OrgChartWithIncumbents>(CacheKeyIncumbents, out var cached) && cached != null)
+                return cached;
+
+            var positions = await GetAllAsync(includeInactive: false);
+            var result = new OrgChartWithIncumbents
+            {
+                Positions = positions,
+                FetchedAtUtc = DateTime.UtcNow
+            };
+
+            var ds = await _context.DataSources.AsNoTracking()
+                .FirstOrDefaultAsync(d => d.DataSourceKey == "IK" && d.IsActive);
+            if (ds == null || string.IsNullOrWhiteSpace(ds.ConnString))
+            {
+                result.Error = "IK DataSource tanımlı değil veya bağlantı bilgisi boş.";
+                return result;
+            }
+
+            var positionCodeUpper = positions
+                .Select(p => p.Code.Trim().ToUpperInvariant())
+                .ToHashSet();
+
+            try
+            {
+                await using var conn = new SqlConnection(ds.ConnString);
+                await conn.OpenAsync();
+                using var cmd = new SqlCommand(
+                    @"SELECT Personelno, AdSoyad, Unvan, Lokasyon, AltLokasyon, Departman, Firma
+                      FROM dbo.vw_PersonelDepartman
+                      WHERE Ict IS NULL",
+                    conn) { CommandType = CommandType.Text, CommandTimeout = 30 };
+                using var reader = await cmd.ExecuteReaderAsync();
+                while (await reader.ReadAsync())
+                {
+                    var unvan = reader.IsDBNull(2) ? string.Empty : reader.GetString(2);
+                    var unvanKey = unvan.Trim().ToUpperInvariant();
+                    var inc = new OrgIncumbent
+                    {
+                        PersonelNo = reader.IsDBNull(0) ? string.Empty : reader.GetString(0),
+                        AdSoyad = reader.IsDBNull(1) ? string.Empty : reader.GetString(1),
+                        Unvan = unvan,
+                        Lokasyon = reader.IsDBNull(3) ? null : reader.GetString(3),
+                        AltLokasyon = reader.IsDBNull(4) ? null : reader.GetString(4),
+                        Departman = reader.IsDBNull(5) ? null : reader.GetString(5),
+                        Firma = reader.IsDBNull(6) ? null : reader.GetString(6)
+                    };
+
+                    if (string.IsNullOrEmpty(unvanKey))
+                    {
+                        result.UnmatchedIncumbents.Add(inc);
+                        continue;
+                    }
+
+                    if (positionCodeUpper.Contains(unvanKey))
+                    {
+                        if (!result.IncumbentsByCode.TryGetValue(unvanKey, out var list))
+                        {
+                            list = new List<OrgIncumbent>();
+                            result.IncumbentsByCode[unvanKey] = list;
+                        }
+                        list.Add(inc);
+                    }
+                    else
+                    {
+                        result.UnmatchedIncumbents.Add(inc);
+                    }
+                }
+            }
+            catch (SqlException ex)
+            {
+                _logger.LogError(ex, "OrgChartService.GetChartWithIncumbentsAsync — SQL hatası ds={Ds}", ds.DataSourceKey);
+                result.Error = "Zirve'ye erişilemedi. Lütfen sistem yöneticisine bildirin.";
+                return result;
+            }
+            catch (InvalidOperationException ex)
+            {
+                _logger.LogError(ex, "OrgChartService.GetChartWithIncumbentsAsync — bağlantı yapılandırma hatası");
+                result.Error = "Zirve bağlantı yapılandırması hatalı. Lütfen sistem yöneticisine bildirin.";
+                return result;
+            }
+
+            _cache.Set(CacheKeyIncumbents, result, IncumbentsTtl);
+            return result;
         }
 
         // True dönerse: candidateParent positionId'nin alt-ağacında — atama cycle yaratır.

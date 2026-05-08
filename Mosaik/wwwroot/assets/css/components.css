@@ -253,6 +253,7 @@ select.inp {
     display: flex; flex-wrap: wrap; gap: 2px;
     border-bottom: 1px solid var(--line);
     margin-bottom: 18px;
+    align-items: center;
 }
 .subnav a {
     display: inline-flex; align-items: center; gap: 8px;
@@ -263,6 +264,26 @@ select.inp {
     margin-bottom: -1px;
     text-decoration: none;
     transition: color .12s, border-color .12s, background .12s;
+}
+/* Yönetim subnav — gruplandırılmış, daha kompakt */
+.subnav-grouped a {
+    padding: 8px 10px;
+    font-size: 12.5px;
+    gap: 6px;
+}
+.subnav-sep {
+    display: inline-block;
+    width: 1px;
+    align-self: stretch;
+    background: var(--line);
+    margin: 4px 6px;
+}
+/* Responsive: 1400px altında label gizle, ikon + tooltip kalsın (11 öğe sığsın) */
+@media (max-width: 1400px) {
+    .subnav-grouped a span { display: none; }
+    .subnav-grouped a { padding: 8px 12px; }
+    .subnav-grouped a i { font-size: 15px; }
+    .subnav-sep { margin: 4px 8px; }
 }
 .subnav a:hover { color: var(--ink-1); background: var(--line-2); }
 .subnav a.active {

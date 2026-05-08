@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging.Abstractions;
 using Mosaik.Models;
 using Mosaik.Services;
@@ -17,7 +18,7 @@ public class OrgChartServiceTests
     }
 
     private static OrgChartService NewService(MosaikContext ctx) =>
-        new(ctx, NullLogger<OrgChartService>.Instance);
+        new(ctx, new MemoryCache(new MemoryCacheOptions()), NullLogger<OrgChartService>.Instance);
 
     [Fact]
     public async Task CreateAsync_RootPosition_Succeeds()

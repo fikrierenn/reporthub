@@ -28,5 +28,31 @@ namespace Mosaik.Services
         // Faz B — Zirve'de var, Mosaik'te yok unvanları tespit eder. IK DataSourceKey'in
         // ConnString'i ile dbo.vw_PersonelDepartman sorgulanır. Hata olursa (error, []) döner.
         Task<(List<string> unknownCodes, string? error)> GetUnknownZirveCodesAsync();
+
+        // Faz C — Pozisyon ağacı + her node için Zirve'den canlı incumbent (kim çalışıyor) listesi.
+        // IMemoryCache 5dk TTL. Hata olursa pozisyon ağacı dolu, incumbents boş + error döner.
+        Task<OrgChartWithIncumbents> GetChartWithIncumbentsAsync();
+    }
+
+    // Faz C — public sayfa için personel dahil tree result.
+    public class OrgChartWithIncumbents
+    {
+        public List<Mosaik.Core.Domain.OrgPosition> Positions { get; set; } = new();
+        // Code (UPPER) → personel listesi
+        public Dictionary<string, List<OrgIncumbent>> IncumbentsByCode { get; set; } = new();
+        public List<OrgIncumbent> UnmatchedIncumbents { get; set; } = new();
+        public string? Error { get; set; }
+        public DateTime FetchedAtUtc { get; set; }
+    }
+
+    public class OrgIncumbent
+    {
+        public string PersonelNo { get; set; } = string.Empty;
+        public string AdSoyad { get; set; } = string.Empty;
+        public string? Unvan { get; set; }
+        public string? Lokasyon { get; set; }
+        public string? AltLokasyon { get; set; }
+        public string? Departman { get; set; }
+        public string? Firma { get; set; }
     }
 }

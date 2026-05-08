@@ -1,7 +1,19 @@
 using Mosaik.Core.Domain;
+using Mosaik.Services;
 
 namespace Mosaik.ViewModels
 {
+    // Plan 20 Faz C — Public org chart view (canlı incumbent).
+    public class OrgChartPublicViewModel
+    {
+        public List<OrgPosition> Positions { get; set; } = new();
+        public Dictionary<string, List<OrgIncumbent>> IncumbentsByCode { get; set; } = new();
+        public List<OrgIncumbent> UnmatchedIncumbents { get; set; } = new();
+        public string? ZirveError { get; set; }
+        public DateTime FetchedAtUtc { get; set; }
+        public string CurrentView { get; set; } = "tree";
+    }
+
     // Plan 20 Faz B — Admin OrgChart liste görünümü.
     public class AdminOrgChartViewModel : UserMessageViewModel
     {

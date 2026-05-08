@@ -116,6 +116,12 @@
                             <span class="label">Genel Bakış</span>
                         </a>
                     </li>
+                    <li>
+                        <a href="/OrgChart" class="@(IsActive("OrgChart") ? "active" : "")" aria-current="@(IsActive("OrgChart") ? "page" : null)">
+                            <span class="icon" aria-hidden="true"><i class="fas fa-sitemap"></i></span>
+                            <span class="label">Organizasyon</span>
+                        </a>
+                    </li>
                     @{
                         // Plan 16.6 — vNext modüller için ikon mapping. Yeni modül
                         // eklendiğinde AppModule seed'inde ModuleKey + buradaki ikon.

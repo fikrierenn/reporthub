@@ -1,0 +1,371 @@
+@model Mosaik.ViewModels.OrgChartPublicViewModel
+@using Mosaik.Core.Domain
+@using Mosaik.Services
+@using System.Text.Json
+@{
+    Layout = "_AppLayout";
+    ViewData["Title"] = "Organizasyon Şeması — Mosaik";
+    ViewData["PageTitle"] = "Organizasyon Şeması";
+
+    var byParent = Model.Positions.ToLookup(p => p.ParentPositionId);
+    var roots = byParent[null].OrderBy(p => p.DisplayOrder).ThenBy(p => p.Title).ToList();
+    var totalCount = Model.Positions.Count;
+    var view = Model.CurrentView;
+    var totalIncumbents = Model.IncumbentsByCode.Sum(kv => kv.Value.Count);
+    var unmatchedCount = Model.UnmatchedIncumbents.Count;
+    var isAdmin = User.IsInRole("admin");
+
+    // Tree data — incumbent count node label'ına ekleniyor.
+    object BuildNode(OrgPosition p)
+    {
+        var key = p.Code.Trim().ToUpperInvariant();
+        var count = Model.IncumbentsByCode.TryGetValue(key, out var list) ? list.Count : 0;
+        var children = byParent[p.Id].OrderBy(c => c.DisplayOrder).ThenBy(c => c.Title)
+            .Select(c => BuildNode(c)).ToList();
+        return new { id = p.Id, code = p.Code, title = p.Title, isActive = p.IsActive, count, children };
+    }
+    var treeData = new {
+        id = 0,
+        code = "ROOT",
+        title = "Mosaik",
+        isActive = true,
+        count = totalIncumbents,
+        children = roots.Select(r => BuildNode(r)).ToList()
+    };
+    var treeJson = JsonSerializer.Serialize(treeData);
+
+    // Incumbent map (Code → personel listesi) JSON — modal için
+    var incumbentJson = JsonSerializer.Serialize(Model.IncumbentsByCode);
+}
+
+@section Breadcrumb {
+    <nav class="crumbs" aria-label="Sayfa konumu">
+        <span aria-current="page">Organizasyon Şeması</span>
+    </nav>
+}
+
+@section TopActions {
+    @if (isAdmin)
+    {
+        <a href="/Admin/OrgChart" class="btn ghost">
+            <i class="fas fa-pen text-[10px]" aria-hidden="true"></i>
+            Düzenle
+        </a>
+    }
+    <a href="#" class="icon-btn" title="Yardım: Bir kutuya tıklayarak o pozisyondaki çalışanları görebilirsiniz.">
+        <i class="fas fa-circle-question"></i>
+    </a>
+}
+
+<div class="hero">
+    <h1>Organizasyon Şeması</h1>
+    <p class="sub">
+        <span class="mono">@totalCount görev</span>
+        <span class="mono">@totalIncumbents çalışan</span>
+        @if (unmatchedCount > 0)
+        {
+            <span class="pill" style="background:#fef3c7; color:#92400e;">
+                <i class="fas fa-triangle-exclamation text-[9px]" aria-hidden="true"></i>
+                @unmatchedCount eşleşmeyen
+            </span>
+        }
+        @if (Model.FetchedAtUtc != default)
+        {
+            <span class="pill"><span class="dot"></span>@Model.FetchedAtUtc.ToLocalTime().ToString("HH:mm") güncellendi</span>
+        }
+    </p>
+</div>
+
+@if (!string.IsNullOrWhiteSpace(Model.ZirveError))
+{
+    <div role="alert" style="margin-bottom:14px; padding:10px 14px; border-radius:8px;
+                              background:#fef3c7; color:#92400e; border:1px solid #fcd34d;">
+        <i class="fas fa-triangle-exclamation" aria-hidden="true"></i>
+        @Model.ZirveError Çalışan dağılımı görüntülenemiyor — yapı bilgisi gösteriliyor.
+    </div>
+}
+
+<div role="tablist" aria-label="Görünüm seçici" style="display:flex; gap:6px; margin: 14px 0;">
+    @{
+        (string Key, string Label, string Icon)[] views = new[] {
+            ("tree",       "Klasik",       "fa-sitemap"),
+            ("horizontal", "Yatay",        "fa-diagram-project"),
+            ("list",       "Liste",        "fa-list-ul")
+        };
+    }
+    @foreach (var v in views)
+    {
+        var isVActive = view == v.Key;
+        <a role="tab" aria-selected="@(isVActive ? "true" : "false")"
+           href="?view=@v.Key"
+           class="btn @(isVActive ? "primary" : "ghost") sm">
+            <i class="fas @v.Icon text-[10px]" aria-hidden="true"></i>
+            @v.Label
+        </a>
+    }
+</div>
+
+<div style="background:var(--paper); border:1px solid var(--line); border-radius:10px; padding:18px;">
+    @if (totalCount == 0)
+    {
+        <div style="text-align:center; padding:40px; border:2px dashed var(--line); border-radius:10px;">
+            <i class="fas fa-folder-open" style="font-size:48px; color:var(--ink-mute);" aria-hidden="true"></i>
+            <h3 style="margin-top:10px;">Organizasyon şeması henüz tanımlanmamış</h3>
+        </div>
+    }
+    else if (view == "list")
+    {
+        <ul id="oc-pub-root" class="oc-pub-children">
+            @{
+                void RenderListNode(OrgPosition p)
+                {
+                    var key = p.Code.Trim().ToUpperInvariant();
+                    var cnt = Model.IncumbentsByCode.TryGetValue(key, out var lst) ? lst.Count : 0;
+                    var children = byParent[p.Id].OrderBy(c => c.DisplayOrder).ThenBy(c => c.Title).ToList();
+                    <li class="oc-pub-node" data-code="@p.Code">
+                        <div class="oc-pub-row" data-id="@p.Id">
+                            <span class="oc-pub-title">@p.Title</span>
+                            <span class="oc-pub-code mono">@p.Code</span>
+                            @if (cnt > 0)
+                            {
+                                <span class="oc-pub-count">@cnt</span>
+                            }
+                        </div>
+                        @if (children.Count > 0)
+                        {
+                            <ul class="oc-pub-children">
+                                @foreach (var c in children) { RenderListNode(c); }
+                            </ul>
+                        }
+                    </li>
+                }
+            }
+            @foreach (var r in roots) { RenderListNode(r); }
+        </ul>
+    }
+    else
+    {
+        <div id="oc-d3" data-mode="@view" style="overflow:auto; min-height:500px;"></div>
+        <script id="oc-tree-data" type="application/json">@Html.Raw(treeJson)</script>
+    }
+</div>
+
+@if (Model.UnmatchedIncumbents.Count > 0)
+{
+    <div style="margin-top:18px; background:var(--paper); border:1px solid var(--line); border-radius:10px; padding:16px;">
+        <h3 style="margin:0 0 6px 0; font-size:14px;">
+            <i class="fas fa-user-slash" aria-hidden="true"></i>
+            Eşleşmeyen çalışanlar (@Model.UnmatchedIncumbents.Count)
+        </h3>
+        <p style="font-size:12px; color:var(--ink-mute); margin:0 0 10px 0;">
+            Zirve'de aktif ama bilinen bir Mosaik pozisyonuna eşleşmeyen çalışanlar.
+        </p>
+        <ul style="list-style:none; padding:0; margin:0; display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:6px;">
+            @foreach (var inc in Model.UnmatchedIncumbents.Take(60))
+            {
+                <li style="font-size:12px; padding:6px 10px; background:#f9fafb; border-radius:6px; border:1px solid var(--line);">
+                    <strong>@inc.AdSoyad</strong>
+                    <span style="color:var(--ink-mute);">— @inc.Unvan</span>
+                    <br />
+                    <span class="mono" style="font-size:10.5px; color:var(--ink-mute);">@inc.AltLokasyon · @inc.Departman</span>
+                </li>
+            }
+        </ul>
+        @if (Model.UnmatchedIncumbents.Count > 60)
+        {
+            <p style="font-size:11px; color:var(--ink-mute); margin-top:8px;">
+                ve @(Model.UnmatchedIncumbents.Count - 60) kişi daha…
+            </p>
+        }
+    </div>
+}
+
+@* Personel listesi modal — Alpine *@
+<div x-data="ocPersonelModal()"
+     x-show="open"
+     x-cloak
+     @@oc-show-personel.window="show($event.detail.code, $event.detail.title)"
+     @@keydown.escape.window="open = false"
+     style="position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:9999;
+            display:flex; align-items:center; justify-content:center;">
+    <div @@click.outside="open = false"
+         style="background:#fff; border-radius:10px; padding:20px;
+                width:min(640px, 92vw); max-height:80vh; display:flex; flex-direction:column; gap:12px;
+                box-shadow:0 12px 40px rgba(0,0,0,0.18);">
+        <div style="display:flex; align-items:start; justify-content:space-between;">
+            <div>
+                <h3 style="margin:0; font-size:16px;" x-text="title"></h3>
+                <p style="margin:2px 0 0 0; font-size:12px; color:var(--ink-mute);">
+                    <span x-text="people.length"></span> çalışan
+                </p>
+            </div>
+            <button type="button" class="icon-btn" @@click="open = false" title="Kapat">
+                <i class="fas fa-xmark"></i>
+            </button>
+        </div>
+        <input type="text" class="inp" placeholder="Ad/lokasyon ara…" x-model="search" />
+        <div style="overflow:auto; max-height:55vh;">
+            <ul style="list-style:none; padding:0; margin:0;">
+                <template x-for="p in filtered()" :key="p.PersonelNo">
+                    <li style="padding:8px 10px; border-bottom:1px solid var(--line); font-size:13px;">
+                        <strong x-text="p.AdSoyad"></strong>
+                        <div style="font-size:11px; color:var(--ink-mute); margin-top:2px;">
+                            <span x-text="p.AltLokasyon || '—'"></span>
+                            <span x-show="p.Departman"> · <span x-text="p.Departman"></span></span>
+                            <span x-show="p.Firma"> · <span x-text="p.Firma"></span></span>
+                        </div>
+                    </li>
+                </template>
+                <li x-show="filtered().length === 0" style="padding:14px; text-align:center; color:var(--ink-mute); font-size:12px;">
+                    Eşleşen çalışan yok.
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<script id="oc-incumbents-data" type="application/json">@Html.Raw(incumbentJson)</script>
+
+<script>
+function ocPersonelModal() {
+    let allByCode = {};
+    try { allByCode = JSON.parse(document.getElementById('oc-incumbents-data').textContent); }
+    catch { allByCode = {}; }
+    return {
+        open: false,
+        title: '',
+        people: [],
+        search: '',
+        show(code, title) {
+            const key = (code || '').trim().toUpperCase();
+            this.people = allByCode[key] || [];
+            this.title = title || code;
+            this.search = '';
+            this.open = true;
+        },
+        filtered() {
+            const q = this.search.trim().toLocaleLowerCase('tr');
+            if (!q) return this.people;
+            return this.people.filter(p =>
+                (p.AdSoyad || '').toLocaleLowerCase('tr').includes(q) ||
+                (p.AltLokasyon || '').toLocaleLowerCase('tr').includes(q) ||
+                (p.Departman || '').toLocaleLowerCase('tr').includes(q)
+            );
+        }
+    };
+}
+
+// Liste view'da node tıklama → modal aç
+document.addEventListener('click', (e) => {
+    const row = e.target.closest('.oc-pub-row[data-id]');
+    if (row) {
+        const li = row.closest('li.oc-pub-node');
+        const code = li?.dataset?.code;
+        const title = row.querySelector('.oc-pub-title')?.textContent?.trim();
+        if (code) {
+            window.dispatchEvent(new CustomEvent('oc-show-personel', { detail: { code, title } }));
+        }
+    }
+});
+</script>
+
+<style>
+    .oc-pub-children { list-style: none; padding-left: 0; margin: 0; }
+    .oc-pub-children .oc-pub-children { padding-left: 22px; border-left: 1px dashed var(--line); margin-left: 12px; margin-top: 4px; }
+    .oc-pub-node { margin: 4px 0; }
+    .oc-pub-row {
+        display: flex; align-items: center; gap: 10px;
+        padding: 8px 12px;
+        background: #fff; border: 1px solid var(--line); border-radius: 8px;
+        cursor: pointer; transition: background 120ms;
+    }
+    .oc-pub-row:hover { background: #f8fafc; }
+    .oc-pub-title { font-size: 13px; font-weight: 500; flex: 1; }
+    .oc-pub-code { font-size: 11px; color: var(--ink-mute); }
+    .oc-pub-count {
+        background: #b91c1c; color: #fff;
+        font-size: 11px; font-weight: 600;
+        padding: 2px 8px; border-radius: 999px;
+        min-width: 22px; text-align: center;
+    }
+
+    /* OrgChart.js node renkleri (tree/horizontal mod) */
+    #oc-d3 .orgchart { background: transparent; }
+    #oc-d3 .orgchart .node { width: 220px; cursor: pointer; }
+    #oc-d3 .orgchart .node .title {
+        background: #b91c1c;
+        white-space: normal; line-height: 1.25; height: auto; min-height: 28px;
+        padding: 4px 22px;
+    }
+    #oc-d3 .orgchart .node .content {
+        color: #64748b; border-color: var(--line);
+        white-space: normal; height: auto; min-height: 22px;
+        padding: 4px 8px; font-size: 11px;
+        font-family: ui-monospace, SFMono-Regular, monospace;
+    }
+    #oc-d3 .orgchart > ul > li > .nodes::before { border-color: #cbd5e1; }
+    #oc-d3 .orgchart .lines .topLine,
+    #oc-d3 .orgchart .lines .rightLine,
+    #oc-d3 .orgchart .lines .leftLine,
+    #oc-d3 .orgchart .lines .downLine { border-color: #cbd5e1; }
+</style>
+
+@if (view != "list")
+{
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/orgchart@@5.0.0/dist/css/jquery.orgchart.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/jquery@@3.7.1/dist/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/json-digger@@2.0.2/dist/json-digger.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/orgchart@@5.0.0/dist/js/jquery.orgchart.min.js"></script>
+    <script>
+    (function () {
+        const container = document.getElementById('oc-d3');
+        if (!container || typeof jQuery === 'undefined') return;
+        const $ = jQuery;
+        const mode = container.dataset.mode || 'tree';
+        let data;
+        try { data = JSON.parse(document.getElementById('oc-tree-data').textContent); }
+        catch (e) { container.innerHTML = '<div style="padding:20px;color:#b91c1c;">Veri hatası: ' + e.message + '</div>'; return; }
+
+        // Tek root varsa onu kullan; çoklu root → sentetik kök altında
+        function transform(node) {
+            const cnt = node.count || 0;
+            return {
+                id: String(node.id),
+                name: node.title + (cnt > 0 ? ' (' + cnt + ')' : ''),
+                title: node.code,
+                className: node.isActive ? '' : 'oc-inactive',
+                origCode: node.code,
+                children: (node.children || []).map(transform)
+            };
+        }
+        const transformed = transform(data);
+        const realRoots = transformed.children || [];
+        const finalData = realRoots.length === 1 ? realRoots[0] : transformed;
+        container.innerHTML = '';
+
+        $('#oc-d3').orgchart({
+            data: finalData,
+            nodeContent: 'title',
+            direction: mode === 'horizontal' ? 'l2r' : 't2b',
+            pan: true,
+            zoom: true,
+            zoominLimit: 2,
+            zoomoutLimit: 0.3,
+            draggable: false,
+            toggleSiblingsResp: false,
+            verticalLevel: mode === 'horizontal' ? 1 : 999
+        });
+
+        // Node tıklama → personel modalı
+        $('#oc-d3').on('click', '.node', function () {
+            const id = $(this).attr('id');
+            if (!id || id === '0') return;
+            const titleEl = $(this).find('.title').text().trim();
+            const codeEl = $(this).find('.content').text().trim();
+            // Title parantez kaldır
+            const cleanTitle = titleEl.replace(/\s*\(\d+\)\s*$/, '');
+            window.dispatchEvent(new CustomEvent('oc-show-personel', { detail: { code: codeEl, title: cleanTitle } }));
+        });
+    })();
+    </script>
+}
