@@ -2,7 +2,7 @@
 
 **Tarih:** 2026-05-07 (gece taslağı + sabah revize)
 **Yazan:** Claude (Fikri yönetiminde)
-**Durum:** Revize 1 — Plan 16.5 bridge + 10 öneri entegre edildi
+**Durum:** Faz A ✅ + Faz B keşif ✅ + Faz C ✅ fiilen kapalı (2026-05-08). Faz B implement (IK sube OptionsQuery aktivasyonu) kullanıcı kararıyla "şimdilik durdur" — Plan 18 HR Sync sonrasına ertelendi. Faz D dropped (overkill). **Plan büyük ölçüde tamam**, kalan tek iş Faz B implement.
 **Tier:** 3 (admin UI + servis + audit + DB seed + test, 4-6 dosya)
 **Tahmini süre:** ~4 saat (Faz D düşüldü, Faz C 16.5'a bağlandı)
 
@@ -126,11 +126,11 @@ BKM ekosisteminde "şube" her programda **farklı tablo + farklı kod sistemi** 
 
 **Önkoşul:** Plan 16.5 Faz B tamamlanmış olmalı (`IUserDataScope` interface + `DataScopeRegistry` mevcut). ✅ TAMAM (commit Plan 16.5 Faz B).
 
-**Faz C1 ✅ TAMAM (2026-05-08, commit bekliyor):**
-- `Mosaik/Core/DataScope/SpInjectionScope.cs` — UserDataFilter SP-side enforcement (`*` magic + CSV expand + DataSourceKey eşleşme)
-- `Mosaik/Core/DataScope/ReportAccessScope.cs` — raporGrubu EF-side enforcement (deny-by-default, `*` magic, GroupId list match)
+**Faz C1 ✅ TAMAM — commit `4e52a05` (2026-05-08):**
+- `Mosaik/Services/SpInjectionScope.cs` — UserDataFilter SP-side enforcement (`*` magic + CSV expand + DataSourceKey eşleşme)
+- `Mosaik/Services/ReportAccessScope.cs` — raporGrubu EF-side enforcement (deny-by-default, `*` magic, GroupId list match)
 - DI kayıt (Program.cs)
-- 11 unit test (UserDataScopeTests): SpInjection 6 + ReportAccess 4 + Registry 1
+- 12 unit test (UserDataScopeTests): SpInjection + ReportAccess + Registry kapsama
 - **Mevcut UserDataFilterInjector + ReportsController.Index dokunulmadı** — pragmatik karar (riski düşük tutma).
 
 **Tanı sorgusu sonucu (2026-05-08, sqlcli):**
@@ -138,11 +138,18 @@ BKM ekosisteminde "şube" her programda **farklı tablo + farklı kod sistemi** 
 - 2 active user var, raporGrubu kaydı 0 — backfill **GEREKSİZ**
 - Migration 35 ŞU AN yazılmıyor. raporGrubu admin GUI'den aktive edilirken Migration 32 logic'i (`*` backfill) çalıştırılmalı.
 
-**Faz C2 (gelecek, ayrı oturum, riski yüksek):**
+**Faz C2/C3 — ertelendi (ayrı oturum, riski yüksek, ROI düşük):**
 - `UserDataFilterInjector` registry'ye refactor (raw EF query yerine `IUserDataScope.HasAccessAsync`)
 - `ReportsController.Index` raporGrubu inline mantığı `ReportAccessScope.ListAccessibleValuesAsync` çağrısına geçir
-- 250+ test full regression
+- 298+ test full regression
 - **DRY** kazancı, vNext modüller için altyapı temizliği. Şu an mevcut işlevsellik doğru çalıştığı için ertelendi.
+
+**Faz C4-C6 — fiilen gereksiz (2026-05-08 değerlendirme):**
+- **C4** (raporGrubu backfill migration): tanı sorgusu sonucu `raporGrubu` FilterDefinition **inactive + 0 kullanıcı**. Backfill yapılacak veri yok. Migration yazılmaz; raporGrubu admin GUI'den aktive edildiğinde Migration 32 logic'i (`*` backfill) tetiklenir.
+- **C5** (FilterDefinition IsActive impact preview AJAX): raporGrubu inactive olduğundan AJAX uyarısının pratik tetiği yok. Aktive edildiğinde tek satır ek mesaj yeterli, ayrı endpoint overkill. **Erteleme.**
+- **C6** (yeni user create'te raporGrubu default `*` zorunlu): raporGrubu inactive olduğundan şu an enforce gereksiz. Aktive edildiğinde Migration 32 backfill yeterli; yeni user için CreateUser servis akışına ek 1 satır gerekir.
+
+**Sonuç (2026-05-08): Faz C fiilen kapalı.** C1 commit'lendi (4e52a05), C2/C3 ayrı oturum bekliyor, C4-C6 raporGrubu hâlâ inactive olduğu için gereksiz. raporGrubu aktive edilirse C4-C6 yeniden değerlendirilir.
 
 - **C1. `IUserDataScope` implementasyonları** (öneri #5 + 16.5 bridge):
   - `SpInjectionScope : IUserDataScope` — mevcut `UserDataFilterInjector` mantığını sarmala
