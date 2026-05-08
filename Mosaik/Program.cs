@@ -48,6 +48,9 @@ builder.Services.AddScoped<Mosaik.Core.Lookup.ILookupService>(
 builder.Services.AddScoped<Mosaik.Core.DataScope.IUserDataScope, Mosaik.Services.SpInjectionScope>();
 builder.Services.AddScoped<Mosaik.Core.DataScope.IUserDataScope, Mosaik.Services.ReportAccessScope>();
 builder.Services.AddScoped<Mosaik.Core.DataScope.DataScopeRegistry>();
+
+// Plan 20 Faz A — Organizasyon şeması
+builder.Services.AddScoped<Mosaik.Services.IOrgChartService, Mosaik.Services.OrgChartService>();
 // Faz C2 (gelecek): UserDataFilterInjector + ReportsController.Index
 // Registry'ye refactor (DRY). Şu an mevcut inline mantık çalışmaya devam ediyor.
 

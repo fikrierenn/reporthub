@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Mosaik.Core.Domain;
 using Mosaik.Core.Lookup;
 using Mosaik.Core.Workflow;
 
@@ -35,6 +36,9 @@ namespace Mosaik.Models
         // Plan 16.5 Faz B — Lookup (dictionary)
         public DbSet<DictionaryType> DictionaryTypes { get; set; }
         public DbSet<DictionaryValue> DictionaryValues { get; set; }
+
+        // Plan 20 Faz A — Organizasyon şeması
+        public DbSet<OrgPosition> OrgPositions { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -324,6 +328,22 @@ namespace Mosaik.Models
                       .OnDelete(DeleteBehavior.Cascade);
                 entity.HasIndex(e => new { e.TypeId, e.Code }).IsUnique();
                 entity.HasIndex(e => new { e.TypeId, e.IsActive, e.DisplayOrder });
+            });
+
+            // Plan 20 Faz A — OrgPosition (self-ref hierarchy)
+            modelBuilder.Entity<OrgPosition>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Code).HasMaxLength(100).IsRequired();
+                entity.Property(e => e.Title).HasMaxLength(150).IsRequired();
+                entity.Property(e => e.Description).HasMaxLength(500);
+                entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+                entity.HasIndex(e => e.Code).IsUnique();
+                entity.HasIndex(e => e.ParentPositionId);
+                entity.HasOne(p => p.Parent)
+                      .WithMany(p => p.Children)
+                      .HasForeignKey(p => p.ParentPositionId)
+                      .OnDelete(DeleteBehavior.Restrict); // self-ref CASCADE yasak
             });
 
             // Plan 16.6 — Her vNext modül kendi entity'lerini ConfigureModelBuilder
