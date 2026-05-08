@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using Microsoft.EntityFrameworkCore;
 using Mosaik.Core.Notification;
 using Mosaik.Models;
@@ -10,15 +11,35 @@ namespace Mosaik.Services
         private readonly MosaikContext _context;
         private readonly ILogger<NotificationService> _logger;
 
+        // Sadece relative URL kabul et — javascript:, data:, http(s):, // (protocol-relative) reddedilir.
+        // Açık-redirect ve XSS via href="javascript:..." koruması.
+        private static readonly Regex SafeRelativeUrl = new(
+            @"^/[A-Za-z0-9/_\-?=&.%#]*$",
+            RegexOptions.Compiled);
+
         public NotificationService(MosaikContext context, ILogger<NotificationService> logger)
         {
             _context = context;
             _logger = logger;
         }
 
+        // Açık-redirect / javascript: scheme koruması. NULL kabul edilir (bildirim tıklanamaz olur).
+        private string? SanitizeTargetUrl(string? targetUrl, string entityType)
+        {
+            if (string.IsNullOrWhiteSpace(targetUrl)) return null;
+            if (!SafeRelativeUrl.IsMatch(targetUrl))
+            {
+                _logger.LogWarning("NotificationService rejected unsafe targetUrl entityType={EntityType} url={Url}",
+                    entityType, targetUrl);
+                return null;
+            }
+            return targetUrl;
+        }
+
         public async Task<Notification> CreateAsync(int userId, string entityType, int? entityId,
             string title, string? message, string? targetUrl, string? notificationType, string? createdBy)
         {
+            var safeUrl = SanitizeTargetUrl(targetUrl, entityType);
             var n = new Notification
             {
                 UserId = userId,
@@ -26,8 +47,9 @@ namespace Mosaik.Services
                 EntityId = entityId,
                 Title = title,
                 Message = message,
-                TargetUrl = targetUrl,
+                TargetUrl = safeUrl,
                 NotificationType = notificationType,
+                CreatedAt = DateTime.UtcNow,
                 CreatedBy = createdBy
             };
             _context.Notifications.Add(n);
@@ -38,6 +60,7 @@ namespace Mosaik.Services
         public async Task<int> CreateBulkAsync(IEnumerable<int> userIds, string entityType, int? entityId,
             string title, string? message, string? targetUrl, string? notificationType, string? createdBy)
         {
+            var safeUrl = SanitizeTargetUrl(targetUrl, entityType);
             var now = DateTime.UtcNow;
             var batch = userIds.Distinct().Select(uid => new Notification
             {
@@ -46,7 +69,7 @@ namespace Mosaik.Services
                 EntityId = entityId,
                 Title = title,
                 Message = message,
-                TargetUrl = targetUrl,
+                TargetUrl = safeUrl,
                 NotificationType = notificationType,
                 CreatedAt = now,
                 CreatedBy = createdBy

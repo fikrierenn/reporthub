@@ -94,7 +94,7 @@
                         }
                         @if (!n.IsRead)
                         {
-                            <form method="post" action="/Notifications/MarkAsRead/@n.Id" style="margin:0;">
+                            <form method="post" action="/Notifications/MarkAsRead" style="margin:0;">
                                 @Html.AntiForgeryToken()
                                 <input type="hidden" name="id" value="@n.Id" />
                                 <button type="submit" class="btn sm" title="Okundu işaretle">

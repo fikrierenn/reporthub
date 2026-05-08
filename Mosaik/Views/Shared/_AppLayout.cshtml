@@ -291,22 +291,37 @@
     (function () {
         const badge = document.getElementById('notificationsBadge');
         if (!badge) return;
+        let intervalId = null;
         async function refresh() {
             try {
                 const res = await fetch('/Notifications/UnreadCount', { credentials: 'same-origin' });
-                if (!res.ok) return;
+                if (res.status === 401) {
+                    // Session expired — polling'i durdur, kullanıcı navigate ettiğinde global handler login'e yönlendirir.
+                    if (intervalId) { clearInterval(intervalId); intervalId = null; }
+                    badge.style.display = 'none';
+                    return;
+                }
+                if (!res.ok) {
+                    console.warn('notificationsBadge refresh: HTTP', res.status);
+                    badge.dataset.state = 'error';
+                    return;
+                }
                 const data = await res.json();
                 const count = data.count || 0;
+                badge.dataset.state = 'ok';
                 if (count > 0) {
                     badge.textContent = count > 99 ? '99+' : count;
                     badge.style.display = '';
                 } else {
                     badge.style.display = 'none';
                 }
-            } catch { /* sessizce yut */ }
+            } catch (e) {
+                console.warn('notificationsBadge refresh failed', e);
+                badge.dataset.state = 'error';
+            }
         }
         refresh();
-        setInterval(refresh, 60000); // 60sn polling
+        intervalId = setInterval(refresh, 60000); // 60sn polling
     })();
     </script>
 }

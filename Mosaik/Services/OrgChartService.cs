@@ -1,4 +1,5 @@
 using System.Data;
+using System.Data.Common;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
@@ -301,9 +302,13 @@ namespace Mosaik.Services
                     if (!string.IsNullOrWhiteSpace(u)) zirve.Add(u);
                 }
             }
-            catch (SqlException ex)
+            catch (OperationCanceledException)
             {
-                _logger.LogError(ex, "OrgChartService.GetUnknownZirveCodesAsync — SQL hatası ds={Ds}", ds.DataSourceKey);
+                throw; // Request iptal — error olarak loglama
+            }
+            catch (DbException ex)
+            {
+                _logger.LogError(ex, "OrgChartService.GetUnknownZirveCodesAsync — DB hatası ds={Ds}", ds.DataSourceKey);
                 return (new List<string>(), "Zirve'ye erişilemedi. Lütfen sistem yöneticisine bildirin.");
             }
             catch (InvalidOperationException ex)
@@ -390,9 +395,13 @@ namespace Mosaik.Services
                     }
                 }
             }
-            catch (SqlException ex)
+            catch (OperationCanceledException)
             {
-                _logger.LogError(ex, "OrgChartService.GetChartWithIncumbentsAsync — SQL hatası ds={Ds}", ds.DataSourceKey);
+                throw; // Request iptal — error olarak loglama
+            }
+            catch (DbException ex)
+            {
+                _logger.LogError(ex, "OrgChartService.GetChartWithIncumbentsAsync — DB hatası ds={Ds}", ds.DataSourceKey);
                 result.Error = "Zirve'ye erişilemedi. Lütfen sistem yöneticisine bildirin.";
                 return result;
             }

@@ -58,7 +58,7 @@ namespace Mosaik.Controllers
         public async Task<IActionResult> Recent()
         {
             var uid = await CurrentUserIdAsync();
-            if (uid == null) return Json(Array.Empty<object>());
+            if (uid == null) return Unauthorized();
             var items = await _notifications.GetRecentAsync(uid.Value, take: 10);
             return Json(items.Select(n => new
             {
@@ -77,7 +77,17 @@ namespace Mosaik.Controllers
         {
             var uid = await CurrentUserIdAsync();
             if (uid == null) return Unauthorized();
-            await _notifications.MarkAsReadAsync(id, uid.Value);
+            var ok = await _notifications.MarkAsReadAsync(id, uid.Value);
+            if (!ok)
+            {
+                // Bildirim ya yok ya da başka kullanıcıya ait — IDOR probe sinyali.
+                _logger.LogWarning("NotificationsController.MarkAsRead: notification not found or not owned id={Id} userId={UserId}", id, uid);
+                if (Request.Headers.TryGetValue("X-Requested-With", out var v0) && v0 == "fetch")
+                    return NotFound(new { success = false, message = "Bildirim bulunamadı." });
+                TempData["Message"] = "Bildirim bulunamadı.";
+                TempData["MessageType"] = "error";
+                return RedirectToAction(nameof(Index));
+            }
             if (Request.Headers.TryGetValue("X-Requested-With", out var v) && v == "fetch")
                 return Ok(new { success = true });
             return RedirectToAction(nameof(Index));

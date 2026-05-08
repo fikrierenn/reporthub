@@ -1,3 +1,4 @@
+using System.Data.Common;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Mosaik.Services;
@@ -39,12 +40,19 @@ namespace Mosaik.Controllers
                     CurrentView = currentView
                 });
             }
-            catch (Exception ex)
+            catch (OperationCanceledException)
             {
-                _logger.LogError(ex, "OrgChartController.Index failed");
+                // İstek iptal edildi (kullanıcı sayfayı kapattı). Error olarak loglama, propagate.
+                throw;
+            }
+            catch (DbException ex)
+            {
+                // Mosaik DB sorgusunda metadata hatası — service Zirve hatalarını zaten içinde yutuyor,
+                // buraya gelen genelde Mosaik tarafı.
+                _logger.LogError(ex, "OrgChartController.Index DB hatası");
                 return View(new OrgChartPublicViewModel
                 {
-                    ZirveError = "Organizasyon şeması yüklenemedi."
+                    ZirveError = "Organizasyon şeması yüklenemedi. Lütfen sistem yöneticisine bildirin."
                 });
             }
         }

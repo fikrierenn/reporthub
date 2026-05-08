@@ -106,10 +106,23 @@ namespace Mosaik.Modules.Circular.Services
                 }
                 catch (Exception ex)
                 {
-                    // Bildirim hatası publish'i bozmaz.
+                    // Bildirim hatası publish'i bozmaz, ama ops görsün diye audit log + warning.
                     _logger.LogWarning(ex,
                         "CompileCircularJob: Bildirim gönderilemedi CircularId={CircularId}. Publish devam ediyor.",
                         circular.Id);
+                    try
+                    {
+                        await _audit.LogAsync(
+                            eventType: "notification_dispatch_failed",
+                            targetType: "circular",
+                            targetKey: circular.Id.ToString(),
+                            description: $"Tamim {circular.CircularNumber} yayınlandı ama bildirim dağıtımı başarısız: {ex.GetType().Name}",
+                            isSuccess: false);
+                    }
+                    catch
+                    {
+                        // Audit log'da da hata olursa sessiz devam — publish kritik path.
+                    }
                 }
             }
 
