@@ -41,14 +41,9 @@ namespace Mosaik.Controllers
                     SelectedGroupIds = new HashSet<int>()
                 };
 
-                // Debug bilgisi
-                Console.WriteLine($"Toplam veri kaynagi: {allDataSources.Count}");
-                Console.WriteLine($"Aktif veri kaynagi: {activeDataSources.Count}");
-
-                foreach (var ds in allDataSources)
-                {
-                    Console.WriteLine($"- {ds.DataSourceKey}: {ds.Title} (Aktif: {ds.IsActive})");
-                }
+                _logger.LogDebug(
+                    "AdminController.CreateReport: total={Total} active={Active}",
+                    allDataSources.Count, activeDataSources.Count);
 
                 if (!activeDataSources.Any())
                 {

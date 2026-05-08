@@ -1,4 +1,5 @@
 using System.Data;
+using System.Diagnostics;
 using System.Text.Json;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Data.SqlClient;
@@ -72,8 +73,12 @@ public static class ReportParamValidator
                 return list;
             }
         }
-        catch
+        catch (Exception ex)
         {
+            // Static utility — DI yok. Trace üzerinden warning yayınla; hosting tarafında
+            // konfigüre edilmiş listener'lar (ASP.NET default Console + Debug) yakalar.
+            // Sessiz swallow YASAK — boş liste yine dönüyor (caller'a etki etmez), ama gözle görülür iz var.
+            Trace.TraceWarning("ReportParamValidator.ParseSchema: invalid JSON. {0}: {1}", ex.GetType().Name, ex.Message);
             return new List<ReportParamField>();
         }
 

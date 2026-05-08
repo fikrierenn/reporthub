@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 using Mosaik.Core.Logging;
 using Mosaik.Models;
 
@@ -9,11 +10,16 @@ namespace Mosaik.Services
     {
         private readonly MosaikContext _context;
         private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly ILogger<AuditLogService> _logger;
 
-        public AuditLogService(MosaikContext context, IHttpContextAccessor httpContextAccessor)
+        public AuditLogService(
+            MosaikContext context,
+            IHttpContextAccessor httpContextAccessor,
+            ILogger<AuditLogService> logger)
         {
             _context = context;
             _httpContextAccessor = httpContextAccessor;
+            _logger = logger;
         }
 
         public async Task LogAsync(AuditLogEntry entry)
@@ -47,8 +53,19 @@ namespace Mosaik.Services
                 UserAgent = httpContext?.Request.Headers.UserAgent.ToString()
             };
 
-            _context.AuditLogs.Add(log);
-            await _context.SaveChangesAsync();
+            try
+            {
+                _context.AuditLogs.Add(log);
+                await _context.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                // Audit log yazımı iş aksiyonunu KIRMAZ — Single Point of Failure önlemi.
+                // Detay log'a, çağıran metoda exception bubble etmez.
+                _logger.LogError(ex,
+                    "AuditLogService.LogAsync: kayıt yazılamadı. EventType={EventType} TargetType={TargetType} TargetKey={TargetKey}",
+                    log.EventType, log.TargetType, log.TargetKey);
+            }
         }
 
         // Plan 17 v2 — IAuditLog cross-modül erişim. Modüller bunu çağırır.

@@ -12,12 +12,14 @@ namespace Mosaik.Services
     {
         private readonly MosaikContext _context;
         private readonly IMemoryCache _cache;
+        private readonly ILogger<LookupService> _logger;
         private static readonly TimeSpan CacheDuration = TimeSpan.FromMinutes(10);
 
-        public LookupService(MosaikContext context, IMemoryCache cache)
+        public LookupService(MosaikContext context, IMemoryCache cache, ILogger<LookupService> logger)
         {
             _context = context;
             _cache = cache;
+            _logger = logger;
         }
 
         private static string CacheKey(string typeCode) => $"lookup_values_{typeCode}";
@@ -52,6 +54,7 @@ namespace Mosaik.Services
         {
             return await _context.DictionaryTypes
                 .AsNoTracking()
+                .Include(t => t.Values)
                 .Where(t => t.IsActive)
                 .OrderBy(t => t.Name)
                 .ToListAsync();
@@ -64,7 +67,7 @@ namespace Mosaik.Services
                 return ServiceResult<DictionaryValue>.Failure("Kod ve etiket zorunludur.");
 
             var type = await _context.DictionaryTypes.FindAsync(typeId);
-            if (type == null) return ServiceResult<DictionaryValue>.Failure("Tip bulunamadi.");
+            if (type == null) return ServiceResult<DictionaryValue>.Failure("Tip bulunamadı.");
 
             if (await _context.DictionaryValues.AnyAsync(v => v.TypeId == typeId && v.Code == code))
                 return ServiceResult<DictionaryValue>.Failure("Bu kod zaten mevcut.");
@@ -79,7 +82,15 @@ namespace Mosaik.Services
                 CreatedBy = createdBy
             };
             _context.DictionaryValues.Add(value);
-            await _context.SaveChangesAsync();
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "LookupService.CreateValueAsync typeId={TypeId} code={Code}", typeId, code);
+                return ServiceResult<DictionaryValue>.Failure("Kayıt sırasında hata oluştu.");
+            }
 
             _cache.Remove(CacheKey(type.Code));
             return ServiceResult<DictionaryValue>.Ok(value, "Eklendi.");
@@ -88,12 +99,20 @@ namespace Mosaik.Services
         public async Task<ServiceResult> SetActiveAsync(int valueId, bool active, string updatedBy)
         {
             var value = await _context.DictionaryValues.Include(v => v.Type).FirstOrDefaultAsync(v => v.Id == valueId);
-            if (value == null) return ServiceResult.Failure("Deger bulunamadi.");
+            if (value == null) return ServiceResult.Failure("Değer bulunamadı.");
 
             value.IsActive = active;
             value.UpdatedBy = updatedBy;
             value.UpdatedAt = DateTime.UtcNow;
-            await _context.SaveChangesAsync();
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "LookupService.SetActiveAsync valueId={ValueId} active={Active}", valueId, active);
+                return ServiceResult.Failure("Güncelleme sırasında hata oluştu.");
+            }
 
             if (value.Type != null) _cache.Remove(CacheKey(value.Type.Code));
             return ServiceResult.Ok(active ? "Aktif edildi." : "Pasif edildi.");

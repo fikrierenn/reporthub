@@ -249,7 +249,7 @@ ORDER BY p.parameter_id;";
         return new SpPreviewResult(true, null, resultSets);
     }
 
-    private static async Task<List<SqlParameter>> BuildSpParametersAsync(
+    private async Task<List<SqlParameter>> BuildSpParametersAsync(
         SqlConnection conn,
         string procName,
         Dictionary<string, string> overrides)
@@ -312,9 +312,10 @@ ORDER BY p.parameter_id;";
                 paramList.Add(new SqlParameter(pname, finalValue));
             }
         }
-        catch
+        catch (Exception ex)
         {
-            // Parametre çıkarma başarısız olursa yine de SP parametresiz denenecek.
+            // Parametre çıkarma başarısız olursa yine de SP parametresiz denenecek (degraded mode).
+            _logger.LogWarning(ex, "BuildSpParametersAsync metadata read failed for proc={ProcName}", procName);
         }
         return paramList;
     }

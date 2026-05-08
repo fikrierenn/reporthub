@@ -40,6 +40,7 @@ namespace Mosaik.Controllers
         private readonly IBrandService _brandService;
         private readonly IModuleService _moduleService;
         private readonly LookupService _lookupService;
+        private readonly ILogger<AdminController> _logger;
 
         public AdminController(
             MosaikContext context,
@@ -56,7 +57,8 @@ namespace Mosaik.Controllers
             FilterDefinitionService filterDefService,
             IBrandService brandService,
             IModuleService moduleService,
-            LookupService lookupService)
+            LookupService lookupService,
+            ILogger<AdminController> logger)
         {
             _context = context;
             _auditLog = auditLog;
@@ -73,6 +75,7 @@ namespace Mosaik.Controllers
             _brandService = brandService;
             _moduleService = moduleService;
             _lookupService = lookupService;
+            _logger = logger;
         }
 
         [HttpGet]

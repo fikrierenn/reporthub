@@ -133,13 +133,17 @@ namespace Mosaik.Controllers
                     }
                     catch (JsonException jx)
                     {
+                        // Detay (jx.Message) Trace'e yazılır; user'a / audit DB'ye sızdırılmaz.
+                        System.Diagnostics.Trace.TraceError(
+                            "DashboardConfigJson deserialize failed for ReportId={0}: {1}",
+                            context.SelectedReport.ReportId, jx.Message);
                         await _auditLog.LogAsync(new AuditLogEntry
                         {
                             EventType = "dashboard_config_invalid",
                             TargetType = "report",
                             TargetKey = context.SelectedReport.ReportId.ToString(),
                             ReportId = context.SelectedReport.ReportId,
-                            Description = $"DashboardConfigJson deserialize failed: {jx.Message}",
+                            Description = "DashboardConfigJson deserialize başarısız oldu (geçersiz JSON).",
                             IsSuccess = false
                         });
                         model.RunMessage = (model.RunMessage ?? "") +

@@ -8,6 +8,7 @@ namespace Mosaik.Services
     public class ModuleService : IModuleService
     {
         private readonly IServiceScopeFactory _scopeFactory;
+        private readonly ILogger<ModuleService> _logger;
         private List<AppModule>? _cache;
         private DateTime _cacheExpiry = DateTime.MinValue;
         private static readonly TimeSpan CacheTtl = TimeSpan.FromMinutes(5);
@@ -19,9 +20,10 @@ namespace Mosaik.Services
             new() { ModuleKey = "dashboards", DisplayName = "Panolar",  IsEnabled = true, SortOrder = 20 }
         ];
 
-        public ModuleService(IServiceScopeFactory scopeFactory)
+        public ModuleService(IServiceScopeFactory scopeFactory, ILogger<ModuleService> logger)
         {
             _scopeFactory = scopeFactory;
+            _logger = logger;
         }
 
         public async Task<IReadOnlyList<AppModule>> GetEnabledAsync()
@@ -44,8 +46,9 @@ namespace Mosaik.Services
                 _cacheExpiry = DateTime.UtcNow.Add(CacheTtl);
                 return _cache;
             }
-            catch
+            catch (Exception ex)
             {
+                _logger.LogWarning(ex, "AppModules read failed, falling back to default/cache");
                 return _cache ?? DefaultModules;
             }
         }

@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging.Abstractions;
 using Mosaik.Models;
 using Mosaik.Services;
 
@@ -37,7 +38,7 @@ public class UserManagementServiceTests
     private static UserManagementService NewService(MosaikContext ctx)
     {
         var httpAccessor = new HttpContextAccessor { HttpContext = new DefaultHttpContext() };
-        var audit = new AuditLogService(ctx, httpAccessor);
+        var audit = new AuditLogService(ctx, httpAccessor, NullLogger<AuditLogService>.Instance);
         var roleSync = new UserRoleSyncService(ctx);
         return new UserManagementService(ctx, audit, roleSync);
     }

@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Mosaik.Core.Ai;
 using Mosaik.Core.Logging;
 using Mosaik.Modules.Circular.Models;
@@ -46,12 +47,14 @@ YAZIM ÜSLUBU (kurumsal/resmi Türkçe):
         private readonly DbContext _db;
         private readonly IAiSummaryProvider _ai;
         private readonly IAuditLog _audit;
+        private readonly ILogger<CircularSummaryService> _logger;
 
-        public CircularSummaryService(DbContext db, IAiSummaryProvider ai, IAuditLog audit)
+        public CircularSummaryService(DbContext db, IAiSummaryProvider ai, IAuditLog audit, ILogger<CircularSummaryService> logger)
         {
             _db = db;
             _ai = ai;
             _audit = audit;
+            _logger = logger;
         }
 
         public async Task<AiSummaryResult> GenerateAsync(int circularId, CancellationToken ct = default)
@@ -103,7 +106,8 @@ YAZIM ÜSLUBU (kurumsal/resmi Türkçe):
             }
             catch (Exception ex)
             {
-                return new AiSummaryResult(false, result.RawJson, $"AI yanıtı geçersiz JSON: {ex.Message}", result.InputTokens, result.OutputTokens, result.ModelUsed);
+                _logger.LogWarning(ex, "CircularSummaryService AI response invalid JSON for circularId={CircularId}", circularId);
+                return new AiSummaryResult(false, result.RawJson, "AI yanıtı geçersiz JSON formatında.", result.InputTokens, result.OutputTokens, result.ModelUsed);
             }
 
             circular.AiSummaryJson = result.RawJson;

@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Mosaik.Core.Domain;
 using Mosaik.Core.Logging;
 using Mosaik.Modules.Circular.Models;
@@ -40,12 +41,14 @@ namespace Mosaik.Modules.Circular.Services
         private readonly DbContext _db;
         private readonly IAuditLog _audit;
         private readonly IWebHostEnvironment _env;
+        private readonly ILogger<BlockFileService> _logger;
 
-        public BlockFileService(DbContext db, IAuditLog audit, IWebHostEnvironment env)
+        public BlockFileService(DbContext db, IAuditLog audit, IWebHostEnvironment env, ILogger<BlockFileService> logger)
         {
             _db = db;
             _audit = audit;
             _env = env;
+            _logger = logger;
         }
 
         private DbSet<BlockFile> Files => _db.Set<BlockFile>();
@@ -100,7 +103,8 @@ namespace Mosaik.Modules.Circular.Services
             }
             catch (Exception ex)
             {
-                return ServiceResult<BlockFile>.Failure($"Dosya kaydedilemedi: {ex.Message}");
+                _logger.LogError(ex, "BlockFileService.UploadAsync disk write failed blockId={BlockId} file={File}", blockId, origName);
+                return ServiceResult<BlockFile>.Failure("Dosya kaydedilemedi.");
             }
 
             var record = new BlockFile

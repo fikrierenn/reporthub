@@ -8,6 +8,7 @@ namespace Mosaik.Services
     public class BrandSettingsService : IBrandService
     {
         private readonly IServiceScopeFactory _scopeFactory;
+        private readonly ILogger<BrandSettingsService> _logger;
         private BrandSettings? _cache;
         private DateTime _cacheExpiry = DateTime.MinValue;
         private static readonly TimeSpan CacheTtl = TimeSpan.FromMinutes(5);
@@ -19,9 +20,10 @@ namespace Mosaik.Services
             PrimaryColor = "#6366f1"
         };
 
-        public BrandSettingsService(IServiceScopeFactory scopeFactory)
+        public BrandSettingsService(IServiceScopeFactory scopeFactory, ILogger<BrandSettingsService> logger)
         {
             _scopeFactory = scopeFactory;
+            _logger = logger;
         }
 
         public async Task<BrandSettings> GetAsync()
@@ -37,8 +39,9 @@ namespace Mosaik.Services
                 _cacheExpiry = DateTime.UtcNow.Add(CacheTtl);
                 return _cache;
             }
-            catch
+            catch (Exception ex)
             {
+                _logger.LogWarning(ex, "BrandSettings read failed, falling back to default/cache");
                 return _cache ?? DefaultBrand;
             }
         }

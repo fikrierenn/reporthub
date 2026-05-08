@@ -119,8 +119,9 @@ public class FilterOptionsService
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "FilterOptions query failed for {FilterKey} on {DataSourceKey}",
+            _logger.LogError(ex, "FilterOptions query failed for {FilterKey} on {DataSourceKey}",
                 def.FilterKey, def.DataSourceKey);
+            return new FilterOptionsResult(false, "Filtre seçenekleri yüklenemedi.", Array.Empty<FilterOption>());
         }
 
         return new FilterOptionsResult(true, null, options);
