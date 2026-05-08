@@ -7,15 +7,15 @@
 }
 
 @section Breadcrumb {
-    <div class="crumbs">
+    <nav class="crumbs" aria-label="Sayfa konumu">
         <a href="/Dashboard">BKM Kitap</a>
-        <span class="sep">/</span>
+        <span class="sep" aria-hidden="true">/</span>
         <a href="/Admin">Yönetim</a>
-        <span class="sep">/</span>
+        <span class="sep" aria-hidden="true">/</span>
         <a href="/Admin?tab=datasources">Veri Kaynakları</a>
-        <span class="sep">/</span>
-        <span class="current">@ds.DataSourceKey</span>
-    </div>
+        <span class="sep" aria-hidden="true">/</span>
+        <span class="current" aria-current="page">@ds.DataSourceKey</span>
+    </nav>
 }
 
 @section TopActions {

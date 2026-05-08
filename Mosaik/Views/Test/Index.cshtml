@@ -19,7 +19,7 @@
 @if (!string.IsNullOrWhiteSpace(Model.Error))
 {
     <div style="margin-bottom:18px; padding:12px 16px; border-radius:10px; font-size:13px;
-                background:rgba(220,38,38,0.10); border:1px solid rgba(220,38,38,0.25); color:var(--accent-ink);">
+                background:var(--danger-bg-soft); border:1px solid rgba(220,38,38,0.25); color:var(--accent-ink);">
         <i class="fas fa-exclamation-circle" style="margin-right:8px;"></i>
         <strong>Hata:</strong> @Model.Error
     </div>

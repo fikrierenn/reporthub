@@ -38,9 +38,9 @@
 @if (!string.IsNullOrEmpty(Model.Message))
 {
     <div role="alert" style="margin-bottom:18px; padding:12px 16px; border-radius:10px; font-size:13px; max-width:880px;
-                background: @(Model.MessageType == "success" ? "rgba(16,185,129,0.10)" : "rgba(220,38,38,0.10)");
+                background: @(Model.MessageType == "success" ? "var(--success-bg-soft)" : "var(--danger-bg-soft)");
                 border: 1px solid @(Model.MessageType == "success" ? "rgba(16,185,129,0.25)" : "rgba(220,38,38,0.25)");
-                color: @(Model.MessageType == "success" ? "#065f46" : "var(--accent-ink)");">
+                color: @(Model.MessageType == "success" ? "var(--success-ink-soft)" : "var(--accent-ink)");">
         <i class="fas @(Model.MessageType == "success" ? "fa-check-circle" : "fa-exclamation-circle")" style="margin-right:8px;"></i>
         @Model.Message
     </div>
@@ -84,6 +84,7 @@
             <div class="field">
                 <label class="lab" for="editor-container">Detaylı içerik <span style="color:var(--accent);">*</span></label>
                 <div style="border:1px solid var(--line); border-radius:8px; overflow:hidden;">
+                    @* Content QuillContentSanitizer ile save-time sanitize edildi (BlockService) *@
                     <div id="editor-container" style="min-height:240px; background:var(--paper);">@Html.Raw(Model.Content)</div>
                 </div>
                 <textarea id="Content" name="Content" hidden>@Model.Content</textarea>

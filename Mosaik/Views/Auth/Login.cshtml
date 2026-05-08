@@ -12,7 +12,7 @@
 @if (!ViewData.ModelState.IsValid)
 {
     <div role="alert" style="margin-bottom:14px; padding:10px 12px; border-radius:8px; font-size:12px;
-                background:rgba(220,38,38,0.10); border:1px solid rgba(220,38,38,0.25); color:var(--accent-ink);">
+                background:var(--danger-bg-soft); border:1px solid rgba(220,38,38,0.25); color:var(--accent-ink);">
         <i class="fas fa-circle-exclamation" style="margin-right:6px;"></i>
         Giriş bilgileri hatalı.
     </div>
@@ -21,7 +21,7 @@
 @if (ViewData["LoginWarning"] is string warning && !string.IsNullOrWhiteSpace(warning))
 {
     <div role="alert" style="margin-bottom:14px; padding:10px 12px; border-radius:8px; font-size:12px;
-                background:rgba(245,158,11,0.10); border:1px solid rgba(245,158,11,0.25); color:#92400e;">
+                background:var(--warn-bg-soft); border:1px solid rgba(245,158,11,0.25); color:var(--warn-ink-soft);">
         <i class="fas fa-triangle-exclamation" style="margin-right:6px;"></i>
         @warning
     </div>

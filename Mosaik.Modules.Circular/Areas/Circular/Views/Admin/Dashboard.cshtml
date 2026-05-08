@@ -121,7 +121,7 @@ else
         <div style="display:flex; flex-wrap:wrap; gap:8px;">
             @foreach (var dept in Model.MissingDepartmentsToday)
             {
-                <span class="type-chip" style="background:rgba(245,158,11,.15); color:#92400e; padding:4px 10px;">
+                <span class="type-chip" style="background:rgba(245,158,11,.15); color:var(--warn-ink-soft); padding:4px 10px;">
                     <i class="fas fa-clock text-[9px]" style="margin-right:4px;"></i>
                     @dept
                 </span>

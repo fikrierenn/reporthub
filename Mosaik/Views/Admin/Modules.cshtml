@@ -5,13 +5,13 @@
 }
 
 @section Breadcrumb {
-    <div class="crumbs">
+    <nav class="crumbs" aria-label="Sayfa konumu">
         <a href="/Dashboard">Ana Sayfa</a>
-        <span class="sep">/</span>
+        <span class="sep" aria-hidden="true">/</span>
         <a href="/Admin">Yönetim</a>
-        <span class="sep">/</span>
-        <span class="current">Modüller</span>
-    </div>
+        <span class="sep" aria-hidden="true">/</span>
+        <span class="current" aria-current="page">Modüller</span>
+    </nav>
 }
 
 @section TopActions {
@@ -32,9 +32,9 @@
 {
     var isSuccess = TempData["MessageType"]?.ToString() == "success";
     <div role="alert" style="margin-bottom:18px; padding:12px 16px; border-radius:10px; font-size:13px;
-        background:@(isSuccess ? "rgba(16,185,129,0.10)" : "rgba(220,38,38,0.10)");
+        background:@(isSuccess ? "var(--success-bg-soft)" : "var(--danger-bg-soft)");
         border:1px solid @(isSuccess ? "rgba(16,185,129,0.25)" : "rgba(220,38,38,0.25)");
-        color:@(isSuccess ? "#065f46" : "var(--accent-ink)");">
+        color:@(isSuccess ? "var(--success-ink-soft)" : "var(--accent-ink)");">
         <i class="fas @(isSuccess ? "fa-check-circle" : "fa-exclamation-circle")" style="margin-right:8px;"></i>
         @TempData["Message"]
     </div>

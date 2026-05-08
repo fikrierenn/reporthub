@@ -17,15 +17,15 @@
 }
 
 @section Breadcrumb {
-    <div class="crumbs">
+    <nav class="crumbs" aria-label="Sayfa konumu">
         <a href="/Dashboard">BKM Kitap</a>
-        <span class="sep">/</span>
+        <span class="sep" aria-hidden="true">/</span>
         <a href="/Admin">Yönetim</a>
-        <span class="sep">/</span>
+        <span class="sep" aria-hidden="true">/</span>
         <a href="/Admin?tab=reports">Raporlar</a>
-        <span class="sep">/</span>
-        <span class="current">@Model.Report.Title</span>
-    </div>
+        <span class="sep" aria-hidden="true">/</span>
+        <span class="current" aria-current="page">@Model.Report.Title</span>
+    </nav>
 }
 
 @* M-13 Plan 03 Faz D: Builder topbar consolidation — eski "builder-topbar" Razor blok SİLİNDİ.
@@ -50,9 +50,9 @@
 {
     var isError = Model.MessageType == "error";
     <div role="alert" style="margin-bottom:18px; padding:12px 16px; border-radius:10px; font-size:13px;
-                background: @(isError ? "rgba(220,38,38,0.10)" : "rgba(16,185,129,0.10)");
+                background: @(isError ? "var(--danger-bg-soft)" : "var(--success-bg-soft)");
                 border: 1px solid @(isError ? "rgba(220,38,38,0.25)" : "rgba(16,185,129,0.25)");
-                color: @(isError ? "var(--accent-ink)" : "#065f46");">
+                color: @(isError ? "var(--accent-ink)" : "var(--success-ink-soft)");">
         <i class="fas @(isError ? "fa-circle-exclamation" : "fa-circle-check")" style="margin-right:8px;"></i>
         @Model.Message
     </div>

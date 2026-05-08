@@ -29,7 +29,10 @@
     </div>
 </div>
 
-@await Html.PartialAsync("_AlertMessage", (TempData["MessageType"]?.ToString() ?? "success", TempData["Message"]?.ToString() ?? ""))
+@if (TempData["Message"] != null)
+{
+    @await Html.PartialAsync("_AlertMessage", (TempData["MessageType"]?.ToString() ?? "success", TempData["Message"]!.ToString()!))
+}
 
 @foreach (var type in Model)
 {

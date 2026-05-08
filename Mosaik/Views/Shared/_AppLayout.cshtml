@@ -67,10 +67,13 @@
 </head>
 <body class="@(ViewData["BodyClass"] as string ?? "")">
 
+@* A11y: klavye kullanıcıları için sidebar'ı atla, doğrudan içeriğe geç. *@
+<a href="#mainContent" class="skip-link">İçeriğe atla</a>
+
 <div class="app-shell" id="appShell">
 
     @* ============ SIDEBAR ============ *@
-    <aside class="sidebar">
+    <aside class="sidebar" aria-label="Ana gezinme">
 
         <div class="side-head">
             @* M-13 UI fix (28 Nisan 2026): Sidebar logo PNG. Expanded'de tam logo,
@@ -108,8 +111,8 @@
                 <div class="side-section">Ana</div>
                 <ul class="nav-list">
                     <li>
-                        <a href="/Dashboard" class="@(IsActive("Dashboard") ? "active" : "")">
-                            <span class="icon"><i class="fas fa-house"></i></span>
+                        <a href="/Dashboard" class="@(IsActive("Dashboard") ? "active" : "")" aria-current="@(IsActive("Dashboard") ? "page" : null)">
+                            <span class="icon" aria-hidden="true"><i class="fas fa-house"></i></span>
                             <span class="label">Genel Bakış</span>
                         </a>
                     </li>
@@ -132,8 +135,8 @@
                         @if (module.ModuleKey == "reports")
                         {
                             <li>
-                                <a href="/Reports" class="@(IsActive("Reports") ? "active" : "")">
-                                    <span class="icon"><i class="fas fa-chart-column"></i></span>
+                                <a href="/Reports" class="@(IsActive("Reports") ? "active" : "")" aria-current="@(IsActive("Reports") ? "page" : null)">
+                                    <span class="icon" aria-hidden="true"><i class="fas fa-chart-column"></i></span>
                                     <span class="label">@module.DisplayName</span>
                                 </a>
                             </li>
@@ -152,8 +155,8 @@
                             var moduleUrl = "/" + char.ToUpper(module.ModuleKey[0]) + module.ModuleKey.Substring(1);
                             var showTamimBadge = module.ModuleKey == "circular" && todaysCircular != null;
                             <li>
-                                <a href="@moduleUrl" class="@(IsActive(moduleUrl.TrimStart('/')) ? "active" : "")">
-                                    <span class="icon"><i class="@icon"></i></span>
+                                <a href="@moduleUrl" class="@(IsActive(moduleUrl.TrimStart('/')) ? "active" : "")" aria-current="@(IsActive(moduleUrl.TrimStart('/')) ? "page" : null)">
+                                    <span class="icon" aria-hidden="true"><i class="@icon"></i></span>
                                     <span class="label">@module.DisplayName</span>
                                     @if (showTamimBadge)
                                     {
@@ -170,8 +173,8 @@
                     <div class="side-section">Sistem</div>
                     <ul class="nav-list">
                         <li>
-                            <a href="/Logs" class="@(IsActive("Logs") ? "active" : "")">
-                                <span class="icon"><i class="fas fa-clock-rotate-left"></i></span>
+                            <a href="/Logs" class="@(IsActive("Logs") ? "active" : "")" aria-current="@(IsActive("Logs") ? "page" : null)">
+                                <span class="icon" aria-hidden="true"><i class="fas fa-clock-rotate-left"></i></span>
                                 <span class="label">Geçmiş / Loglar</span>
                             </a>
                         </li>
@@ -185,8 +188,8 @@
                     <div class="side-section">Yönetim</div>
                     <ul class="nav-list">
                         <li>
-                            <a href="/Admin" class="@(IsActive("Admin") ? "active" : "")">
-                                <span class="icon"><i class="fas fa-gauge-high"></i></span>
+                            <a href="/Admin" class="@(IsActive("Admin") ? "active" : "")" aria-current="@(IsActive("Admin") ? "page" : null)">
+                                <span class="icon" aria-hidden="true"><i class="fas fa-gauge-high"></i></span>
                                 <span class="label">Yönetim Paneli</span>
                             </a>
                         </li>
@@ -212,7 +215,7 @@
     </aside>
 
     @* ============ MAIN ============ *@
-    <main class="main">
+    <main class="main" id="mainContent">
 
         <div class="topbar">
             <button class="mobile-menu" id="btnMobileMenu" type="button" title="Menü">
@@ -226,20 +229,21 @@
             }
             else
             {
-                <div class="crumbs">
+                <nav class="crumbs" aria-label="Sayfa konumu">
                     <a href="/Dashboard">BKM Kitap</a>
-                    <span class="sep">/</span>
-                    <span class="current">@(ViewData["PageTitle"] as string ?? ViewData["Title"]?.ToString()?.Split(" - ")[0] ?? "")</span>
-                </div>
+                    <span class="sep" aria-hidden="true">/</span>
+                    <span class="current" aria-current="page">@(ViewData["PageTitle"] as string ?? ViewData["Title"]?.ToString()?.Split(" - ")[0] ?? "")</span>
+                </nav>
             }
 
             @* Search slot — view'lar disable edebilir *@
             @if (!(ViewData["HideSearch"] is bool hideSearch && hideSearch))
             {
                 <div class="search">
-                    <span class="ico"><i class="fas fa-magnifying-glass"></i></span>
-                    <input type="text" placeholder="Rapor, dashboard, kullanıcı ara..." />
-                    <span class="kbd">⌘K</span>
+                    <span class="ico" aria-hidden="true"><i class="fas fa-magnifying-glass"></i></span>
+                    <label for="topSearch" class="sr-only">Arama</label>
+                    <input type="text" id="topSearch" placeholder="Rapor, dashboard, kullanıcı ara..." aria-label="Rapor, dashboard, kullanıcı arama" />
+                    <span class="kbd" aria-hidden="true">⌘K</span>
                 </div>
             }
 

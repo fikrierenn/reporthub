@@ -9,13 +9,13 @@
 }
 
 @section Breadcrumb {
-    <div class="crumbs">
+    <nav class="crumbs" aria-label="Sayfa konumu">
         <a href="/Dashboard">BKM Kitap</a>
-        <span class="sep">/</span>
+        <span class="sep" aria-hidden="true">/</span>
         <a href="/Reports">Raporlar</a>
-        <span class="sep">/</span>
-        <span class="current">@(report?.Title ?? "Rapor")</span>
-    </div>
+        <span class="sep" aria-hidden="true">/</span>
+        <span class="current" aria-current="page">@(report?.Title ?? "Rapor")</span>
+    </nav>
 }
 
 @if (Model.RunSuccess)
@@ -56,7 +56,7 @@ else
     @if (!string.IsNullOrWhiteSpace(Model.RunError))
     {
         <div style="margin-bottom:18px; padding:12px 16px; border-radius:10px; font-size:13px;
-                    background:rgba(220,38,38,0.10); border:1px solid rgba(220,38,38,0.25); color:var(--accent-ink);">
+                    background:var(--danger-bg-soft); border:1px solid rgba(220,38,38,0.25); color:var(--accent-ink);">
             <i class="fas fa-exclamation-circle" style="margin-right:8px;"></i>
             <strong>Hata:</strong> @Model.RunError
         </div>
@@ -176,7 +176,7 @@ else
     @if (Model.RunSuccess)
     {
         <div style="margin-bottom:18px; padding:12px 16px; border-radius:10px; font-size:13px;
-                    background:rgba(16,185,129,0.10); border:1px solid rgba(16,185,129,0.25); color:#065f46;
+                    background:var(--success-bg-soft); border:1px solid rgba(16,185,129,0.25); color:var(--success-ink-soft);
                     display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
             <i class="fas fa-circle-check"></i>
             <div>

@@ -167,6 +167,7 @@
                 }
             </div>
             <h4>@b.Subject</h4>
+            @* Content QuillContentSanitizer ile save-time sanitize edildi (BlockService) *@
             <div class="b-content">@Html.Raw(b.Content)</div>
 
             @if (fileMap.TryGetValue(b.Id, out var bf) && bf.Any())

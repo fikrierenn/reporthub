@@ -65,9 +65,9 @@
 {
     var t = TempData["MessageType"]?.ToString();
     <div role="alert" style="margin-bottom:18px; padding:12px 16px; border-radius:10px; font-size:13px;
-                background: @(t == "success" ? "rgba(16,185,129,0.10)" : "rgba(220,38,38,0.10)");
+                background: @(t == "success" ? "var(--success-bg-soft)" : "var(--danger-bg-soft)");
                 border: 1px solid @(t == "success" ? "rgba(16,185,129,0.25)" : "rgba(220,38,38,0.25)");
-                color: @(t == "success" ? "#065f46" : "var(--accent-ink)");">
+                color: @(t == "success" ? "var(--success-ink-soft)" : "var(--accent-ink)");">
         <i class="fas @(t == "success" ? "fa-check-circle" : "fa-exclamation-circle")" style="margin-right:8px;"></i>
         @TempData["Message"]
     </div>
