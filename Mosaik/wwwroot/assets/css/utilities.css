@@ -102,3 +102,6 @@ input:-webkit-autofill:active {
         scroll-behavior: auto !important;
     }
 }
+
+/* Form margin reset — sıkça kullanılan inline form pattern (button satırı vb) */
+.inline-form { margin: 0; display: inline; }

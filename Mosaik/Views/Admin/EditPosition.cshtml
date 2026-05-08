@@ -45,35 +45,33 @@
 <form method="post" action="@actionUrl" autocomplete="off">
     @Html.AntiForgeryToken()
 
-    <div style="background:var(--paper); border:1px solid var(--line); border-radius:10px;
-                max-width:720px; margin-bottom:18px; padding:20px;">
+    <div class="form-section-card">
 
         <div class="field">
-            <label class="lab" for="Code">Kod (Zirve eşleşme anahtarı) <span style="color:#b91c1c;">*</span></label>
+            <label class="lab" for="Code">Kod (Zirve eşleşme anahtarı) <span class="form-required">*</span></label>
             @if (isCreate)
             {
                 <input class="inp" type="text" id="Code" name="Code" value="@Model.Code"
                        maxlength="100" required
                        placeholder="Örn: SATIŞ DANIŞMANI" />
-                <p style="font-size:11px; color:var(--ink-mute); margin-top:4px;">
+                <p class="form-help">
                     Zirve `vw_PersonelDepartman.Unvan` değeriyle birebir aynı olmalı (büyük harf, Türkçe karakter dahil).
                 </p>
             }
             else
             {
-                <input class="inp" type="text" id="Code" value="@Model.Code" disabled
-                       style="background:#f9fafb; cursor:not-allowed;" />
-                <p style="font-size:11px; color:var(--ink-mute); margin-top:4px;">
+                <input class="inp" type="text" id="Code" value="@Model.Code" disabled />
+                <p class="form-help">
                     Kod değiştirilemez (Zirve eşleşmesi bozulur). Yeni kod gerekiyorsa bu görevi silip yeniden ekleyin.
                 </p>
             }
         </div>
 
         <div class="field">
-            <label class="lab" for="Title">Başlık <span style="color:#b91c1c;">*</span></label>
+            <label class="lab" for="Title">Başlık <span class="form-required">*</span></label>
             <input class="inp" type="text" id="Title" name="Title" value="@Model.Title"
                    maxlength="150" required />
-            <p style="font-size:11px; color:var(--ink-mute); margin-top:4px;">
+            <p class="form-help">
                 Görsel etiket. Title Case Türkçe (örn: "Satış Danışmanı").
             </p>
         </div>
@@ -94,17 +92,17 @@
                     }
                 }
             </select>
-            <p style="font-size:11px; color:var(--ink-mute); margin-top:4px;">
-                Drag-drop ile de değiştirilebilir. Döngü oluşturan atamalar reddedilir.
+            <p class="form-help">
+                Sağ-tık modal ile de değiştirilebilir. Döngü oluşturan atamalar reddedilir.
             </p>
         </div>
 
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:14px;">
+        <div class="form-grid-2">
             <div class="field">
                 <label class="lab" for="DisplayOrder">Sıra</label>
                 <input class="inp" type="number" id="DisplayOrder" name="DisplayOrder"
                        value="@Model.DisplayOrder" min="0" max="9999" />
-                <p style="font-size:11px; color:var(--ink-mute); margin-top:4px;">
+                <p class="form-help">
                     Aynı parent altında küçükten büyüğe sıralanır.
                 </p>
             </div>
@@ -133,9 +131,7 @@
         </div>
     </div>
 
-    <div style="display:flex; align-items:center; justify-content:space-between;
-                max-width:720px; padding:14px 20px;
-                background:var(--paper); border:1px solid var(--line); border-radius:10px;">
+    <div class="form-action-row">
         <a href="/Admin/OrgChart" class="btn ghost">
             <i class="fas fa-arrow-left text-[10px]" aria-hidden="true"></i>
             Geri Dön

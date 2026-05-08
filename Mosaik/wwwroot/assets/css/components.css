@@ -328,3 +328,63 @@ select.inp {
     border-bottom-width: 2px; border-radius: 4px; padding: 1px 5px;
     color: var(--ink-3); margin: 0 2px;
 }
+
+/* ============================================================
+   Form Section Card + Action Row Pattern (ui-patterns.md §7)
+   Kullanım:
+     <form>
+       <div class="form-section-card">
+         <div class="field">...</div>
+       </div>
+       <div class="form-action-row">
+         <a class="btn ghost">İptal</a>
+         <button class="btn primary">Kaydet</button>
+       </div>
+     </form>
+   ============================================================ */
+
+.form-section-card {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    max-width: 720px;
+    margin-bottom: 18px;
+    padding: 20px;
+}
+.form-section-card.wide { max-width: 880px; }
+
+.form-action-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    max-width: 720px;
+    padding: 14px 20px;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+}
+.form-action-row.wide { max-width: 880px; }
+
+/* Field içinde küçük yardım metni */
+.form-help {
+    font-size: 11px;
+    color: var(--ink-mute);
+    margin-top: 4px;
+}
+
+/* Required işareti */
+.form-required { color: #b91c1c; }
+
+/* 2 kolonlu grid (örn. Sıra + Durum) */
+.form-grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+}
+
+/* Disabled input için stil */
+.inp:disabled,
+.inp[readonly] {
+    background: #f9fafb;
+    cursor: not-allowed;
+}

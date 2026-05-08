@@ -1,0 +1,86 @@
+/* ============================================================
+   Plan 17 Faz H — Bildirim Sistemi CSS
+   Kapsam: /Notifications (Index, list view)
+   ============================================================ */
+
+/* Filtre tab listesi (Tümü / Okunmamış) */
+.notif-tabs {
+    display: flex;
+    gap: 6px;
+    margin: 14px 0;
+}
+
+/* Konteyner — paper card kapalı border */
+.notif-list {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+/* Empty state */
+.notif-empty {
+    text-align: center;
+    padding: 40px;
+    color: var(--ink-mute);
+}
+.notif-empty .icon { font-size: 48px; }
+.notif-empty h3 { margin-top: 10px; }
+.notif-empty p { font-size: 12px; }
+
+/* Liste */
+.notif-list ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+/* Satır */
+.notif-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--line);
+}
+.notif-item.unread { background: #fefce8; }
+
+/* Sol durum noktası */
+.notif-dot {
+    margin-top: 3px;
+    font-size: 8px;
+    color: #cbd5e1;
+}
+.notif-item.unread .notif-dot { color: #b91c1c; }
+
+/* İçerik */
+.notif-body { flex: 1; min-width: 0; }
+.notif-head {
+    display: flex;
+    gap: 8px;
+    align-items: baseline;
+    flex-wrap: wrap;
+}
+.notif-title { font-size: 13px; }
+.notif-time {
+    font-size: 11px;
+    color: var(--ink-mute);
+}
+.notif-msg {
+    margin: 4px 0 0 0;
+    font-size: 12px;
+    color: var(--ink-2);
+}
+
+/* Sağ aksiyonlar */
+.notif-actions {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+/* Hero pill (okunmamış sayısı badge) — global pill class'ı override */
+.notif-pill-warn {
+    background: #fef3c7;
+    color: #92400e;
+}
