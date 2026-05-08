@@ -14,14 +14,14 @@
         var tabsHtml = '<div class="flex gap-1 border-b border-gray-200 mb-4">';
         state.config.tabs.forEach(function (tab, i) {
             var active = i === state.activeTab ? ' text-blue-600 border-blue-600' : ' text-gray-500 border-transparent';
-            tabsHtml += '<div class="flex items-center gap-1 px-3 py-2 text-sm font-semibold border-b-2 cursor-pointer' + active + '" onclick="window._dbSetTab(' + i + ')">';
+            tabsHtml += '<div class="flex items-center gap-1 px-3 py-2 text-sm font-semibold border-b-2 cursor-pointer' + active + '" data-action="dbSetTab" data-arg="' + i + '">';
             tabsHtml += '<span>' + esc(tab.title) + '</span>';
             if (state.config.tabs.length > 1) {
-                tabsHtml += ' <button type="button" class="text-red-400 hover:text-red-600 text-xs ml-1" onclick="event.stopPropagation(); window._dbRemoveTab(' + i + ')" title="Sekmeyi sil">&times;</button>';
+                tabsHtml += ' <button type="button" class="text-red-400 hover:text-red-600 text-xs ml-1" data-action="dbRemoveTab" data-arg="' + i + '" title="Sekmeyi sil">&times;</button>';
             }
             tabsHtml += '</div>';
         });
-        tabsHtml += '<div class="px-3 py-2 text-sm text-gray-400 cursor-pointer hover:text-blue-600" onclick="window._dbAddTab()">+ Sekme</div>';
+        tabsHtml += '<div class="px-3 py-2 text-sm text-gray-400 cursor-pointer hover:text-blue-600" data-action="dbAddTab">+ Sekme</div>';
         tabsHtml += '</div>';
         return tabsHtml;
     }
@@ -46,8 +46,8 @@
             html += '<span class="text-xs text-gray-400 whitespace-nowrap">RS:' + comp.resultSet + ' &middot; ' + comp.span + '/4</span>';
             html += '</div>';
             html += '<div class="flex items-center gap-1 ml-3">';
-            html += '<button type="button" class="text-blue-600 hover:bg-blue-100 px-3 py-1.5 rounded-md text-sm font-semibold transition-colors" onclick="window._dbEditComp(' + i + ')" title="Düzenle"><i class="fas fa-pen mr-1"></i>Düzenle</button>';
-            html += '<button type="button" class="text-red-500 hover:bg-red-50 hover:text-red-700 px-2 py-1.5 rounded-md text-sm transition-colors" onclick="window._dbDeleteComp(' + i + ')" title="Sil"><i class="fas fa-trash"></i></button>';
+            html += '<button type="button" class="text-blue-600 hover:bg-blue-100 px-3 py-1.5 rounded-md text-sm font-semibold transition-colors" data-action="dbEditComp" data-arg="' + i + '" title="Düzenle"><i class="fas fa-pen mr-1"></i>Düzenle</button>';
+            html += '<button type="button" class="text-red-500 hover:bg-red-50 hover:text-red-700 px-2 py-1.5 rounded-md text-sm transition-colors" data-action="dbDeleteComp" data-arg="' + i + '" title="Sil"><i class="fas fa-trash"></i></button>';
             html += '</div>';
             html += '</div>';
         });

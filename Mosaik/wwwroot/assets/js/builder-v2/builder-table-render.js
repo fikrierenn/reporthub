@@ -20,26 +20,9 @@
 
     var ROW_LIMIT = 50;
 
-    function fmtCell(rawVal, fmt) {
-        if (rawVal == null || rawVal === '') return '—';
-        var n = parseFloat(rawVal);
-        if (fmt === 'currency') return isNaN(n) ? String(rawVal) : '₺ ' + n.toLocaleString('tr-TR', { maximumFractionDigits: 2 });
-        if (fmt === 'number')   return isNaN(n) ? String(rawVal) : n.toLocaleString('tr-TR', { maximumFractionDigits: 2 });
-        if (fmt === 'percent')  return isNaN(n) ? String(rawVal) : n.toFixed(1).replace('.', ',') + '%';
-        if (fmt === 'date') {
-            try { var d = new Date(rawVal); return isNaN(d.getTime()) ? String(rawVal) : d.toLocaleDateString('tr-TR'); }
-            catch (e) { return String(rawVal); }
-        }
-        if (fmt === 'text') return String(rawVal);
-        // auto
-        if (isNaN(n)) return String(rawVal);
-        return Math.abs(n) >= 1000 ? n.toLocaleString('tr-TR', { maximumFractionDigits: 1 }) : String(n);
-    }
-
-    function escHtml(s) {
-        return String(s == null ? '' : s)
-            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-    }
+    // Shared helpers from builder-utils.js (loaded first in Razor view).
+    var fmtCell = window.__BuilderV2.fmtCell;
+    var escHtml = window.__BuilderV2.escHtml;
 
     // Conditional format → td innerHTML (string, esc'li)
     function condFormatCellHtml(condFormat, n, stats, fmttedEsc, alignCls) {

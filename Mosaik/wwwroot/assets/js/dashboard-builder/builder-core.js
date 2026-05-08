@@ -120,7 +120,7 @@
         ['standard', 'compact', 'wide'].forEach(function (l) {
             var labels = { standard: '4', compact: '2', wide: 'Tam' };
             var active = state.config.layout === l ? ' bg-blue-100 text-blue-700 border-blue-300' : ' bg-white text-gray-600 border-gray-200 hover:bg-gray-50';
-            layoutBar += '<button type="button" class="px-2 py-1 font-semibold rounded border' + active + '" onclick="window._dbSetLayout(\'' + l + '\')" title="' + l + '">' + labels[l] + '</button>';
+            layoutBar += '<button type="button" class="px-2 py-1 font-semibold rounded border' + active + '" data-action="dbSetLayout" data-arg="' + l + '" title="' + l + '">' + labels[l] + '</button>';
         });
         layoutBar += '</div>';
 
@@ -168,7 +168,7 @@
             var editingTitle = editingComp && editingComp.title ? editingComp.title : ('#' + (state.editIndex + 1));
             html += '<div class="flex items-center justify-between mb-2">';
             html += '<h4 class="text-sm font-bold text-blue-800"><i class="fas fa-pen mr-1"></i> Düzenleniyor: ' + esc(editingTitle) + '</h4>';
-            html += '<button type="button" class="text-xs text-gray-500 hover:text-gray-700 underline" onclick="window._dbCancelEdit()">İptal</button>';
+            html += '<button type="button" class="text-xs text-gray-500 hover:text-gray-700 underline" data-action="dbCancelEdit">İptal</button>';
             html += '</div>';
         } else {
             html += '<h4 class="text-sm font-bold text-gray-700 mb-2"><i class="fas fa-plus-circle mr-1 text-blue-600"></i> Yeni Bileşen</h4>';
@@ -181,7 +181,7 @@
 
         // ---- Footer: JSON view toggle (debug + copy/paste) ----
         html += '<div class="mt-3 flex justify-end">';
-        html += '<button type="button" id="dbJsonToggleBtn" class="text-xs text-gray-600 hover:text-gray-800 font-semibold" onclick="window._dbToggleJsonView()">' + (state.jsonViewOpen ? '<i class="fas fa-eye-slash mr-1"></i>JSON Gizle' : '<i class="fas fa-code mr-1"></i>JSON Goster') + '</button>';
+        html += '<button type="button" id="dbJsonToggleBtn" class="text-xs text-gray-600 hover:text-gray-800 font-semibold" data-action="dbToggleJsonView">' + (state.jsonViewOpen ? '<i class="fas fa-eye-slash mr-1"></i>JSON Gizle' : '<i class="fas fa-code mr-1"></i>JSON Goster') + '</button>';
         html += '</div>';
         html += '<div id="dbJsonView" class="mb-4' + (state.jsonViewOpen ? '' : ' hidden') + '">';
         html += '<textarea readonly class="w-full h-64 px-3 py-2 border border-gray-300 rounded-lg text-xs font-mono bg-gray-50" placeholder="Config JSON"></textarea>';
@@ -232,4 +232,41 @@
         state.jsonViewOpen = !state.jsonViewOpen;
         render();
     };
+
+    // ---- Delegated click listener (replaces inline onclick attributes) ----
+    // Single listener on builderEl handles all data-action elements across modules.
+    // Args parsed via data-arg / data-arg2. Numeric coercion done per-action.
+    builderEl.addEventListener('click', function (e) {
+        var t = e.target.closest && e.target.closest('[data-action]');
+        if (!t || !builderEl.contains(t)) return;
+        var action = t.getAttribute('data-action');
+        var arg = t.getAttribute('data-arg');
+        switch (action) {
+            // core
+            case 'dbSetLayout': window._dbSetLayout(arg); break;
+            case 'dbToggleJsonView': window._dbToggleJsonView(); break;
+            case 'dbCancelEdit': window._dbCancelEdit(); break;
+            // contract
+            case 'dbAddContractEntry': window._dbAddContractEntry(); break;
+            case 'dbRemoveContractEntry': window._dbRemoveContractEntry(t); break;
+            // list — tabs
+            case 'dbSetTab': window._dbSetTab(parseInt(arg, 10)); break;
+            case 'dbRemoveTab': e.stopPropagation(); window._dbRemoveTab(parseInt(arg, 10)); break;
+            case 'dbAddTab': window._dbAddTab(); break;
+            // list — components
+            case 'dbEditComp': window._dbEditComp(parseInt(arg, 10)); break;
+            case 'dbDeleteComp': window._dbDeleteComp(parseInt(arg, 10)); break;
+            // drawer — datasets / columns / save
+            case 'dbAddDs': window._dbAddDs(); break;
+            case 'dbRemoveDs': window._dbRemoveDs(parseInt(arg, 10)); break;
+            case 'dbAddCol': window._dbAddCol(); break;
+            case 'dbRemoveCol': window._dbRemoveCol(parseInt(arg, 10)); break;
+            case 'dbSaveComp': window._dbSaveComp(); break;
+            // DOM-local row removal (replaces this.parentElement.parentElement.remove())
+            case 'removeRow':
+                var row = t.parentElement && t.parentElement.parentElement;
+                if (row && row.parentElement) row.parentElement.removeChild(row);
+                break;
+        }
+    });
 })();

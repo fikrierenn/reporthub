@@ -265,6 +265,7 @@
                 window.__builderV2.rsViewerMixin(),
                 window.__builderV2.chartRenderMixin(),
                 window.__builderV2.kpiFieldsMixin(),
+                window.__builderV2.kpiRenderMixin(),
                 window.__builderV2.tableRenderMixin()
             );
         };

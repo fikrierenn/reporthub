@@ -107,10 +107,10 @@
                 html += '<div><input type="text" class="ds-col w-full px-2 py-1.5 border border-gray-300 rounded-lg text-sm" value="' + esc(ds.column) + '" placeholder="Kolon adi"></div>';
                 html += '<div><input type="text" class="ds-label w-full px-2 py-1.5 border border-gray-300 rounded-lg text-sm" value="' + esc(ds.label) + '" placeholder="Etiket"></div>';
                 html += '<div>' + colorSelect('dsColor_' + di, ds.color) + '</div>';
-                html += '<div><button type="button" class="text-red-500 text-sm" onclick="window._dbRemoveDs(' + di + ')">Sil</button></div>';
+                html += '<div><button type="button" class="text-red-500 text-sm" data-action="dbRemoveDs" data-arg="' + di + '">Sil</button></div>';
                 html += '</div>';
             });
-            html += '<button type="button" class="text-blue-600 text-sm font-semibold mt-1" onclick="window._dbAddDs()">+ Dataset Ekle</button>';
+            html += '<button type="button" class="text-blue-600 text-sm font-semibold mt-1" data-action="dbAddDs">+ Dataset Ekle</button>';
             html += '</div>';
 
         } else if (type === 'table') {
@@ -135,10 +135,10 @@
                 html += '<option value="">Varsayilan</option>';
                 colors.forEach(function (c) { html += '<option value="' + c.value + '"' + (col.color === c.value ? ' selected' : '') + '>' + c.label + '</option>'; });
                 html += '</select></div>';
-                html += '<div><button type="button" class="text-red-500 text-sm" onclick="window._dbRemoveCol(' + ci + ')">Sil</button></div>';
+                html += '<div><button type="button" class="text-red-500 text-sm" data-action="dbRemoveCol" data-arg="' + ci + '">Sil</button></div>';
                 html += '</div>';
             });
-            html += '<button type="button" class="text-blue-600 text-sm font-semibold mt-1" onclick="window._dbAddCol()">+ Kolon Ekle</button>';
+            html += '<button type="button" class="text-blue-600 text-sm font-semibold mt-1" data-action="dbAddCol">+ Kolon Ekle</button>';
             html += '</div>';
         }
 
@@ -146,9 +146,9 @@
 
         // Action button
         html += '<div class="mt-4 flex gap-3">';
-        html += '<button type="button" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-semibold" onclick="window._dbSaveComp()">' + (state.editIndex >= 0 ? 'Güncelle' : 'Ekle') + '</button>';
+        html += '<button type="button" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-semibold" data-action="dbSaveComp">' + (state.editIndex >= 0 ? 'Güncelle' : 'Ekle') + '</button>';
         if (state.editIndex >= 0) {
-            html += '<button type="button" class="text-gray-500 hover:text-gray-700 px-4 py-2 text-sm" onclick="window._dbCancelEdit()">İptal</button>';
+            html += '<button type="button" class="text-gray-500 hover:text-gray-700 px-4 py-2 text-sm" data-action="dbCancelEdit">İptal</button>';
         }
         html += '</div>';
 
@@ -230,7 +230,7 @@
         row.innerHTML = '<div><input type="text" class="ds-col w-full px-2 py-1.5 border border-gray-300 rounded-lg text-sm" placeholder="Kolon adi"></div>' +
             '<div><input type="text" class="ds-label w-full px-2 py-1.5 border border-gray-300 rounded-lg text-sm" placeholder="Etiket"></div>' +
             '<div>' + colorSelect('dsColor_' + idx, 'blue') + '</div>' +
-            '<div><button type="button" class="text-red-500 text-sm" onclick="this.parentElement.parentElement.remove()">Sil</button></div>';
+            '<div><button type="button" class="text-red-500 text-sm" data-action="removeRow">Sil</button></div>';
         area.insertBefore(row, area.lastElementChild);
         attachListAttribute();
     };
@@ -253,7 +253,7 @@
             '<div><select class="tc-align w-full px-2 py-1.5 border border-gray-300 rounded-lg text-sm"><option value="left">Sol</option><option value="right">Sag</option><option value="center">Orta</option></select></div>' +
             '<div><select class="tc-color w-full px-2 py-1.5 border border-gray-300 rounded-lg text-sm"><option value="">Varsayilan</option>' +
             colors.map(function (c) { return '<option value="' + c.value + '">' + c.label + '</option>'; }).join('') + '</select></div>' +
-            '<div><button type="button" class="text-red-500 text-sm" onclick="this.parentElement.parentElement.remove()">Sil</button></div>';
+            '<div><button type="button" class="text-red-500 text-sm" data-action="removeRow">Sil</button></div>';
         area.insertBefore(row, area.lastElementChild);
     };
 

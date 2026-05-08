@@ -17,7 +17,7 @@
         var html = '<div class="mb-4 border border-gray-200 rounded-lg p-3 bg-white">';
         html += '<div class="flex items-center justify-between mb-2">';
         html += '<h4 class="text-xs font-semibold text-gray-600 uppercase tracking-wide"><i class="fas fa-link mr-1"></i> Result Contract <span class="text-[10px] text-blue-600 normal-case">(isim -> result set)</span></h4>';
-        html += '<button type="button" class="text-xs text-blue-600 hover:text-blue-800 font-semibold" onclick="window._dbAddContractEntry()"><i class="fas fa-plus mr-1"></i>Ekle</button>';
+        html += '<button type="button" class="text-xs text-blue-600 hover:text-blue-800 font-semibold" data-action="dbAddContractEntry"><i class="fas fa-plus mr-1"></i>Ekle</button>';
         html += '</div>';
 
         if (keys.length === 0) {
@@ -38,7 +38,7 @@
                 html += '<div class="col-span-2"><input type="number" class="w-full px-2 py-1 border border-gray-300 rounded text-sm" value="' + (e.resultSet != null ? e.resultSet : 0) + '" min="0" max="20" data-rc-key="' + kAttr + '" onchange="window._dbUpdateContractField(this, \'resultSet\')"></div>';
                 html += '<div class="col-span-2 text-center"><input type="checkbox"' + (e.required ? ' checked' : '') + ' class="h-4 w-4 text-blue-600 border-gray-300 rounded" data-rc-key="' + kAttr + '" onchange="window._dbUpdateContractField(this, \'required\')"></div>';
                 html += '<div class="col-span-3">' + shapeSelect(e.shape, kAttr) + '</div>';
-                html += '<div class="col-span-1 text-right"><button type="button" class="text-red-500 hover:text-red-700 text-sm px-2" data-rc-key="' + kAttr + '" onclick="window._dbRemoveContractEntry(this)" title="Sil">&times;</button></div>';
+                html += '<div class="col-span-1 text-right"><button type="button" class="text-red-500 hover:text-red-700 text-sm px-2" data-rc-key="' + kAttr + '" data-action="dbRemoveContractEntry" title="Sil">&times;</button></div>';
                 html += '</div>';
             });
         }

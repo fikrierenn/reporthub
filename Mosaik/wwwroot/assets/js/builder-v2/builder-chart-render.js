@@ -21,19 +21,8 @@
         '#7c3aed', '#e11d48', '#0891b2', '#ea580c', '#65a30d'
     ];
 
-    function fmtChart(v, numFormat) {
-        var n = typeof v === 'number' ? v : parseFloat(v);
-        if (isNaN(n)) return v;
-        if (numFormat === 'currency') return '₺ ' + n.toLocaleString('tr-TR', { maximumFractionDigits: 0 });
-        if (numFormat === 'currency-short') {
-            if (Math.abs(n) >= 1e6) return '₺ ' + (n / 1e6).toFixed(1).replace('.', ',') + 'M';
-            if (Math.abs(n) >= 1e3) return '₺ ' + (n / 1e3).toFixed(1).replace('.', ',') + 'K';
-            return '₺ ' + n;
-        }
-        if (numFormat === 'percent') return n.toFixed(1).replace('.', ',') + '%';
-        if (numFormat === 'decimal2') return n.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-        return Math.abs(n) >= 1000 ? (n / 1000).toLocaleString('tr-TR', { maximumFractionDigits: 1 }) + 'k' : n;
-    }
+    // Shared helper from builder-utils.js (loaded first in Razor view).
+    var fmtChart = window.__BuilderV2.fmtChart;
 
     function buildChartConfig(comp, rs, paletteHexResolver) {
         var rows = (rs && rs.rows) || [];
