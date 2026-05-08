@@ -52,6 +52,9 @@ kodlari_topla_v2.bat
 # Python virtual environments (NotebookLM CLI vb.)
 .venv/
 
+# Geçici cleanup/migration script'leri (Plan 17 vb. tek kullanımlık utility'ler)
+.tmp/
+
 # OS junk
 .DS_Store
 Thumbs.db

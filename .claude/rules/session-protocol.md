@@ -84,7 +84,9 @@ Kullanıcının "TodoWrite kullanmadın" / "planı dosyaya yazmadın" demesi bu 
 | 3+ adımlı iş | TodoWrite + `plan-tracker` | İkisi farklı amaç, biri yetmez |
 | Oturum sonu | `session-handoff` | "iyi geceler" / "handoff" |
 | Multi-LLM danışma | `llm-council` skill | Mimari "hangi yol" belirsizliği |
-| UI/UX değişiklik | `ui-ux-pro-max` + `frontend-design` + `accessibility-compliance` | Razor view edit, M-13 sırası |
+| UI/UX değişiklik (HER .cshtml edit) | `accessibility-compliance` + `ui-ux-pro-max` | **Otomatik:** view düzenlerken WCAG contrast, ARIA, touch target, focus-visible kontrol |
+| Yeni sayfa / layout değişiklik | `frontend-design` + `visual-design-foundations` + `responsive-design` | Yeni view, layout migration, hero/card/table pattern |
+| Design system değişiklik | `design-system-patterns` + `interaction-design` | Token ekleme, animasyon, theming |
 | BKM kurumsal DB sorgu | `mcp__sqlserver__*` | Allowlist: master, DerinSIS*, BKMDATA, EncoreMerkez, BKM. **Mosaik DB allowlist DIŞINDA** — uygulama içi DB için MCP yerine SSMS/sqlcmd |
 | Dashboard/UI regresyon | `mcp__Claude_Preview__*` | Render smoke test, screenshot |
 | Yeni feature implement | `/feature-dev` slash | 7 fazlı guided |
@@ -116,7 +118,23 @@ Detay memory: `feedback_subagent_skill_ana_prensip.md`.
 
 ### Tetikler
 
-Kullanıcı "iyi geceler" / "handoff" / "kaydet ve kapat" / "/handoff" / "devam edeceğiz" dediğinde `.claude/skills/session-handoff/SKILL.md` devreye girer.
+Kullanıcı "iyi geceler" / "handoff" / "kaydet ve kapat" / "/handoff" / "devam edeceğiz" dediğinde önce **Pre-handoff Compliance Scan** çalışır, sonra `.claude/skills/session-handoff/SKILL.md` devreye girer.
+
+### Pre-handoff Compliance Scan (ZORUNLU — session-handoff öncesi)
+
+Handoff tetiklenmeden önce bu oturumda **dokunulan tüm kod** için tek mesajda 3 paralel agent:
+
+```
+Agent(subagent_type="code-reviewer")        — CLAUDE.md + mimari uyumluluk
+Agent(subagent_type="silent-failure-hunter") — exception handling + silent catch + fallback
+Agent(subagent_type="security-review")      — güvenlik taraması (Skill değil, Agent)
+```
+
+Scope: `git diff --name-only HEAD` veya oturumda editlenen dosyalar.
+- Bulgu yok → handoff'a geç.
+- Bulgu var → önce fix et, sonra handoff.
+
+**Override:** Kullanıcı açıkça "tarama yapmadan geç" derse atlanabilir. Aksi default = tarama zorunlu.
 
 ### Ne yapar
 
