@@ -70,8 +70,8 @@ Bu liste 5 plan dosyasi (`plans/02-06`) + Plan 14/16/16.5 + asagidaki FAZ 1-3 + 
 - [x] **Plan 14 Faz A** ✅ commit `27714c5` (2026-05-07) — UserDataFilter diff audit + ortak BuildAdminUserFormAsync + ModelState + 4 yeni unit test (250/250 yeşil)
 - [x] **Plan 14 Faz B keşif** ✅ 2026-05-08 — Zirve `vw_PersonelDepartman` canonical, 3 firma UNION (BKM/BURSA_KÜLTÜR_MERKEZİ/ASİYE), 272 aktif, 4 seviye hiyerarşi. Memory: `project_zirve_personel_discovery.md`. Implement durmuş (Plan 18A ile birleşik).
 - [ ] **Plan 18A · IK Quick Reports + Dashboard** ⭐ HIZLI KAZANIM (~4-6h, read-only, sync gerek değil) — view'ı sarmalayan 5 SP + ReportCatalog seed + İK Pano dashboard + FilterDefinition (sube/IK) aktive. Plan 18B sync'i beklemez, somut yönetim değeri.
-- [ ] **Plan 16.5 Faz A+B** — domain primitives + workflow + Lookup + `IUserDataScope` (Plan 14 Faz C önkoşulu, ~7h)
-- [ ] **Plan 14 Faz C** — `IUserDataScope` (Plan 16.5'tan) ile reportAccess deny-by-default + migration 34 backfill
+- [x] **Plan 16.5 Faz A+B** ✅ tamamlandı (2026-05-08) — Domain primitives (BaseEntity / Markers / ServiceResult), Workflow (IWorkflow / StatusTransition / ApprovalRequest+Step + ApprovalService), Lookup (DictionaryType+Value / LookupService), DataScope (IUserDataScope / DataScopeRegistry). Migration 33+34. Test: 8 ServiceResult + 8 Approval + 12 DataScope + 15 Lookup. Faz A6'daki Attachment/ReadLog spekülatif (Plan 17 Faz I / Plan 19 ihtiyacı doğunca yazılır — YAGNI).
+- [ ] **Plan 14 Faz C** — `IUserDataScope` (Plan 16.5'tan) ile reportAccess deny-by-default + migration 34 backfill — **artık unblocked**
 - [ ] **Plan 18B · HR Sync** (büyük, ~16-24h) — Hangfire + Mosaik.User ek kolonlar + UserSyncService + Email/TC kararları + UserDataFilter otomatik atama. 18A bittikten sonra.
 - [ ] **Plan 16.5 Faz C+D** — AI Core (YonetIQ providers + DikkatIQ extraction). Plan 19 Doküman öncesi zorunlu.
 - [ ] **Plan 17 (Tamim)** — vNext modül roadmap'in ilk üyesi (~10h, tamim/ direkt port)
