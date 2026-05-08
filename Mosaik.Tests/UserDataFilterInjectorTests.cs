@@ -20,7 +20,7 @@ public class UserDataFilterInjectorTests
         var ctx = new MosaikContext(options);
         // AuditLogService dependency: HttpContextAccessor + IConfiguration. NullLogger pattern yok burada;
         // ama InjectAsync sadece LogAsync çağrısı yapıyor — minimal stub yeterli.
-        var auditLog = new AuditLogService(ctx, new Microsoft.AspNetCore.Http.HttpContextAccessor());
+        var auditLog = new AuditLogService(ctx, new Microsoft.AspNetCore.Http.HttpContextAccessor(), NullLogger<AuditLogService>.Instance);
         return (new UserDataFilterInjector(ctx, auditLog), ctx);
     }
 

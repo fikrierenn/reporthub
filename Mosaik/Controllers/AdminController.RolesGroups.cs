@@ -16,7 +16,7 @@ namespace Mosaik.Controllers
             var role = await _context.Roles.FindAsync(id);
             if (role == null)
             {
-                TempData["Message"] = "Rol bulunamadi.";
+                TempData["Message"] = "Rol bulunamadı.";
                 TempData["MessageType"] = "error";
                 return RedirectToAction("Index", new { tab = "roles" });
             }
@@ -30,12 +30,13 @@ namespace Mosaik.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Route("Admin/EditRole/{id}")]
-        public async Task<IActionResult> EditRole(Role role)
+        public async Task<IActionResult> EditRole(int id, Role role)
         {
-            var existing = await _context.Roles.FindAsync(role.RoleId);
+            // IDOR guard: existing'i route id ile bul, role.RoleId form'dan gelmesin (Role.RoleId'de [BindNever] ileri taşınana kadar explicit guard).
+            var existing = await _context.Roles.FindAsync(id);
             if (existing == null)
             {
-                TempData["Message"] = "Rol bulunamadi.";
+                TempData["Message"] = "Rol bulunamadı.";
                 TempData["MessageType"] = "error";
                 return RedirectToAction("Index", new { tab = "roles" });
             }
@@ -43,10 +44,11 @@ namespace Mosaik.Controllers
             var name = role.Name?.Trim() ?? "";
             if (string.IsNullOrWhiteSpace(name))
             {
+                role.RoleId = id;
                 return View(new AdminRoleFormViewModel
                 {
                     Role = role,
-                    Message = "Rol adi zorunludur.",
+                    Message = "Rol adı zorunludur.",
                     MessageType = "error"
                 });
             }
@@ -55,10 +57,11 @@ namespace Mosaik.Controllers
                 .AnyAsync(r => r.RoleId != existing.RoleId && r.Name.ToLower() == name.ToLower());
             if (duplicate)
             {
+                role.RoleId = id;
                 return View(new AdminRoleFormViewModel
                 {
                     Role = role,
-                    Message = "Ayni isimde rol zaten var.",
+                    Message = "Aynı isimde rol zaten var.",
                     MessageType = "error"
                 });
             }
@@ -73,7 +76,7 @@ namespace Mosaik.Controllers
                 await _roleService.PropagateRenameToReportAllowedRolesAsync(oldName, name);
             }
 
-            TempData["Message"] = "Rol guncellendi.";
+            TempData["Message"] = "Rol güncellendi.";
             TempData["MessageType"] = "success";
             return RedirectToAction("Index", new { tab = "roles" });
         }
@@ -84,7 +87,7 @@ namespace Mosaik.Controllers
             var group = await _context.ReportGroups.FindAsync(id);
             if (group == null)
             {
-                TempData["Message"] = "Grup bulunamadi.";
+                TempData["Message"] = "Grup bulunamadı.";
                 TempData["MessageType"] = "error";
                 return RedirectToAction("Index", new { tab = "groups" });
             }
@@ -104,7 +107,7 @@ namespace Mosaik.Controllers
             var existing = await _context.ReportGroups.FindAsync(id);
             if (existing == null)
             {
-                TempData["Message"] = "Grup bulunamadi.";
+                TempData["Message"] = "Grup bulunamadı.";
                 TempData["MessageType"] = "error";
                 return RedirectToAction("Index", new { tab = "groups" });
             }
@@ -116,7 +119,7 @@ namespace Mosaik.Controllers
                 return View(new AdminGroupFormViewModel
                 {
                     Group = group,
-                    Message = "Grup adi zorunludur.",
+                    Message = "Grup adı zorunludur.",
                     MessageType = "error"
                 });
             }
@@ -129,7 +132,7 @@ namespace Mosaik.Controllers
                 return View(new AdminGroupFormViewModel
                 {
                     Group = group,
-                    Message = "Ayni isimde grup zaten var.",
+                    Message = "Aynı isimde grup zaten var.",
                     MessageType = "error"
                 });
             }
@@ -139,7 +142,7 @@ namespace Mosaik.Controllers
             existing.IsActive = ReadFormBool("IsActive");
             await _context.SaveChangesAsync();
 
-            TempData["Message"] = "Grup guncellendi.";
+            TempData["Message"] = "Grup güncellendi.";
             TempData["MessageType"] = "success";
             return RedirectToAction("Index", new { tab = "groups" });
         }

@@ -108,7 +108,7 @@
                 if (!proc) { alert('Stored procedure adını girin.'); procInput.focus(); return; }
 
                 previewPanel.classList.remove('hidden');
-                previewPanel.innerHTML = '<div class="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-700"><i class="fas fa-spinner fa-spin mr-2"></i>SP çalıştırılıyor...</div>';
+                showLoading(previewPanel);
 
                 var url = '/Admin/SpPreview?dataSourceKey=' + encodeURIComponent(dsKey) +
                           '&procName=' + encodeURIComponent(proc);
@@ -120,7 +120,7 @@
                     .then(function (r) { return r.json(); })
                     .then(function (data) { renderPreview(data); })
                     .catch(function (err) {
-                        previewPanel.innerHTML = '<div class="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700">İstek başarısız: ' + escText(String(err)) + '</div>';
+                        showRequestFailure(previewPanel, String(err));
                     });
             });
         }
@@ -128,13 +128,10 @@
         function renderPreview(data) {
             previewPanel.textContent = '';
             if (!data.success) {
-                var err = document.createElement('div');
-                err.className = 'bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700';
-                err.innerHTML = '<i class="fas fa-exclamation-triangle mr-2"></i>';
-                var errText = document.createElement('span');
-                errText.textContent = data.error || 'SP önizleme başarısız';
-                err.appendChild(errText);
-                previewPanel.appendChild(err);
+                buildBanner(previewPanel,
+                    'bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700',
+                    'fas fa-exclamation-triangle',
+                    data.error || 'SP önizleme başarısız');
                 return;
             }
             var resultSets = data.resultSets || [];
@@ -150,7 +147,10 @@
             // Ust ozet
             var summary = document.createElement('div');
             summary.className = 'bg-green-50 border border-green-200 rounded-lg p-3 mb-3 text-sm text-green-800 flex items-center gap-2';
-            summary.innerHTML = '<i class="fas fa-check-circle"></i>';
+            var summaryIcon = document.createElement('i');
+            summaryIcon.className = 'fas fa-check-circle';
+            summaryIcon.setAttribute('aria-hidden', 'true');
+            summary.appendChild(summaryIcon);
             var summaryText = document.createElement('span');
             summaryText.textContent = resultSets.length + ' result set dondu. Toplam ' +
                 resultSets.reduce(function (a, rs) { return a + (rs.rowCount || 0); }, 0) + ' satir.';
@@ -180,7 +180,10 @@
                 // Kolon ozeti (dashboard builder icin auto-detect kaynak)
                 var colsDiv = document.createElement('div');
                 colsDiv.className = 'px-3 py-2 bg-gray-50 border-b border-gray-200 text-xs text-gray-700';
-                colsDiv.innerHTML = '<span class="font-semibold">Kolonlar: </span>';
+                var colsLabel = document.createElement('span');
+                colsLabel.className = 'font-semibold';
+                colsLabel.textContent = 'Kolonlar: ';
+                colsDiv.appendChild(colsLabel);
                 (rs.columns || []).forEach(function (c, ci) {
                     if (ci > 0) colsDiv.appendChild(document.createTextNode(', '));
                     var chip = document.createElement('code');
@@ -242,8 +245,34 @@
             document.dispatchEvent(new CustomEvent('spPreviewReady', { detail: window.__spPreview }));
         }
 
-        function escText(s) {
-            return String(s == null ? '' : s)
-                .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        // DOM-based banner builders (innerHTML + string concat yerine — XSS-safe pattern).
+        function buildBanner(panel, classes, iconClass, message) {
+            panel.textContent = '';
+            var box = document.createElement('div');
+            box.className = classes;
+            if (iconClass) {
+                var icon = document.createElement('i');
+                icon.className = iconClass + ' mr-2';
+                icon.setAttribute('aria-hidden', 'true');
+                box.appendChild(icon);
+            }
+            var span = document.createElement('span');
+            span.textContent = message;
+            box.appendChild(span);
+            panel.appendChild(box);
+        }
+
+        function showLoading(panel) {
+            buildBanner(panel,
+                'bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-700',
+                'fas fa-spinner fa-spin',
+                'SP çalıştırılıyor...');
+        }
+
+        function showRequestFailure(panel, errMsg) {
+            buildBanner(panel,
+                'bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700',
+                'fas fa-exclamation-triangle',
+                'İstek başarısız: ' + errMsg);
         }
 })();

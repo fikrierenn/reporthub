@@ -62,9 +62,9 @@ window.__availableDataSources = @Html.Raw(System.Text.Json.JsonSerializer.Serial
     var isError = Model.MessageType == "error";
     <div role="alert" style="margin:12px 24px; padding:12px 16px; border-radius:10px; font-size:13px;
                 white-space:pre-line;
-                background: @(isError ? "rgba(220,38,38,0.10)" : "rgba(16,185,129,0.10)");
+                background: @(isError ? "var(--danger-bg-soft)" : "var(--success-bg-soft)");
                 border: 1px solid @(isError ? "rgba(220,38,38,0.25)" : "rgba(16,185,129,0.25)");
-                color: @(isError ? "var(--accent-ink)" : "#065f46");">
+                color: @(isError ? "var(--accent-ink)" : "var(--success-ink-soft)");">
         <i class="fas @(isError ? "fa-circle-exclamation" : "fa-circle-check")" style="margin-right:8px;"></i>@Model.Message
     </div>
 }
@@ -351,7 +351,7 @@ window.__availableDataSources = @Html.Raw(System.Text.Json.JsonSerializer.Serial
                         <div>
                             @* Capacity warning *@
                             <template x-if="kpiCapacityWarning()">
-                                <div style="background:#fef3c7; border:1px solid #fde68a; color:#92400e; padding:8px 10px; border-radius:6px; font-size:11px; margin-bottom:10px;">
+                                <div style="background:var(--warn-bg-soft); border:1px solid #fde68a; color:var(--warn-ink-soft); padding:8px 10px; border-radius:6px; font-size:11px; margin-bottom:10px;">
                                     <i class="fas fa-triangle-exclamation text-[10px]"></i>
                                     <span x-text="kpiCapacityWarning()"></span>
                                 </div>
@@ -965,8 +965,9 @@ window.__availableDataSources = @Html.Raw(System.Text.Json.JsonSerializer.Serial
                      style="padding:20px; color:var(--accent-ink); white-space:pre-line;"
                      x-text="previewModal.error"></div>
                 <template x-if="!previewModal.loading && !previewModal.error && previewModal.html">
+                    @* XSS izolasyonu: allow-same-origin yok — iframe ile parent farklı origin gibi davranır. *@
                     <iframe :srcdoc="previewModal.html"
-                            sandbox="allow-scripts allow-same-origin allow-downloads"
+                            sandbox="allow-scripts allow-downloads"
                             style="width:100%; height:100%; border:0;"></iframe>
                 </template>
             </div>
@@ -1046,6 +1047,8 @@ window.__availableDataSources = @Html.Raw(System.Text.Json.JsonSerializer.Serial
     <span style="margin-left:auto;" x-data="{}" x-text="'12 sütun grid'"></span>
 </div>
 
+<script src="~/assets/js/builder-v2/builder-utils.js" asp-append-version="true"></script>
+<script src="~/assets/js/builder-v2/builder-kpi-render.js" asp-append-version="true"></script>
 <script src="~/assets/js/builder-v2/builder-render.js" asp-append-version="true"></script>
 <script src="~/assets/js/builder-v2/builder-sp.js" asp-append-version="true"></script>
 <script src="~/assets/js/builder-v2/builder-drawer.js" asp-append-version="true"></script>

@@ -23,20 +23,12 @@ namespace Mosaik.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Route("Admin/CreateDataSource")]
-        public async Task<IActionResult> CreateDataSource(DataSource dataSource)
+        public async Task<IActionResult> CreateDataSource(
+            [Bind("DataSourceKey,Title,ConnString")] DataSource dataSource)
         {
             try
             {
-                // Debug: Form değerlerini kontrol et
-                var isActiveFormValue = Request.Form["IsActive"].ToString();
-                Console.WriteLine($"Form IsActive değeri: '{isActiveFormValue}'");
-                Console.WriteLine($"Model IsActive değeri: {dataSource.IsActive}");
-
-                // Manuel olarak IsActive değerini set et
                 dataSource.IsActive = ReadFormBool("IsActive");
-
-                Console.WriteLine($"Final IsActive değeri: {dataSource.IsActive}");
-
                 dataSource.DataSourceKey = dataSource.DataSourceKey.ToUpper();
                 _context.DataSources.Add(dataSource);
                 await _context.SaveChangesAsync();
@@ -59,8 +51,7 @@ namespace Mosaik.Controllers
             }
             catch (Exception ex)
             {
-                // M-02: CreateDataSource (EF SaveChangesAsync fail path).
-                _ = ex;
+                _logger.LogError(ex, "AdminController.CreateDataSource failed key={Key}", dataSource.DataSourceKey);
                 TempData["Message"] = "Veri kaynağı oluşturulurken hata oluştu.";
                 TempData["MessageType"] = "error";
                 return View(new AdminDataSourceFormViewModel
@@ -100,15 +91,27 @@ namespace Mosaik.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Route("Admin/EditDataSource/{key}")]
-        public async Task<IActionResult> EditDataSource(DataSource dataSource)
+        public async Task<IActionResult> EditDataSource(
+            string key,
+            [Bind("Title,ConnString")] DataSource dataSource)
         {
             try
             {
-                // Manuel olarak IsActive değerini set et
-                dataSource.IsActive = ReadFormBool("IsActive");
+                // IDOR guard: key route'tan, form'dan değil. Mevcut entity'yi route key ile çek, alanları aktar.
+                var existing = await _context.DataSources.FirstOrDefaultAsync(d => d.DataSourceKey == key);
+                if (existing == null)
+                {
+                    TempData["Message"] = $"Veri kaynağı bulunamadı: '{key}'";
+                    TempData["MessageType"] = "error";
+                    return RedirectToAction("Index", new { tab = "datasources" });
+                }
 
-                _context.DataSources.Update(dataSource);
+                existing.Title = dataSource.Title;
+                existing.ConnString = dataSource.ConnString;
+                existing.IsActive = ReadFormBool("IsActive");
+
                 await _context.SaveChangesAsync();
+                dataSource = existing;
                 await _auditLog.LogAsync(new AuditLogEntry
                 {
                     EventType = "datasource_update",
@@ -129,8 +132,7 @@ namespace Mosaik.Controllers
             }
             catch (Exception ex)
             {
-                // M-02: EditDataSource.
-                _ = ex;
+                _logger.LogError(ex, "AdminController.EditDataSource failed key={Key}", key);
                 TempData["Message"] = "Veri kaynağı güncellenirken hata oluştu.";
                 TempData["MessageType"] = "error";
                 return View(new AdminDataSourceFormViewModel

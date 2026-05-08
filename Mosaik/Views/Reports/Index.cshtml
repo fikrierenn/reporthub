@@ -41,7 +41,8 @@
 @* Plan 04 F2.2: Alpine.js instant client-side filter. Server-side form submit (URL state) korundu —
    kullanıcı Enter veya Filtrele ile URL'ye yansır; ama Alpine ile her tuş vuruşunda anlık filter görsel.
    x-data scope: filter bar + qcard grid'i kapsar. *@
-<div x-data="{ q: '@Html.Raw(Model.SearchTerm?.Replace("'", "\\'") ?? "")', grp: '@Html.Raw(Model.SelectedGroup?.Replace("'", "\\'") ?? "")' }">
+@* XSS guard: Alpine x-data string'lerini JsonSerializer ile escape et — Html.Raw + manual replace yetersiz (ör. " kaçışı yok). *@
+<div x-data="{ q: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.SearchTerm ?? "")), grp: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.SelectedGroup ?? "")) }">
 
 <form method="get" class="report-filter-bar" style="background:var(--paper); border:1px solid var(--line); border-radius:10px; padding:14px 16px; margin-bottom:18px; display:flex; gap:12px; flex-wrap:wrap; align-items:end;">
     <div style="flex:1; min-width:240px;">

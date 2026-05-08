@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -6,8 +7,10 @@ namespace Mosaik.Models
     public class UserDataFilter
     {
         [Key]
+        [BindNever]
         public int FilterId { get; set; }
 
+        [BindNever]
         public int UserId { get; set; }
 
         [Required]
@@ -23,6 +26,7 @@ namespace Mosaik.Models
 
         public int? ReportId { get; set; } // null = tüm raporlar
 
+        [BindNever]
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         // Navigation
