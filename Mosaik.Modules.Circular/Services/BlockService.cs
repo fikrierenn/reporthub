@@ -37,11 +37,11 @@ namespace Mosaik.Modules.Circular.Services
             int blockTypeId, bool isUrgent)
         {
             if (string.IsNullOrWhiteSpace(subject))
-                return ServiceResult<DailyBlock>.Failure("Subject zorunludur.");
+                return ServiceResult<DailyBlock>.Failure("Konu zorunludur.");
             if (string.IsNullOrWhiteSpace(content))
-                return ServiceResult<DailyBlock>.Failure("Content zorunludur.");
+                return ServiceResult<DailyBlock>.Failure("İçerik zorunludur.");
             if (blockTypeId <= 0)
-                return ServiceResult<DailyBlock>.Failure("Block turu secilmeli.");
+                return ServiceResult<DailyBlock>.Failure("Blok türü seçilmeli.");
 
             var bugun = DateTime.UtcNow.Date;
             var blockNumber = await GenerateBlockNumberAsync(bugun);
@@ -52,7 +52,7 @@ namespace Mosaik.Modules.Circular.Services
                 CreatedById = createdById,
                 Department = (department ?? "").Trim(),
                 Subject = subject.Trim(),
-                Content = content,
+                Content = QuillContentSanitizer.Sanitize(content),
                 BlockDate = bugun,
                 BlockTypeId = blockTypeId,
                 IsUrgent = isUrgent,
@@ -66,21 +66,21 @@ namespace Mosaik.Modules.Circular.Services
                 eventType: "block_create",
                 targetType: "dailyBlock",
                 targetKey: block.Id.ToString(),
-                description: $"Block olusturuldu: {subject}");
+                description: $"Blok oluşturuldu: {subject}");
 
-            return ServiceResult<DailyBlock>.Ok(block, "Block olusturuldu.");
+            return ServiceResult<DailyBlock>.Ok(block, "Blok oluşturuldu.");
         }
 
         public async Task<ServiceResult> UpdateAsync(
             int id, string subject, string content, int blockTypeId, bool isUrgent, int updatedById)
         {
             var block = await Blocks.FirstOrDefaultAsync(b => b.Id == id && b.IsActive);
-            if (block == null) return ServiceResult.Failure("Block bulunamadi.");
+            if (block == null) return ServiceResult.Failure("Blok bulunamadı.");
             if (block.CircularId.HasValue)
-                return ServiceResult.Failure("Yayinlanmis blok duzenlenemez.");
+                return ServiceResult.Failure("Yayınlanmış blok düzenlenemez.");
 
             block.Subject = (subject ?? "").Trim();
-            block.Content = content ?? "";
+            block.Content = QuillContentSanitizer.Sanitize(content);
             block.BlockTypeId = blockTypeId;
             block.IsUrgent = isUrgent;
             block.UpdatedAt = DateTime.UtcNow;
@@ -92,15 +92,15 @@ namespace Mosaik.Modules.Circular.Services
                 targetType: "dailyBlock",
                 targetKey: id.ToString());
 
-            return ServiceResult.Ok("Block guncellendi.");
+            return ServiceResult.Ok("Blok güncellendi.");
         }
 
         public async Task<ServiceResult> DeleteAsync(int id, int deletedById)
         {
             var block = await Blocks.FirstOrDefaultAsync(b => b.Id == id && b.IsActive);
-            if (block == null) return ServiceResult.Failure("Block bulunamadi.");
+            if (block == null) return ServiceResult.Failure("Blok bulunamadı.");
             if (block.CircularId.HasValue)
-                return ServiceResult.Failure("Yayinlanmis blok silinemez.");
+                return ServiceResult.Failure("Yayınlanmış blok silinemez.");
 
             block.IsActive = false;
             block.UpdatedAt = DateTime.UtcNow;
@@ -113,7 +113,7 @@ namespace Mosaik.Modules.Circular.Services
                 targetKey: id.ToString(),
                 description: "Soft-delete (IsActive=0)");
 
-            return ServiceResult.Ok("Block silindi.");
+            return ServiceResult.Ok("Blok silindi.");
         }
 
         // BLK-YYYYMMDD-NNN — günlük 1'den başlayan sayaç
