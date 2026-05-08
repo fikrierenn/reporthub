@@ -257,7 +257,7 @@ select.inp {
 .subnav a {
     display: inline-flex; align-items: center; gap: 8px;
     padding: 10px 14px;
-    color: var(--ink-3);
+    color: var(--ink-2);
     font-size: 13px; font-weight: 500;
     border-bottom: 2px solid transparent;
     margin-bottom: -1px;

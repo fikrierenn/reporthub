@@ -82,4 +82,14 @@
     --ok: var(--success);             /* #10b981 */
     --warn: var(--warning);           /* #f59e0b */
     --danger: var(--brand-red-dark);  /* #b91c1c */
+
+    /* === Semantic state tokens (alert/empty/pill backgrounds + WCAG AA ink) === */
+    --empty-state-bg: rgba(249, 250, 251, 0.6);
+    --empty-state-border: var(--line);
+    --danger-bg-soft: rgba(220, 38, 38, 0.10);
+    --danger-ink-soft: #991b1b;
+    --success-bg-soft: rgba(16, 185, 129, 0.10);
+    --success-ink-soft: #065f46;
+    --warn-bg-soft: rgba(234, 179, 8, 0.10);
+    --warn-ink-soft: #92400e;
 }
