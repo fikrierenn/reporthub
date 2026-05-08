@@ -213,6 +213,12 @@
                     <div class="r">@(userRoles.Length > 0 ? string.Join(", ", userRoles) : "user")</div>
                 </div>
                 <div class="user-actions">
+                    <a href="/Notifications" id="notificationsLink" title="Bildirimler" style="position:relative;">
+                        <i class="fas fa-bell"></i>
+                        <span id="notificationsBadge" style="display:none; position:absolute; top:-4px; right:-4px;
+                              background:#b91c1c; color:#fff; font-size:9px; font-weight:600;
+                              padding:1px 5px; border-radius:8px; line-height:1.4; min-width:14px; text-align:center;">0</span>
+                    </a>
                     <a href="/Profile" title="Profil"><i class="fas fa-user-gear"></i></a>
                     <a href="/Login?logout=1" class="danger" title="Çıkış"><i class="fas fa-right-from-bracket"></i></a>
                 </div>
@@ -279,6 +285,31 @@
 </div>
 
 <script src="~/assets/js/app-shell.js" asp-append-version="true"></script>
+@if (User.Identity?.IsAuthenticated == true)
+{
+    <script>
+    (function () {
+        const badge = document.getElementById('notificationsBadge');
+        if (!badge) return;
+        async function refresh() {
+            try {
+                const res = await fetch('/Notifications/UnreadCount', { credentials: 'same-origin' });
+                if (!res.ok) return;
+                const data = await res.json();
+                const count = data.count || 0;
+                if (count > 0) {
+                    badge.textContent = count > 99 ? '99+' : count;
+                    badge.style.display = '';
+                } else {
+                    badge.style.display = 'none';
+                }
+            } catch { /* sessizce yut */ }
+        }
+        refresh();
+        setInterval(refresh, 60000); // 60sn polling
+    })();
+    </script>
+}
 @RenderSection("Scripts", required: false)
 </body>
 </html>

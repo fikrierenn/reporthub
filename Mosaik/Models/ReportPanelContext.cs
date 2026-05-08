@@ -40,6 +40,9 @@ namespace Mosaik.Models
         // Plan 20 Faz A — Organizasyon şeması
         public DbSet<OrgPosition> OrgPositions { get; set; }
 
+        // Plan 17 Faz H — cross-modül bildirim
+        public DbSet<Mosaik.Core.Notification.Notification> Notifications { get; set; } = default!;
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             // DataSource configuration

@@ -51,6 +51,9 @@ builder.Services.AddScoped<Mosaik.Core.DataScope.DataScopeRegistry>();
 
 // Plan 20 Faz A — Organizasyon şeması
 builder.Services.AddScoped<Mosaik.Services.IOrgChartService, Mosaik.Services.OrgChartService>();
+
+// Plan 17 Faz H — cross-modül bildirim
+builder.Services.AddScoped<Mosaik.Core.Notification.INotificationService, Mosaik.Services.NotificationService>();
 // Faz C2 (gelecek): UserDataFilterInjector + ReportsController.Index
 // Registry'ye refactor (DRY). Şu an mevcut inline mantık çalışmaya devam ediyor.
 

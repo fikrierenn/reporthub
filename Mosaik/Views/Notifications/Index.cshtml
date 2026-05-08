@@ -1,0 +1,110 @@
+@model List<Mosaik.Core.Notification.Notification>
+@{
+    Layout = "_AppLayout";
+    ViewData["Title"] = "Bildirimler — Mosaik";
+    ViewData["PageTitle"] = "Bildirimler";
+
+    var unreadOnly = (bool)(ViewData["UnreadOnly"] ?? false);
+    var unreadCount = Model.Count(n => !n.IsRead);
+    var totalCount = Model.Count;
+}
+
+@section Breadcrumb {
+    <nav class="crumbs" aria-label="Sayfa konumu">
+        <span aria-current="page">Bildirimler</span>
+    </nav>
+}
+
+@section TopActions {
+    @if (unreadCount > 0)
+    {
+        <form method="post" action="/Notifications/MarkAllAsRead" style="margin:0;">
+            @Html.AntiForgeryToken()
+            <button type="submit" class="btn ghost">
+                <i class="fas fa-check-double text-[10px]" aria-hidden="true"></i>
+                Tümünü okundu işaretle
+            </button>
+        </form>
+    }
+}
+
+<div class="hero">
+    <h1>Bildirimler</h1>
+    <p class="sub">
+        <span class="mono">@totalCount kayıt</span>
+        @if (unreadCount > 0)
+        {
+            <span class="pill" style="background:#fef3c7; color:#92400e;">
+                <i class="fas fa-circle-exclamation text-[9px]" aria-hidden="true"></i>
+                @unreadCount okunmamış
+            </span>
+        }
+    </p>
+</div>
+
+@if (!string.IsNullOrWhiteSpace(TempData["Message"] as string))
+{
+    @await Html.PartialAsync("_AlertMessage", ((string)(TempData["MessageType"] ?? "success"), (string)TempData["Message"]!))
+}
+
+<div role="tablist" aria-label="Filtre" style="display:flex; gap:6px; margin: 14px 0;">
+    <a href="?unreadOnly=false" role="tab" aria-selected="@(!unreadOnly ? "true" : "false")" class="btn @(!unreadOnly ? "primary" : "ghost") sm">
+        Tümü
+    </a>
+    <a href="?unreadOnly=true" role="tab" aria-selected="@(unreadOnly ? "true" : "false")" class="btn @(unreadOnly ? "primary" : "ghost") sm">
+        Okunmamış
+    </a>
+</div>
+
+<div style="background:var(--paper); border:1px solid var(--line); border-radius:10px; overflow:hidden;">
+    @if (Model.Count == 0)
+    {
+        <div style="text-align:center; padding:40px; color:var(--ink-mute);">
+            <i class="fas fa-bell-slash" style="font-size:48px;" aria-hidden="true"></i>
+            <h3 style="margin-top:10px;">Bildirim yok</h3>
+            <p style="font-size:12px;">@(unreadOnly ? "Okunmamış bildirim bulunmuyor." : "Henüz hiç bildirim almadınız.")</p>
+        </div>
+    }
+    else
+    {
+        <ul style="list-style:none; padding:0; margin:0;">
+            @foreach (var n in Model)
+            {
+                <li style="display:flex; align-items:flex-start; gap:12px; padding:12px 16px; border-bottom:1px solid var(--line); @(n.IsRead ? "" : "background:#fefce8;")">
+                    <span style="margin-top:3px; color:@(n.IsRead ? "#cbd5e1" : "#b91c1c"); font-size:8px;">
+                        <i class="fas fa-circle" aria-hidden="true"></i>
+                    </span>
+                    <div style="flex:1; min-width:0;">
+                        <div style="display:flex; gap:8px; align-items:baseline; flex-wrap:wrap;">
+                            <strong style="font-size:13px;">@n.Title</strong>
+                            <span class="ago" style="font-size:11px; color:var(--ink-mute);">@n.CreatedAt.ToLocalTime().ToString("dd MMM HH:mm")</span>
+                        </div>
+                        @if (!string.IsNullOrWhiteSpace(n.Message))
+                        {
+                            <p style="margin:4px 0 0 0; font-size:12px; color:var(--ink-2);">@n.Message</p>
+                        }
+                    </div>
+                    <div style="display:flex; gap:6px; align-items:center;">
+                        @if (!string.IsNullOrWhiteSpace(n.TargetUrl))
+                        {
+                            <a href="@n.TargetUrl" class="btn ghost sm" title="Aç">
+                                <i class="fas fa-arrow-right text-[9px]" aria-hidden="true"></i>
+                                Aç
+                            </a>
+                        }
+                        @if (!n.IsRead)
+                        {
+                            <form method="post" action="/Notifications/MarkAsRead/@n.Id" style="margin:0;">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@n.Id" />
+                                <button type="submit" class="btn sm" title="Okundu işaretle">
+                                    <i class="fas fa-check text-[9px]" aria-hidden="true"></i>
+                                </button>
+                            </form>
+                        }
+                    </div>
+                </li>
+            }
+        </ul>
+    }
+</div>

@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Mosaik.Core.Logging;
+using Mosaik.Core.Notification;
 using Mosaik.Modules.Circular.Models;
 
 namespace Mosaik.Modules.Circular.Services
@@ -20,17 +21,20 @@ namespace Mosaik.Modules.Circular.Services
         private readonly DbContext _db;
         private readonly IAuditLog _audit;
         private readonly CircularSummaryService _summary;
+        private readonly INotificationService _notifications;
         private readonly ILogger<CompileCircularJob> _logger;
 
         public CompileCircularJob(
             DbContext db,
             IAuditLog audit,
             CircularSummaryService summary,
+            INotificationService notifications,
             ILogger<CompileCircularJob> logger)
         {
             _db = db;
             _audit = audit;
             _summary = summary;
+            _notifications = notifications;
             _logger = logger;
         }
 
@@ -84,6 +88,30 @@ namespace Mosaik.Modules.Circular.Services
                 targetType: "circular",
                 targetKey: circular!.Id.ToString(),
                 description: $"{circular.CircularNumber}: {pendingBlocks.Count} block eklendi (yeni={isNew}).");
+
+            // Plan 17 Faz H — yeni tamim ise tüm aktif kullanıcılara bildirim
+            if (isNew)
+            {
+                try
+                {
+                    var n = await _notifications.NotifyAllActiveUsersAsync(
+                        entityType: "Circular",
+                        entityId: circular.Id,
+                        title: $"Yeni tamim yayınlandı: {circular.CircularNumber}",
+                        message: $"{date:dd MMMM yyyy} günlük tamiminde {pendingBlocks.Count} blok yer alıyor.",
+                        targetUrl: $"/Circular/Circular/Details/{circular.Id}",
+                        notificationType: "CircularPublished",
+                        createdBy: "system");
+                    _logger.LogInformation("CompileCircularJob: {Count} kullanıcıya bildirim gönderildi (CircularId={CircularId})", n, circular.Id);
+                }
+                catch (Exception ex)
+                {
+                    // Bildirim hatası publish'i bozmaz.
+                    _logger.LogWarning(ex,
+                        "CompileCircularJob: Bildirim gönderilemedi CircularId={CircularId}. Publish devam ediyor.",
+                        circular.Id);
+                }
+            }
 
             // Plan 17 Faz F — AI özet üret (best-effort, hata olursa tamim yine yayında)
             try
