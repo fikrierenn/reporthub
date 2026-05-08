@@ -2,11 +2,9 @@ using Mosaik.Models;
 
 namespace Mosaik.ViewModels
 {
-    public class AdminUserFormViewModel
+    public class AdminUserFormViewModel : UserMessageViewModel
     {
         public User User { get; set; } = new();
-        public string Message { get; set; } = "";
-        public string MessageType { get; set; } = "";
         public List<Role> AvailableRoles { get; set; } = new();
         public HashSet<int> SelectedRoleIds { get; set; } = new();
         public List<UserDataFilter> DataFilters { get; set; } = new();

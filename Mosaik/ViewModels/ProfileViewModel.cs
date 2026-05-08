@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Mosaik.ViewModels
 {
-    public class ProfileViewModel
+    public class ProfileViewModel : UserMessageViewModel
     {
         [Required]
         public string Username { get; set; } = string.Empty;
@@ -21,8 +21,5 @@ namespace Mosaik.ViewModels
         public string? NewPassword { get; set; }
 
         public string? ConfirmPassword { get; set; }
-
-        public string Message { get; set; } = string.Empty;
-        public string MessageType { get; set; } = string.Empty;
     }
 }

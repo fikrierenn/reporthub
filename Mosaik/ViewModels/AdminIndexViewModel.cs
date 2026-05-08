@@ -2,11 +2,9 @@ using Mosaik.Models;
 
 namespace Mosaik.ViewModels
 {
-    public class AdminIndexViewModel
+    public class AdminIndexViewModel : UserMessageViewModel
     {
         public string ActiveTab { get; set; } = "datasources";
-        public string Message { get; set; } = "";
-        public string MessageType { get; set; } = "";
         public string TemplateConnString { get; set; } = "";
         public List<DataSource> DataSources { get; set; } = new();
         public List<ReportCatalog> Reports { get; set; } = new();
