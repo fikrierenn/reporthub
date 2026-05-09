@@ -437,3 +437,103 @@ select.inp {
     background: #f9fafb;
     cursor: not-allowed;
 }
+
+/* ====================================================================
+   Plan 25.1 Faz 1 — Inline Style Refactor Utility Paketi (2026-05-10)
+   ui-patterns.md §0 Inline Style YASAĞI enforcement.
+   ==================================================================== */
+
+/* Form section card sistemi (genişlik modifier'ları) */
+.form-section-card.narrow { max-width: 720px; }
+.form-section-card.wide { max-width: 880px; }
+.form-section-card.detail { background: var(--paper); border: 1px solid var(--border); border-radius: 8px; }
+
+.form-section-head { padding: 14px 18px; border-bottom: 1px solid var(--border); font-weight: 600; font-size: 14px; }
+.form-section-head__title { font-size: 13px; font-weight: 600; color: var(--ink-1); margin: 0; }
+.form-section-head__sub { font-size: 12px; color: var(--muted); margin-top: 4px; }
+.form-section-head.with-actions { display: flex; justify-content: space-between; align-items: center; }
+
+.form-section-body { padding: 20px; }
+.form-section-body.stack { display: flex; flex-direction: column; gap: 14px; }
+.form-section-body.detail-grid { padding: 16px 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 13px; }
+
+/* Action row (zaten var olabilir, modifier ekle) */
+.action-row.narrow { max-width: 720px; }
+.action-row.wide { max-width: 880px; }
+
+/* Grid utilities */
+.grid-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.grid-2-1 { display: grid; grid-template-columns: 2fr 1fr; gap: 14px; }
+.grid-3col { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.col-span-2 { grid-column: span 2; }
+
+/* Status modifiers (Razor expression style yerine) */
+.dot.ok { background: var(--ok, #16a34a); }
+.dot.err, .dot.error { background: var(--danger, #dc2626); }
+.dot.warn { background: var(--warn, #f59e0b); }
+.pill.ok { background: rgba(22, 163, 74, 0.06); border-color: rgba(22, 163, 74, 0.2); color: #166534; }
+.pill.error, .pill.danger { background: rgba(220, 38, 38, 0.06); border-color: rgba(220, 38, 38, 0.2); color: #991b1b; }
+.pill.warn { background: rgba(245, 158, 11, 0.08); border-color: rgba(245, 158, 11, 0.25); color: #92400e; }
+
+/* Text utilities */
+.text-muted { color: var(--muted, #6b7280); }
+.text-xs { font-size: 11px; }
+.text-sm { font-size: 12px; }
+.text-strong { font-weight: 500; }
+.link-emph { color: var(--accent); font-weight: 500; }
+.help-text { font-size: 12px; color: var(--ink-2, #4b5563); }
+.help-text.error { color: var(--danger); font-size: 11px; }
+.req { color: var(--accent); }
+
+/* Layout helpers */
+.ta-right { text-align: right; }
+.ta-center { text-align: center; }
+.stack-8 { display: flex; flex-direction: column; gap: 8px; }
+.stack-14 { display: flex; flex-direction: column; gap: 14px; }
+.inline-actions { display: inline-flex; gap: 4px; }
+.toolbar-row { display: flex; flex-wrap: wrap; gap: 18px; padding-top: 8px; }
+.flex-between { display: flex; justify-content: space-between; align-items: center; }
+
+/* Field modifiers */
+.field.tight { margin-bottom: 0; }
+.lab.inline { margin: 0; }
+
+/* Checkbox grup (CreateUser/EditUser pattern) */
+.checkbox-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 8px 10px; background: var(--canvas, #fafafa); border: 1px solid var(--line, #e5e7eb); border-radius: 8px; }
+.checkbox-row { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--ink-2, #4b5563); cursor: pointer; }
+.checkbox { width: 14px; height: 14px; accent-color: var(--accent); }
+.pill-icon { font-size: 9px; color: var(--ink-3, #9ca3af); }
+
+/* Detail page utilities (Contracts/Details.cshtml) */
+.detail-header-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 18px; align-items: start; }
+
+/* File list (Contracts/Details.cshtml) */
+.file-row { display: flex; flex-direction: column; gap: 8px; padding: 12px 16px; border-top: 1px solid var(--border); }
+.file-row:first-child { border-top: 0; }
+.file-row__head { display: flex; gap: 12px; align-items: center; }
+.file-row__meta { display: flex; gap: 8px; align-items: center; font-size: 11px; color: var(--muted); }
+
+/* Notification badge (_AppLayout.cshtml) */
+.notif-link { position: relative; }
+.notif-badge { position: absolute; top: -4px; right: -4px; }
+
+/* Empty state mini */
+.empty-state.compact { padding: 32px; text-align: center; color: var(--muted); font-size: 13px; }
+
+/* Alert utilities (mevcut _AlertMessage.cshtml partial yedeği) */
+.alert { padding: 12px 16px; border-radius: 10px; font-size: 13px; margin-bottom: 14px; }
+.alert.success { background: rgba(22, 163, 74, 0.08); border: 1px solid rgba(22, 163, 74, 0.25); color: #166534; }
+.alert.warn { background: rgba(245, 158, 11, 0.08); border: 1px solid rgba(245, 158, 11, 0.25); color: #92400e; }
+.alert.error, .alert.danger { background: rgba(220, 38, 38, 0.08); border: 1px solid rgba(220, 38, 38, 0.25); color: #991b1b; }
+
+/* Button modifier (AI buton — Contracts/Details.cshtml) */
+.btn.tertiary { background: var(--violet-soft, #f3e8ff); color: var(--violet, #7c3aed); border-color: var(--violet-border, #ddd6fe); }
+
+/* Form inline (POST butonları wrap) */
+.inline-form { display: inline; }
+
+/* Search input wrapper (filter bar pattern) */
+.search-input-wrap { position: relative; flex: 1; min-width: 200px; }
+.search-input-wrap .inp { padding-left: 32px; }
+.search-input-wrap__icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); font-size: 12px; color: var(--muted); pointer-events: none; }
+
