@@ -1,7 +1,7 @@
 # Plan 18A — İK Quick Reports + Dashboard
 
 **Tarih:** 2026-05-12  
-**Durum:** Implement  
+**Durum:** Tamamlandı (2026-05-08, commit a972b66)  
 **Tier:** 3 (yeni SP + seed + FilterDef + dashboard config)
 
 ## Problem

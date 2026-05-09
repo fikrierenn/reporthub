@@ -4,7 +4,7 @@
 
 **Tarih:** 2026-05-08
 **Yazan:** Claude (Fikri yönetiminde)
-**Durum:** `Taslak`
+**Durum:** `Tamamlandı` (2026-05-08, Faz A+B+C — sağ-tık modal + Zirve canlı incumbent + PNG export)
 **Tier:** 3 (yeni domain entity + migration + admin UI + görsel render + cross-DB join)
 
 ---
