@@ -1,21 +1,30 @@
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
 using Mosaik.Core.Ai;
 using Mosaik.Models;
+using System.Security.Cryptography;
 
 namespace Mosaik.Services
 {
     // Plan 17 Faz F — AiSettings multi-row provider.
-    // Aktif config'leri sıralayıp döndürür: IsPrimary önce, sonra Priority asc.
-    // 1 dakika in-memory cache (admin Save sonrası InvalidateCache).
+    // Plan 25.1 Faz 2 — ApiKey DB'de IDataProtector ile şifrelenmiş; bu sınıf decrypt eder.
     public class AiSettingsProvider : IAiSettingsProvider
     {
         private readonly MosaikContext _db;
+        private readonly IDataProtector _protector;
+        private readonly ILogger<AiSettingsProvider> _logger;
+
         private static IReadOnlyList<AiConfig>? _cached;
         private static DateTime _cachedAt;
         private static readonly TimeSpan CacheTtl = TimeSpan.FromMinutes(1);
         private static readonly SemaphoreSlim _lock = new(1, 1);
 
-        public AiSettingsProvider(MosaikContext db) { _db = db; }
+        public AiSettingsProvider(MosaikContext db, IDataProtectionProvider dpProvider, ILogger<AiSettingsProvider> logger)
+        {
+            _db = db;
+            _protector = dpProvider.CreateProtector("Mosaik.AiSettings.ApiKey");
+            _logger = logger;
+        }
 
         public async Task<IReadOnlyList<AiConfig>> GetActiveOrderedAsync(CancellationToken ct = default)
         {
@@ -33,13 +42,29 @@ namespace Mosaik.Services
                     .ThenBy(x => x.Id)
                     .ToListAsync(ct);
 
-                _cached = rows.Select(s => new AiConfig(
-                    Provider: s.Provider,
-                    ApiKey: s.ApiKey ?? "",
-                    Model: s.Model,
-                    MaxTokens: s.MaxTokens,
-                    Temperature: s.Temperature,
-                    BaseUrl: s.BaseUrl)).ToList();
+                var configs = new List<AiConfig>(rows.Count);
+                foreach (var s in rows)
+                {
+                    string plaintextKey;
+                    try
+                    {
+                        plaintextKey = _protector.Unprotect(s.ApiKey!);
+                    }
+                    catch (CryptographicException ex)
+                    {
+                        _logger.LogWarning(ex, "AiSettings Id={Id} ApiKey decrypt başarısız — satır atlanıyor.", s.Id);
+                        continue;
+                    }
+                    configs.Add(new AiConfig(
+                        Provider: s.Provider,
+                        ApiKey: plaintextKey,
+                        Model: s.Model,
+                        MaxTokens: s.MaxTokens,
+                        Temperature: s.Temperature,
+                        BaseUrl: s.BaseUrl));
+                }
+
+                _cached = configs;
                 _cachedAt = DateTime.UtcNow;
                 return _cached;
             }

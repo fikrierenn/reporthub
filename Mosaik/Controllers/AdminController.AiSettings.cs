@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Mosaik.Core.Ai;
@@ -44,7 +45,8 @@ namespace Mosaik.Controllers
         [Route("Admin/AiSettings/Edit/{id?}")]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> AiSettingsEdit(int? id, AiSettings input)
+        public async Task<IActionResult> AiSettingsEdit(int? id, AiSettings input,
+            [FromServices] IDataProtectionProvider dpProvider)
         {
             AiSettings entity;
             if (id.HasValue)
@@ -60,9 +62,9 @@ namespace Mosaik.Controllers
 
             entity.Name = string.IsNullOrWhiteSpace(input.Name) ? null : input.Name.Trim();
             entity.Provider = (input.Provider ?? "groq").Trim();
-            // Boş ise eskiyi koru (re-edit'te key görünmesin diye)
+            // Boş ise eskiyi koru (re-edit'te key görünmesin diye). Yeni key girilmişse encrypt.
             if (!string.IsNullOrWhiteSpace(input.ApiKey))
-                entity.ApiKey = input.ApiKey.Trim();
+                entity.ApiKey = dpProvider.CreateProtector("Mosaik.AiSettings.ApiKey").Protect(input.ApiKey.Trim());
             entity.Model = (input.Model ?? "").Trim();
             entity.MaxTokens = Math.Clamp(input.MaxTokens, 128, 8192);
             entity.Temperature = Math.Clamp(input.Temperature, 0.0, 2.0);
