@@ -231,27 +231,43 @@ namespace Mosaik.Controllers
             var firmas = AccessibleFirmaIds;
             if (firmas.Count == 0) return Forbid();
 
-            var contract = await _db.Contracts
+            var contract = await _db.Contracts.AsNoTracking()
                 .FirstOrDefaultAsync(c => c.Id == id && firmas.Contains(c.FirmaId));
 
             if (contract is null) return NotFound();
-            return View(contract);
+
+            return View(new ContractEditViewModel
+            {
+                Id = contract.Id,
+                Title = contract.Title,
+                Counterparty = contract.Counterparty,
+                Category = contract.Category,
+                Status = contract.Status,
+                StartDate = contract.StartDate,
+                EndDate = contract.EndDate,
+                Notes = contract.Notes
+            });
         }
 
         // POST /Contracts/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Route("Contracts/Edit/{id}")]
-        public async Task<IActionResult> Edit(int id, Contract model)
+        public async Task<IActionResult> Edit(int id, ContractEditViewModel model)
         {
             var firmas = AccessibleFirmaIds;
             if (firmas.Count == 0) return Forbid();
+
+            if (!ModelState.IsValid)
+            {
+                model.Id = id;
+                return View(model);
+            }
 
             var contract = await _db.Contracts
                 .FirstOrDefaultAsync(c => c.Id == id && firmas.Contains(c.FirmaId));
 
             if (contract is null) return NotFound();
-            if (!ModelState.IsValid) return View(model);
 
             // FirmaId edit edilmez (güvenlik sınırı taşınmaz).
             contract.Title = model.Title;
@@ -265,6 +281,17 @@ namespace Mosaik.Controllers
             contract.UpdatedBy = _currentUser.Username;
 
             await _db.SaveChangesAsync();
+
+            await _auditLog.LogAsync(new AuditLogEntry
+            {
+                EventType = "contract_update",
+                TargetType = "contract",
+                TargetKey = contract.Id.ToString(),
+                Description = $"Sözleşme güncellendi: {contract.Title}",
+                IsSuccess = true,
+                NewValuesJson = AuditLogService.ToJson(new { contract.Id, contract.Title, contract.Category, contract.Status, contract.StartDate, contract.EndDate })
+            });
+
             TempData["Message"] = "Sözleşme güncellendi.";
             return RedirectToAction(nameof(Details), new { id });
         }
