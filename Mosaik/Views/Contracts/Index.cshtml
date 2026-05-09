@@ -1,0 +1,139 @@
+@model List<Mosaik.Models.Contract>
+@using Mosaik.Models
+
+@{
+    Layout = "_AppLayout";
+    ViewData["Title"] = "Sözleşmeler";
+    var statusFilter = ViewBag.StatusFilter as ContractStatus?;
+    var q = ViewBag.Q as string ?? "";
+}
+
+@section Breadcrumb {
+    <nav class="crumbs" aria-label="Sayfa konumu">
+        <a href="/">Ana Sayfa</a>
+        <span aria-current="page">Sözleşmeler</span>
+    </nav>
+}
+
+@section TopActions {
+    <a href="/Contracts/Create" class="btn primary">
+        <i class="fa fa-plus text-[10px]"></i> Yeni Sözleşme
+    </a>
+}
+
+<div class="hero">
+    <h1>Sözleşmeler</h1>
+    <div class="sub">
+        <span class="mono">@Model.Count kayıt</span>
+        @if (statusFilter.HasValue)
+        {
+            <span class="pill">@statusFilter</span>
+        }
+    </div>
+</div>
+
+@if (TempData["Warning"] is string warn)
+{
+    <div role="alert" style="background:var(--yellow-light,#fffbeb);border:1px solid var(--yellow,#f59e0b);border-radius:6px;padding:12px 16px;margin-bottom:16px;color:#92400e;">
+        <i class="fa fa-triangle-exclamation"></i> @warn
+    </div>
+}
+
+@* Filter bar *@
+<div x-data="{ q: '@q', status: '@(statusFilter?.ToString() ?? "")' }" style="background:var(--paper);border:1px solid var(--border);border-radius:8px;padding:14px 16px;margin-bottom:20px;display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">
+    <form method="get" style="display:contents;">
+        <div style="position:relative;flex:1;min-width:200px;">
+            <i class="fa fa-magnifying-glass" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:12px;"></i>
+            <input type="text" name="q" value="@q" placeholder="Başlık veya karşı taraf ara..." x-model="q"
+                   style="width:100%;padding:7px 10px 7px 30px;border:1px solid var(--border);border-radius:6px;font-size:13px;" />
+        </div>
+        <select name="status" x-model="status" style="padding:7px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;background:var(--paper);">
+            <option value="">Tüm durumlar</option>
+            <option value="0">Taslak</option>
+            <option value="1">Aktif</option>
+            <option value="2">Süresi Doldu</option>
+            <option value="3">Feshedildi</option>
+        </select>
+        <button type="submit" class="btn primary">Filtrele</button>
+        <a href="/Contracts" class="btn ghost" x-show="q || status">Temizle</a>
+    </form>
+</div>
+
+@if (!Model.Any())
+{
+    <div style="border:2px dashed var(--border);border-radius:10px;padding:48px 24px;text-align:center;color:var(--muted);">
+        <i class="fa fa-file-contract" style="font-size:48px;margin-bottom:16px;display:block;opacity:.4;"></i>
+        <h3 style="font-size:16px;font-weight:600;margin:0 0 6px;">Sözleşme bulunamadı</h3>
+        <p style="font-size:13px;margin:0;">Yeni sözleşme ekleyerek başlayın.</p>
+    </div>
+}
+else
+{
+    <div style="background:var(--paper);border:1px solid var(--border);border-radius:8px;overflow:hidden;">
+        <table class="dt">
+            <thead>
+                <tr>
+                    <th>Başlık</th>
+                    <th>Karşı Taraf</th>
+                    <th>Kategori</th>
+                    <th>Durum</th>
+                    <th>Bitiş Tarihi</th>
+                    <th style="text-align:right;">İşlemler</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var c in Model)
+                {
+                    <tr>
+                        <td><a href="/Contracts/Details/@c.Id" style="font-weight:500;color:var(--accent);">@c.Title</a></td>
+                        <td>@(c.Counterparty ?? "—")</td>
+                        <td>@CategoryLabel(c.Category)</td>
+                        <td>@StatusBadge(c.Status)</td>
+                        <td>
+                            @if (c.EndDate.HasValue)
+                            {
+                                var days = c.EndDate.Value.DayNumber - DateOnly.FromDateTime(DateTime.Today).DayNumber;
+                                <span class="@(days < 30 ? "status err" : days < 90 ? "status warn" : "status ok")">
+                                    @c.EndDate.Value.ToString("dd.MM.yyyy")
+                                </span>
+                            }
+                            else { <span>—</span> }
+                        </td>
+                        <td style="text-align:right;">
+                            <a href="/Contracts/Details/@c.Id" class="btn ghost sm">Detay</a>
+                            <a href="/Contracts/Edit/@c.Id" class="btn ghost sm">Düzenle</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@await Html.PartialAsync("_FooterHint", (string?)$"{Model.Count} sözleşme")
+
+@functions {
+    string CategoryLabel(ContractCategory cat) => cat switch
+    {
+        ContractCategory.Lease      => "Kira",
+        ContractCategory.Service    => "Hizmet",
+        ContractCategory.Supply     => "Tedarik",
+        ContractCategory.Employment => "İş",
+        ContractCategory.License    => "Lisans",
+        ContractCategory.Insurance  => "Sigorta",
+        _                           => "Diğer"
+    };
+
+    Microsoft.AspNetCore.Html.IHtmlContent StatusBadge(ContractStatus s)
+    {
+        var (cls, lbl) = s switch
+        {
+            ContractStatus.Active     => ("ok",   "Aktif"),
+            ContractStatus.Draft      => ("warn",  "Taslak"),
+            ContractStatus.Expired    => ("err",   "Süresi Doldu"),
+            ContractStatus.Terminated => ("err",   "Feshedildi"),
+            _                         => ("",      s.ToString())
+        };
+        return new Microsoft.AspNetCore.Html.HtmlString($"<span class=\"status {cls}\">{lbl}</span>");
+    }
+}

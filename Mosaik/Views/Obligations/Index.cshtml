@@ -1,0 +1,158 @@
+@model List<Mosaik.Models.ContractObligation>
+@using Mosaik.Models
+
+@{
+    Layout = "_AppLayout";
+    ViewData["Title"] = "Yükümlülükler";
+    var statusFilter = ViewBag.StatusFilter as ObligationStatus?;
+}
+
+@section Breadcrumb {
+    <nav class="crumbs" aria-label="Sayfa konumu">
+        <a href="/">Ana Sayfa</a>
+        <span aria-current="page">Yükümlülükler</span>
+    </nav>
+}
+
+@section TopActions {
+    <a href="/Obligations/Create" class="btn primary">
+        <i class="fa fa-plus text-[10px]"></i> Yeni Yükümlülük
+    </a>
+}
+
+<div class="hero">
+    <h1>Yükümlülükler</h1>
+    <div class="sub">
+        <span class="mono">@Model.Count kayıt</span>
+        @if (statusFilter.HasValue)
+        {
+            <span class="pill">@StatusLabel(statusFilter.Value)</span>
+        }
+        else
+        {
+            <span class="pill">Bekleyen + Gecikmiş</span>
+        }
+    </div>
+</div>
+
+@if (TempData["Message"] is string msg)
+{
+    @await Html.PartialAsync("_AlertMessage", ("success", msg))
+}
+
+@* Durum filtresi *@
+<div style="background:var(--paper);border:1px solid var(--border);border-radius:8px;padding:14px 16px;margin-bottom:20px;display:flex;gap:8px;flex-wrap:wrap;">
+    <a href="/Obligations" class="btn @(statusFilter == null ? "primary" : "ghost") sm">Bekleyen + Gecikmiş</a>
+    <a href="/Obligations?status=0" class="btn @(statusFilter == ObligationStatus.Pending ? "primary" : "ghost") sm">Bekleyen</a>
+    <a href="/Obligations?status=1" class="btn @(statusFilter == ObligationStatus.Overdue ? "primary" : "ghost") sm">Gecikmiş</a>
+    <a href="/Obligations?status=2" class="btn @(statusFilter == ObligationStatus.Completed ? "primary" : "ghost") sm">Tamamlanan</a>
+    <a href="/Obligations?status=3" class="btn @(statusFilter == ObligationStatus.Cancelled ? "primary" : "ghost") sm">İptal</a>
+</div>
+
+@if (!Model.Any())
+{
+    <div style="border:2px dashed var(--border);border-radius:10px;padding:48px 24px;text-align:center;color:var(--muted);">
+        <i class="fa fa-calendar-check" style="font-size:48px;margin-bottom:16px;display:block;opacity:.4;"></i>
+        <h3 style="font-size:16px;font-weight:600;margin:0 0 6px;">Yükümlülük bulunamadı</h3>
+        <p style="font-size:13px;margin:0;">Bu filtreye göre yükümlülük yok.</p>
+    </div>
+}
+else
+{
+    <div style="background:var(--paper);border:1px solid var(--border);border-radius:8px;overflow:hidden;">
+        <table class="dt">
+            <thead>
+                <tr>
+                    <th>Başlık</th>
+                    <th>Sözleşme</th>
+                    <th>Vade</th>
+                    <th>Tutar</th>
+                    <th>Durum</th>
+                    <th style="text-align:right;">İşlemler</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var o in Model)
+                {
+                    <tr>
+                        <td style="font-weight:500;">@o.Title</td>
+                        <td>
+                            @if (o.Contract is not null)
+                            {
+                                <a href="/Contracts/Details/@o.ContractId" style="color:var(--accent);">@o.Contract.Title</a>
+                            }
+                            else
+                            {
+                                <span style="color:var(--muted);">—</span>
+                            }
+                        </td>
+                        <td>
+                            @{
+                                var daysLeft = o.DueDate.DayNumber - DateOnly.FromDateTime(DateTime.Today).DayNumber;
+                            }
+                            <span class="@(daysLeft < 0 ? "status err" : daysLeft < 7 ? "status warn" : "")">
+                                @o.DueDate.ToString("dd.MM.yyyy")
+                            </span>
+                            @if (daysLeft >= 0 && daysLeft <= 30)
+                            {
+                                <span style="font-size:11px;color:var(--muted);"> (@daysLeft gün)</span>
+                            }
+                            else if (daysLeft < 0)
+                            {
+                                <span style="font-size:11px;color:var(--muted);"> (@(-daysLeft) gün geçti)</span>
+                            }
+                        </td>
+                        <td>
+                            @if (o.Amount.HasValue)
+                            {
+                                <span class="mono" style="font-size:12px;">@o.Amount.Value.ToString("N0") @o.Currency</span>
+                            }
+                            else { <span style="color:var(--muted);">—</span> }
+                        </td>
+                        <td>@StatusBadge(o.Status)</td>
+                        <td style="text-align:right;">
+                            @if (o.Status == ObligationStatus.Pending || o.Status == ObligationStatus.Overdue)
+                            {
+                                <form method="post" action="/Obligations/Complete/@o.Id" style="display:inline;">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="returnUrl" value="/Obligations@(statusFilter.HasValue ? "?status=" + (int)statusFilter.Value : "")" />
+                                    <button type="submit" class="btn sm primary">Tamamla</button>
+                                </form>
+                                <form method="post" action="/Obligations/Cancel/@o.Id" style="display:inline;margin-left:4px;">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="returnUrl" value="/Obligations@(statusFilter.HasValue ? "?status=" + (int)statusFilter.Value : "")" />
+                                    <button type="submit" class="btn sm danger">İptal</button>
+                                </form>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@await Html.PartialAsync("_FooterHint", (string?)$"{Model.Count} yükümlülük")
+
+@functions {
+    string StatusLabel(ObligationStatus s) => s switch
+    {
+        ObligationStatus.Pending   => "Bekleyen",
+        ObligationStatus.Completed => "Tamamlanan",
+        ObligationStatus.Overdue   => "Gecikmiş",
+        ObligationStatus.Cancelled => "İptal",
+        _                          => s.ToString()
+    };
+
+    Microsoft.AspNetCore.Html.IHtmlContent StatusBadge(ObligationStatus s)
+    {
+        var (cls, lbl) = s switch
+        {
+            ObligationStatus.Completed => ("ok",   "Tamamlandı"),
+            ObligationStatus.Overdue   => ("err",  "Gecikmiş"),
+            ObligationStatus.Cancelled => ("",     "İptal"),
+            _                          => ("warn", "Bekliyor")
+        };
+        return new Microsoft.AspNetCore.Html.HtmlString($"<span class=\"status {cls}\">{lbl}</span>");
+    }
+}

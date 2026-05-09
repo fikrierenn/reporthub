@@ -1,0 +1,266 @@
+@model Mosaik.Models.Contract
+@using Mosaik.Models
+
+@{
+    Layout = "_AppLayout";
+    ViewData["Title"] = Model.Title;
+    var extractions = ViewBag.Extractions as List<ContractAiExtraction> ?? new();
+}
+
+@section Breadcrumb {
+    <nav class="crumbs" aria-label="Sayfa konumu">
+        <a href="/">Ana Sayfa</a>
+        <a href="/Contracts">Sözleşmeler</a>
+        <span aria-current="page">@Model.Title</span>
+    </nav>
+}
+
+@section TopActions {
+    <a href="/Contracts/Edit/@Model.Id" class="btn primary">
+        <i class="fa fa-pen text-[10px]"></i> Düzenle
+    </a>
+}
+
+<div class="hero">
+    <h1>@Model.Title</h1>
+    <div class="sub">
+        @if (Model.Counterparty is not null)
+        {
+            <span>@Model.Counterparty</span>
+        }
+        <span class="pill">@CategoryLabel(Model.Category)</span>
+        @{
+            var (cls, lbl) = Model.Status switch
+            {
+                ContractStatus.Active     => ("ok",   "Aktif"),
+                ContractStatus.Draft      => ("warn",  "Taslak"),
+                ContractStatus.Expired    => ("err",   "Süresi Doldu"),
+                ContractStatus.Terminated => ("err",   "Feshedildi"),
+                _                         => ("",      Model.Status.ToString())
+            };
+        }
+        <span class="pill"><span class="dot @cls"></span>@lbl</span>
+    </div>
+</div>
+
+@if (TempData["Message"] is string msg)
+{
+    @await Html.PartialAsync("_AlertMessage", ("success", msg))
+}
+@if (TempData["Warning"] is string warn)
+{
+    @await Html.PartialAsync("_AlertMessage", ("warn", warn))
+}
+@if (TempData["Error"] is string err)
+{
+    @await Html.PartialAsync("_AlertMessage", ("error", err))
+}
+
+<div style="display:grid;grid-template-columns:2fr 1fr;gap:18px;align-items:start;">
+
+    @* Sol kolon *@
+    <div>
+        @* Özet *@
+        <div style="background:var(--paper);border:1px solid var(--border);border-radius:8px;margin-bottom:18px;">
+            <div style="padding:14px 18px;border-bottom:1px solid var(--border);font-weight:600;font-size:14px;">Sözleşme Detayı</div>
+            <div style="padding:16px 20px;display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:13px;">
+                <div><span style="color:var(--muted);">Başlangıç</span><br/>@(Model.StartDate?.ToString("dd.MM.yyyy") ?? "—")</div>
+                <div><span style="color:var(--muted);">Bitiş</span><br/>
+                    @if (Model.EndDate.HasValue)
+                    {
+                        var days = Model.EndDate.Value.DayNumber - DateOnly.FromDateTime(DateTime.Today).DayNumber;
+                        <span class="@(days < 30 ? "status err" : days < 90 ? "status warn" : "")">@Model.EndDate.Value.ToString("dd.MM.yyyy")</span>
+                        if (days >= 0) { <text> (<span style="font-size:11px;">@days gün kaldı</span>)</text> }
+                    }
+                    else { <text>—</text> }
+                </div>
+                @if (!string.IsNullOrEmpty(Model.Notes))
+                {
+                    <div style="grid-column:span 2;"><span style="color:var(--muted);">Notlar</span><br/>@Model.Notes</div>
+                }
+            </div>
+        </div>
+
+        @* Yükümlülükler *@
+        <div style="background:var(--paper);border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:18px;">
+            <div style="padding:14px 18px;border-bottom:1px solid var(--border);font-weight:600;font-size:14px;display:flex;justify-content:space-between;align-items:center;">
+                <span>Yükümlülükler <span class="mono" style="font-size:11px;">@Model.Obligations.Count</span></span>
+                <a href="/Obligations/Create?contractId=@Model.Id" class="btn sm primary">
+                    <i class="fa fa-plus text-[9px]"></i> Ekle
+                </a>
+            </div>
+            @if (!Model.Obligations.Any())
+            {
+                <div style="padding:32px;text-align:center;color:var(--muted);font-size:13px;">Henüz yükümlülük yok.</div>
+            }
+            else
+            {
+                <table class="dt">
+                    <thead>
+                        <tr>
+                            <th>Başlık</th>
+                            <th>Vade</th>
+                            <th>Tutar</th>
+                            <th>Durum</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var o in Model.Obligations)
+                        {
+                            <tr>
+                                <td>@o.Title</td>
+                                <td>
+                                    @{
+                                        var daysLeft = o.DueDate.DayNumber - DateOnly.FromDateTime(DateTime.Today).DayNumber;
+                                    }
+                                    <span class="@(daysLeft < 0 ? "status err" : daysLeft < 7 ? "status warn" : "")">
+                                        @o.DueDate.ToString("dd.MM.yyyy")
+                                    </span>
+                                </td>
+                                <td>
+                                    @if (o.Amount.HasValue)
+                                    {
+                                        <span>@o.Amount.Value.ToString("N0") @o.Currency</span>
+                                    }
+                                    else { <text>—</text> }
+                                </td>
+                                <td>@ObligationStatusBadge(o.Status)</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        </div>
+
+        @* AI Analizler *@
+        @if (extractions.Any())
+        {
+            <div style="background:var(--paper);border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:18px;">
+                <div style="padding:14px 18px;border-bottom:1px solid var(--border);font-weight:600;font-size:14px;">AI Analiz Geçmişi</div>
+                <table class="dt">
+                    <thead>
+                        <tr>
+                            <th>Tarih</th>
+                            <th>Durum</th>
+                            <th>Model</th>
+                            <th>Token</th>
+                            <th style="text-align:right;">İşlem</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var x in extractions)
+                        {
+                            <tr>
+                                <td><span class="ago">@x.CreatedAt.ToString("dd.MM.yy HH:mm")</span></td>
+                                <td>@ExtractionStatusBadge(x.Status)</td>
+                                <td><span class="mono" style="font-size:11px;">@(x.ModelUsed ?? "—")</span></td>
+                                <td><span class="mono" style="font-size:11px;">@(x.InputTokens + x.OutputTokens)</span></td>
+                                <td style="text-align:right;">
+                                    @if (x.Status == ExtractionStatus.AwaitingReview)
+                                    {
+                                        <form method="post" action="/Contracts/ReviewExtraction" style="display:inline-flex;gap:4px;">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="extractionId" value="@x.Id" />
+                                            <button type="submit" name="action" value="approve" class="btn sm primary">Onayla</button>
+                                            <button type="submit" name="action" value="reject" class="btn sm danger">Reddet</button>
+                                        </form>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+
+    @* Sağ kolon — Dosyalar *@
+    <div>
+        <div style="background:var(--paper);border:1px solid var(--border);border-radius:8px;margin-bottom:18px;">
+            <div style="padding:14px 18px;border-bottom:1px solid var(--border);font-weight:600;font-size:14px;">Dosyalar</div>
+            <div style="padding:16px;">
+                <form method="post" action="/Contracts/UploadFile" enctype="multipart/form-data" style="margin-bottom:14px;">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="contractId" value="@Model.Id" />
+                    <div style="display:flex;flex-direction:column;gap:8px;">
+                        <input type="file" name="file" accept=".pdf,.doc,.docx"
+                               style="font-size:12px;border:1px solid var(--border);border-radius:6px;padding:6px;" />
+                        <button type="submit" class="btn sm primary">
+                            <i class="fa fa-upload text-[9px]"></i> Yükle
+                        </button>
+                    </div>
+                </form>
+
+                @if (!Model.Files.Any())
+                {
+                    <p style="font-size:12px;color:var(--muted);text-align:center;">Henüz dosya yok.</p>
+                }
+                else
+                {
+                    <div style="display:flex;flex-direction:column;gap:8px;">
+                        @foreach (var f in Model.Files)
+                        {
+                            <div style="display:flex;align-items:center;gap:8px;padding:8px;border:1px solid var(--border);border-radius:6px;font-size:12px;">
+                                <i class="fa fa-file-pdf" style="color:var(--accent);font-size:16px;"></i>
+                                <div style="flex:1;min-width:0;">
+                                    <div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500;">@f.FileName</div>
+                                    <div style="color:var(--muted);">@(f.FileSize / 1024) KB</div>
+                                </div>
+                                @if (f.MimeType == "application/pdf")
+                                {
+                                    <form method="post" action="/Contracts/StartAiExtraction">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="contractFileId" value="@f.Id" />
+                                        <button type="submit" class="btn sm" title="AI ile analiz et"
+                                                style="background:var(--purple-light,#f3e8ff);color:#7c3aed;border-color:#ddd6fe;">
+                                            <i class="fa fa-robot text-[9px]"></i>
+                                        </button>
+                                    </form>
+                                }
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@functions {
+    string CategoryLabel(ContractCategory cat) => cat switch
+    {
+        ContractCategory.Lease      => "Kira",
+        ContractCategory.Service    => "Hizmet",
+        ContractCategory.Supply     => "Tedarik",
+        ContractCategory.Employment => "İş",
+        ContractCategory.License    => "Lisans",
+        ContractCategory.Insurance  => "Sigorta",
+        _                           => "Diğer"
+    };
+
+    Microsoft.AspNetCore.Html.IHtmlContent ObligationStatusBadge(ObligationStatus s)
+    {
+        var (cls, lbl) = s switch
+        {
+            ObligationStatus.Completed => ("ok",   "Tamamlandı"),
+            ObligationStatus.Overdue   => ("err",  "Gecikmiş"),
+            ObligationStatus.Cancelled => ("",     "İptal"),
+            _                          => ("warn", "Bekliyor")
+        };
+        return new Microsoft.AspNetCore.Html.HtmlString($"<span class=\"status {cls}\">{lbl}</span>");
+    }
+
+    Microsoft.AspNetCore.Html.IHtmlContent ExtractionStatusBadge(ExtractionStatus s)
+    {
+        var (cls, lbl) = s switch
+        {
+            ExtractionStatus.Processing     => ("warn",  "İşleniyor"),
+            ExtractionStatus.AwaitingReview => ("warn",  "İnceleme Bekliyor"),
+            ExtractionStatus.Approved       => ("ok",    "Onaylandı"),
+            ExtractionStatus.Rejected       => ("err",   "Reddedildi"),
+            ExtractionStatus.Failed         => ("err",   "Hata"),
+            _                               => ("",      s.ToString())
+        };
+        return new Microsoft.AspNetCore.Html.HtmlString($"<span class=\"status {cls}\">{lbl}</span>");
+    }
+}

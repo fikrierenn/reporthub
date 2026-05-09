@@ -382,6 +382,55 @@ select.inp {
     gap: 14px;
 }
 
+/* form-section-card split: header + body bölmesi varsa kart padding'i 0,
+   head ve body kendi padding'lerine sahip. */
+.form-section-card.split { padding: 0; }
+.form-section-head {
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--line);
+    font-weight: 600;
+    font-size: 14px;
+}
+.form-section-head--with-action {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.form-section-body {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+/* Recurring obligation panel — Plan 25 sözleşme periyodik yükümlülük listesi. */
+.recurring-item {
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 14px;
+    margin-bottom: 12px;
+}
+.recurring-item:last-child { margin-bottom: 0; }
+.recurring-item-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--ink-2);
+}
+.recurring-row-3 {
+    display: grid;
+    grid-template-columns: 1fr 80px 1fr;
+    gap: 12px;
+}
+.recurring-row-4 {
+    display: grid;
+    grid-template-columns: 80px 80px 1fr 1fr;
+    gap: 12px;
+}
+
 /* Disabled input için stil */
 .inp:disabled,
 .inp[readonly] {

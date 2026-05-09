@@ -1,0 +1,277 @@
+@model Mosaik.ViewModels.ContractCreateViewModel
+@using Mosaik.Models
+
+@{
+    Layout = "_AppLayout";
+    ViewData["Title"] = "Yeni Sözleşme";
+    var accessibleFirmas = ViewBag.AccessibleFirmas as List<Mosaik.Models.Firma> ?? new();
+    var multiFirma = accessibleFirmas.Count > 1;
+}
+
+@section Breadcrumb {
+    <nav class="crumbs" aria-label="Sayfa konumu">
+        <a href="/">Ana Sayfa</a>
+        <a href="/Contracts">Sözleşmeler</a>
+        <span aria-current="page">Yeni Sözleşme</span>
+    </nav>
+}
+
+@section TopActions {
+    <a href="/Contracts" class="btn ghost">İptal</a>
+}
+
+<div class="hero">
+    <h1>Yeni Sözleşme</h1>
+    <div class="sub"><span>Sözleşme bilgilerini doldurun</span></div>
+</div>
+
+@if (TempData["Error"] is string err)
+{
+    @await Html.PartialAsync("_AlertMessage", ("error", err))
+}
+
+@if (!ViewData.ModelState.IsValid)
+{
+    <div role="alert" class="alert alert-error">
+        @foreach (var modelError in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+        {
+            <div>@modelError.ErrorMessage</div>
+        }
+    </div>
+}
+
+<form method="post" action="/Contracts/Create">
+    @Html.AntiForgeryToken()
+    @if (!multiFirma)
+    {
+        <input type="hidden" name="FirmaId" value="@Model.FirmaId" />
+    }
+
+    @* === Temel Bilgiler === *@
+    <div class="form-section-card split">
+        <div class="form-section-head">Temel Bilgiler</div>
+        <div class="form-section-body">
+            @if (multiFirma)
+            {
+                <div class="field">
+                    <label class="lab" for="FirmaId">Firma <span class="form-required">*</span></label>
+                    <select class="inp" id="FirmaId" name="FirmaId" required>
+                        @foreach (var f in accessibleFirmas)
+                        {
+                            <option value="@f.FirmaId" selected="@(Model.FirmaId == f.FirmaId)">@f.Ad</option>
+                        }
+                    </select>
+                </div>
+            }
+
+            <div class="field">
+                <label class="lab" for="Title">Sözleşme Başlığı <span class="form-required">*</span></label>
+                <input class="inp" id="Title" name="Title" value="@Model.Title" required maxlength="200"
+                       placeholder="Örn: Bilgisayar Kiralama Sözleşmesi 2026" />
+            </div>
+
+            <div class="field">
+                <label class="lab" for="Counterparty">Karşı Taraf</label>
+                <input class="inp" id="Counterparty" name="Counterparty" value="@Model.Counterparty" maxlength="200"
+                       placeholder="Şirket veya kişi adı" />
+            </div>
+
+            <div class="form-grid-2">
+                <div class="field">
+                    <label class="lab" for="Category">Kategori</label>
+                    <select class="inp" id="Category" name="Category">
+                        <option value="6" selected="@(Model.Category == ContractCategory.Other)">Diğer</option>
+                        <option value="0" selected="@(Model.Category == ContractCategory.Lease)">Kira</option>
+                        <option value="1" selected="@(Model.Category == ContractCategory.Service)">Hizmet</option>
+                        <option value="2" selected="@(Model.Category == ContractCategory.Supply)">Tedarik</option>
+                        <option value="3" selected="@(Model.Category == ContractCategory.Employment)">İş</option>
+                        <option value="4" selected="@(Model.Category == ContractCategory.License)">Lisans</option>
+                        <option value="5" selected="@(Model.Category == ContractCategory.Insurance)">Sigorta</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label class="lab" for="Status">Durum</label>
+                    <select class="inp" id="Status" name="Status">
+                        <option value="0" selected="@(Model.Status == ContractStatus.Draft)">Taslak</option>
+                        <option value="1" selected="@(Model.Status == ContractStatus.Active)">Aktif</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-grid-2">
+                <div class="field">
+                    <label class="lab" for="StartDate">Başlangıç Tarihi</label>
+                    <input class="inp" type="date" id="StartDate" name="StartDate"
+                           value="@(Model.StartDate?.ToString("yyyy-MM-dd"))" />
+                </div>
+                <div class="field">
+                    <label class="lab" for="EndDate">Bitiş Tarihi</label>
+                    <input class="inp" type="date" id="EndDate" name="EndDate"
+                           value="@(Model.EndDate?.ToString("yyyy-MM-dd"))" />
+                </div>
+            </div>
+
+            <div class="field">
+                <label class="lab" for="Notes">Notlar</label>
+                <textarea class="inp" id="Notes" name="Notes" rows="3" maxlength="2000"
+                          placeholder="İsteğe bağlı notlar...">@Model.Notes</textarea>
+            </div>
+        </div>
+    </div>
+
+    @* === Periyodik Yükümlülükler (kira, stopaj, KDV vb.) === *@
+    <div class="form-section-card split"
+         x-data="recurringPanel()">
+        <div class="form-section-head form-section-head--with-action">
+            <span>Periyodik Yükümlülükler</span>
+            <button type="button" class="btn sm" @@click="addItem()">
+                <i class="fa fa-plus text-[9px]"></i> Ekle
+            </button>
+        </div>
+        <div class="form-section-body">
+            <p class="form-help" x-show="items.length === 0">
+                Kira, stopaj, KDV gibi tekrarlayan ödemeleri buradan tanımlayın.
+                Sözleşme kaydedildiğinde tüm dönemler otomatik üretilir.
+            </p>
+
+            <template x-for="(item, i) in items" :key="i">
+                <div class="recurring-item">
+                    <div class="recurring-item-head">
+                        <span x-text="'Yükümlülük #' + (i + 1)"></span>
+                        <button type="button" class="btn sm danger" @@click="removeItem(i)">
+                            <i class="fa fa-trash text-[9px]"></i>
+                        </button>
+                    </div>
+
+                    <div class="form-grid-2">
+                        <div class="field">
+                            <label class="lab">Başlık <span class="form-required">*</span></label>
+                            <input class="inp" type="text" x-model="item.title"
+                                   :name="'Recurrences[' + i + '].Title'"
+                                   maxlength="200" placeholder="Örn: Aylık Kira" />
+                        </div>
+                        <div class="field">
+                            <label class="lab">Tür</label>
+                            <select class="inp" x-model="item.type" :name="'Recurrences[' + i + '].Type'">
+                                <option value="0">Ödeme</option>
+                                <option value="1">Vergi (Stopaj/KDV)</option>
+                                <option value="2">Uyumluluk</option>
+                                <option value="3">Yenileme</option>
+                                <option value="4">Son Tarih</option>
+                                <option value="5">Denetim</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="recurring-row-3">
+                        <div class="field">
+                            <label class="lab">Tutar</label>
+                            <input class="inp" type="number" step="0.01" min="0" x-model="item.amount"
+                                   :name="'Recurrences[' + i + '].Amount'" placeholder="0.00" />
+                        </div>
+                        <div class="field">
+                            <label class="lab">Döviz</label>
+                            <select class="inp" x-model="item.currency" :name="'Recurrences[' + i + '].Currency'">
+                                <option value="TRY">TRY</option>
+                                <option value="USD">USD</option>
+                                <option value="EUR">EUR</option>
+                            </select>
+                        </div>
+                        <div class="field">
+                            <label class="lab">Periyot</label>
+                            <select class="inp" x-model="item.recurrenceType"
+                                    :name="'Recurrences[' + i + '].RecurrenceType'">
+                                <option value="0">Aylık</option>
+                                <option value="1">3 Aylık</option>
+                                <option value="2">Yıllık</option>
+                                <option value="3">Özel (ay aralığı)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="recurring-row-4">
+                        <div class="field">
+                            <label class="lab">Ayın günü</label>
+                            <input class="inp" type="number" min="1" max="28" x-model="item.dayOfMonth"
+                                   :name="'Recurrences[' + i + '].DayOfMonth'" />
+                        </div>
+                        <div class="field" x-show="item.recurrenceType == '2'">
+                            <label class="lab">Yılın ayı</label>
+                            <input class="inp" type="number" min="1" max="12" x-model="item.monthOfYear"
+                                   :name="'Recurrences[' + i + '].MonthOfYear'" />
+                        </div>
+                        @* Custom interval — sadece Custom seçildiğinde DOM'da; aynı name'li hidden input ile çakışmasın *@
+                        <template x-if="item.recurrenceType == '3'">
+                            <div class="field">
+                                <label class="lab">Aralık (ay)</label>
+                                <input class="inp" type="number" min="1" max="60" x-model="item.intervalValue"
+                                       :name="'Recurrences[' + i + '].IntervalValue'" />
+                            </div>
+                        </template>
+                        <div class="field">
+                            <label class="lab">Başlangıç</label>
+                            <input class="inp" type="date" x-model="item.startDate"
+                                   :name="'Recurrences[' + i + '].StartDate'" />
+                        </div>
+                        <div class="field">
+                            <label class="lab">Bitiş</label>
+                            <input class="inp" type="date" x-model="item.endDate"
+                                   :name="'Recurrences[' + i + '].EndDate'" />
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <label class="lab">Notlar</label>
+                        <input class="inp" type="text" x-model="item.notes"
+                               :name="'Recurrences[' + i + '].Notes'" maxlength="2000"
+                               placeholder="Örn: Stopaj %20 — vergi dairesine" />
+                    </div>
+
+                    @* RecurrenceType=Monthly/Quarterly/Yearly için intervalValue otomatik.
+                       template x-if ile DOM'dan çıkar — Custom'daki visible input ile name çakışması olmasın. *@
+                    <template x-if="item.recurrenceType != '3'">
+                        <input type="hidden"
+                               x-bind:value="item.recurrenceType == '0' ? 1 : item.recurrenceType == '1' ? 3 : item.recurrenceType == '2' ? 12 : 1"
+                               :name="'Recurrences[' + i + '].IntervalValue'" />
+                    </template>
+                </div>
+            </template>
+        </div>
+    </div>
+
+    <div class="form-action-row">
+        <a href="/Contracts" class="btn ghost">Geri Dön</a>
+        <button type="submit" class="btn primary">
+            <i class="fa fa-check text-[10px]"></i> Oluştur
+        </button>
+    </div>
+</form>
+
+@section Scripts {
+    <script>
+        function recurringPanel() {
+            return {
+                items: [],
+                addItem() {
+                    this.items.push({
+                        title: '',
+                        type: '0',
+                        category: '0',
+                        amount: '',
+                        currency: 'TRY',
+                        recurrenceType: '0',
+                        intervalValue: 1,
+                        dayOfMonth: 1,
+                        monthOfYear: 1,
+                        startDate: '',
+                        endDate: '',
+                        notes: ''
+                    });
+                },
+                removeItem(i) {
+                    this.items.splice(i, 1);
+                }
+            };
+        }
+    </script>
+}

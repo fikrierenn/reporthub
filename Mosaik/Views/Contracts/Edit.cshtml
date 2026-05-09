@@ -1,0 +1,85 @@
+@model Mosaik.Models.Contract
+@using Mosaik.Models
+
+@{
+    Layout = "_AppLayout";
+    ViewData["Title"] = "Sözleşme Düzenle";
+}
+
+@section Breadcrumb {
+    <nav class="crumbs" aria-label="Sayfa konumu">
+        <a href="/">Ana Sayfa</a>
+        <a href="/Contracts">Sözleşmeler</a>
+        <a href="/Contracts/Details/@Model.Id">@Model.Title</a>
+        <span aria-current="page">Düzenle</span>
+    </nav>
+}
+
+@section TopActions {
+    <a href="/Contracts/Details/@Model.Id" class="btn ghost">İptal</a>
+}
+
+<div class="hero">
+    <h1>Sözleşme Düzenle</h1>
+    <div class="sub"><span class="mono">@Model.Title</span></div>
+</div>
+
+<form method="post" action="/Contracts/Edit/@Model.Id">
+    @Html.AntiForgeryToken()
+
+    <div style="background:var(--paper);border:1px solid var(--border);border-radius:8px;max-width:720px;margin-bottom:18px;">
+        <div style="padding:14px 18px;border-bottom:1px solid var(--border);font-weight:600;font-size:14px;">Bilgiler</div>
+        <div style="padding:20px;display:flex;flex-direction:column;gap:14px;">
+            <div class="field">
+                <label class="lab">Başlık <span style="color:var(--accent)">*</span></label>
+                <input class="inp" name="Title" value="@Model.Title" required maxlength="200" />
+            </div>
+            <div class="field">
+                <label class="lab">Karşı Taraf</label>
+                <input class="inp" name="Counterparty" value="@Model.Counterparty" maxlength="200" />
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+                <div class="field">
+                    <label class="lab">Kategori</label>
+                    <select class="inp" name="Category">
+                        <option value="0" selected="@(Model.Category == ContractCategory.Lease)">Kira</option>
+                        <option value="1" selected="@(Model.Category == ContractCategory.Service)">Hizmet</option>
+                        <option value="2" selected="@(Model.Category == ContractCategory.Supply)">Tedarik</option>
+                        <option value="3" selected="@(Model.Category == ContractCategory.Employment)">İş</option>
+                        <option value="4" selected="@(Model.Category == ContractCategory.License)">Lisans</option>
+                        <option value="5" selected="@(Model.Category == ContractCategory.Insurance)">Sigorta</option>
+                        <option value="6" selected="@(Model.Category == ContractCategory.Other)">Diğer</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label class="lab">Durum</label>
+                    <select class="inp" name="Status">
+                        <option value="0" selected="@(Model.Status == ContractStatus.Draft)">Taslak</option>
+                        <option value="1" selected="@(Model.Status == ContractStatus.Active)">Aktif</option>
+                        <option value="2" selected="@(Model.Status == ContractStatus.Expired)">Süresi Doldu</option>
+                        <option value="3" selected="@(Model.Status == ContractStatus.Terminated)">Feshedildi</option>
+                    </select>
+                </div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+                <div class="field">
+                    <label class="lab">Başlangıç</label>
+                    <input class="inp" type="date" name="StartDate" value="@(Model.StartDate?.ToString("yyyy-MM-dd"))" />
+                </div>
+                <div class="field">
+                    <label class="lab">Bitiş</label>
+                    <input class="inp" type="date" name="EndDate" value="@(Model.EndDate?.ToString("yyyy-MM-dd"))" />
+                </div>
+            </div>
+            <div class="field">
+                <label class="lab">Notlar</label>
+                <textarea class="inp" name="Notes" rows="3" maxlength="2000">@Model.Notes</textarea>
+            </div>
+        </div>
+    </div>
+
+    <div style="background:var(--paper);border:1px solid var(--border);border-radius:8px;max-width:720px;padding:14px 20px;display:flex;justify-content:space-between;">
+        <a href="/Contracts/Details/@Model.Id" class="btn ghost">Geri Dön</a>
+        <button type="submit" class="btn primary">Kaydet</button>
+    </div>
+</form>
