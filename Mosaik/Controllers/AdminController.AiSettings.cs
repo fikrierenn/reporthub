@@ -168,18 +168,24 @@ namespace Mosaik.Controllers
             var others = await _context.AiSettings.Where(x => x.Id != id && x.IsEnabled).ToListAsync();
             foreach (var o in others) o.IsEnabled = false;
             entity.IsPrimary = true;
-            foreach (var o in others) {} // (sadece flag değiştirildi, save aşağıda)
             await _context.SaveChangesAsync();
             AiSettingsProvider.InvalidateCache();
 
-            var result = await ai.GenerateAsync(new AiRequest(
-                SystemPrompt: "Sen kısa Türkçe özet üreten bir asistansın. Çıktı sadece JSON: {\"ok\": true, \"echo\": \"<gelen mesajın aynısı>\"}",
-                UserPrompt: "Test mesajı: Mosaik AI bağlantısı çalışıyor.",
-                Purpose: "settings_test"));
-
-            // Geri yükle
-            foreach (var o in others) o.IsEnabled = true;
-            await _context.SaveChangesAsync();
+            AiSummaryResult result;
+            try
+            {
+                result = await ai.GenerateAsync(new AiRequest(
+                    SystemPrompt: "Sen kısa Türkçe özet üreten bir asistansın. Çıktı sadece JSON: {\"ok\": true, \"echo\": \"<gelen mesajın aynısı>\"}",
+                    UserPrompt: "Test mesajı: Mosaik AI bağlantısı çalışıyor.",
+                    Purpose: "settings_test"));
+            }
+            finally
+            {
+                // Exception olsa bile diğer profilleri geri aç.
+                foreach (var o in others) o.IsEnabled = true;
+                await _context.SaveChangesAsync();
+                AiSettingsProvider.InvalidateCache();
+            }
 
             entity.LastTestAt = DateTime.UtcNow;
             entity.LastTestSuccess = result.IsSuccess;
@@ -188,7 +194,6 @@ namespace Mosaik.Controllers
                 : $"FAIL · {result.Error}";
             entity.LastTestMessage = msg.Length > 500 ? msg.Substring(0, 500) : msg;
             await _context.SaveChangesAsync();
-            AiSettingsProvider.InvalidateCache();
 
             TempData["Message"] = result.IsSuccess
                 ? $"Test başarılı [{entity.Name ?? entity.Provider}]. Yanıt: {result.RawJson}"

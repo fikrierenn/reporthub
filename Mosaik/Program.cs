@@ -36,8 +36,9 @@ builder.Services.AddSingleton<Mosaik.Services.IModuleService, Mosaik.Services.Mo
 builder.Services.AddHttpClient("ai");
 // Plan 25 — vision için ayrı timeout (sözleşme görseli 30-90s sürebilir).
 builder.Services.AddHttpClient("ai-vision", c => c.Timeout = TimeSpan.FromSeconds(120));
-// Plan 25.1 Faz 2 — API key at-rest encryption. Prod'da key ring'i kalıcı yola bağla:
-//   .PersistKeysToFileSystem(new DirectoryInfo(@"D:\secrets\keys")) veya DB.
+// Plan 25.1 Faz 2 — API key at-rest encryption.
+// Prod'da .PersistKeysToFileSystem(new DirectoryInfo(@"D:\secrets\keys")) veya .PersistKeysToDbContext ekle;
+// dev'de memory key ring yeterli (restart sonrası key değişir → mevcut ApiKey'ler NULL'a sıfırla).
 builder.Services.AddDataProtection();
 builder.Services.AddScoped<Mosaik.Core.Ai.IAiSettingsProvider, Mosaik.Services.AiSettingsProvider>();
 builder.Services.AddScoped<Mosaik.Core.Ai.IAiSummaryProvider, Mosaik.Services.AiSummaryProvider>();
