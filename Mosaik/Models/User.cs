@@ -15,7 +15,9 @@ namespace Mosaik.Models
         [MaxLength(50)]
         public string Username { get; set; } = string.Empty;
 
-        [Required]
+        // [BindNever] — form'dan gelmez, UserManagementService.PasswordHasher set eder.
+        // [Required] kaldırıldı: ModelState validation'ı çalışıyor ama field bind edilmediği
+        // için empty default değer her zaman fail veriyordu. DB NOT NULL constraint zaten var.
         [MaxLength(255)]
         [BindNever]
         public string PasswordHash { get; set; } = string.Empty;
@@ -30,6 +32,14 @@ namespace Mosaik.Models
         public bool IsAdUser { get; set; }
 
         public bool IsActive { get; set; } = true;
+
+        // ADR-012 — firma güvenlik sınırı (çoklu erişim CSV).
+        // Format: "1,2,3" veya "1" veya NULL. NULL/boş = modül kapalı.
+        // Login'de claim'lere parse edilir.
+        // [BindNever]: form'da FirmaIds checkbox grup olarak gelir (multi-value);
+        // string'e bind çakışır → service layer'da BuildUserFormInput manuel okur.
+        [BindNever]
+        public string? FirmaIds { get; set; }
 
         [BindNever]
         public DateTime? LastLoginAt { get; set; }

@@ -12,6 +12,7 @@ namespace Mosaik.Services
         bool IsAdUser,
         bool IsActive,
         string? Password,
+        string? FirmaIds,
         HashSet<int> SelectedRoleIds,
         List<UserFilterInput> DataFilters);
 
@@ -58,6 +59,7 @@ namespace Mosaik.Services
                 Email = string.IsNullOrWhiteSpace(input.Email) ? null : input.Email.Trim(),
                 IsAdUser = input.IsAdUser,
                 IsActive = input.IsActive,
+                FirmaIds = input.FirmaIds,
                 PasswordHash = input.IsAdUser
                     ? PasswordHasher.CreateHash(Guid.NewGuid().ToString("N"))
                     : PasswordHasher.CreateHash(input.Password!),
@@ -117,6 +119,7 @@ namespace Mosaik.Services
             existing.Email = string.IsNullOrWhiteSpace(input.Email) ? null : input.Email.Trim();
             existing.IsAdUser = input.IsAdUser;
             existing.IsActive = input.IsActive;
+            existing.FirmaIds = input.FirmaIds;
 
             if (existing.IsAdUser)
             {

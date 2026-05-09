@@ -51,6 +51,7 @@ public class UserManagementServiceTests
             IsAdUser: false,
             IsActive: true,
             Password: "p1",
+            FirmaIds: null,
             SelectedRoleIds: new HashSet<int> { roleId },
             DataFilters: filters.Select(f => new UserFilterInput(f.key, f.value, f.ds)).ToList());
 

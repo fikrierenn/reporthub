@@ -77,11 +77,41 @@
                 </div>
             </div>
 
+            @{
+                var firmaList = ViewBag.Firmas as List<Mosaik.Models.Firma> ?? new();
+                var selectedFirmaIds = string.IsNullOrWhiteSpace(user.FirmaIds)
+                    ? new HashSet<int>()
+                    : user.FirmaIds.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                        .Select(s => int.TryParse(s, out var n) ? n : 0).Where(n => n > 0).ToHashSet();
+            }
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:14px;">
                 <div class="field" style="margin-bottom:0;">
                     <label class="lab">E-posta</label>
                     <input type="email" name="Email" value="@user.Email" class="inp" placeholder="ornek@bkmkitap.com" />
                 </div>
+                <div class="field" style="margin-bottom:0;">
+                    <label class="lab">Firma Erişimi</label>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; padding:8px 10px; background:var(--canvas); border:1px solid var(--line); border-radius:8px;">
+                        @if (!firmaList.Any())
+                        {
+                            <div style="font-size:12px; color:var(--accent-ink);">Firma listesi tanımlı değil.</div>
+                        }
+                        else
+                        {
+                            foreach (var f in firmaList)
+                            {
+                                var isFirmaChecked = selectedFirmaIds.Contains(f.FirmaId);
+                                <label style="display:flex; align-items:center; gap:6px; font-size:12px; color:var(--ink-2); cursor:pointer;">
+                                    <input type="checkbox" name="SelectedFirmaIds" value="@f.FirmaId" @(isFirmaChecked ? "checked" : "")
+                                           style="width:14px; height:14px; accent-color:var(--accent);" />
+                                    <span>@f.Ad</span>
+                                </label>
+                            }
+                        }
+                    </div>
+                </div>
+            </div>
+            <div style="display:grid; grid-template-columns:1fr; gap:14px; margin-bottom:14px;">
                 <div class="field" style="margin-bottom:0;">
                     <label class="lab">Roller <span style="color:var(--accent);">*</span></label>
                     <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; padding:8px 10px; background:var(--canvas); border:1px solid var(--line); border-radius:8px;">

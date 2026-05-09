@@ -162,8 +162,35 @@ namespace Mosaik.Controllers
                 new(ClaimTypes.NameIdentifier, user.UserId.ToString()),
                 new(ClaimTypes.Name, user.Username),
                 new(ClaimTypes.Email, user.Email ?? string.Empty),
-                new("full_name", user.FullName)
+                new("full_name", user.FullName),
+                new("userId", user.UserId.ToString())
             };
+
+            // ADR-012 — FirmaIds CSV: her firma için ayrı "firmaId" claim'i ("1,2,3" → 3 claim).
+            // Boş/NULL ise hiç claim yok = modül kapalı.
+            if (!string.IsNullOrWhiteSpace(user.FirmaIds))
+            {
+                foreach (var part in user.FirmaIds.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+                {
+                    if (int.TryParse(part, out var fid) && fid > 0)
+                    {
+                        claims.Add(new Claim("firmaId", fid.ToString()));
+                    }
+                    else
+                    {
+                        // Malformed CSV (örn. "1,abc,3") silently skip ediliyordu — audit'e bildir
+                        await _auditLog.LogAsync(new AuditLogEntry
+                        {
+                            EventType = "user_firmaids_malformed",
+                            TargetType = "user",
+                            TargetKey = user.UserId.ToString(),
+                            Username = user.Username,
+                            Description = $"FirmaIds CSV'de geçersiz parça atlandı: '{part}' (full='{user.FirmaIds}')",
+                            IsSuccess = false
+                        });
+                    }
+                }
+            }
 
             // M-03: Rol kaynağı artık yalnızca UserRole junction tablosu. User.Roles CSV kolonu deprecate.
             var roles = await _context.UserRoles

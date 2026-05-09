@@ -107,6 +107,14 @@ namespace Mosaik.Controllers
                 if (string.IsNullOrWhiteSpace(k) || string.IsNullOrWhiteSpace(v)) continue;
                 filters.Add(new UserFilterInput(k, v, ds));
             }
+            // SelectedFirmaIds checkbox grubu — seçili olanları CSV'ye birleştir ("1,2,3").
+            // Hiç seçilmediyse NULL (modül kapalı).
+            // Not: form field adı User.FirmaIds (string) ile çakışmasın diye SelectedFirmaIds.
+            var firmaIds = ParseIds(Request.Form["SelectedFirmaIds"]);
+            string? firmaIdsCsv = firmaIds.Count > 0
+                ? string.Join(",", firmaIds.OrderBy(x => x))
+                : null;
+
             return new UserFormInput(
                 Username: user.Username,
                 FullName: user.FullName,
@@ -114,6 +122,7 @@ namespace Mosaik.Controllers
                 IsAdUser: ReadFormBool("IsAdUser"),
                 IsActive: ReadFormBool("IsActive"),
                 Password: Request.Form["Password"],
+                FirmaIds: firmaIdsCsv,
                 SelectedRoleIds: ParseIds(Request.Form["SelectedRoles"]),
                 DataFilters: filters);
         }
@@ -138,6 +147,12 @@ namespace Mosaik.Controllers
                 .ToListAsync();
 
             var filters = postedFilters ?? ReadPostedFilters();
+
+            ViewBag.Firmas = await _context.Firmas
+                .AsNoTracking()
+                .Where(f => f.IsActive)
+                .OrderBy(f => f.Ad)
+                .ToListAsync();
 
             return new AdminUserFormViewModel
             {
