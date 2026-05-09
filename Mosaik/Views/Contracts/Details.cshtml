@@ -56,42 +56,42 @@
     @await Html.PartialAsync("_AlertMessage", ("error", err))
 }
 
-<div style="display:grid;grid-template-columns:2fr 1fr;gap:18px;align-items:start;">
+<div class="detail-header-grid">
 
     @* Sol kolon *@
     <div>
         @* Özet *@
-        <div style="background:var(--paper);border:1px solid var(--border);border-radius:8px;margin-bottom:18px;">
-            <div style="padding:14px 18px;border-bottom:1px solid var(--border);font-weight:600;font-size:14px;">Sözleşme Detayı</div>
-            <div style="padding:16px 20px;display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:13px;">
-                <div><span style="color:var(--muted);">Başlangıç</span><br/>@(Model.StartDate?.ToString("dd.MM.yyyy") ?? "—")</div>
-                <div><span style="color:var(--muted);">Bitiş</span><br/>
+        <div class="form-section-card">
+            <div class="form-section-head">Sözleşme Detayı</div>
+            <div class="form-section-body detail-grid">
+                <div><span class="text-muted">Başlangıç</span><br/>@(Model.StartDate?.ToString("dd.MM.yyyy") ?? "—")</div>
+                <div><span class="text-muted">Bitiş</span><br/>
                     @if (Model.EndDate.HasValue)
                     {
                         var days = Model.EndDate.Value.DayNumber - DateOnly.FromDateTime(DateTime.Today).DayNumber;
                         <span class="@(days < 30 ? "status err" : days < 90 ? "status warn" : "")">@Model.EndDate.Value.ToString("dd.MM.yyyy")</span>
-                        if (days >= 0) { <text> (<span style="font-size:11px;">@days gün kaldı</span>)</text> }
+                        if (days >= 0) { <text> (<span class="text-xs">@days gün kaldı</span>)</text> }
                     }
                     else { <text>—</text> }
                 </div>
                 @if (!string.IsNullOrEmpty(Model.Notes))
                 {
-                    <div style="grid-column:span 2;"><span style="color:var(--muted);">Notlar</span><br/>@Model.Notes</div>
+                    <div style="grid-column:span 2;"><span class="text-muted">Notlar</span><br/>@Model.Notes</div>
                 }
             </div>
         </div>
 
         @* Yükümlülükler *@
-        <div style="background:var(--paper);border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:18px;">
-            <div style="padding:14px 18px;border-bottom:1px solid var(--border);font-weight:600;font-size:14px;display:flex;justify-content:space-between;align-items:center;">
-                <span>Yükümlülükler <span class="mono" style="font-size:11px;">@Model.Obligations.Count</span></span>
+        <div class="form-section-card">
+            <div class="form-section-head with-actions">
+                <span>Yükümlülükler <span class="mono text-xs">@Model.Obligations.Count</span></span>
                 <a href="/Obligations/Create?contractId=@Model.Id" class="btn sm primary">
                     <i class="fa fa-plus text-[9px]"></i> Ekle
                 </a>
             </div>
             @if (!Model.Obligations.Any())
             {
-                <div style="padding:32px;text-align:center;color:var(--muted);font-size:13px;">Henüz yükümlülük yok.</div>
+                <div class="form-section-body ta-center"><span class="text-muted text-sm">Henüz yükümlülük yok.</span></div>
             }
             else
             {
@@ -135,8 +135,8 @@
         @* AI Analizler *@
         @if (extractions.Any())
         {
-            <div style="background:var(--paper);border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:18px;">
-                <div style="padding:14px 18px;border-bottom:1px solid var(--border);font-weight:600;font-size:14px;">AI Analiz Geçmişi</div>
+            <div class="form-section-card">
+                <div class="form-section-head">AI Analiz Geçmişi</div>
                 <table class="dt">
                     <thead>
                         <tr>
@@ -144,7 +144,7 @@
                             <th>Durum</th>
                             <th>Model</th>
                             <th>Token</th>
-                            <th style="text-align:right;">İşlem</th>
+                            <th class="text-right">İşlem</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -153,12 +153,12 @@
                             <tr>
                                 <td><span class="ago">@x.CreatedAt.ToString("dd.MM.yy HH:mm")</span></td>
                                 <td>@ExtractionStatusBadge(x.Status)</td>
-                                <td><span class="mono" style="font-size:11px;">@(x.ModelUsed ?? "—")</span></td>
-                                <td><span class="mono" style="font-size:11px;">@(x.InputTokens + x.OutputTokens)</span></td>
-                                <td style="text-align:right;">
+                                <td><span class="mono text-xs">@(x.ModelUsed ?? "—")</span></td>
+                                <td><span class="mono text-xs">@(x.InputTokens + x.OutputTokens)</span></td>
+                                <td class="text-right">
                                     @if (x.Status == ExtractionStatus.AwaitingReview)
                                     {
-                                        <form method="post" action="/Contracts/ReviewExtraction" style="display:inline-flex;gap:4px;">
+                                        <form method="post" action="/Contracts/ReviewExtraction" class="inline-actions">
                                             @Html.AntiForgeryToken()
                                             <input type="hidden" name="extractionId" value="@x.Id" />
                                             <button type="submit" name="action" value="approve" class="btn sm primary">Onayla</button>
@@ -176,15 +176,15 @@
 
     @* Sağ kolon — Dosyalar *@
     <div>
-        <div style="background:var(--paper);border:1px solid var(--border);border-radius:8px;margin-bottom:18px;">
-            <div style="padding:14px 18px;border-bottom:1px solid var(--border);font-weight:600;font-size:14px;">Dosyalar</div>
-            <div style="padding:16px;">
-                <form method="post" action="/Contracts/UploadFile" enctype="multipart/form-data" style="margin-bottom:14px;">
+        <div class="form-section-card">
+            <div class="form-section-head">Dosyalar</div>
+            <div class="form-section-body">
+                <form method="post" action="/Contracts/UploadFile" enctype="multipart/form-data" class="mb-14">
                     @Html.AntiForgeryToken()
                     <input type="hidden" name="contractId" value="@Model.Id" />
-                    <div style="display:flex;flex-direction:column;gap:8px;">
+                    <div class="file-row">
                         <input type="file" name="file" accept=".pdf,.doc,.docx"
-                               style="font-size:12px;border:1px solid var(--border);border-radius:6px;padding:6px;" />
+                               class="inp text-xs" />
                         <button type="submit" class="btn sm primary">
                             <i class="fa fa-upload text-[9px]"></i> Yükle
                         </button>
@@ -193,26 +193,25 @@
 
                 @if (!Model.Files.Any())
                 {
-                    <p style="font-size:12px;color:var(--muted);text-align:center;">Henüz dosya yok.</p>
+                    <p class="text-xs text-muted ta-center">Henüz dosya yok.</p>
                 }
                 else
                 {
-                    <div style="display:flex;flex-direction:column;gap:8px;">
+                    <div class="file-row">
                         @foreach (var f in Model.Files)
                         {
-                            <div style="display:flex;align-items:center;gap:8px;padding:8px;border:1px solid var(--border);border-radius:6px;font-size:12px;">
-                                <i class="fa fa-file-pdf" style="color:var(--accent);font-size:16px;"></i>
-                                <div style="flex:1;min-width:0;">
-                                    <div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500;">@f.FileName</div>
-                                    <div style="color:var(--muted);">@(f.FileSize / 1024) KB</div>
+                            <div class="file-row__head">
+                                <i class="fa fa-file-pdf req" style="font-size:16px;"></i>
+                                <div class="flex-fill">
+                                    <div class="text-strong text-truncate">@f.FileName</div>
+                                    <div class="text-muted">@(f.FileSize / 1024) KB</div>
                                 </div>
                                 @if (f.MimeType == "application/pdf")
                                 {
                                     <form method="post" action="/Contracts/StartAiExtraction">
                                         @Html.AntiForgeryToken()
                                         <input type="hidden" name="contractFileId" value="@f.Id" />
-                                        <button type="submit" class="btn sm" title="AI ile analiz et"
-                                                style="background:var(--purple-light,#f3e8ff);color:#7c3aed;border-color:#ddd6fe;">
+                                        <button type="submit" class="btn sm tertiary" title="AI ile analiz et">
                                             <i class="fa fa-robot text-[9px]"></i>
                                         </button>
                                     </form>

@@ -41,7 +41,7 @@
 }
 
 @* Durum filtresi *@
-<div style="background:var(--paper);border:1px solid var(--border);border-radius:8px;padding:14px 16px;margin-bottom:20px;display:flex;gap:8px;flex-wrap:wrap;">
+<div class="filter-bar tabs">
     <a href="/Obligations" class="btn @(statusFilter == null ? "primary" : "ghost") sm">Bekleyen + Gecikmiş</a>
     <a href="/Obligations?status=0" class="btn @(statusFilter == ObligationStatus.Pending ? "primary" : "ghost") sm">Bekleyen</a>
     <a href="/Obligations?status=1" class="btn @(statusFilter == ObligationStatus.Overdue ? "primary" : "ghost") sm">Gecikmiş</a>
@@ -51,15 +51,15 @@
 
 @if (!Model.Any())
 {
-    <div style="border:2px dashed var(--border);border-radius:10px;padding:48px 24px;text-align:center;color:var(--muted);">
-        <i class="fa fa-calendar-check" style="font-size:48px;margin-bottom:16px;display:block;opacity:.4;"></i>
-        <h3 style="font-size:16px;font-weight:600;margin:0 0 6px;">Yükümlülük bulunamadı</h3>
-        <p style="font-size:13px;margin:0;">Bu filtreye göre yükümlülük yok.</p>
+    <div class="empty-state">
+        <i class="fa fa-calendar-check empty-state__icon"></i>
+        <h3>Yükümlülük bulunamadı</h3>
+        <p>Bu filtreye göre yükümlülük yok.</p>
     </div>
 }
 else
 {
-    <div style="background:var(--paper);border:1px solid var(--border);border-radius:8px;overflow:hidden;">
+    <div class="table-card">
         <table class="dt">
             <thead>
                 <tr>
@@ -68,22 +68,22 @@ else
                     <th>Vade</th>
                     <th>Tutar</th>
                     <th>Durum</th>
-                    <th style="text-align:right;">İşlemler</th>
+                    <th class="ta-right">İşlemler</th>
                 </tr>
             </thead>
             <tbody>
                 @foreach (var o in Model)
                 {
                     <tr>
-                        <td style="font-weight:500;">@o.Title</td>
+                        <td class="fw-500">@o.Title</td>
                         <td>
                             @if (o.Contract is not null)
                             {
-                                <a href="/Contracts/Details/@o.ContractId" style="color:var(--accent);">@o.Contract.Title</a>
+                                <a href="/Contracts/Details/@o.ContractId" class="data-link">@o.Contract.Title</a>
                             }
                             else
                             {
-                                <span style="color:var(--muted);">—</span>
+                                <span class="text-muted">—</span>
                             }
                         </td>
                         <td>
@@ -95,30 +95,30 @@ else
                             </span>
                             @if (daysLeft >= 0 && daysLeft <= 30)
                             {
-                                <span style="font-size:11px;color:var(--muted);"> (@daysLeft gün)</span>
+                                <span class="text-xs text-muted"> (@daysLeft gün)</span>
                             }
                             else if (daysLeft < 0)
                             {
-                                <span style="font-size:11px;color:var(--muted);"> (@(-daysLeft) gün geçti)</span>
+                                <span class="text-xs text-muted"> (@(-daysLeft) gün geçti)</span>
                             }
                         </td>
                         <td>
                             @if (o.Amount.HasValue)
                             {
-                                <span class="mono" style="font-size:12px;">@o.Amount.Value.ToString("N0") @o.Currency</span>
+                                <span class="mono text-xs">@o.Amount.Value.ToString("N0") @o.Currency</span>
                             }
-                            else { <span style="color:var(--muted);">—</span> }
+                            else { <span class="text-muted">—</span> }
                         </td>
                         <td>@StatusBadge(o.Status)</td>
-                        <td style="text-align:right;">
+                        <td class="ta-right">
                             @if (o.Status == ObligationStatus.Pending || o.Status == ObligationStatus.Overdue)
                             {
-                                <form method="post" action="/Obligations/Complete/@o.Id" style="display:inline;">
+                                <form method="post" action="/Obligations/Complete/@o.Id" class="inline-form">
                                     @Html.AntiForgeryToken()
                                     <input type="hidden" name="returnUrl" value="/Obligations@(statusFilter.HasValue ? "?status=" + (int)statusFilter.Value : "")" />
                                     <button type="submit" class="btn sm primary">Tamamla</button>
                                 </form>
-                                <form method="post" action="/Obligations/Cancel/@o.Id" style="display:inline;margin-left:4px;">
+                                <form method="post" action="/Obligations/Cancel/@o.Id" class="inline-form">
                                     @Html.AntiForgeryToken()
                                     <input type="hidden" name="returnUrl" value="/Obligations@(statusFilter.HasValue ? "?status=" + (int)statusFilter.Value : "")" />
                                     <button type="submit" class="btn sm danger">İptal</button>

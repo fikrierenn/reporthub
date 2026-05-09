@@ -58,7 +58,7 @@
                     <select class="inp" id="FirmaId" name="FirmaId" required>
                         @foreach (var f in accessibleFirmas)
                         {
-                            <option value="@f.FirmaId" selected="@(Model.FirmaId == f.FirmaId)">@f.Ad</option>
+                            <option value="@f.FirmaId" selected="@(Model.FirmaId == f.FirmaId)">@f.Name</option>
                         }
                     </select>
                 </div>

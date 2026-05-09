@@ -36,7 +36,7 @@
     <div class="sub">
         <span>Yeni kullanıcı oluşturun</span>
         <span class="pill">
-            <i class="fas fa-circle-info" style="font-size:9px; color:var(--ink-3);"></i>
+            <i class="fas fa-circle-info text-[9px] text-muted"></i>
             Roller + opsiyonel veri filtreleri
         </span>
     </div>
@@ -44,11 +44,8 @@
 
 @if (!string.IsNullOrWhiteSpace(message))
 {
-    <div role="alert" style="margin-bottom:18px; padding:12px 16px; border-radius:10px; font-size:13px;
-                background: @(messageType == "success" ? "var(--success-bg-soft)" : "var(--danger-bg-soft)");
-                border: 1px solid @(messageType == "success" ? "rgba(16,185,129,0.25)" : "rgba(220,38,38,0.25)");
-                color: @(messageType == "success" ? "var(--success-ink-soft)" : "var(--accent-ink)");">
-        <i class="fas @(messageType == "success" ? "fa-check-circle" : "fa-exclamation-circle")" style="margin-right:8px;"></i>
+    <div role="alert" class="alert @(messageType == "success" ? "success" : "error")">
+        <i class="fas @(messageType == "success" ? "fa-check-circle" : "fa-exclamation-circle")"></i>
         @message
     </div>
 }
@@ -56,23 +53,23 @@
 <form method="post">
     @Html.AntiForgeryToken()
 
-    <div style="background:var(--paper); border:1px solid var(--line); border-radius:10px; overflow:hidden; max-width:880px; margin-bottom:18px;">
-        <div style="padding:14px 18px; border-bottom:1px solid var(--line);">
-            <h2 style="font-size:13px; font-weight:600; color:var(--ink-1); margin:0;">
-                <i class="fas fa-user-plus" style="margin-right:6px; color:var(--ink-3);"></i>
+    <div class="form-section-card wide">
+        <div class="form-section-head">
+            <h2>
+                <i class="fas fa-user-plus text-muted"></i>
                 Kullanıcı Bilgileri
             </h2>
-            <div style="font-size:12px; color:var(--ink-3); margin-top:2px;">Gerekli alanları doldurun</div>
+            <div class="help-text">Gerekli alanları doldurun</div>
         </div>
 
-        <div style="padding:20px;">
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:14px;">
-                <div class="field" style="margin-bottom:0;">
-                    <label class="lab">Kullanıcı Adı <span style="color:var(--accent);">*</span></label>
+        <div class="form-section-body stack">
+            <div class="grid-2col">
+                <div class="field mb-0">
+                    <label class="lab">Kullanıcı Adı <span class="req">*</span></label>
                     <input type="text" name="Username" value="@user.Username" required class="inp" placeholder="örn: admin_staging" />
                 </div>
-                <div class="field" style="margin-bottom:0;">
-                    <label class="lab">Ad Soyad <span style="color:var(--accent);">*</span></label>
+                <div class="field mb-0">
+                    <label class="lab">Ad Soyad <span class="req">*</span></label>
                     <input type="text" name="FullName" value="@user.FullName" required class="inp" placeholder="örn: Staging Admin" />
                 </div>
             </div>
@@ -84,77 +81,75 @@
                     : user.FirmaIds.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
                         .Select(s => int.TryParse(s, out var n) ? n : 0).Where(n => n > 0).ToHashSet();
             }
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:14px;">
-                <div class="field" style="margin-bottom:0;">
+            <div class="grid-2col">
+                <div class="field mb-0">
                     <label class="lab">E-posta</label>
                     <input type="email" name="Email" value="@user.Email" class="inp" placeholder="ornek@bkmkitap.com" />
                 </div>
-                <div class="field" style="margin-bottom:0;">
+                <div class="field mb-0">
                     <label class="lab">Firma Erişimi</label>
-                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; padding:8px 10px; background:var(--canvas); border:1px solid var(--line); border-radius:8px;">
+                    <div class="checkbox-grid">
                         @if (!firmaList.Any())
                         {
-                            <div style="font-size:12px; color:var(--accent-ink);">Firma listesi tanımlı değil.</div>
+                            <div class="text-xs text-muted">Firma listesi tanımlı değil.</div>
                         }
                         else
                         {
                             foreach (var f in firmaList)
                             {
                                 var isFirmaChecked = selectedFirmaIds.Contains(f.FirmaId);
-                                <label style="display:flex; align-items:center; gap:6px; font-size:12px; color:var(--ink-2); cursor:pointer;">
+                                <label class="checkbox-row">
                                     <input type="checkbox" name="SelectedFirmaIds" value="@f.FirmaId" @(isFirmaChecked ? "checked" : "")
-                                           style="width:14px; height:14px; accent-color:var(--accent);" />
-                                    <span>@f.Ad</span>
+                                           class="checkbox" />
+                                    <span>@f.Name</span>
                                 </label>
                             }
                         }
                     </div>
                 </div>
             </div>
-            <div style="display:grid; grid-template-columns:1fr; gap:14px; margin-bottom:14px;">
-                <div class="field" style="margin-bottom:0;">
-                    <label class="lab">Roller <span style="color:var(--accent);">*</span></label>
-                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; padding:8px 10px; background:var(--canvas); border:1px solid var(--line); border-radius:8px;">
-                        @if (!availableRoles.Any())
+            <div class="field mb-0">
+                <label class="lab">Roller <span class="req">*</span></label>
+                <div class="checkbox-grid">
+                    @if (!availableRoles.Any())
+                    {
+                        <div class="text-xs text-muted">Rol listesi tanımlı değil.</div>
+                    }
+                    else
+                    {
+                        foreach (var role in availableRoles)
                         {
-                            <div style="font-size:12px; color:var(--accent-ink);">Rol listesi tanımlı değil.</div>
+                            var isChecked = selectedRoleIds.Contains(role.RoleId);
+                            <label class="checkbox-row">
+                                <input type="checkbox" name="SelectedRoles" value="@role.RoleId" @(isChecked ? "checked" : "")
+                                       class="checkbox" />
+                                <span>@role.Name</span>
+                            </label>
                         }
-                        else
-                        {
-                            foreach (var role in availableRoles)
-                            {
-                                var isChecked = selectedRoleIds.Contains(role.RoleId);
-                                <label style="display:flex; align-items:center; gap:6px; font-size:12px; color:var(--ink-2); cursor:pointer;">
-                                    <input type="checkbox" name="SelectedRoles" value="@role.RoleId" @(isChecked ? "checked" : "")
-                                           style="width:14px; height:14px; accent-color:var(--accent);" />
-                                    <span>@role.Name</span>
-                                </label>
-                            }
-                        }
-                    </div>
+                    }
                 </div>
             </div>
 
-            <div class="field" style="margin-bottom:14px;">
-                <label class="lab">Şifre <span style="color:var(--accent);">*</span></label>
+            <div class="field mb-0">
+                <label class="lab">Şifre <span class="req">*</span></label>
                 <input type="password" id="Password" name="Password" required class="inp" placeholder="Şifre belirleyin" autocomplete="new-password" />
             </div>
 
-            <div style="display:flex; flex-wrap:wrap; gap:18px; padding-top:8px;">
-                <div style="display:flex; align-items:center; gap:8px;">
+            <div class="toolbar-row">
+                <div class="checkbox-row">
                     <input type="hidden" name="IsAdUser" value="false" />
                     <input type="checkbox" id="IsAdUser" name="IsAdUser" value="true" @(user.IsAdUser ? "checked" : "")
-                           style="width:16px; height:16px; accent-color:var(--accent);" />
-                    <label for="IsAdUser" class="lab" style="margin:0;">Windows AD kullanıcısı</label>
-                    <span style="font-size:11px; color:var(--ink-3);" title="AD kullanıcıları DOMAIN\\kullanici ile giriş yapar">
+                           class="checkbox" />
+                    <label for="IsAdUser" class="lab inline">Windows AD kullanıcısı</label>
+                    <span class="text-xs text-muted" title="AD kullanıcıları DOMAIN\\kullanici ile giriş yapar">
                         <i class="fas fa-circle-info"></i>
                     </span>
                 </div>
-                <div style="display:flex; align-items:center; gap:8px;">
+                <div class="checkbox-row">
                     <input type="hidden" name="IsActive" value="false" />
                     <input type="checkbox" id="userActive" name="IsActive" value="true" @(user.IsActive ? "checked" : "")
-                           style="width:16px; height:16px; accent-color:var(--accent);" />
-                    <label for="userActive" class="lab" style="margin:0;">Kullanıcıyı aktif yap</label>
+                           class="checkbox" />
+                    <label for="userActive" class="lab inline">Kullanıcıyı aktif yap</label>
                 </div>
             </div>
         </div>
@@ -162,7 +157,7 @@
 
     @await Html.PartialAsync("_AdminUserDataFilterPanel", Model)
 
-    <div style="display:flex; align-items:center; justify-content:space-between; max-width:880px; padding:14px 20px; background:var(--paper); border:1px solid var(--line); border-radius:10px;">
+    <div class="action-row wide">
         <a href="/Admin?tab=users" class="btn ghost">
             <i class="fas fa-arrow-left text-[10px]"></i>
             Geri Dön

@@ -1,4 +1,4 @@
-@model Mosaik.Models.ContractObligation
+@model Mosaik.ViewModels.ObligationCreateViewModel
 @using Mosaik.Models
 
 @{
@@ -51,16 +51,16 @@
         <input type="hidden" name="ContractId" value="@contractId" />
     }
 
-    <div style="background:var(--paper);border:1px solid var(--border);border-radius:8px;max-width:720px;margin-bottom:18px;">
-        <div style="padding:14px 18px;border-bottom:1px solid var(--border);font-weight:600;font-size:14px;">Yükümlülük Bilgileri</div>
-        <div style="padding:20px;display:flex;flex-direction:column;gap:14px;">
+    <div class="form-section-card narrow">
+        <div class="form-section-head">Yükümlülük Bilgileri</div>
+        <div class="form-section-body stack">
             <div class="field">
-                <label class="lab" for="Title">Başlık <span style="color:var(--accent)">*</span></label>
+                <label class="lab" for="Title">Başlık <span class="req">*</span></label>
                 <input class="inp" id="Title" name="Title" value="@Model.Title" required maxlength="200"
                        placeholder="Örn: Kira ödemesi — Haziran 2026" />
             </div>
 
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+            <div class="grid-2col">
                 <div class="field">
                     <label class="lab" for="Category">Kategori</label>
                     <select class="inp" id="Category" name="Category">
@@ -85,9 +85,9 @@
                 </div>
             </div>
 
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+            <div class="grid-2col">
                 <div class="field">
-                    <label class="lab" for="DueDate">Vade Tarihi <span style="color:var(--accent)">*</span></label>
+                    <label class="lab" for="DueDate">Vade Tarihi <span class="req">*</span></label>
                     <input class="inp" type="date" id="DueDate" name="DueDate"
                            value="@Model.DueDate.ToString("yyyy-MM-dd")" required />
                 </div>
@@ -98,7 +98,7 @@
                 </div>
             </div>
 
-            <div style="display:grid;grid-template-columns:2fr 1fr;gap:14px;">
+            <div class="grid-2-1">
                 <div class="field">
                     <label class="lab" for="Amount">Tutar</label>
                     <input class="inp" type="number" id="Amount" name="Amount"
@@ -122,7 +122,7 @@
         </div>
     </div>
 
-    <div style="background:var(--paper);border:1px solid var(--border);border-radius:8px;max-width:720px;padding:14px 20px;display:flex;justify-content:space-between;align-items:center;">
+    <div class="action-row narrow">
         @if (contractId.HasValue)
         {
             <a href="/Contracts/Details/@contractId" class="btn ghost">Geri Dön</a>

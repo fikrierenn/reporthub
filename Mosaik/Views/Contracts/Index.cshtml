@@ -34,20 +34,19 @@
 
 @if (TempData["Warning"] is string warn)
 {
-    <div role="alert" style="background:var(--yellow-light,#fffbeb);border:1px solid var(--yellow,#f59e0b);border-radius:6px;padding:12px 16px;margin-bottom:16px;color:#92400e;">
+    <div role="alert" class="alert warn">
         <i class="fa fa-triangle-exclamation"></i> @warn
     </div>
 }
 
 @* Filter bar *@
-<div x-data="{ q: '@q', status: '@(statusFilter?.ToString() ?? "")' }" style="background:var(--paper);border:1px solid var(--border);border-radius:8px;padding:14px 16px;margin-bottom:20px;display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">
+<div x-data="{ q: '@q', status: '@(statusFilter?.ToString() ?? "")' }" class="filter-bar">
     <form method="get" style="display:contents;">
-        <div style="position:relative;flex:1;min-width:200px;">
-            <i class="fa fa-magnifying-glass" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:12px;"></i>
-            <input type="text" name="q" value="@q" placeholder="Başlık veya karşı taraf ara..." x-model="q"
-                   style="width:100%;padding:7px 10px 7px 30px;border:1px solid var(--border);border-radius:6px;font-size:13px;" />
+        <div class="search-input-wrap">
+            <i class="fa fa-magnifying-glass search-input-wrap__icon"></i>
+            <input type="text" name="q" value="@q" placeholder="Başlık veya karşı taraf ara..." x-model="q" class="inp" />
         </div>
-        <select name="status" x-model="status" style="padding:7px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;background:var(--paper);">
+        <select name="status" x-model="status" class="inp">
             <option value="">Tüm durumlar</option>
             <option value="0">Taslak</option>
             <option value="1">Aktif</option>
@@ -61,15 +60,15 @@
 
 @if (!Model.Any())
 {
-    <div style="border:2px dashed var(--border);border-radius:10px;padding:48px 24px;text-align:center;color:var(--muted);">
-        <i class="fa fa-file-contract" style="font-size:48px;margin-bottom:16px;display:block;opacity:.4;"></i>
-        <h3 style="font-size:16px;font-weight:600;margin:0 0 6px;">Sözleşme bulunamadı</h3>
-        <p style="font-size:13px;margin:0;">Yeni sözleşme ekleyerek başlayın.</p>
+    <div class="empty-state">
+        <i class="fa fa-file-contract empty-state__icon"></i>
+        <h3>Sözleşme bulunamadı</h3>
+        <p>Yeni sözleşme ekleyerek başlayın.</p>
     </div>
 }
 else
 {
-    <div style="background:var(--paper);border:1px solid var(--border);border-radius:8px;overflow:hidden;">
+    <div class="table-card">
         <table class="dt">
             <thead>
                 <tr>
@@ -78,14 +77,14 @@ else
                     <th>Kategori</th>
                     <th>Durum</th>
                     <th>Bitiş Tarihi</th>
-                    <th style="text-align:right;">İşlemler</th>
+                    <th class="ta-right">İşlemler</th>
                 </tr>
             </thead>
             <tbody>
                 @foreach (var c in Model)
                 {
                     <tr>
-                        <td><a href="/Contracts/Details/@c.Id" style="font-weight:500;color:var(--accent);">@c.Title</a></td>
+                        <td><a href="/Contracts/Details/@c.Id" class="data-link fw-500">@c.Title</a></td>
                         <td>@(c.Counterparty ?? "—")</td>
                         <td>@CategoryLabel(c.Category)</td>
                         <td>@StatusBadge(c.Status)</td>
@@ -99,7 +98,7 @@ else
                             }
                             else { <span>—</span> }
                         </td>
-                        <td style="text-align:right;">
+                        <td class="ta-right">
                             <a href="/Contracts/Details/@c.Id" class="btn ghost sm">Detay</a>
                             <a href="/Contracts/Edit/@c.Id" class="btn ghost sm">Düzenle</a>
                         </td>
