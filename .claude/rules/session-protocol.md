@@ -37,9 +37,39 @@ Her ikisini de `Read` et. Özellikle bak:
 
 `git status --porcelain | wc -l` — 15 üstüyse yeni iş yasak, önce commit-split.
 
+### Adım 5 — Pre-session Compliance Scan (ZORUNLU — uncommitted varsa)
+
+**Karar 2026-05-10 (kullanıcı):** "Session sonundaki 3 aşamalı kod taramasını session başına alalım, kapanırken yapmıyorsun." Tarama oturum **başında** yapılır, sona bırakılmaz — çünkü uygulamada handoff sırasında bypass ediliyordu, yarın (yani bugün) yapılan iş borç olarak handoff'a giren oturumdan kalan dosyalarla başlıyordu.
+
+**2026-05-10 ek karar:** Inline style taraması da bu adıma dahil ("başlangıca inline stil taramasını da eklemelisin"). 4. paralel agent inline style envanter çıkarır.
+
+Eğer uncommitted dosya varsa (handoff'tan devreden iş ya da yarım kalan kod), oturum başında **tek mesajda 4 paralel agent** çalıştır:
+
+```
+Agent(subagent_type="code-reviewer")           — CLAUDE.md + mimari uyumluluk
+Agent(subagent_type="silent-failure-hunter")    — exception handling + silent catch + fallback
+Agent(subagent_type="general-purpose")          — security-review checklist (.claude/rules/security-principles.md)
+Agent(subagent_type="general-purpose")          — inline style envanter (.claude/rules/ui-patterns.md §0)
+```
+
+Scope: `git diff --name-only HEAD` + untracked (`git ls-files --others --exclude-standard`). Inline style scan için scope: tüm `.cshtml` (yeni ve değiştirilmiş).
+
+- **Bulgu yok** → kullanıcının istediği işe geç (örn. commit-split).
+- **Bulgu var** → önce fix et, sonra commit-split / yeni iş.
+- **Inline style HIGH** (Plan 25 / yeni view) → utility class'a refactor zorunlu, commit-split öncesi.
+- **Inline style MEDIUM/LOW** (admin module / legacy) → envanter Plan 25.1 / sonraki sprint borç listesine eklenir.
+
+**Önemli:** Bulgular fix edilmeden commit-split yapma. Aksi takdirde HIGH/MEDIUM bulgular commit'lere gömülür ve sonraki oturumda kaybolur.
+
+**Refactor agent'lara dağıtım:** Inline style HIGH bulgular birden fazla view'a yayılırsa **tek başına yapma** — kullanıcı 2026-05-10'da net söyledi: "agentlara dağıttın mı". Her bağımsız view için paralel agent (general-purpose veya frontend-design skill ile), shared CSS önce eklenir. 8+ view = 4-8 paralel agent.
+
+**Override:** Kullanıcı açıkça "tarama yapma" / "atla" derse atlanır. Aksi default = tarama zorunlu.
+
+**Uncommitted yoksa:** Adım 5 atlanır.
+
 ### Kullanıcıya cevap
 
-Yukarıdaki 4 adım **sessizce** yapılır — kullanıcıya "şunu okudum şunu okudum" demeye gerek yok. Cevap sadece bu okumalara dayanır, hafıza tahminine değil.
+Yukarıdaki 5 adım **sessizce** yapılır — kullanıcıya "şunu okudum şunu okudum" demeye gerek yok. Cevap sadece bu okumalara dayanır, hafıza tahminine değil. Adım 5 (compliance scan) sonuçları varsa kullanıcıya özet ver: "X HIGH, Y MEDIUM bulgu — düzelttikten sonra başlıyorum."
 
 ---
 
@@ -118,23 +148,13 @@ Detay memory: `feedback_subagent_skill_ana_prensip.md`.
 
 ### Tetikler
 
-Kullanıcı "iyi geceler" / "handoff" / "kaydet ve kapat" / "/handoff" / "devam edeceğiz" dediğinde önce **Pre-handoff Compliance Scan** çalışır, sonra `.claude/skills/session-handoff/SKILL.md` devreye girer.
+Kullanıcı "iyi geceler" / "handoff" / "kaydet ve kapat" / "/handoff" / "devam edeceğiz" dediğinde `.claude/skills/session-handoff/SKILL.md` devreye girer.
 
-### Pre-handoff Compliance Scan (ZORUNLU — session-handoff öncesi)
+### Compliance Scan oturum sonunda DEĞİL, oturum başında
 
-Handoff tetiklenmeden önce bu oturumda **dokunulan tüm kod** için tek mesajda 3 paralel agent:
+Karar 2026-05-10 (kullanıcı): 3 aşamalı tarama oturum **başına** alındı (Adım 5). Oturum sonunda tarama yapılmaz — uygulamada bypass ediliyordu ve borç birikiyordu. Yarınki oturumun başında uncommitted devreden işler için Adım 5 zaten çalışacak.
 
-```
-Agent(subagent_type="code-reviewer")        — CLAUDE.md + mimari uyumluluk
-Agent(subagent_type="silent-failure-hunter") — exception handling + silent catch + fallback
-Agent(subagent_type="security-review")      — güvenlik taraması (Skill değil, Agent)
-```
-
-Scope: `git diff --name-only HEAD` veya oturumda editlenen dosyalar.
-- Bulgu yok → handoff'a geç.
-- Bulgu var → önce fix et, sonra handoff.
-
-**Override:** Kullanıcı açıkça "tarama yapmadan geç" derse atlanabilir. Aksi default = tarama zorunlu.
+**İstisna:** Bu oturumda kod yazıp commit etmeden handoff edersen, kullanıcıya "uncommitted X dosya kaldı — yarın oturum başı taraması bunu yakalayacak" hatırlatması ver.
 
 ### Ne yapar
 
