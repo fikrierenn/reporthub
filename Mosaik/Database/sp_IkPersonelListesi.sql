@@ -32,7 +32,7 @@ BEGIN
     WHERE Ict IS NULL
       AND (
           @sube_Filtre IS NULL
-          OR AltLokasyon IN (SELECT LTRIM(RTRIM(value)) FROM STRING_SPLIT(@sube_Filtre, ','))
+          OR ',' + @sube_Filtre + ',' LIKE '%,' + AltLokasyon + ',%'
       )
     ORDER BY Firma, AltLokasyon, AdSoyad;
 END

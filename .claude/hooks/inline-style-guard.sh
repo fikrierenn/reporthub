@@ -36,7 +36,7 @@ for f in $staged_cshtml; do
     [ -f "$f" ] || continue
 
     # Bu PR'da eklenen yeni satırları al ('+' prefix, header'ları '++' ile filtrele)
-    added=$(git diff --cached -U0 "$f" | grep -E '^\+' | grep -v '^\+\+\+')
+    added=$(git diff --cached -U0 "$f" | grep -E '^\+' | grep -v '^\+\+\+' || true)
 
     # Inline style attribute eklenmiş mi?
     new_inline=$(echo "$added" | grep -E 'style="' || true)

@@ -38,12 +38,6 @@
     </div>
 </div>
 
-@* Plan 04 F2.2: Alpine.js instant client-side filter. Server-side form submit (URL state) korundu —
-   kullanıcı Enter veya Filtrele ile URL'ye yansır; ama Alpine ile her tuş vuruşunda anlık filter görsel.
-   x-data scope: filter bar + qcard grid'i kapsar. *@
-@* XSS guard: Alpine x-data string'lerini JsonSerializer ile escape et — Html.Raw + manual replace yetersiz (ör. " kaçışı yok). *@
-<div x-data="{ q: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.SearchTerm ?? "")), grp: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.SelectedGroup ?? "")) }">
-
 <form method="get" class="report-filter-bar" style="background:var(--paper); border:1px solid var(--line); border-radius:10px; padding:14px 16px; margin-bottom:18px; display:flex; gap:12px; flex-wrap:wrap; align-items:end;">
     <div style="flex:1; min-width:240px;">
         <label class="lab" for="reportSearch">Arama</label>
@@ -51,7 +45,7 @@
             <span style="position:absolute; left:10px; top:50%; transform:translateY(-50%); color:var(--ink-4); pointer-events:none;">
                 <i class="fas fa-magnifying-glass" style="font-size:12px;"></i>
             </span>
-            <input type="text" id="reportSearch" name="q" x-model="q"
+            <input type="text" id="reportSearch" name="q" value="@Model.SearchTerm"
                    class="inp" style="padding-left:32px;"
                    placeholder="Rapor adı, açıklama veya grup..." />
         </div>
@@ -59,24 +53,34 @@
 
     <div style="min-width:180px;">
         <label class="lab" for="reportGroup">Grup</label>
-        <select id="reportGroup" name="group" x-model="grp" class="inp">
+        <select id="reportGroup" name="group" class="inp">
             <option value="">Tüm gruplar</option>
             @foreach (var grpName in Model.Groups)
             {
-                <option value="@grpName">@grpName</option>
+                if (grpName == Model.SelectedGroup)
+                {
+                    <option value="@grpName" selected>@grpName</option>
+                }
+                else
+                {
+                    <option value="@grpName">@grpName</option>
+                }
             }
         </select>
     </div>
 
     <div style="display:flex; gap:6px;">
-        <button type="submit" class="btn primary" title="URL'ye yansıt (paylaşılabilir link)">
+        <button type="submit" class="btn primary">
             <i class="fas fa-filter text-[10px]"></i>
             Filtrele
         </button>
-        <button type="button" class="btn ghost" @@click="q = ''; grp = ''" x-show="q || grp" x-cloak>
-            <i class="fas fa-xmark text-[10px]"></i>
-            Temizle
-        </button>
+        @if (!string.IsNullOrWhiteSpace(Model.SearchTerm) || !string.IsNullOrWhiteSpace(Model.SelectedGroup))
+        {
+            <a href="/Reports" class="btn ghost">
+                <i class="fas fa-xmark text-[10px]"></i>
+                Temizle
+            </a>
+        }
     </div>
 </form>
 
@@ -108,13 +112,7 @@ else
             var displaySub = string.IsNullOrWhiteSpace(report.Description)
                 ? (groupNames.Count > 0 ? string.Join(", ", groupNames) : (report.DataSource?.Title ?? report.DataSourceKey))
                 : report.Description;
-            var searchHay = $"{report.Title} {report.Description} {string.Join(' ', groupNames)} {report.DataSource?.Title} {report.DataSourceKey}".ToLowerInvariant();
-            var grpHay = string.Join(",", groupNames).ToLowerInvariant();
-            <div class="qcard" style="position:relative;"
-                 data-search="@searchHay"
-                 data-grp="@grpHay"
-                 x-show="(!q || $el.dataset.search.includes(q.toLowerCase())) && (!grp || $el.dataset.grp.includes(grp.toLowerCase()))"
-                 x-cloak>
+            <div class="qcard">
                 <div class="row1">
                     <span class="type-chip type-dash">Dashboard</span>
                     <span class="mono" style="font-size:10.5px; color:var(--ink-4); margin-left:auto;">#@report.ReportId</span>
@@ -158,7 +156,5 @@ else
     if (!string.IsNullOrWhiteSpace(Model.SearchTerm)) reportsFooter += $" · arama \"{Model.SearchTerm}\"";
     if (!string.IsNullOrWhiteSpace(Model.SelectedGroup)) reportsFooter += $" · grup {Model.SelectedGroup}";
 }
-
-</div>
 
 @await Html.PartialAsync("_FooterHint", (string?)reportsFooter)

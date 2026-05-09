@@ -62,7 +62,7 @@
     @* M-13 Plan 04 (28 Nisan 2026): Alpine.js + htmx CDN-only entegrasyon. Build step yok.
        Alpine = client state (toggle/modal/form), htmx = server-driven swap (SP preview, list refresh).
        Skill: .claude/skills/alpine-js/ + .claude/skills/htmx-expert/. *@
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@@3.x.x/dist/cdn.min.js"></script>
+    <script defer src="~/lib/alpinejs/alpine.min.js" asp-append-version="true"></script>
     <script src="https://cdn.jsdelivr.net/npm/htmx.org@@2.0.4/dist/htmx.min.js"></script>
 
     @RenderSection("Head", required: false)
