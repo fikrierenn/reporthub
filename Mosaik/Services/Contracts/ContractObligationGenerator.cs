@@ -7,8 +7,15 @@ namespace Mosaik.Services.Contracts
     // Saf hesaplama (DB'ye yazmaz). Controller transaction içinde çağırır.
     public static class ContractObligationGenerator
     {
-        // Sonsuz döngü guard'ı: 10 yıl aylık = 120. Aşılırsa argüman hatası.
-        private const int MaxIterations = 120;
+        // RecurrenceType başına maksimum dönem sayısı (10 yıl referansı).
+        private static int GetMaxIterations(RecurrenceType type, int intervalValue) => type switch
+        {
+            RecurrenceType.Yearly   => 10,
+            RecurrenceType.Quarterly => 40,
+            RecurrenceType.Monthly  => 120,
+            RecurrenceType.Custom   => intervalValue > 0 ? (120 / intervalValue + 10) : 120,
+            _                       => 120
+        };
 
         public sealed record GeneratedSet(
             ContractRecurrence Recurrence,
@@ -91,12 +98,24 @@ namespace Mosaik.Services.Contracts
                 _ => FirstMonthlyDue(effectiveStart, dayOfMonth)
             };
 
+            int maxIter = GetMaxIterations(input.RecurrenceType, input.IntervalValue);
             int iterations = 0;
             while (current <= effectiveEnd)
             {
-                if (++iterations > MaxIterations)
+                if (++iterations > maxIter)
+                {
+                    string limitLabel = input.RecurrenceType switch
+                    {
+                        RecurrenceType.Yearly    => "10 yıl (10 dönem)",
+                        RecurrenceType.Quarterly => "10 yıl (40 dönem)",
+                        RecurrenceType.Monthly   => "10 yıl (120 dönem)",
+                        RecurrenceType.Custom    => $"izin verilen maksimum ({maxIter} dönem)",
+                        _                        => $"{maxIter} dönem"
+                    };
                     throw new ArgumentException(
-                        "Tarih aralığı çok uzun: 120'den fazla dönem üretilemez. Bitiş tarihini kısaltın.");
+                        $"Yükümlülük '{input.Title}' için tarih aralığı çok uzun. " +
+                        $"Maksimum: {limitLabel}. Bitiş tarihini kısaltın.");
+                }
 
                 if (current >= effectiveStart)
                     dueDates.Add(current);
