@@ -109,6 +109,8 @@ Ayrıntılı kurallar `.claude/rules/` altında — burada sadece değişmez pre
 
 9. **Kodlama disiplini.** Spekülatif feature/abstraction ekleme, drive-by refactoring yapma. Detay: [`.claude/rules/coding-discipline.md`](.claude/rules/coding-discipline.md).
 
+10. **Yanıt özlülüğü.** Uzun açıklama yasak. Yap, bir cümleyle bildir, devam et. Özet / iltifat / adım duyurusu yok. Detay: [`.claude/rules/response-style.md`](.claude/rules/response-style.md).
+
 ---
 
 ## 3. Mimari Durumu
