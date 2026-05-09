@@ -34,6 +34,8 @@ builder.Services.AddSingleton<Mosaik.Services.IModuleService, Mosaik.Services.Mo
 
 // Plan 17 Faz F — AI özet altyapısı (Groq/Gemini provider, runtime config Admin'den)
 builder.Services.AddHttpClient("ai");
+// Plan 25 — vision için ayrı timeout (sözleşme görseli 30-90s sürebilir).
+builder.Services.AddHttpClient("ai-vision", c => c.Timeout = TimeSpan.FromSeconds(120));
 builder.Services.AddScoped<Mosaik.Core.Ai.IAiSettingsProvider, Mosaik.Services.AiSettingsProvider>();
 builder.Services.AddScoped<Mosaik.Core.Ai.IAiSummaryProvider, Mosaik.Services.AiSummaryProvider>();
 
@@ -56,6 +58,17 @@ builder.Services.AddScoped<Mosaik.Services.IOrgChartService, Mosaik.Services.Org
 builder.Services.AddScoped<Mosaik.Core.Notification.INotificationService, Mosaik.Services.NotificationService>();
 // Faz C2 (gelecek): UserDataFilterInjector + ReportsController.Index
 // Registry'ye refactor (DRY). Şu an mevcut inline mantık çalışmaya devam ediyor.
+
+// Plan 25 — Sözleşme modülü (ADR-012: IHostedService + Channel<int>)
+builder.Services.AddScoped<Mosaik.Services.ICurrentUserService, Mosaik.Services.CurrentUserService>();
+builder.Services.AddSingleton<Mosaik.Services.Ai.AiPipelineQueue>();
+builder.Services.AddSingleton<Mosaik.Services.Ai.IPdfTextExtractor, Mosaik.Services.Ai.PdfPigTextExtractor>();
+builder.Services.AddHostedService<Mosaik.Services.Ai.AiExtractionWorker>();
+
+// Plan 25 AI Wizard — vision provider + extraction service (Faz 1).
+// Plan 25.1 hardening (file serving + queue migration) bekliyor.
+builder.Services.AddScoped<Mosaik.Core.Ai.IAiVisionProvider, Mosaik.Services.Ai.ZaiVisionProvider>();
+builder.Services.AddScoped<Mosaik.Services.Ai.WizardExtractionService>();
 
 // Plan 16.6 — Modular Monolith. ModuleLoader Mosaik.Modules.* assembly'lerini
 // tarar, IMosaikModule implementasyonlarını DI + ModelBuilder + endpoint'lere

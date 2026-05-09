@@ -53,4 +53,28 @@ namespace Mosaik.Core.Ai
         int InputTokens = 0,
         int OutputTokens = 0,
         string? ModelUsed = null);
+
+    // ---- Vision (görsel) AI ----
+    // Plan 25 wizard — taranmış sözleşme görseli z.ai GLM-4V-plus'a yollanır.
+    // Text path (IAiSummaryProvider) ile ortogonal: ayrı interface, ayrı request.
+    public interface IAiVisionProvider
+    {
+        Task<AiSummaryResult> GenerateFromImagesAsync(AiVisionRequest request, CancellationToken ct = default);
+    }
+
+    // - SystemPrompt: vision modellerinde user içeriğine prepended olarak gider
+    //   (GLM-4V system role'ünü image+text içerikle birlikte kabul etmiyor).
+    // - Base64Images: data URL bileşenleri ("data:image/jpeg;base64,..." değil, sadece base64 payload)
+    // - MimeType: "image/jpeg" | "image/png" | ...
+    // - OverrideModel: null ise "glm-4v-plus" varsayılan
+    public sealed record AiVisionRequest(
+        string SystemPrompt,
+        string UserPrompt,
+        IReadOnlyList<string> Base64Images,
+        string MimeType,
+        string? OverrideModel = null,
+        int? OverrideMaxTokens = null,
+        double? OverrideTemperature = null,
+        bool RequireJson = true,
+        string? Purpose = null);
 }
