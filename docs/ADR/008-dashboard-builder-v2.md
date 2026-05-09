@@ -16,7 +16,7 @@ Mevcut dashboard builder (22 Nisan itibarıyla) çalışıyor ama 4 yapısal sı
 
 Kullanıcı 23 Nisan'da iki referans paylaştı:
 - `D:/Downloads/dashboard-builder-design-v2.html` (1085 satır, görsel kit kaynağı)
-- `D:/Downloads/ReportHub Dashboard Builder.html` (1118 satır, tam çalışan Gridstack + Chart.js mockup)
+- `D:/Downloads/Mosaik Dashboard Builder.html` (1118 satır, tam çalışan Gridstack + Chart.js mockup)
 
 Hedef: Apache Superset'in Explore view UX prensiplerinden esinlenen, proje brand'ine uyumlu, 4 KPI variant + 10 chart tipi + koşullu format tablosu + live preview = Reports/Run destekli modern builder.
 

@@ -1,4 +1,4 @@
-# ReportHub — Bağlam Yönetimi Anayasası
+# Mosaik — Bağlam Yönetimi Anayasası
 _22 Nisan 2026 — 2 paralel araştırma agent'ı + Claude Code resmi dokümanları sentezi_
 
 ## Problem Tanımı
@@ -218,7 +218,7 @@ Geoffrey Huntley'in pattern'i ([ghuntley.com/ralph](https://ghuntley.com/ralph/)
 
 **Primary context = scheduler.** Büyük iş spawn edilir, özet alınır, bir sonrakine geçilir. Primary'nin context'i şişmez.
 
-ReportHub için somut uygulama:
+Mosaik için somut uygulama:
 
 | İş | Primary mi, subagent mi? |
 |---|---|

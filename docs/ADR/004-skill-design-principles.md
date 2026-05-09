@@ -6,7 +6,7 @@
 
 ## Bağlam
 
-ReportHub'da üç skill/agent sürüme girdi:
+Mosaik'da üç skill/agent sürüme girdi:
 - `session-handoff` — oturum sonu journal yazar
 - `plan-tracker` — TodoWrite ↔ TODO.md senkron
 - `commit-splitter` — uncommitted çalışmayı bucket'lara böl, ardışık commit et

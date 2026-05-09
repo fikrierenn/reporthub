@@ -45,7 +45,7 @@ Proje kısmen UTC'ye geçmiş durumda:
 | Faz | Kapsam | Durum |
 |---|---|---|
 | A — Yeni servisler UTC | UserManagementService, UserRoleSyncService, ReportManagementService | ✅ tamamlanmış (önceki PR'lar) |
-| B — ReportHub ana dosyalar UTC | ReportCatalog:41, ReportsController:89/382/384 | ✅ commit `0f73478` (M-05 Faz C cleanup) |
+| B — Mosaik ana dosyalar UTC | ReportCatalog:41, ReportsController:89/382/384 | ✅ commit `0f73478` (M-05 Faz C cleanup) |
 | **C — Kalan app kodu UTC** | AuthController (4), ProfileController (1), DashboardController (1), AuditLogService (1), 11 model default | **bu ADR ile sweep** |
 | D — DB DEFAULT'ları | 14+ `GETDATE()` → `GETUTCDATE()`, migration + data shift | ⏳ ayrı TODO, backup gerekir |
 | E — SP ve seed'ler | sp_PdksPano vb., 03_SeedData.sql | ⏳ SP refactor (madde 21) ile |

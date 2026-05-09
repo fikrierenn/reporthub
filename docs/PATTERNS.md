@@ -109,7 +109,7 @@ M-09 and will be fixed in Faz 1/2 refactor passes.
 
 **Senaryo:** Claude oturum açıldı. SessionStart hook fire etti, çıktı context'te görünüyor (git log + TODO + journal). Claude düşünüyor: "Hook çalıştı, özet önümde, `bash` tekrar çalıştırmaya gerek yok." Cevap verir. Ama cevap **hafızadan**, çünkü context'teki çıktı stale olabilir (dün fire etmiş, bugün farklı durum vb.).
 
-**Gerçek olay (ReportHub, 22 Nisan 2026):**
+**Gerçek olay (Mosaik, 22 Nisan 2026):**
 - Sabah: Claude "günaydın" sorusuna context'teki hook çıktısından cevap verdi. Kullanıcı fark etti, "neden çalıştırmadın?" diye sordu.
 - Öğleden sonra: Kullanıcı "nerede kaldık?" dedi. Claude yine context'ten cevapladı. Kullanıcı: "varsayım yapma, her oturumda çalıştır, nereye yazıyorsan da yaz."
 
@@ -194,7 +194,7 @@ Known technical debt (tracked for refactor):
 - Prod DB şifresi: `(1)` zorunlu.
 - Dev SA, local dev: `(3)` kabul edilebilir (kullanıcı onayı ile).
 
-**ReportHub örneği:** Kullanıcı "şifreler önemli değil, dev ortamı lokal" dedi → `(3)` uygulandı. Commit mesajında not:
+**Mosaik örneği:** Kullanıcı "şifreler önemli değil, dev ortamı lokal" dedi → `(3)` uygulandı. Commit mesajında not:
 
 ```
 Note: this fix stops the leak going forward. Historic git commits
@@ -213,7 +213,7 @@ decision (dev-only credentials, local environment).
 
 **Senaryo:** Eski bir dosya (`Views/Auth/AGENT.md`) "proje MVC değil, Razor Pages" gibi yanıltıcı içeriğe sahip. Banner ekledin: `> ⚠️ DEPRECATED — ...`. Ama dosya hala orada, her session okunurken kafa karıştırıyor.
 
-**Kullanıcı geri bildirimi (ReportHub):** "geçerliliği olmayan dosyaları silsek nasıl olur kafa karıştıracağına".
+**Kullanıcı geri bildirimi (Mosaik):** "geçerliliği olmayan dosyaları silsek nasıl olur kafa karıştıracağına".
 
 **Çözüm:** Silmek > banner'lamak.
 
