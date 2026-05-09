@@ -17,7 +17,8 @@
 
 set -e
 
-DISABLED=true
+# Plan 25.1 Faz 1 tamamlandı (2026-05-11) — hook aktif
+DISABLED=false
 if [ "$DISABLED" = "true" ]; then
     exit 0
 fi
