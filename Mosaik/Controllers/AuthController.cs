@@ -18,12 +18,14 @@ namespace Mosaik.Controllers
         private readonly MosaikContext _context;
         private readonly AuditLogService _auditLog;
         private readonly IHostEnvironment _env;
+        private readonly ILogger<AuthController> _logger;
 
-        public AuthController(MosaikContext context, AuditLogService auditLog, IHostEnvironment env)
+        public AuthController(MosaikContext context, AuditLogService auditLog, IHostEnvironment env, ILogger<AuthController> logger)
         {
             _context = context;
             _auditLog = auditLog;
             _env = env;
+            _logger = logger;
         }
 
         [HttpGet("/Login")]
@@ -256,6 +258,7 @@ namespace Mosaik.Controllers
             var user = await _context.Users.FirstOrDefaultAsync(u => u.UserId == userId);
             if (user == null)
             {
+                _logger.LogWarning("UpdateLastLogin: UserId={UserId} bulunamadı.", userId);
                 return;
             }
 
@@ -279,24 +282,27 @@ namespace Mosaik.Controllers
         }
 
         [SupportedOSPlatform("windows")]
-        private static bool ValidateAdCredentials(string domain, string username, string password)
+        private bool ValidateAdCredentials(string domain, string username, string password)
         {
             if (!OperatingSystem.IsWindows())
-            {
                 return false;
-            }
+
             if (string.IsNullOrWhiteSpace(password))
-            {
                 return false;
-            }
 
             try
             {
                 using var context = new PrincipalContext(ContextType.Domain, domain);
                 return context.ValidateCredentials(username, password, ContextOptions.Negotiate);
             }
-            catch
+            catch (PrincipalServerDownException psd)
             {
+                _logger.LogError(psd, "AD sunucusuna ulaşılamadı: {Domain}", domain);
+                return false;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "AD doğrulaması başarısız: {Domain}\\{Username}", domain, username);
                 return false;
             }
         }

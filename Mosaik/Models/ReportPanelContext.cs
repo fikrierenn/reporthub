@@ -361,9 +361,9 @@ namespace Mosaik.Models
             modelBuilder.Entity<Firma>(e =>
             {
                 e.HasKey(f => f.FirmaId);
-                e.Property(f => f.Kod).HasMaxLength(50).IsRequired();
-                e.Property(f => f.Ad).HasMaxLength(100).IsRequired();
-                e.HasIndex(f => f.Kod).IsUnique();
+                e.Property(f => f.Code).HasColumnName("Kod").HasMaxLength(50).IsRequired();
+                e.Property(f => f.Name).HasColumnName("Ad").HasMaxLength(100).IsRequired();
+                e.HasIndex(f => f.Code).IsUnique();
             });
 
             modelBuilder.Entity<Contract>(e =>

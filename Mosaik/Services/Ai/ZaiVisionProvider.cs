@@ -37,7 +37,10 @@ namespace Mosaik.Services.Ai
             var configs = await _settings.GetActiveOrderedAsync(ct);
             var zaiCfg = configs.FirstOrDefault(c => string.Equals(c.Provider, "zai", StringComparison.OrdinalIgnoreCase));
             if (zaiCfg is null)
+            {
+                _logger.LogWarning("ZaiVisionProvider: Aktif 'zai' sağlayıcı konfigürasyonu bulunamadı.");
                 return new AiSummaryResult(false, null, "z.ai vision için aktif zai sağlayıcısı yok.");
+            }
 
             var model = request.OverrideModel ?? DefaultVisionModel;
             var temperature = Math.Clamp(request.OverrideTemperature ?? zaiCfg.Temperature, 0.0, 1.0);

@@ -151,7 +151,7 @@ namespace Mosaik.Controllers
             ViewBag.Firmas = await _context.Firmas
                 .AsNoTracking()
                 .Where(f => f.IsActive)
-                .OrderBy(f => f.Ad)
+                .OrderBy(f => f.Name)
                 .ToListAsync();
 
             return new AdminUserFormViewModel

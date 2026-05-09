@@ -19,10 +19,10 @@ namespace Mosaik.Services.Ai
 
         public Task<string> ExtractAsync(string filePath, CancellationToken ct = default)
         {
-            // wwwroot-relative path'i absolute'a çevir
-            var absolute = filePath.StartsWith(_env.WebRootPath, StringComparison.OrdinalIgnoreCase)
+            // Absolute path gelirse direkt kullan; relative ise ContentRoot (App_Data) altında çöz
+            var absolute = Path.IsPathRooted(filePath)
                 ? filePath
-                : Path.Combine(_env.WebRootPath, filePath.TrimStart('/', '\\'));
+                : Path.Combine(_env.ContentRootPath, filePath.TrimStart('/', '\\'));
 
             if (!File.Exists(absolute))
             {

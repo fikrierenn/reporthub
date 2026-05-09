@@ -200,6 +200,7 @@ namespace Mosaik.Controllers
             catch (ArgumentException ex)
             {
                 await tx.RollbackAsync();
+                _logger.LogWarning(ex, "Contract create domain validation fail. FirmaId={FirmaId}", model.FirmaId);
                 ModelState.AddModelError(string.Empty, ex.Message);
                 ViewBag.AccessibleFirmas = await GetAccessibleFirmasAsync();
                 return View(model);
@@ -542,7 +543,7 @@ namespace Mosaik.Controllers
             return await _db.Firmas
                 .AsNoTracking()
                 .Where(f => firmas.Contains(f.FirmaId))
-                .OrderBy(f => f.Ad)
+                .OrderBy(f => f.Name)
                 .ToListAsync();
         }
     }

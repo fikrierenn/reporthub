@@ -158,7 +158,10 @@ namespace Mosaik.Services.Ai
             }
 
             if (!aiResult.IsSuccess || string.IsNullOrWhiteSpace(aiResult.RawJson))
-                throw new InvalidOperationException("AI çağrısı başarısız: " + (aiResult.Error ?? "boş yanıt"));
+            {
+                _logger.LogWarning("Wizard AI çağrısı başarısız. Hata: {Error}", aiResult.Error ?? "boş yanıt");
+                throw new InvalidOperationException("AI analizi tamamlanamadı. Lütfen tekrar deneyin.");
+            }
 
             return ParseResult(aiResult.RawJson!);
         }

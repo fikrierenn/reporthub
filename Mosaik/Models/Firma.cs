@@ -13,11 +13,11 @@ namespace Mosaik.Models
 
         [Required]
         [MaxLength(50)]
-        public string Kod { get; set; } = string.Empty;    // "BKM_GENEL" — Zirve DB kodu
+        public string Code { get; set; } = string.Empty;   // "BKM_GENEL" — Zirve DB kodu
 
         [Required]
         [MaxLength(100)]
-        public string Ad { get; set; } = string.Empty;     // "BKMKİTAP"
+        public string Name { get; set; } = string.Empty;   // "BKMKİTAP"
 
         public bool IsActive { get; set; } = true;
     }

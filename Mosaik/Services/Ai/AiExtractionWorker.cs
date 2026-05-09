@@ -61,7 +61,7 @@ namespace Mosaik.Services.Ai
                 {
                     _logger.LogError(ex,
                         "AI extraction kalıcı hata (3 deneme tükendi). ExtractionId={Id}.", extractionId);
-                    await MarkFailedAsync(extractionId, ex.Message);
+                    await MarkFailedAsync(extractionId, "Beklenmedik hata oluştu. Detaylar log'da.");
                 }
             }
         }
@@ -74,8 +74,15 @@ namespace Mosaik.Services.Ai
 
             var extraction = await db.ContractAiExtractions
                 .Include(e => e.ContractFile)
+                .Include(e => e.Contract)
                 .FirstOrDefaultAsync(e => e.Id == extractionId, ct)
                 ?? throw new InvalidOperationException($"ContractAiExtraction bulunamadı: {extractionId}");
+
+            if (extraction.ContractFile is null)
+            {
+                await MarkFailedAsync(extractionId, "Sözleşme dosyası bulunamadı.");
+                return;
+            }
 
             if (extraction.Status == ExtractionStatus.Approved)
             {
@@ -125,7 +132,11 @@ namespace Mosaik.Services.Ai
                 if (doc1.RootElement.TryGetProperty("contractCategory", out var cat))
                     detectedCategory = cat.GetString();
             }
-            catch { /* kategori parse edilemezse Stage2 "Other" prompt kullanır */ }
+            catch (JsonException jex)
+            {
+                _logger.LogWarning(jex,
+                    "Stage1 kategori parse edilemedi; Stage2 'Other' prompt kullanılıyor. ExtractionId={Id}", extractionId);
+            }
 
             // Adım 2 — Aşama 2 AI çağrısı (kategori-spesifik derinleştirme)
             UpdateProgress(db, extraction, "ai_stage2");
@@ -146,6 +157,13 @@ namespace Mosaik.Services.Ai
                 RequireJson: false,
                 Purpose: "contract_extraction_stage2"
             ), ct);
+
+            if (!stage2Result.IsSuccess)
+            {
+                _logger.LogWarning(
+                    "AI Stage2 başarısız, Stage1 sonuçlarıyla devam ediliyor. ExtractionId={Id}, Hata={Error}",
+                    extractionId, stage2Result.Error);
+            }
 
             // Adım 3 — Sonuçları kaydet
             extraction.Status = ExtractionStatus.AwaitingReview;

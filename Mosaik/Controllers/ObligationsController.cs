@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Mosaik.Models;
 using Mosaik.Services;
+using Mosaik.ViewModels;
 
 namespace Mosaik.Controllers
 {
@@ -79,7 +80,7 @@ namespace Mosaik.Controllers
             ViewBag.ContractTitle = contractTitle;
             ViewBag.AccessibleFirmas = await GetAccessibleFirmasAsync();
 
-            return View(new ContractObligation
+            return View(new ObligationCreateViewModel
             {
                 FirmaId = defaultFirmaId,
                 ContractId = contractId,
@@ -90,9 +91,15 @@ namespace Mosaik.Controllers
         // POST /Obligations/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(ContractObligation model)
+        public async Task<IActionResult> Create(ObligationCreateViewModel model)
         {
             if (!HasAccess(model.FirmaId)) return Forbid();
+
+            if (!ModelState.IsValid)
+            {
+                ViewBag.ContractId = model.ContractId;
+                return View(model);
+            }
 
             // Sözleşmeye bağlıysa firma uyumu kontrolü
             if (model.ContractId.HasValue)
@@ -103,27 +110,40 @@ namespace Mosaik.Controllers
                     return Forbid();
             }
 
-            if (model.DueDate == default)
-                model.DueDate = DateOnly.FromDateTime(DateTime.Today.AddDays(30));
+            var obligation = new ContractObligation
+            {
+                FirmaId = model.FirmaId,
+                ContractId = model.ContractId,
+                Title = model.Title,
+                Category = model.Category,
+                Type = model.Type,
+                DueDate = model.DueDate == default ? DateOnly.FromDateTime(DateTime.Today.AddDays(30)) : model.DueDate,
+                ReminderDays = model.ReminderDays,
+                Amount = model.Amount,
+                Currency = model.Currency,
+                Notes = model.Notes,
+                Status = ObligationStatus.Pending,
+                Source = ObligationSource.Manual,
+                CreatedAt = DateTime.UtcNow,
+                CreatedBy = _currentUser.Username
+            };
 
-            model.CreatedAt = DateTime.UtcNow;
-            model.CreatedBy = _currentUser.Username;
-            _db.ContractObligations.Add(model);
+            _db.ContractObligations.Add(obligation);
             await _db.SaveChangesAsync();
 
             await _auditLog.LogAsync(new AuditLogEntry
             {
                 EventType = "obligation_create",
                 TargetType = "contract_obligation",
-                TargetKey = model.Id.ToString(),
-                Description = $"Yükümlülük eklendi: {model.Title}",
+                TargetKey = obligation.Id.ToString(),
+                Description = $"Yükümlülük eklendi: {obligation.Title}",
                 IsSuccess = true,
-                NewValuesJson = AuditLogService.ToJson(new { model.Id, model.FirmaId, model.ContractId, model.Title, model.DueDate, model.Amount, model.Currency })
+                NewValuesJson = AuditLogService.ToJson(new { obligation.Id, obligation.FirmaId, obligation.ContractId, obligation.Title, obligation.DueDate, obligation.Amount, obligation.Currency })
             });
 
             TempData["Message"] = "Yükümlülük eklendi.";
-            return model.ContractId.HasValue
-                ? RedirectToAction("Details", "Contracts", new { id = model.ContractId })
+            return obligation.ContractId.HasValue
+                ? RedirectToAction("Details", "Contracts", new { id = obligation.ContractId })
                 : RedirectToAction(nameof(Index));
         }
 
@@ -211,7 +231,7 @@ namespace Mosaik.Controllers
             return await _db.Firmas
                 .AsNoTracking()
                 .Where(f => firmas.Contains(f.FirmaId))
-                .OrderBy(f => f.Ad)
+                .OrderBy(f => f.Name)
                 .ToListAsync();
         }
     }
