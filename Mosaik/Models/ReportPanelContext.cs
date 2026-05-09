@@ -50,6 +50,9 @@ namespace Mosaik.Models
         public DbSet<ContractRecurrence> ContractRecurrences { get; set; }
         public DbSet<ContractFile> ContractFiles { get; set; }
         public DbSet<ContractAiExtraction> ContractAiExtractions { get; set; }
+        public DbSet<ContractEvent> ContractEvents { get; set; }
+        public DbSet<AiSuggestion> AiSuggestions { get; set; }
+        public DbSet<ComplianceTemplate> ComplianceTemplates { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -427,6 +430,42 @@ namespace Mosaik.Models
                 e.HasOne(x => x.ContractFile).WithMany(f => f.AiExtractions).HasForeignKey(x => x.ContractFileId).OnDelete(DeleteBehavior.Restrict);
                 e.HasOne(x => x.Contract).WithMany().HasForeignKey(x => x.ContractId).OnDelete(DeleteBehavior.SetNull);
                 e.HasIndex(x => x.Status);
+            });
+
+            modelBuilder.Entity<ContractEvent>(e =>
+            {
+                e.HasKey(ev => ev.Id);
+                e.Property(ev => ev.Title).HasMaxLength(200).IsRequired();
+                e.Property(ev => ev.Notes).HasMaxLength(500);
+                e.Property(ev => ev.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+                e.HasOne(ev => ev.Firma).WithMany().HasForeignKey(ev => ev.FirmaId).OnDelete(DeleteBehavior.Restrict);
+                e.HasOne(ev => ev.Contract).WithMany().HasForeignKey(ev => ev.ContractId).OnDelete(DeleteBehavior.SetNull);
+                e.HasOne(ev => ev.Obligation).WithMany().HasForeignKey(ev => ev.ObligationId).OnDelete(DeleteBehavior.SetNull);
+                e.HasIndex(ev => new { ev.FirmaId, ev.EventDate });
+                e.HasIndex(ev => ev.Status);
+            });
+
+            modelBuilder.Entity<AiSuggestion>(e =>
+            {
+                e.HasKey(s => s.Id);
+                e.Property(s => s.Title).HasMaxLength(200).IsRequired();
+                e.Property(s => s.Description).HasMaxLength(2000);
+                e.Property(s => s.ApprovedBy).HasMaxLength(100);
+                e.Property(s => s.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+                e.HasOne(s => s.Firma).WithMany().HasForeignKey(s => s.FirmaId).OnDelete(DeleteBehavior.Restrict);
+                e.HasOne(s => s.Extraction).WithMany().HasForeignKey(s => s.ExtractionId).OnDelete(DeleteBehavior.Cascade);
+                e.HasIndex(s => new { s.ExtractionId, s.Status });
+            });
+
+            modelBuilder.Entity<ComplianceTemplate>(e =>
+            {
+                e.HasKey(t => t.Id);
+                e.Property(t => t.PackageName).HasMaxLength(100).IsRequired();
+                e.Property(t => t.Title).HasMaxLength(200).IsRequired();
+                e.Property(t => t.Description).HasMaxLength(500);
+                e.Property(t => t.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+                e.HasIndex(t => t.PackageName);
+                e.HasIndex(t => t.IsActive);
             });
 
             // Plan 16.6 — Her vNext modül kendi entity'lerini ConfigureModelBuilder

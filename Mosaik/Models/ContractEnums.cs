@@ -69,4 +69,48 @@ namespace Mosaik.Models
         Rejected,       // Reddedildi
         Failed          // Hata
     }
+
+    public enum EventType
+    {
+        Payment,    // Ödeme
+        Deadline,   // Son tarih
+        Renewal,    // Yenileme
+        Tax,        // Vergi
+        Compliance, // Uyumluluk
+        Operation   // Operasyon
+    }
+
+    public enum EventStatus
+    {
+        Upcoming,   // Yaklaşan
+        Completed,  // Tamamlandı
+        Cancelled   // İptal
+    }
+
+    public enum EventSource
+    {
+        Manual,       // Manuel girildi
+        AiSuggested   // AI önerdi
+    }
+
+    public enum SuggestionType
+    {
+        Obligation,    // Yükümlülük önerisi
+        ContractEvent, // Takvim etkinliği önerisi
+        RiskWarning    // Risk uyarısı
+    }
+
+    public enum SuggestionStatus
+    {
+        Pending,   // Bekliyor
+        Approved,  // Onaylandı
+        Rejected   // Reddedildi
+    }
+
+    public enum Confidence
+    {
+        High,   // Yüksek
+        Medium, // Orta
+        Low     // Düşük
+    }
 }

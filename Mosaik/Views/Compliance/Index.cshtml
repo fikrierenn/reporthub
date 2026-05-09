@@ -1,0 +1,103 @@
+@model List<string>
+@{
+    Layout = "_AppLayout";
+    ViewData["Title"] = "Uyum";
+    ViewData["PageTitle"] = "Uyum";
+
+    string PackageIcon(string pkg) => pkg.ToLower() switch
+    {
+        "vergi"   => "fas fa-landmark",
+        "ik"      => "fas fa-users",
+        "finans"  => "fas fa-coins",
+        "hukuk"   => "fas fa-scale-balanced",
+        "it"      => "fas fa-server",
+        "operasyon"=> "fas fa-gears",
+        _         => "fas fa-clipboard-check"
+    };
+    string PackageColor(string pkg) => pkg.ToLower() switch
+    {
+        "vergi"   => "#dc2626",
+        "ik"      => "#2563eb",
+        "finans"  => "#059669",
+        "hukuk"   => "#7c3aed",
+        "it"      => "#0891b2",
+        _         => "#d97706"
+    };
+    string PackageLabel(string pkg) => pkg.ToLower() switch
+    {
+        "vergi"   => "Vergi & Mali Yükümlülükler",
+        "ik"      => "İnsan Kaynakları",
+        "finans"  => "Finans & Muhasebe",
+        "hukuk"   => "Hukuki Yükümlülükler",
+        "it"      => "Bilgi Teknolojileri",
+        "operasyon"=> "Operasyonel Uyum",
+        _         => pkg
+    };
+    string PackageDesc(string pkg) => pkg.ToLower() switch
+    {
+        "vergi"   => "KDV, muhtasar, kurumlar vergisi ve diğer vergi beyannameleri",
+        "ik"      => "SGK bildirgeleri, izin takibi ve personel yükümlülükleri",
+        "finans"  => "Banka mutabakatı, sigorta yenileme ve finansal raporlar",
+        "hukuk"   => "Sözleşme süreleri, lisans yenileme ve hukuki son tarihler",
+        "it"      => "Güvenlik güncellemeleri, yedekleme ve sistem bakımı",
+        _         => "Uyum şablonları"
+    };
+}
+
+@section Breadcrumb {
+    <nav class="crumbs" aria-label="Sayfa konumu">
+        <a href="/Dashboard">Ana Sayfa</a>
+        <span aria-hidden="true">›</span>
+        <span aria-current="page">Uyum</span>
+    </nav>
+}
+
+@section TopActions {
+    <a href="#" class="icon-btn" title="Yardım">
+        <i class="fas fa-circle-question"></i>
+    </a>
+}
+
+<div class="hero">
+    <h1>Uyum Şablonları</h1>
+    <div class="sub">
+        <span>Sektörel yükümlülük paketlerini firmanıza hızlıca ekleyin</span>
+        <span class="mono">@Model.Count paket</span>
+    </div>
+</div>
+
+@if (!Model.Any())
+{
+    <div class="empty-state">
+        <i class="fas fa-clipboard-check" style="font-size:48px; opacity:.3; margin-bottom:12px;"></i>
+        <h3>Uyum şablonu bulunamadı</h3>
+        <p>Sistem yöneticisi şablon ekleyebilir.</p>
+    </div>
+}
+else
+{
+    <div class="quick-grid">
+        @foreach (var pkg in Model)
+        {
+            var color = PackageColor(pkg);
+            var icon  = PackageIcon(pkg);
+            <div class="qcard" style="text-decoration:none;">
+                <div class="row1">
+                    <span class="type-chip" style="background:@(color)20; color:@color;">
+                        <i class="@icon" style="margin-right:4px; font-size:10px;"></i>
+                        @pkg.ToUpperInvariant()
+                    </span>
+                </div>
+                <a href="/Compliance/Preview/@pkg" style="text-decoration:none; color:inherit;">
+                    <h3>@PackageLabel(pkg)</h3>
+                    <div class="sub">@PackageDesc(pkg)</div>
+                    <div class="meta">
+                        <span class="run">İncele ve Yükle <i class="fas fa-arrow-right text-[10px]"></i></span>
+                    </div>
+                </a>
+            </div>
+        }
+    </div>
+}
+
+@await Html.PartialAsync("_FooterHint", (string?)$"{Model.Count} uyum paketi")

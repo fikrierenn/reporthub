@@ -1,0 +1,186 @@
+@model List<Mosaik.Models.ContractFile>
+@{
+    Layout = "_AppLayout";
+    ViewData["Title"] = "Belgeler";
+    ViewData["PageTitle"] = "Belgeler";
+    var contracts = ViewBag.Contracts as dynamic;
+    var contractFilter = ViewBag.ContractFilter as int?;
+    var q = ViewBag.Q as string;
+}
+
+@section Breadcrumb {
+    <nav class="crumbs" aria-label="Sayfa konumu">
+        <a href="/Dashboard">Ana Sayfa</a>
+        <span aria-hidden="true">›</span>
+        <span aria-current="page">Belgeler</span>
+    </nav>
+}
+
+@section TopActions {
+    <a href="#" class="icon-btn" title="Yardım">
+        <i class="fas fa-circle-question"></i>
+    </a>
+}
+
+<div class="hero">
+    <h1>Belgeler</h1>
+    <div class="sub">
+        <span class="mono">@Model.Count belge</span>
+    </div>
+</div>
+
+@await Html.PartialAsync("_AlertMessage", TempData["Success"] != null ? ("success", TempData["Success"]!.ToString()!) : TempData["Error"] != null ? ("error", TempData["Error"]!.ToString()!) : ("", ""))
+
+@* Upload Formu *@
+<div class="form-section-card" style="max-width:100%; margin-bottom:18px;">
+    <div style="padding:14px 18px; border-bottom:1px solid var(--line);">
+        <span style="font-size:13px; font-weight:600; color:var(--ink-1);">Belge Yükle</span>
+    </div>
+    <div style="padding:18px;">
+        <form method="post" action="/Documents/Upload" enctype="multipart/form-data">
+            @Html.AntiForgeryToken()
+            <div style="display:grid; grid-template-columns:2fr 1fr auto; gap:12px; align-items:end;">
+                <div class="field">
+                    <label class="lab" for="fileInput">Dosya (PDF / DOCX / XLSX, maks. 50 MB)</label>
+                    <input class="inp" type="file" id="fileInput" name="file" accept=".pdf,.docx,.xlsx,.doc" required>
+                </div>
+                <div class="field">
+                    <label class="lab" for="contractSel">Sözleşme (opsiyonel)</label>
+                    <select class="inp" id="contractSel" name="contractId">
+                        <option value="">— Seçin —</option>
+                        @if (contracts != null)
+                        {
+                            foreach (var c in contracts)
+                            {
+                                <option value="@c.Id">@c.Title</option>
+                            }
+                        }
+                    </select>
+                </div>
+                <button type="submit" class="btn primary">
+                    <i class="fas fa-upload text-[10px]"></i>
+                    Yükle
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@* Filtre *@
+<form method="get" class="report-filter-bar" style="margin-bottom:18px;">
+    <div style="flex:1; min-width:200px;">
+        <label class="lab" for="qInput">Dosya Adı</label>
+        <input class="inp" type="text" id="qInput" name="q" value="@q" placeholder="Dosya ara...">
+    </div>
+    <div style="min-width:180px;">
+        <label class="lab" for="contractFilter">Sözleşme</label>
+        <select class="inp" id="contractFilter" name="contractId">
+            <option value="">Tümü</option>
+            @if (contracts != null)
+            {
+                foreach (var c in contracts)
+                {
+                    if (contractFilter.HasValue && (int)c.Id == contractFilter.Value)
+                    {
+                        <option value="@c.Id" selected>@c.Title</option>
+                    }
+                    else
+                    {
+                        <option value="@c.Id">@c.Title</option>
+                    }
+                }
+            }
+        </select>
+    </div>
+    <div style="display:flex; gap:6px; align-items:flex-end;">
+        <button type="submit" class="btn primary">
+            <i class="fas fa-filter text-[10px]"></i>
+            Filtrele
+        </button>
+        @if (!string.IsNullOrWhiteSpace(q) || contractFilter.HasValue)
+        {
+            <a href="/Documents" class="btn ghost">
+                <i class="fas fa-xmark text-[10px]"></i>
+                Temizle
+            </a>
+        }
+    </div>
+</form>
+
+@if (!Model.Any())
+{
+    <div class="empty-state">
+        <i class="fas fa-folder-open" style="font-size:48px; opacity:.3; margin-bottom:12px;"></i>
+        <h3>Belge bulunamadı</h3>
+        <p>Henüz belge yüklenmemiş ya da filtre kriterlerinize uygun sonuç yok.</p>
+    </div>
+}
+else
+{
+    <div style="background:var(--paper); border:1px solid var(--line); border-radius:10px; overflow:hidden;">
+        <table class="dt">
+            <thead>
+                <tr>
+                    <th scope="col">Dosya</th>
+                    <th scope="col">Sözleşme</th>
+                    <th scope="col">Boyut</th>
+                    <th scope="col">Versiyon</th>
+                    <th scope="col">Yüklenme</th>
+                    <th scope="col" style="text-align:right;">İşlemler</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var f in Model)
+                {
+                    var icon = f.MimeType?.Contains("pdf") == true ? "fas fa-file-pdf"
+                             : f.MimeType?.Contains("word") == true ? "fas fa-file-word"
+                             : f.MimeType?.Contains("sheet") == true ? "fas fa-file-excel"
+                             : "fas fa-file";
+                    var sizeLabel = f.FileSize >= 1024 * 1024
+                        ? $"{f.FileSize / 1024.0 / 1024.0:F1} MB"
+                        : $"{f.FileSize / 1024.0:F0} KB";
+
+                    <tr>
+                        <td>
+                            <a href="/@f.FilePath" target="_blank" style="display:flex; align-items:center; gap:8px; color:var(--accent); text-decoration:none;">
+                                <i class="@icon" style="font-size:15px; opacity:.7;"></i>
+                                <span>@f.FileName</span>
+                            </a>
+                        </td>
+                        <td>
+                            @if (f.Contract != null)
+                            {
+                                <a href="/Contracts/Details/@f.Contract.Id" style="color:var(--accent); font-size:12.5px;">@f.Contract.Title</a>
+                            }
+                            else
+                            {
+                                <span class="text-muted">—</span>
+                            }
+                        </td>
+                        <td><span class="mono">@sizeLabel</span></td>
+                        <td><span class="pill">v@f.Version</span></td>
+                        <td><span class="ago">@f.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</span></td>
+                        <td style="text-align:right;">
+                            @if (f.MimeType?.Contains("pdf") == true)
+                            {
+                                <a href="/Ai?fileId=@f.Id" class="btn sm ghost" title="AI Analiz">
+                                    <i class="fas fa-robot text-[9px]"></i>
+                                    AI
+                                </a>
+                            }
+                            <form method="post" action="/Documents/Delete" style="display:inline; margin:0;" onsubmit="return confirm('Bu belge silinsin mi?')">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@f.Id">
+                                <button type="submit" class="btn sm danger">
+                                    <i class="fas fa-trash text-[9px]"></i>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@await Html.PartialAsync("_FooterHint", (string?)$"{Model.Count} belge")

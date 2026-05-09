@@ -1,0 +1,150 @@
+@model List<Mosaik.Models.ComplianceTemplate>
+@using Mosaik.Models
+@{
+    Layout = "_AppLayout";
+    var package = ViewBag.Package as string ?? "";
+    var firmas  = ViewBag.AccessibleFirmas as List<Firma> ?? new List<Firma>();
+    ViewData["Title"] = $"Uyum — {package}";
+
+    string RecurrenceLabel(RecurrenceType r) => r switch
+    {
+        RecurrenceType.Monthly   => "Aylık",
+        RecurrenceType.Quarterly => "Çeyreklik",
+        RecurrenceType.Yearly    => "Yıllık",
+        RecurrenceType.Custom    => "Özel",
+        _                        => r.ToString()
+    };
+    string CategoryLabel(ObligationCategory c) => c switch
+    {
+        ObligationCategory.Finance    => "Finans",
+        ObligationCategory.Tax        => "Vergi",
+        ObligationCategory.Hr         => "İK",
+        ObligationCategory.Operation  => "Operasyon",
+        ObligationCategory.It         => "BT",
+        ObligationCategory.Legal      => "Hukuk",
+        _                             => c.ToString()
+    };
+}
+
+@section Breadcrumb {
+    <nav class="crumbs" aria-label="Sayfa konumu">
+        <a href="/Dashboard">Ana Sayfa</a>
+        <span aria-hidden="true">›</span>
+        <a href="/Compliance">Uyum</a>
+        <span aria-hidden="true">›</span>
+        <span aria-current="page">@package</span>
+    </nav>
+}
+
+@section TopActions {
+    <a href="/Compliance" class="btn ghost">
+        <i class="fas fa-arrow-left text-[10px]"></i>
+        Paketler
+    </a>
+}
+
+<div class="hero">
+    <h1>@package Paketi</h1>
+    <div class="sub">
+        <span>@Model.Count şablon seçin ve yükümlülük olarak ekleyin</span>
+    </div>
+</div>
+
+@await Html.PartialAsync("_AlertMessage", TempData["Success"] != null ? ("success", TempData["Success"]!.ToString()!) : TempData["Error"] != null ? ("error", TempData["Error"]!.ToString()!) : ("", ""))
+
+<form method="post" action="/Compliance/Import" id="importForm">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="package" value="@package">
+
+    @* Firma seçimi *@
+    @if (firmas.Any())
+    {
+        <div class="form-section-card" style="max-width:100%; margin-bottom:16px;">
+            <div style="padding:12px 18px; border-bottom:1px solid var(--line);">
+                <span style="font-size:13px; font-weight:600;">Firma Seçin</span>
+            </div>
+            <div style="padding:14px 18px;">
+                <select class="inp" name="firmaId" required style="max-width:320px;">
+                    @foreach (var f in firmas)
+                    {
+                        <option value="@f.FirmaId">@f.Name</option>
+                    }
+                </select>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="alert warn" role="alert" style="margin-bottom:16px;">
+            <i class="fas fa-triangle-exclamation"></i>
+            Erişilebilir firma bulunamadı. Yöneticinize başvurun.
+        </div>
+    }
+
+    @* Şablon listesi *@
+    <div style="background:var(--paper); border:1px solid var(--line); border-radius:10px; overflow:hidden; margin-bottom:16px;">
+        <div style="padding:12px 18px; border-bottom:1px solid var(--line); display:flex; justify-content:space-between; align-items:center;">
+            <span style="font-size:13px; font-weight:600;">Şablonlar</span>
+            <label style="font-size:12.5px; color:var(--ink-3); cursor:pointer; display:flex; align-items:center; gap:6px;">
+                <input type="checkbox" id="checkAll"> Tümünü seç
+            </label>
+        </div>
+        <table class="dt">
+            <thead>
+                <tr>
+                    <th scope="col" style="width:36px;"></th>
+                    <th scope="col">Yükümlülük</th>
+                    <th scope="col">Kategori</th>
+                    <th scope="col">Tekrar</th>
+                    <th scope="col">Hatırlatma</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var t in Model)
+                {
+                    <tr>
+                        <td>
+                            <input type="checkbox" name="templateIds" value="@t.Id" class="template-cb">
+                        </td>
+                        <td>
+                            <span style="font-size:13px; font-weight:500; color:var(--ink-1);">@t.Title</span>
+                            @if (!string.IsNullOrWhiteSpace(t.Description))
+                            {
+                                <br><span class="text-muted text-xs">@t.Description</span>
+                            }
+                        </td>
+                        <td><span class="pill">@CategoryLabel(t.Category)</span></td>
+                        <td><span class="mono text-xs">@RecurrenceLabel(t.Recurrence)</span></td>
+                        <td>
+                            @if (t.ReminderDays > 0)
+                            {
+                                <span class="mono text-xs">@t.ReminderDays gün önce</span>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    @if (firmas.Any())
+    {
+        <div class="action-row" style="max-width:100%;">
+            <a href="/Compliance" class="btn ghost">İptal</a>
+            <button type="submit" class="btn primary">
+                <i class="fas fa-plus text-[10px]"></i>
+                Seçilenleri Yükümlülük Olarak Ekle
+            </button>
+        </div>
+    }
+</form>
+
+@section Scripts {
+    <script>
+    document.getElementById('checkAll').addEventListener('change', function () {
+        document.querySelectorAll('.template-cb').forEach(function (cb) {
+            cb.checked = document.getElementById('checkAll').checked;
+        });
+    });
+    </script>
+}
