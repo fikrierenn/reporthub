@@ -1,5 +1,27 @@
 namespace Mosaik.Core.Ai
 {
+    // Plan 16.5 Faz C — genel LLM metin üretici (provider-agnostic, fallback zinciri).
+    // Extraction ve özet pipeline'ı her ikisi de bu interface'i kullanır.
+    // Implementasyon: Mosaik/Services/Ai/FallbackLlmService.cs (IAiSettingsProvider'dan config okur).
+    public interface ILlmService
+    {
+        Task<LlmResponse> GenerateAsync(LlmRequest request, CancellationToken ct = default);
+    }
+
+    public sealed record LlmRequest(
+        string SystemPrompt,
+        string UserPrompt,
+        bool RequireJson = true,
+        string? Purpose = null);
+
+    public sealed record LlmResponse(
+        bool IsSuccess,
+        string? Content,
+        string? Error,
+        int InputTokens = 0,
+        int OutputTokens = 0,
+        string? ModelUsed = null);
+
     // Plan 17 Faz F (Plan 16.5 Faz C+D'ye evrilecek shared AI Core).
     // vNext modüller (Circular, Document, vb.) AI özet/analiz ihtiyacında
     // bu interface'i inject eder. Host (Mosaik) IAiSettingsProvider üzerinden

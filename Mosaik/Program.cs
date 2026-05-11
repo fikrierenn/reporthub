@@ -64,6 +64,7 @@ builder.Services.AddHttpClient("ai-vision", c => c.Timeout = TimeSpan.FromSecond
 builder.Services.AddDataProtection();
 builder.Services.AddScoped<Mosaik.Core.Ai.IAiSettingsProvider, Mosaik.Services.AiSettingsProvider>();
 builder.Services.AddScoped<Mosaik.Core.Ai.IAiSummaryProvider, Mosaik.Services.AiSummaryProvider>();
+builder.Services.AddScoped<Mosaik.Core.Ai.ILlmService, Mosaik.Services.Ai.FallbackLlmService>();
 
 // Plan 16.5 Faz A+B — Mosaik.Core
 builder.Services.AddMemoryCache();
