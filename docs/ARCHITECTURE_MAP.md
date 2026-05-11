@@ -5,9 +5,15 @@
 > hangi sidebar linki canonical entry point — hepsi burada.
 > Tahmin etme. **Önce buraya bak.**
 
-Son güncelleme: **2026-05-12**
-Tutucu kural: Repo'da gerçekle eşleşmeyen satır görürsen, **kod yerine bu dosyayı güncelle** ya da
-en azından "stale!" işareti ekle.
+Son elle güncelleme: **2026-05-12**
+Son otomatik refresh: <!-- AUTO:LAST_REFRESH --> 2026-05-12 <!-- /AUTO:LAST_REFRESH -->
+
+> **Otomatik tazelenir.** `bash scripts/refresh-arch-map.sh` çalıştırılınca aşağıdaki marker'lı bölümler regenerate edilir:
+> AppModules live state (§ 7), Admin views listesi (§ 12), Controller routes (§ 13).
+> El ile yazılan bölümler (§ 2-6, 8-11) — kullanıcı sorumluluğunda.
+>
+> **Oturum başı 5. adım** = ARCHITECTURE_MAP.md oku (CLAUDE.md § 0).
+> **Oturum sonu 4. adım** = `bash scripts/refresh-arch-map.sh` çalıştır, değişen satır varsa commit'e dahil et.
 
 ---
 
@@ -151,19 +157,26 @@ Son migration numarası (2026-05-12): **56** (`56_AppModulesGroupKey.sql`).
 dotnet run --project D:/Dev/sqlcli -- query "SELECT ModuleKey, DisplayName, GroupKey, IsEnabled, ModuleType FROM dbo.AppModules ORDER BY SortOrder"
 ```
 
-Mevcut (2026-05-12, 10 modül):
-```
-reports       Raporlar           workspace   core
-dashboards    Panolar            workspace   core   (sidebar render'da SKIP — Dashboard hardcoded)
-calendar      Takvim             workspace   extension
-documents     Dokümanlar         workspace   core
-compliance    Uyum               contracts   extension
-ai            AI Analiz          structure   extension
-contracts     Sözleşmeler        contracts   core
-obligations   Yükümlülükler      contracts   core
-orgchart      Organizasyon       structure   core
-circular      Tamim & Sirküler   workspace   extension (Mosaik.Modules.Tamim assembly)
-```
+Live tablo (her oturum sonu refresh script ile güncellenir):
+
+<!-- AUTO:APPMODULES:START -->
+_Otomatik üretildi — `scripts/refresh-arch-map.sh` tarafından. Elle düzenleme yok._
+
+| ModuleKey | DisplayName | GroupKey | IsEnabled | ModuleType | AssemblyName |
+|---|---|---|---|---|---|
+| reports | Raporlar | workspace | ✓ | core |  |
+| dashboards | Panolar | workspace | ✓ | core |  |
+| calendar | Takvim | workspace | ✓ | extension |  |
+| documents | Dokümanlar | workspace | ✓ | core |  |
+| compliance | Uyum | contracts | ✓ | extension |  |
+| ai | AI Analiz | structure | ✓ | extension |  |
+| contracts | Sözleşmeler | contracts | ✓ | core |  |
+| obligations | Yükümlülükler | contracts | ✓ | core |  |
+| orgchart | Organizasyon | structure | ✓ | core |  |
+| circular | Tamim & Sirküler | workspace | ✓ | extension | Mosaik.Modules.Tamim |
+<!-- AUTO:APPMODULES:END -->
+
+Not: `dashboards` modülü sidebar render'da SKIP edilir (Genel Bakış zaten `/Dashboard`).
 
 **Yeni modül eklerken:** Migration → seed (ModuleKey, DisplayName, IsEnabled, SortOrder, ModuleType, **GroupKey**) → `_AppLayout.cshtml` `moduleIcons` dict'e ikon ekle → `ModuleUrl` switch'ine route mapping ekle (gerekiyorsa).
 
@@ -215,5 +228,139 @@ Bir view/method/file silmeden veya rename etmeden önce **hepsini sırayla** yap
 - `.claude/rules/architecture.md` — kalıcı mimari kural (bu dosyanın özeti)
 - `.claude/rules/known-issues.md` — Kaspersky, AGENT.md vs
 - `.claude/rules/session-protocol.md` — oturum başı ritüel (bu dosya artık 0. adım)
+- `.claude/rules/before-major-change.md` — silme/refactor öncesi çek-liste
 - `memory/project_architecture_map.md` — machine-local özet (auto-memory)
 - `docs/MOSAIK_DESIGN_PROMPT.md` — UI standardı promptu (tasarım üretimi için)
+
+---
+
+## 12. Admin views envanteri (otomatik)
+
+<!-- AUTO:ADMIN_VIEWS:START -->
+_Otomatik üretildi. Mosaik/Views/Admin/*.cshtml (partial hariç)._
+
+- `AiSettings.cshtml` (lines=181, inline-style=30)
+- `AiSettingsEdit.cshtml` (lines=254, inline-style=55)
+- `BrandSettings.cshtml` (lines=110, inline-style=21)
+- `CreateDataSource.cshtml` (lines=149, inline-style=36)
+- `CreateFilter.cshtml` (lines=57, inline-style=7)
+- `CreateReportV2.cshtml` (lines=967, inline-style=81)
+- `CreateUser.cshtml` (lines=172, inline-style=0)
+- `EditDataSource.cshtml` (lines=159, inline-style=37)
+- `EditFilter.cshtml` (lines=63, inline-style=7)
+- `EditGroup.cshtml` (lines=91, inline-style=16)
+- `EditPosition.cshtml` (lines=144, inline-style=0)
+- `EditReportV2.cshtml` (lines=1067, inline-style=97)
+- `EditRole.cshtml` (lines=92, inline-style=16)
+- `EditUser.cshtml` (lines=177, inline-style=0)
+- `Index.cshtml` (lines=36, inline-style=2)
+- `Lookup.cshtml` (lines=118, inline-style=16)
+- `Modules.cshtml` (lines=92, inline-style=16)
+- `OrgChart.cshtml` (lines=439, inline-style=39)
+<!-- AUTO:ADMIN_VIEWS:END -->
+
+`inline-style=0` → standart. `>10` → Plan 33 standardizasyon hedefi.
+
+---
+
+## 13. AdminController routes envanteri (otomatik)
+
+<!-- AUTO:CONTROLLER_ROUTES:START -->
+_Otomatik üretildi. AdminController partial'larından çıkarılır._
+
+```
+14:        [Route("Admin/AiSettings")]
+16:        public async Task<IActionResult> AiSettings()
+27:        [Route("Admin/AiSettings/Edit/{id?}")]
+29:        public async Task<IActionResult> AiSettingsEdit(int? id)
+45:        [Route("Admin/AiSettings/Edit/{id?}")]
+48:        public async Task<IActionResult> AiSettingsEdit(int? id, AiSettings input,
+100:        [Route("Admin/AiSettings/SetPrimary/{id:int}")]
+103:        public async Task<IActionResult> AiSettingsSetPrimary(int id)
+116:        [Route("Admin/AiSettings/Delete/{id:int}")]
+119:        public async Task<IActionResult> AiSettingsDelete(int id)
+139:        [Route("Admin/AiSettings/Test/{id:int}")]
+142:        public async Task<IActionResult> AiSettingsTest(int id, [FromServices] IAiSummaryProvider ai)
+10:        [Route("Admin/BrandSettings")]
+11:        public async Task<IActionResult> BrandSettings()
+20:        [Route("Admin/BrandSettings")]
+21:        public async Task<IActionResult> BrandSettings(BrandSettings model, IFormFile? logoFile)
+13:        [Route("Admin/CreateDataSource")]
+14:        public IActionResult CreateDataSource()
+25:        [Route("Admin/CreateDataSource")]
+26:        public async Task<IActionResult> CreateDataSource(
+65:        [Route("Admin/EditDataSource/{key}")]
+66:        public async Task<IActionResult> EditDataSource(string key)
+93:        [Route("Admin/EditDataSource/{key}")]
+94:        public async Task<IActionResult> EditDataSource(
+14:        [Route("Admin/CreateFilter")]
+15:        public async Task<IActionResult> CreateFilter()
+35:        [Route("Admin/CreateFilter")]
+36:        public async Task<IActionResult> CreateFilter(FilterDefinition definition)
+63:        [Route("Admin/EditFilter/{id}")]
+64:        public async Task<IActionResult> EditFilter(int id)
+86:        [Route("Admin/EditFilter/{id}")]
+87:        public async Task<IActionResult> EditFilter(int id, FilterDefinition definition)
+121:        [Route("Admin/TestFilterOptionsQuery")]
+122:        public async Task<IActionResult> TestFilterOptionsQuery(
+12:        public async Task<IActionResult> Lookup()
+30:        public async Task<IActionResult> LookupAddValue(int typeId, string code, string label, int displayOrder)
+62:        public async Task<IActionResult> LookupToggleValue(int valueId, bool active)
+10:        [Route("Admin/Modules")]
+11:        public async Task<IActionResult> Modules()
+19:        [Route("Admin/Modules")]
+20:        public async Task<IActionResult> Modules(List<int> enabledIds)
+15:        public async Task<IActionResult> OrgChart(string? view, [FromServices] IOrgChartService orgChart)
+34:        public async Task<IActionResult> CreatePosition([FromServices] IOrgChartService orgChart)
+45:        public async Task<IActionResult> CreatePosition(AdminOrgPositionFormViewModel input,
+75:        public async Task<IActionResult> EditPosition(int id, [FromServices] IOrgChartService orgChart)
+96:        public async Task<IActionResult> EditPosition(int id, AdminOrgPositionFormViewModel input,
+129:        public async Task<IActionResult> DeletePosition(int id, [FromServices] IOrgChartService orgChart)
+153:        public async Task<IActionResult> OrgChartReorder([FromBody] OrgChartReorderRequest req,
+179:        public async Task<IActionResult> ImportZirvePosition(string code, [FromServices] IOrgChartService orgChart)
+16:        public async Task<IActionResult> CreateReport()
+87:        [Route("Admin/CreateReport")]
+88:        public async Task<IActionResult> CreateReport(ReportCatalog report)
+104:        [Route("Admin/CreateReportV2")]
+105:        public async Task<IActionResult> CreateReportV2()
+112:        [Route("Admin/EditReportV2/{id}")]
+113:        public async Task<IActionResult> EditReportV2(int id)
+121:        [Route("Admin/CreateReport")]
+123:        public IActionResult CreateReportLegacyRedirect() =>
+126:        [Route("Admin/EditReport/{id:int}")]
+128:        public IActionResult EditReportLegacyRedirect(int id) =>
+132:        public async Task<IActionResult> EditReport(int id)
+184:        [Route("Admin/EditReport/{id}")]
+185:        public async Task<IActionResult> EditReport(int id, ReportCatalog report)
+13:        [Route("Admin/EditRole/{id}")]
+14:        public async Task<IActionResult> EditRole(int id)
+32:        [Route("Admin/EditRole/{id}")]
+33:        public async Task<IActionResult> EditRole(int id, Role role)
+84:        [Route("Admin/EditGroup/{id}")]
+85:        public async Task<IActionResult> EditGroup(int id)
+103:        [Route("Admin/EditGroup/{id}")]
+104:        public async Task<IActionResult> EditGroup(int id, ReportGroup group)
+13:        [Route("Admin/ProcParams")]
+15:        public async Task<IActionResult> ProcParams(string dataSourceKey, string procName)
+27:        [Route("Admin/FilterOptions")]
+30:        public async Task<IActionResult> FilterOptions(string filterKey, string? dataSourceKey = null)
+44:        [Route("Admin/ValidateFormula")]
+46:        public IActionResult ValidateFormula([FromForm] string? formula)
+59:        [Route("Admin/SpList")]
+61:        public async Task<IActionResult> SpList(string dataSourceKey)
+71:        [Route("Admin/SpPreview")]
+73:        public async Task<IActionResult> SpPreview(string dataSourceKey, string procName, int maxRows = 10, string? paramsJson = null)
+13:        [Route("Admin/CreateUser")]
+14:        public async Task<IActionResult> CreateUser()
+26:        [Route("Admin/CreateUser")]
+27:        public async Task<IActionResult> CreateUser(User user)
+45:        [Route("Admin/EditUser/{id}")]
+46:        public async Task<IActionResult> EditUser(int id)
+72:        [Route("Admin/EditUser/{id}")]
+73:        public async Task<IActionResult> EditUser(int id, User user)
+82:        public async Task<IActionResult> Index(string tab = "overview")
+145:        public async Task<IActionResult> Index(string tab = "datasources", string action = "", string key = "", int id = 0)
+```
+<!-- AUTO:CONTROLLER_ROUTES:END -->
+
+GET-only (route attribute olmayan) method'lar V2 wrapper'lardan çağrılır — sadece data load için public.

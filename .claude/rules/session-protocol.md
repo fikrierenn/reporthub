@@ -150,6 +150,27 @@ Detay memory: `feedback_subagent_skill_ana_prensip.md`.
 
 Kullanıcı "iyi geceler" / "handoff" / "kaydet ve kapat" / "/handoff" / "devam edeceğiz" dediğinde `.claude/skills/session-handoff/SKILL.md` devreye girer.
 
+### ARCHITECTURE_MAP refresh — ZORUNLU
+
+**Karar 2026-05-12 (kullanıcı):** "Bu dosyayı da sürekli besle." Oturum sonu (handoff öncesi) ve **kod/view/controller değiştiren her commit öncesi** çalıştır:
+
+```bash
+bash scripts/refresh-arch-map.sh
+```
+
+Script şu bölümleri otomatik yeniler (marker'lı):
+- § 7 AppModules live state (sqlcli'den çekilir)
+- § 12 Admin views envanteri (inline-style sayımı dahil)
+- § 13 Controller routes envanteri
+- "Last refresh" tarihi
+
+Diff varsa commit'e dahil et:
+```bash
+git add docs/ARCHITECTURE_MAP.md
+```
+
+El ile yazılan bölümler (§ 2-6, 8-11) değişen yapıya göre ayrıca güncellenmeli — script bunlara dokunmaz.
+
 ### Compliance Scan — oturum başında VE sonunda ZORUNLU
 
 **Karar 2026-05-11 (kullanıcı):** "her kapanışta ya da açılışta yapmalısın." Artık iki yönde zorunlu:

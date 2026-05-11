@@ -38,6 +38,15 @@
             "command": "bash D:/Dev/reporthub/.claude/hooks/post-tool-size-warn.sh"
           }
         ]
+      },
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash D:/Dev/reporthub/.claude/hooks/architecture-map-staleness.sh"
+          }
+        ]
       }
     ],
     "PreCompact": [
