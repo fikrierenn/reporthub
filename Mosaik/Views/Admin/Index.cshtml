@@ -3,9 +3,7 @@
     Layout = "_AppLayout";
     ViewData["Title"] = "Yönetim Paneli - BKM Rapor Paneli";
     ViewData["PageTitle"] = "Yönetim Paneli";
-    var tab = Model.ActiveTab ?? "datasources";
-
-    string TabClass(string name) => tab == name ? "active" : "";
+    var tab = Model.ActiveTab ?? "overview";
 }
 
 <div class="hero">
@@ -26,53 +24,6 @@
     </div>
 }
 
-@* Plan 23 — Yatay subnav kaldırıldı, sidebar Sistem grubu erişim sağlar.
-   Kayıt sayıları KPI kartları olarak gösterilir (navigasyon değil, özet). *@
-<div class="admin-kpi-grid">
-    <a href="/Admin?tab=datasources" class="admin-kpi-card @TabClass("datasources")">
-        <i class="fas fa-database"></i>
-        <div class="kpi-meta">
-            <div class="kpi-label">Veri Kaynakları</div>
-            <div class="kpi-count">@Model.DataSources.Count</div>
-        </div>
-    </a>
-    <a href="/Admin?tab=reports" class="admin-kpi-card @TabClass("reports")">
-        <i class="fas fa-file-lines"></i>
-        <div class="kpi-meta">
-            <div class="kpi-label">Raporlar</div>
-            <div class="kpi-count">@Model.Reports.Count</div>
-        </div>
-    </a>
-    <a href="/Admin?tab=users" class="admin-kpi-card @TabClass("users")">
-        <i class="fas fa-users"></i>
-        <div class="kpi-meta">
-            <div class="kpi-label">Kullanıcılar</div>
-            <div class="kpi-count">@Model.Users.Count</div>
-        </div>
-    </a>
-    <a href="/Admin?tab=roles" class="admin-kpi-card @TabClass("roles")">
-        <i class="fas fa-shield-halved"></i>
-        <div class="kpi-meta">
-            <div class="kpi-label">Roller</div>
-            <div class="kpi-count">@Model.Roles.Count</div>
-        </div>
-    </a>
-    <a href="/Admin?tab=groups" class="admin-kpi-card @TabClass("groups")">
-        <i class="fas fa-folder-tree"></i>
-        <div class="kpi-meta">
-            <div class="kpi-label">Rapor Grupları</div>
-            <div class="kpi-count">@Model.Groups.Count</div>
-        </div>
-    </a>
-    <a href="/Admin?tab=filters" class="admin-kpi-card @TabClass("filters")">
-        <i class="fas fa-filter"></i>
-        <div class="kpi-meta">
-            <div class="kpi-label">Filtreler</div>
-            <div class="kpi-count">@Model.FilterDefinitions.Count</div>
-        </div>
-    </a>
-</div>
-
 @switch (tab)
 {
     case "reports":     @await Html.PartialAsync("_AdminTabReports", Model);     break;
@@ -80,5 +31,6 @@
     case "roles":       @await Html.PartialAsync("_AdminTabRoles", Model);       break;
     case "groups":      @await Html.PartialAsync("_AdminTabGroups", Model);      break;
     case "filters":     @await Html.PartialAsync("_AdminTabFilters", Model);     break;
-    default:            @await Html.PartialAsync("_AdminTabDataSources", Model); break;
+    case "datasources": @await Html.PartialAsync("_AdminTabDataSources", Model); break;
+    default:            @await Html.PartialAsync("_AdminOverview", Model);       break;
 }

@@ -777,49 +777,210 @@ select.inp {
 .form-section-card.mb-16 { margin-bottom: 16px; }
 
 
-/* Plan 23 — Admin KPI kart grid (yatay subnav yerine).
-   Sidebar Sistem grubu navigasyonu sağlar, bu kartlar sadece sayım özet + tab geçişi. */
-.admin-kpi-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
-    gap: 10px;
-    margin: 14px 0 18px;
-}
+/* ───────────────────────────────────────────────────────────────────
+   Plan 23 — Admin Overview Dashboard
+   Sidebar zaten navigasyon — bu sayfa metrik + aktivite + hızlı eylem.
+   ─────────────────────────────────────────────────────────────────── */
 
-.admin-kpi-card {
+/* Sistem sağlık şeridi (en üstte tam genişlik) */
+.overview-health { margin: 14px 0 18px; }
+
+.overview-health .health-card {
     display: flex;
     align-items: center;
+    gap: 14px;
+    padding: 14px 18px;
+    border-radius: 12px;
+    border: 1px solid var(--line);
+}
+
+.overview-health .health-card.ok {
+    background: linear-gradient(90deg, rgba(16,185,129,.06), rgba(16,185,129,0) 50%);
+    border-color: rgba(16,185,129,.25);
+}
+
+.overview-health .health-card.warn {
+    background: linear-gradient(90deg, rgba(245,158,11,.08), rgba(245,158,11,0) 50%);
+    border-color: rgba(245,158,11,.3);
+}
+
+.overview-health .health-icon {
+    width: 36px; height: 36px; border-radius: 50%;
+    display: grid; place-items: center; font-size: 16px;
+}
+
+.overview-health .health-card.ok .health-icon { background: rgba(16,185,129,.15); color: #059669; }
+.overview-health .health-card.warn .health-icon { background: rgba(245,158,11,.18); color: #b45309; }
+
+.overview-health .health-title { font-size: 14px; font-weight: 700; color: var(--ink-1); }
+.overview-health .health-desc { font-size: 12.5px; color: var(--ink-3); margin-top: 2px; }
+
+/* 4-KPI metric satırı */
+.overview-kpis {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
     gap: 12px;
-    padding: 12px 14px;
+    margin-bottom: 20px;
+}
+
+.kpi-tile {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 16px;
     background: var(--paper);
     border: 1px solid var(--line);
-    border-radius: 10px;
-    text-decoration: none;
-    color: var(--ink-2);
-    transition: background .12s ease, border-color .12s ease, transform .12s ease;
+    border-radius: 12px;
 }
 
-.admin-kpi-card:hover {
+.kpi-tile-alert { border-color: rgba(220,38,38,.3); background: rgba(220,38,38,.04); }
+.kpi-tile-alert .kpi-tile-icon { background: rgba(220,38,38,.12); color: #b91c1c; }
+
+.kpi-tile-icon {
+    width: 40px; height: 40px;
+    border-radius: 10px;
     background: var(--line-2);
-    border-color: var(--ink-5);
+    color: var(--accent);
+    display: grid; place-items: center;
+    font-size: 16px;
+}
+
+.kpi-tile-body { flex: 1; }
+.kpi-tile-label { font-size: 11.5px; color: var(--ink-3); font-weight: 600; letter-spacing: .02em; }
+.kpi-tile-value {
+    font-size: 24px; font-weight: 700; color: var(--ink-1);
+    font-feature-settings: "tnum"; line-height: 1.1; margin-top: 2px;
+}
+.kpi-tile-total { font-size: 13px; color: var(--ink-4); font-weight: 500; margin-left: 4px; }
+
+/* 2 kolonlu grid: aktivite + sidebar (eylem + son rapor) */
+.overview-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.5fr) minmax(280px, 1fr);
+    gap: 14px;
+}
+
+@media (max-width: 1024px) {
+    .overview-grid { grid-template-columns: 1fr; }
+}
+
+.overview-aside { display: flex; flex-direction: column; gap: 14px; }
+
+.overview-panel {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.overview-panel-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--line);
+    background: var(--line-2);
+}
+
+.overview-panel-head h2 {
+    font-size: 13px; font-weight: 700; margin: 0;
+    color: var(--ink-2); display: flex; align-items: center; gap: 8px;
+    text-transform: uppercase; letter-spacing: .05em;
+}
+
+.overview-panel-head h2 i { color: var(--accent); font-size: 12px; }
+
+.overview-panel-link {
+    font-size: 11.5px; color: var(--ink-3); text-decoration: none;
+    display: flex; align-items: center; gap: 4px;
+}
+.overview-panel-link:hover { color: var(--accent); }
+
+/* Aktivite listesi */
+.overview-activity { list-style: none; margin: 0; padding: 0; max-height: 480px; overflow-y: auto; }
+.overview-activity li {
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 10px 16px; border-bottom: 1px solid var(--line);
+    font-size: 13px;
+}
+.overview-activity li:last-child { border-bottom: 0; }
+
+.overview-activity .act-icon {
+    width: 28px; height: 28px; border-radius: 8px;
+    display: grid; place-items: center; font-size: 12px;
+    flex-shrink: 0;
+}
+
+.overview-activity .tone-success .act-icon { background: rgba(16,185,129,.12); color: #059669; }
+.overview-activity .tone-warn    .act-icon { background: rgba(245,158,11,.15); color: #b45309; }
+.overview-activity .tone-danger  .act-icon { background: rgba(220,38,38,.12); color: #b91c1c; }
+.overview-activity .tone-neutral .act-icon { background: var(--line-2); color: var(--ink-3); }
+
+.overview-activity .act-body { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.overview-activity .act-title { font-weight: 600; color: var(--ink-1); font-size: 13px; }
+.overview-activity .act-actor { font-size: 11.5px; color: var(--ink-3); }
+.overview-activity .act-desc {
+    font-size: 11.5px; color: var(--ink-3);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.overview-activity .act-time {
+    font-size: 11px; color: var(--ink-4); flex-shrink: 0;
+    font-variant-numeric: tabular-nums;
+}
+
+/* Hızlı eylem butonları */
+.overview-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    padding: 14px 16px;
+}
+
+.action-btn {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 6px;
+    padding: 14px 8px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--bg-1);
+    color: var(--ink-2);
+    text-decoration: none;
+    font-size: 12px; font-weight: 600;
+    transition: background .12s, border-color .12s, transform .12s;
+}
+
+.action-btn i { font-size: 16px; color: var(--ink-3); }
+.action-btn:hover {
+    background: var(--line-2); border-color: var(--ink-5);
     transform: translateY(-1px);
 }
+.action-btn.primary {
+    background: var(--accent); border-color: var(--accent);
+    color: #fff;
+}
+.action-btn.primary i { color: #fff; }
+.action-btn.primary:hover { background: var(--accent-dark, #b91c1c); border-color: var(--accent-dark, #b91c1c); }
 
-.admin-kpi-card.active {
-    border-color: var(--accent);
-    background: var(--paper);
-    box-shadow: 0 0 0 1px var(--accent) inset;
+/* Genel liste (son rapor vb.) */
+.overview-list { list-style: none; margin: 0; padding: 8px 0; }
+.overview-list li { padding: 0; }
+.overview-list a {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 16px;
+    text-decoration: none; color: var(--ink-2);
+    font-size: 13px;
+}
+.overview-list a:hover { background: var(--line-2); }
+.overview-list a i { color: var(--ink-4); font-size: 12px; width: 14px; }
+.overview-list .ovl-title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.overview-list .ovl-meta {
+    font-size: 11px; color: var(--ink-4);
+    background: var(--line-2); padding: 2px 8px; border-radius: 4px;
+    flex-shrink: 0;
 }
 
-.admin-kpi-card i {
-    font-size: 18px;
-    color: var(--ink-3);
-    width: 22px;
-    text-align: center;
+/* Boş durum */
+.overview-empty {
+    text-align: center; padding: 32px 16px;
+    color: var(--ink-4);
 }
-
-.admin-kpi-card.active i { color: var(--accent); }
-
-.admin-kpi-card .kpi-meta { display: flex; flex-direction: column; gap: 2px; }
-.admin-kpi-card .kpi-label { font-size: 11.5px; font-weight: 600; color: var(--ink-3); letter-spacing: .01em; }
-.admin-kpi-card .kpi-count { font-size: 18px; font-weight: 700; color: var(--ink-1); font-feature-settings: "tnum"; line-height: 1; }
+.overview-empty i { font-size: 28px; opacity: .4; display: block; margin-bottom: 8px; }
+.overview-empty p { font-size: 13px; margin: 0; }

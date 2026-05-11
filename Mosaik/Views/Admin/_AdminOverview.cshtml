@@ -1,0 +1,223 @@
+@model Mosaik.ViewModels.AdminIndexViewModel
+@using Mosaik.Models
+@{
+    // Plan 23 — Gerçek admin dashboard. KPI rakam + sistem sağlık + son aktivite + hızlı eylem.
+    // Navigasyon sidebar'dan; bu sayfa sadece özet + kısayollar.
+
+    string TimeAgo(DateTime utc)
+    {
+        var span = DateTime.UtcNow - utc;
+        if (span.TotalMinutes < 1) return "şimdi";
+        if (span.TotalMinutes < 60) return $"{(int)span.TotalMinutes} dk önce";
+        if (span.TotalHours < 24)   return $"{(int)span.TotalHours} sa önce";
+        if (span.TotalDays < 7)     return $"{(int)span.TotalDays} gün önce";
+        return utc.ToLocalTime().ToString("dd MMM");
+    }
+
+    string EventLabel(string eventType) => eventType switch
+    {
+        "login_success"     => "Giriş başarılı",
+        "login_failed"      => "Giriş başarısız",
+        "logout"            => "Çıkış",
+        "user_create"       => "Kullanıcı eklendi",
+        "user_update"       => "Kullanıcı güncellendi",
+        "user_delete"       => "Kullanıcı silindi",
+        "role_create"       => "Rol eklendi",
+        "role_update"       => "Rol güncellendi",
+        "role_delete"       => "Rol silindi",
+        "datasource_create" => "Veri kaynağı eklendi",
+        "datasource_update" => "Veri kaynağı güncellendi",
+        "datasource_delete" => "Veri kaynağı silindi",
+        "report_create"     => "Rapor eklendi",
+        "report_update"     => "Rapor güncellendi",
+        "report_delete"     => "Rapor silindi",
+        "report_run"        => "Rapor çalıştırıldı",
+        "report_export"     => "Rapor dışa aktarıldı",
+        "password_change"   => "Şifre değiştirildi",
+        _ => eventType
+    };
+
+    string EventIcon(string eventType) => eventType switch
+    {
+        var e when e.StartsWith("login")    => "fas fa-right-to-bracket",
+        "logout"                            => "fas fa-right-from-bracket",
+        var e when e.StartsWith("user")     => "fas fa-user",
+        var e when e.StartsWith("role")     => "fas fa-shield-halved",
+        var e when e.StartsWith("datasource") => "fas fa-database",
+        var e when e.StartsWith("report")   => "fas fa-file-lines",
+        "password_change"                   => "fas fa-key",
+        _                                   => "fas fa-circle-info"
+    };
+
+    string EventTone(string eventType) =>
+        eventType.Contains("failed") || eventType.Contains("delete") ? "tone-danger" :
+        eventType.Contains("create") ? "tone-success" :
+        eventType.Contains("update") || eventType.Contains("change") ? "tone-warn" :
+        "tone-neutral";
+
+    var moduleHealthy = Model.ActiveModuleCount > 0;
+    var loginAlert = Model.FailedLoginCount24h >= 5;
+    var healthOk = moduleHealthy && !loginAlert;
+}
+
+@* ── ÜST: Sistem sağlık göstergesi ──────────────────────────────── *@
+<section class="overview-health" aria-label="Sistem sağlık">
+    <div class="health-card @(healthOk ? "ok" : "warn")">
+        <div class="health-icon">
+            <i class="fas @(healthOk ? "fa-circle-check" : "fa-triangle-exclamation")"></i>
+        </div>
+        <div class="health-body">
+            <div class="health-title">
+                @(healthOk ? "Sistem normal çalışıyor" : "Dikkat — sistem uyarısı var")
+            </div>
+            <div class="health-desc">
+                @if (!moduleHealthy)
+                {
+                    <span>Aktif modül yok. </span>
+                }
+                @if (loginAlert)
+                {
+                    <span>Son 24 saatte @Model.FailedLoginCount24h başarısız giriş denemesi.</span>
+                }
+                @if (healthOk)
+                {
+                    <span>@Model.ActiveModuleCount aktif modül · @Model.ActiveUserCount aktif kullanıcı · @Model.TodayAuditCount bugünkü olay</span>
+                }
+            </div>
+        </div>
+    </div>
+</section>
+
+@* ── KPI satırı (4 ana metrik) ──────────────────────────────────── *@
+<section class="overview-kpis" aria-label="Anahtar metrikler">
+    <div class="kpi-tile">
+        <div class="kpi-tile-icon"><i class="fas fa-users"></i></div>
+        <div class="kpi-tile-body">
+            <div class="kpi-tile-label">Aktif Kullanıcı</div>
+            <div class="kpi-tile-value">@Model.ActiveUserCount<span class="kpi-tile-total">/@Model.Users.Count</span></div>
+        </div>
+    </div>
+    <div class="kpi-tile">
+        <div class="kpi-tile-icon"><i class="fas fa-puzzle-piece"></i></div>
+        <div class="kpi-tile-body">
+            <div class="kpi-tile-label">Aktif Modül</div>
+            <div class="kpi-tile-value">@Model.ActiveModuleCount<span class="kpi-tile-total">/@Model.TotalModuleCount</span></div>
+        </div>
+    </div>
+    <div class="kpi-tile">
+        <div class="kpi-tile-icon"><i class="fas fa-file-lines"></i></div>
+        <div class="kpi-tile-body">
+            <div class="kpi-tile-label">Rapor</div>
+            <div class="kpi-tile-value">@Model.Reports.Count</div>
+        </div>
+    </div>
+    <div class="kpi-tile @(loginAlert ? "kpi-tile-alert" : "")">
+        <div class="kpi-tile-icon"><i class="fas fa-shield-halved"></i></div>
+        <div class="kpi-tile-body">
+            <div class="kpi-tile-label">Başarısız Giriş (24sa)</div>
+            <div class="kpi-tile-value">@Model.FailedLoginCount24h</div>
+        </div>
+    </div>
+</section>
+
+@* ── İki kolon: Son aktivite + Hızlı eylem + Eklenen son kayıtlar ─ *@
+<section class="overview-grid">
+
+    @* Sol: Son aktivite *@
+    <article class="overview-panel">
+        <header class="overview-panel-head">
+            <h2><i class="fas fa-bolt"></i> Son Aktivite</h2>
+            <a href="/Logs" class="overview-panel-link">Tümünü gör <i class="fas fa-arrow-right"></i></a>
+        </header>
+        @if (Model.RecentAudits.Count == 0)
+        {
+            <div class="overview-empty">
+                <i class="fas fa-inbox"></i>
+                <p>Henüz aktivite kaydı yok.</p>
+            </div>
+        }
+        else
+        {
+            <ul class="overview-activity">
+                @foreach (var log in Model.RecentAudits)
+                {
+                    <li class="@EventTone(log.EventType)">
+                        <span class="act-icon"><i class="@EventIcon(log.EventType)"></i></span>
+                        <span class="act-body">
+                            <span class="act-title">@EventLabel(log.EventType)</span>
+                            @if (!string.IsNullOrEmpty(log.Username))
+                            {
+                                <span class="act-actor">@log.Username</span>
+                            }
+                            @if (!string.IsNullOrEmpty(log.Description))
+                            {
+                                <span class="act-desc">@log.Description</span>
+                            }
+                        </span>
+                        <time class="act-time">@TimeAgo(log.CreatedAt)</time>
+                    </li>
+                }
+            </ul>
+        }
+    </article>
+
+    @* Sağ: Hızlı eylem + son eklenen rapor *@
+    <aside class="overview-aside">
+        <article class="overview-panel">
+            <header class="overview-panel-head">
+                <h2><i class="fas fa-bolt-lightning"></i> Hızlı Eylem</h2>
+            </header>
+            <div class="overview-actions">
+                <a href="/Admin/CreateReport" class="action-btn primary">
+                    <i class="fas fa-plus"></i>
+                    <span>Yeni Rapor</span>
+                </a>
+                <a href="/Admin/CreateUser" class="action-btn">
+                    <i class="fas fa-user-plus"></i>
+                    <span>Yeni Kullanıcı</span>
+                </a>
+                <a href="/Admin/CreateDataSource" class="action-btn">
+                    <i class="fas fa-database"></i>
+                    <span>Veri Kaynağı</span>
+                </a>
+                <a href="/Admin/Modules" class="action-btn">
+                    <i class="fas fa-toggle-on"></i>
+                    <span>Modüller</span>
+                </a>
+            </div>
+        </article>
+
+        <article class="overview-panel">
+            <header class="overview-panel-head">
+                <h2><i class="fas fa-clock-rotate-left"></i> Son Eklenen Raporlar</h2>
+                <a href="/Admin?tab=reports" class="overview-panel-link">Tümü <i class="fas fa-arrow-right"></i></a>
+            </header>
+            @{
+                var latestReports = Model.Reports.OrderByDescending(r => r.ReportId).Take(5).ToList();
+            }
+            @if (latestReports.Count == 0)
+            {
+                <div class="overview-empty">
+                    <i class="fas fa-file-circle-plus"></i>
+                    <p>Henüz rapor eklenmedi.</p>
+                </div>
+            }
+            else
+            {
+                <ul class="overview-list">
+                    @foreach (var r in latestReports)
+                    {
+                        <li>
+                            <a href="/Admin/EditReport/@r.ReportId" title="@r.Title">
+                                <i class="fas fa-file-lines"></i>
+                                <span class="ovl-title">@r.Title</span>
+                                <span class="ovl-meta">@(r.DataSource?.DataSourceKey ?? "—")</span>
+                            </a>
+                        </li>
+                    }
+                </ul>
+            }
+        </article>
+    </aside>
+
+</section>

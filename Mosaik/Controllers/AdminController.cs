@@ -79,7 +79,7 @@ namespace Mosaik.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> Index(string tab = "datasources")
+        public async Task<IActionResult> Index(string tab = "overview")
         {
             if (string.Equals(tab, "logs", StringComparison.OrdinalIgnoreCase))
             {
@@ -113,6 +113,29 @@ namespace Mosaik.Controllers
                 .GroupBy(ur => ur.UserId)
                 .Select(g => new { UserId = g.Key, Names = g.Where(x => x.Role != null).Select(x => x.Role!.Name).ToList() })
                 .ToDictionaryAsync(x => x.UserId, x => x.Names);
+
+            // Plan 23 — Dashboard widget verileri (sadece "overview" tab'da gösterilir)
+            if (string.Equals(tab, "overview", StringComparison.OrdinalIgnoreCase))
+            {
+                model.ActiveUserCount = model.Users.Count(u => u.IsActive);
+                model.ActiveModuleCount = await _context.AppModules.CountAsync(m => m.IsEnabled);
+                model.TotalModuleCount = await _context.AppModules.CountAsync();
+
+                var todayUtc = DateTime.UtcNow.Date;
+                var yesterdayUtc = todayUtc.AddDays(-1);
+                model.TodayAuditCount = await _context.AuditLogs
+                    .AsNoTracking()
+                    .CountAsync(a => a.CreatedAt >= todayUtc);
+                model.FailedLoginCount24h = await _context.AuditLogs
+                    .AsNoTracking()
+                    .CountAsync(a => a.CreatedAt >= yesterdayUtc
+                                  && a.EventType == "login_failed");
+                model.RecentAudits = await _context.AuditLogs
+                    .AsNoTracking()
+                    .OrderByDescending(a => a.CreatedAt)
+                    .Take(10)
+                    .ToListAsync();
+            }
 
             return View(model);
         }
