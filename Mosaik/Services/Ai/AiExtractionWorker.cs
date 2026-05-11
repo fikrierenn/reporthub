@@ -1,3 +1,4 @@
+using System.Runtime.Versioning;
 using System.Text.Json;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
@@ -321,7 +322,7 @@ namespace Mosaik.Services.Ai
                 extractionId, extraction.ModelUsed, extraction.InputTokens, extraction.OutputTokens);
         }
 
-        // Plan 27 Faz A — Tesseract conf < eşik olan sayfaları vision'a yolla, sayfa→metin sözlüğü dön.
+        [SupportedOSPlatform("windows")]
         private async Task<(Dictionary<int, string> byPage, string? diag)> TryRescueLowConfPagesAsync(
             string filePath, HashSet<int> pageIndices, CancellationToken ct)
         {
@@ -382,7 +383,7 @@ namespace Mosaik.Services.Ai
             return (byPage, byPage.Count == 0 ? "Vision rescue: tüm sayfalar boş döndü" : null);
         }
 
-        // Plan 26 + Plan 27 — komple PDF'i vision'a yolla (Tesseract'ın hiçbir sayfayı kurtaramadığı durum).
+        [SupportedOSPlatform("windows")]
         private async Task<(string text, string? diag)> TryFullDocumentVisionAsync(string filePath, CancellationToken ct)
         {
             using var scope = _scopeFactory.CreateScope();
@@ -489,7 +490,7 @@ namespace Mosaik.Services.Ai
                 ExtractionId = extractionId,
                 FirmaId = firmaId,
                 SuggestionType = d.SuggestionType,
-                Title = Truncate(d.Title, 200),
+                Title = Truncate(d.Title, 200) ?? string.Empty,
                 Description = Truncate(d.Description, 2000),
                 Confidence = d.Confidence,
                 Status = SuggestionStatus.Pending,

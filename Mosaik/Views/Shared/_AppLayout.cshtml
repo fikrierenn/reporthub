@@ -293,7 +293,7 @@
 </div>
 
 <script src="~/assets/js/app-shell.js" asp-append-version="true"></script>
-@if (User.Identity?.IsAuthenticated == true)
+@if (User?.Identity is { IsAuthenticated: true })
 {
     <script>
     (function () {

@@ -2,6 +2,7 @@ using PDFtoImage;
 using SkiaSharp;
 using Tesseract;
 using Microsoft.AspNetCore.Hosting;
+using System.Runtime.Versioning;
 
 namespace Mosaik.Services.Ai
 {
@@ -28,7 +29,7 @@ namespace Mosaik.Services.Ai
             _logger = logger;
         }
 
-        // Backwards compat — ExtractPages'ı çağırıp metinleri concat eder.
+        [SupportedOSPlatform("windows")]
         public string ExtractFromPdf(string filePath)
         {
             var pages = ExtractPages(filePath);
@@ -36,8 +37,7 @@ namespace Mosaik.Services.Ai
             return string.Join("\n", pages.Where(p => !string.IsNullOrWhiteSpace(p.Text)).Select(p => p.Text)).Trim();
         }
 
-        // Plan 27 Faz A-02 + A-04: per-page metin + Tesseract confidence + Otsu preprocessing.
-        // Worker bu sonuçtan PageImportanceScorer ile kritik sayfaları seçip AI'ya gönderir.
+        [SupportedOSPlatform("windows")]
         public IReadOnlyList<OcrPageResult> ExtractPages(string filePath)
         {
             LastDiagnostic = null;

@@ -13,7 +13,7 @@
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.1" />
     <PackageReference Include="ClosedXML" Version="0.105.0" />
-    <PackageReference Include="HtmlSanitizer" Version="9.0.886" />
+    <PackageReference Include="HtmlSanitizer" Version="9.0.892" />
     <ProjectReference Include="..\Mosaik.Core\Mosaik.Core.csproj" />
   </ItemGroup>
 
