@@ -38,7 +38,7 @@ namespace Mosaik.Services.Ai
         }
 
         [SupportedOSPlatform("windows")]
-        public IReadOnlyList<OcrPageResult> ExtractPages(string filePath)
+        public IReadOnlyList<OcrPageResult> ExtractPages(string filePath, CancellationToken ct = default)
         {
             LastDiagnostic = null;
             var absolute = Path.IsPathRooted(filePath)
@@ -77,6 +77,7 @@ namespace Mosaik.Services.Ai
                 int pageIndex = 0;
                 foreach (var skBitmap in Conversion.ToImages(imgStream, options: new(Dpi: Dpi)))
                 {
+                    ct.ThrowIfCancellationRequested();
                     if (pageIndex >= pagesToProcess) break;
 
                     using (skBitmap)

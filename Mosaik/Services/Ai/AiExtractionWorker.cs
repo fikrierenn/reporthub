@@ -71,7 +71,15 @@ namespace Mosaik.Services.Ai
 
             await foreach (var extractionId in _queue.ReadAllAsync(stoppingToken))
             {
-                await ProcessWithRetryAsync(extractionId, stoppingToken);
+                try
+                {
+                    await ProcessWithRetryAsync(extractionId, stoppingToken);
+                }
+                catch (Exception ex) when (!stoppingToken.IsCancellationRequested)
+                {
+                    _logger.LogCritical(ex,
+                        "ProcessWithRetryAsync beklenmedik hata — worker devam ediyor. ExtractionId={Id}", extractionId);
+                }
             }
             _logger.LogInformation("AiExtractionWorker durdu.");
         }
@@ -150,7 +158,7 @@ namespace Mosaik.Services.Ai
                 if (string.IsNullOrWhiteSpace(rawText))
                 {
                     _logger.LogInformation("PdfPig boş döndü, Tesseract OCR deneniyor. ExtractionId={Id}", extractionId);
-                    var ocrPages = _tesseract.ExtractPages(extraction.ContractFile.FilePath);
+                    var ocrPages = _tesseract.ExtractPages(extraction.ContractFile.FilePath, ct);
                     _logger.LogInformation(
                         "Tesseract: {Count} sayfa işlendi, ort. conf={Conf:F2}. ExtractionId={Id}",
                         ocrPages.Count, ocrPages.Count > 0 ? ocrPages.Average(p => p.MeanConfidence) : 0, extractionId);
@@ -427,7 +435,7 @@ namespace Mosaik.Services.Ai
             return (string.Empty, $"Vision full: IsSuccess={result.IsSuccess}, Hata={result.Error}");
         }
 
-        private static List<ContractAiSuggestionDraft> ParseDrafts(string? rawJson)
+        private List<ContractAiSuggestionDraft> ParseDrafts(string? rawJson)
         {
             var list = new List<ContractAiSuggestionDraft>();
             if (string.IsNullOrWhiteSpace(rawJson)) return list;
@@ -474,14 +482,16 @@ namespace Mosaik.Services.Ai
                             DataJson: r.GetRawText()));
                 }
             }
-            catch (JsonException)
+            catch (JsonException jex)
             {
-                // Parse edilemezse boş dönsün — extraction yine kaydedilir.
+                _logger.LogWarning(jex,
+                    "AI öneri JSON parse başarısız — extraction sıfır öneriyle kaydediliyor. RawJson(ilk 200): {Raw}",
+                    rawJson?[..Math.Min(200, rawJson.Length)]);
             }
             return list;
         }
 
-        private static List<AiSuggestion> BuildSuggestions(int extractionId, int firmaId, string? rawJson)
+        private List<AiSuggestion> BuildSuggestions(int extractionId, int firmaId, string? rawJson)
         {
             var drafts = ParseDrafts(rawJson);
             var now = DateTime.UtcNow;
@@ -562,15 +572,23 @@ namespace Mosaik.Services.Ai
 
         private async Task MarkFailedAsync(int extractionId, string error)
         {
-            using var scope = _scopeFactory.CreateScope();
-            var db = scope.ServiceProvider.GetRequiredService<Mosaik.Models.MosaikContext>();
-            var extraction = await db.ContractAiExtractions.FindAsync(extractionId);
-            if (extraction is null) return;
+            try
+            {
+                using var scope = _scopeFactory.CreateScope();
+                var db = scope.ServiceProvider.GetRequiredService<Mosaik.Models.MosaikContext>();
+                var extraction = await db.ContractAiExtractions.FindAsync(extractionId);
+                if (extraction is null) return;
 
-            extraction.Status = ExtractionStatus.Failed;
-            extraction.ErrorMessage = error.Length > 1000 ? error[..1000] : error;
-            extraction.ProgressStep = "failed";
-            await db.SaveChangesAsync();
+                extraction.Status = ExtractionStatus.Failed;
+                extraction.ErrorMessage = error.Length > 1000 ? error[..1000] : error;
+                extraction.ProgressStep = "failed";
+                await db.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex,
+                    "MarkFailed DB hatası — extraction {Id} 'Failed' olarak işaretlenemedi, state belirsiz.", extractionId);
+            }
         }
     }
 }

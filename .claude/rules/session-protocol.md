@@ -65,7 +65,7 @@ Scope: `git diff --name-only HEAD` + untracked (`git ls-files --others --exclude
 
 **Override:** Kullanıcı açıkça "tarama yapma" / "atla" derse atlanır. Aksi default = tarama zorunlu.
 
-**Uncommitted yoksa:** Adım 5 atlanır.
+**Uncommitted yoksa bile:** Bu oturumda kod yazıldıysa (git log ile son commit bu oturuma aitse) Adım 5 çalıştırılır — scope olarak son commit'teki dosyalar kullanılır. Gerçekten hiç kod yazılmamışsa atlanır.
 
 ### Kullanıcıya cevap
 
@@ -150,11 +150,26 @@ Detay memory: `feedback_subagent_skill_ana_prensip.md`.
 
 Kullanıcı "iyi geceler" / "handoff" / "kaydet ve kapat" / "/handoff" / "devam edeceğiz" dediğinde `.claude/skills/session-handoff/SKILL.md` devreye girer.
 
-### Compliance Scan oturum sonunda DEĞİL, oturum başında
+### Compliance Scan — oturum başında VE sonunda ZORUNLU
 
-Karar 2026-05-10 (kullanıcı): 3 aşamalı tarama oturum **başına** alındı (Adım 5). Oturum sonunda tarama yapılmaz — uygulamada bypass ediliyordu ve borç birikiyordu. Yarınki oturumun başında uncommitted devreden işler için Adım 5 zaten çalışacak.
+**Karar 2026-05-11 (kullanıcı):** "her kapanışta ya da açılışta yapmalısın." Artık iki yönde zorunlu:
 
-**İstisna:** Bu oturumda kod yazıp commit etmeden handoff edersen, kullanıcıya "uncommitted X dosya kaldı — yarın oturum başı taraması bunu yakalayacak" hatırlatması ver.
+**Oturum başında (Adım 5):** Uncommitted veya bu oturumda yazılan kod varsa 4 paralel agent.
+
+**Oturum sonunda (handoff öncesi):** Bu oturumda commit edilen/değiştirilen dosyalar üzerinde aynı 4 paralel agent:
+```
+Agent(subagent_type="code-reviewer")
+Agent(subagent_type="silent-failure-hunter")
+Agent(subagent_type="general-purpose")   — security-review
+Agent(subagent_type="general-purpose")   — inline style envanter
+```
+Scope: `git diff HEAD~N..HEAD --name-only` (bu oturumda yapılan commit'ler).
+
+- Bulgu yok → handoff yaz.
+- CRITICAL/HIGH bulgu → düzelt + commit → sonra handoff.
+- MEDIUM/LOW → handoff'ta "bilinen borç" olarak kaydet.
+
+**Override:** Kullanıcı "tarama yapma" / "atla" derse atlanır.
 
 ### Ne yapar
 
