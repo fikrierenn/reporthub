@@ -11,7 +11,7 @@ Bu dosya AKTIF işleri ve backlog'u takip eder. Tamamlanmış işler arşiv böl
 Sıra: Plan 14 + Plan 16.5 + IK quick wins birleşik.
 
 - [ ] **Plan 18B · HR Sync** (büyük, ~16-24h) — Hangfire + Mosaik.User ek kolonlar + UserSyncService + Email/TC kararları + UserDataFilter otomatik atama. 18A bittikten sonra.
-- [ ] **Plan 16.5 Faz C+D** — AI Core (YonetIQ providers + DikkatIQ extraction). Plan 19 Doküman öncesi zorunlu.
+- [x] **Plan 16.5 Faz C+D** ✅ — ILlmService + FallbackLlmService + IAiExtractionService + IAiSuggestionService + PromptBase. 337 test. commit d2fd745 + 1b195d4.
 - [ ] **Plan 17 (Tamim)** — vNext modül roadmap'in ilk üyesi (~10h, tamim/ direkt port). Faz H (Bildirim) en sona.
 
 ### IK / HR — Zirve `vw_PersonelDepartman` ile
