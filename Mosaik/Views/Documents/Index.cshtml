@@ -3,9 +3,10 @@
     Layout = "_AppLayout";
     ViewData["Title"] = "Belgeler";
     ViewData["PageTitle"] = "Belgeler";
-    var contracts = ViewBag.Contracts as dynamic;
+    var contracts = ViewBag.Contracts as List<(int Id, string Title)>;
     var contractFilter = ViewBag.ContractFilter as int?;
     var q = ViewBag.Q as string;
+    var hasFilter = !string.IsNullOrWhiteSpace(q) || contractFilter.HasValue;
 }
 
 @section Breadcrumb {
@@ -17,6 +18,10 @@
 }
 
 @section TopActions {
+    <button type="button" class="btn primary" onclick="toggleUpload()">
+        <i class="fas fa-upload text-[10px]"></i>
+        Yeni Belge
+    </button>
     <a href="#" class="icon-btn" title="Yardım">
         <i class="fas fa-circle-question"></i>
     </a>
@@ -31,93 +36,105 @@
 
 @await Html.PartialAsync("_AlertMessage", TempData["Success"] != null ? ("success", TempData["Success"]!.ToString()!) : TempData["Error"] != null ? ("error", TempData["Error"]!.ToString()!) : ("", ""))
 
-@* Upload Formu *@
-<div class="form-section-card" style="max-width:100%; margin-bottom:18px;">
-    <div style="padding:14px 18px; border-bottom:1px solid var(--line);">
-        <span style="font-size:13px; font-weight:600; color:var(--ink-1);">Belge Yükle</span>
-    </div>
-    <div style="padding:18px;">
-        <form method="post" action="/Documents/Upload" enctype="multipart/form-data">
-            @Html.AntiForgeryToken()
-            <div style="display:grid; grid-template-columns:2fr 1fr auto; gap:12px; align-items:end;">
-                <div class="field">
-                    <label class="lab" for="fileInput">Dosya (PDF / DOCX / XLSX, maks. 50 MB)</label>
-                    <input class="inp" type="file" id="fileInput" name="file" accept=".pdf,.docx,.xlsx,.doc" required>
-                </div>
-                <div class="field">
-                    <label class="lab" for="contractSel">Sözleşme (opsiyonel)</label>
-                    <select class="inp" id="contractSel" name="contractId">
-                        <option value="">— Seçin —</option>
-                        @if (contracts != null)
-                        {
-                            foreach (var c in contracts)
-                            {
-                                <option value="@c.Id">@c.Title</option>
-                            }
-                        }
-                    </select>
-                </div>
-                <button type="submit" class="btn primary">
-                    <i class="fas fa-upload text-[10px]"></i>
-                    Yükle
+<div x-data="{ q: '@(q ?? "")' }">
+
+    @* Upload formu — collapsible (Yeni Belge butonu tetikler). Default gizli, JS toggle. *@
+    <form id="uploadForm" method="post" action="/Documents/Upload" enctype="multipart/form-data" style="display:none;">
+        @Html.AntiForgeryToken()
+        <div class="form-section-card wide">
+            <div class="form-section-head">
+                <h2>
+                    <i class="fas fa-upload text-muted"></i>
+                    Belge Yükle
+                </h2>
+                <button type="button" class="icon-btn" onclick="toggleUpload(false)" title="Kapat">
+                    <i class="fas fa-xmark"></i>
                 </button>
             </div>
-        </form>
-    </div>
-</div>
+            <div class="form-section-body stack">
+                <div class="grid-2col">
+                    <div class="field">
+                        <label class="lab" for="fileInput">Dosya</label>
+                        <input class="inp" type="file" id="fileInput" name="file" accept=".pdf,.docx,.xlsx,.doc" required>
+                        <p class="help-text">PDF / DOCX / XLSX, maks. 50 MB</p>
+                    </div>
+                    <div class="field">
+                        <label class="lab" for="contractSel">Sözleşme (opsiyonel)</label>
+                        <select class="inp" id="contractSel" name="contractId">
+                            <option value="">— Seçin —</option>
+                            @if (contracts != null)
+                            {
+                                foreach (var c in contracts)
+                                {
+                                    <option value="@c.Id">@c.Title</option>
+                                }
+                            }
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="form-action-row wide">
+            <button type="button" class="btn ghost" onclick="toggleUpload(false)">İptal</button>
+            <button type="submit" class="btn primary">
+                <i class="fas fa-upload text-[10px]"></i>
+                Yükle
+            </button>
+        </div>
+    </form>
 
-@* Filtre *@
-<form method="get" class="report-filter-bar" style="margin-bottom:18px;">
-    <div style="flex:1; min-width:200px;">
-        <label class="lab" for="qInput">Dosya Adı</label>
-        <input class="inp" type="text" id="qInput" name="q" value="@q" placeholder="Dosya ara...">
-    </div>
-    <div style="min-width:180px;">
-        <label class="lab" for="contractFilter">Sözleşme</label>
-        <select class="inp" id="contractFilter" name="contractId">
-            <option value="">Tümü</option>
-            @if (contracts != null)
-            {
-                foreach (var c in contracts)
+    @* Filter bar — standart pattern *@
+    <form method="get" class="filter-bar">
+        <div class="field" style="flex:1; min-width:240px;">
+            <label class="lab" for="qInput">Dosya adı</label>
+            <input class="inp" type="text" id="qInput" name="q" value="@q" placeholder="Dosya ara..." x-model="q">
+        </div>
+        <div class="field" style="min-width:200px;">
+            <label class="lab" for="contractFilter">Sözleşme</label>
+            <select class="inp" id="contractFilter" name="contractId">
+                <option value="">Tümü</option>
+                @if (contracts != null)
                 {
-                    if (contractFilter.HasValue && (int)c.Id == contractFilter.Value)
+                    foreach (var c in contracts)
                     {
-                        <option value="@c.Id" selected>@c.Title</option>
-                    }
-                    else
-                    {
-                        <option value="@c.Id">@c.Title</option>
+                        if (contractFilter.HasValue && c.Id == contractFilter.Value)
+                        {
+                            <option value="@c.Id" selected>@c.Title</option>
+                        }
+                        else
+                        {
+                            <option value="@c.Id">@c.Title</option>
+                        }
                     }
                 }
-            }
-        </select>
-    </div>
-    <div style="display:flex; gap:6px; align-items:flex-end;">
+            </select>
+        </div>
         <button type="submit" class="btn primary">
             <i class="fas fa-filter text-[10px]"></i>
             Filtrele
         </button>
-        @if (!string.IsNullOrWhiteSpace(q) || contractFilter.HasValue)
+        @if (hasFilter)
         {
             <a href="/Documents" class="btn ghost">
                 <i class="fas fa-xmark text-[10px]"></i>
                 Temizle
             </a>
         }
-    </div>
-</form>
+    </form>
+
+</div>
 
 @if (!Model.Any())
 {
     <div class="empty-state">
-        <i class="fas fa-folder-open" style="font-size:48px; opacity:.3; margin-bottom:12px;"></i>
+        <i class="fas fa-folder-open empty-state__icon"></i>
         <h3>Belge bulunamadı</h3>
-        <p>Henüz belge yüklenmemiş ya da filtre kriterlerinize uygun sonuç yok.</p>
+        <p>@(hasFilter ? "Filtre kriterlerinize uygun belge yok. Filtreleri temizleyip tekrar deneyin." : "Henüz belge yüklenmemiş. \"Yeni Belge\" ile başlayın.")</p>
     </div>
 }
 else
 {
-    <div style="background:var(--paper); border:1px solid var(--line); border-radius:10px; overflow:hidden;">
+    <div class="table-card">
         <table class="dt">
             <thead>
                 <tr>
@@ -140,17 +157,49 @@ else
                         ? $"{f.FileSize / 1024.0 / 1024.0:F1} MB"
                         : $"{f.FileSize / 1024.0:F0} KB";
 
+                    string? aiDocType = null;
+                    var aiTagList = new List<string>();
+                    if (!string.IsNullOrWhiteSpace(f.AiTagsJson))
+                    {
+                        try
+                        {
+                            using var d = System.Text.Json.JsonDocument.Parse(f.AiTagsJson);
+                            var r = d.RootElement;
+                            if (r.TryGetProperty("documentType", out var dt) && dt.ValueKind == System.Text.Json.JsonValueKind.String)
+                                aiDocType = dt.GetString();
+                            if (r.TryGetProperty("tags", out var ta) && ta.ValueKind == System.Text.Json.JsonValueKind.Array)
+                            {
+                                foreach (var t in ta.EnumerateArray())
+                                    if (t.ValueKind == System.Text.Json.JsonValueKind.String)
+                                        aiTagList.Add(t.GetString() ?? "");
+                            }
+                        }
+                        catch { }
+                    }
                     <tr>
                         <td>
-                            <a href="/@f.FilePath" target="_blank" style="display:flex; align-items:center; gap:8px; color:var(--accent); text-decoration:none;">
-                                <i class="@icon" style="font-size:15px; opacity:.7;"></i>
+                            <a href="/@f.FilePath" target="_blank" class="row-link" title="@(f.AiSummary ?? "")">
+                                <i class="@icon" aria-hidden="true"></i>
                                 <span>@f.FileName</span>
                             </a>
+                            @if (!string.IsNullOrWhiteSpace(aiDocType) || aiTagList.Count > 0)
+                            {
+                                <div class="doc-tags">
+                                    @if (!string.IsNullOrWhiteSpace(aiDocType))
+                                    {
+                                        <span class="pill">@aiDocType</span>
+                                    }
+                                    @foreach (var t in aiTagList.Take(3))
+                                    {
+                                        <span class="pill ghost">@t</span>
+                                    }
+                                </div>
+                            }
                         </td>
                         <td>
                             @if (f.Contract != null)
                             {
-                                <a href="/Contracts/Details/@f.Contract.Id" style="color:var(--accent); font-size:12.5px;">@f.Contract.Title</a>
+                                <a href="/Contracts/Details/@f.Contract.Id" class="row-link">@f.Contract.Title</a>
                             }
                             else
                             {
@@ -163,6 +212,11 @@ else
                         <td style="text-align:right;">
                             @if (f.MimeType?.Contains("pdf") == true)
                             {
+                                <button type="button" class="btn sm ghost" title="Belgeye soru sor"
+                                        onclick="DocChat.open(@f.Id, @Html.Raw(System.Text.Json.JsonSerializer.Serialize(f.FileName)))">
+                                    <i class="fas fa-comments text-[9px]"></i>
+                                    Sor
+                                </button>
                                 <a href="/Ai?fileId=@f.Id" class="btn sm ghost" title="AI Analiz">
                                     <i class="fas fa-robot text-[9px]"></i>
                                     AI
@@ -171,7 +225,7 @@ else
                             <form method="post" action="/Documents/Delete" style="display:inline; margin:0;" onsubmit="return confirm('Bu belge silinsin mi?')">
                                 @Html.AntiForgeryToken()
                                 <input type="hidden" name="id" value="@f.Id">
-                                <button type="submit" class="btn sm danger">
+                                <button type="submit" class="btn sm danger" title="Sil">
                                     <i class="fas fa-trash text-[9px]"></i>
                                 </button>
                             </form>
@@ -184,3 +238,118 @@ else
 }
 
 @await Html.PartialAsync("_FooterHint", (string?)$"{Model.Count} belge")
+
+@* Plan 27 Faz B-05 — Belgeye soru sor drawer'ı *@
+<div id="docChatDrawer" class="doc-chat-drawer" style="display:none;">
+    <div class="doc-chat-head">
+        <div>
+            <div class="doc-chat-title" id="docChatFileName">—</div>
+            <div class="doc-chat-sub">Belgeye soru sorun, AI cevaplasın</div>
+        </div>
+        <button type="button" class="icon-btn" onclick="DocChat.close()" title="Kapat">
+            <i class="fas fa-xmark"></i>
+        </button>
+    </div>
+    <div class="doc-chat-body" id="docChatBody">
+        <p class="text-muted">Henüz soru sorulmadı.</p>
+    </div>
+    <form class="doc-chat-form" onsubmit="event.preventDefault(); DocChat.ask();">
+        <input type="text" id="docChatQ" class="inp" placeholder="Örn. Sözleşme süresi nedir?" autocomplete="off">
+        <button type="submit" class="btn primary" id="docChatBtn">
+            <i class="fas fa-paper-plane text-[10px]"></i>
+            Sor
+        </button>
+    </form>
+</div>
+
+@section Scripts {
+<script>
+// Yeni Belge butonu — TopActions x-data scope'unun dışında olduğundan native JS toggle.
+window.toggleUpload = function (force) {
+    var f = document.getElementById('uploadForm');
+    if (!f) return;
+    var shown = f.style.display !== 'none';
+    var target = (typeof force === 'boolean') ? force : !shown;
+    f.style.display = target ? 'block' : 'none';
+    if (target) {
+        var fi = document.getElementById('fileInput');
+        if (fi) setTimeout(function () { fi.focus(); }, 50);
+    }
+};
+
+(function () {
+    var token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+    var state = { fileId: 0, fileName: '', messages: [] };
+
+    function el(id) { return document.getElementById(id); }
+
+    function escapeHtml(s) {
+        var d = document.createElement('div'); d.textContent = s; return d.innerHTML;
+    }
+
+    function render() {
+        var body = el('docChatBody');
+        if (state.messages.length === 0) {
+            body.innerHTML = '<p class="text-muted">Henüz soru sorulmadı.</p>';
+            return;
+        }
+        body.innerHTML = state.messages.map(function (m) {
+            if (m.role === 'user')
+                return '<div class="msg-row user"><div class="msg user">' + escapeHtml(m.text) + '</div></div>';
+            if (m.role === 'assistant')
+                return '<div class="msg-row ai"><div class="msg ai">' + escapeHtml(m.text) + '</div></div>';
+            if (m.role === 'error')
+                return '<div class="msg-row ai"><div class="msg error">' + escapeHtml(m.text) + '</div></div>';
+            if (m.role === 'loading')
+                return '<div class="msg-row ai"><div class="msg loading"><i class="fas fa-spinner fa-spin"></i> Düşünüyor...</div></div>';
+            return '';
+        }).join('');
+        body.scrollTop = body.scrollHeight;
+    }
+
+    window.DocChat = {
+        open: function (fileId, fileName) {
+            state.fileId = fileId;
+            state.fileName = fileName;
+            state.messages = [];
+            el('docChatFileName').textContent = fileName;
+            el('docChatDrawer').style.display = 'flex';
+            render();
+            setTimeout(function () { el('docChatQ').focus(); }, 50);
+        },
+        close: function () {
+            el('docChatDrawer').style.display = 'none';
+        },
+        ask: async function () {
+            var q = el('docChatQ').value.trim();
+            if (!q) return;
+            state.messages.push({ role: 'user', text: q });
+            state.messages.push({ role: 'loading' });
+            el('docChatQ').value = '';
+            el('docChatBtn').disabled = true;
+            render();
+
+            try {
+                var form = new FormData();
+                form.append('fileId', state.fileId);
+                form.append('question', q);
+                form.append('__RequestVerificationToken', token);
+                var r = await fetch('/Ai/AskDocument', { method: 'POST', body: form });
+                var data = await r.json();
+
+                state.messages.pop(); // remove loading
+                if (data.ok) state.messages.push({ role: 'assistant', text: data.answer });
+                else state.messages.push({ role: 'error', text: data.error || 'Bilinmeyen hata' });
+            } catch (e) {
+                state.messages.pop();
+                state.messages.push({ role: 'error', text: 'Ağ hatası: ' + e.message });
+            } finally {
+                el('docChatBtn').disabled = false;
+                render();
+                el('docChatQ').focus();
+            }
+        }
+    };
+})();
+</script>
+}

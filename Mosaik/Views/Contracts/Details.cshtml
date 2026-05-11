@@ -156,14 +156,15 @@
                                 <td><span class="mono text-xs">@(x.ModelUsed ?? "—")</span></td>
                                 <td><span class="mono text-xs">@(x.InputTokens + x.OutputTokens)</span></td>
                                 <td class="text-right">
+                                    <a href="/Ai/Detail/@x.Id" class="btn sm ghost" title="Çıkarım detayı">
+                                        <i class="fa fa-file-lines text-[9px]"></i>
+                                    </a>
                                     @if (x.Status == ExtractionStatus.AwaitingReview)
                                     {
-                                        <form method="post" action="/Contracts/ReviewExtraction" class="inline-actions">
-                                            @Html.AntiForgeryToken()
-                                            <input type="hidden" name="extractionId" value="@x.Id" />
-                                            <button type="submit" name="action" value="approve" class="btn sm primary">Onayla</button>
-                                            <button type="submit" name="action" value="reject" class="btn sm danger">Reddet</button>
-                                        </form>
+                                        <a href="/Ai/Review/@x.Id" class="btn sm primary" title="İnceleme">
+                                            <i class="fa fa-magnifying-glass text-[9px]"></i>
+                                            İncele
+                                        </a>
                                     }
                                 </td>
                             </tr>
@@ -200,21 +201,37 @@
                     <div class="file-row">
                         @foreach (var f in Model.Files)
                         {
+                            var fileExt = extractions.FirstOrDefault(e => e.ContractFileId == f.Id);
+                            var isPdf = f.MimeType == "application/pdf";
                             <div class="file-row__head">
-                                <i class="fa fa-file-pdf req" style="font-size:16px;"></i>
+                                <i class="fa fa-file-pdf text-err" style="font-size:16px;"></i>
                                 <div class="flex-fill">
                                     <div class="text-strong text-truncate">@f.FileName</div>
                                     <div class="text-muted">@(f.FileSize / 1024) KB</div>
                                 </div>
-                                @if (f.MimeType == "application/pdf")
+                                @if (isPdf)
                                 {
-                                    <form method="post" action="/Contracts/StartAiExtraction">
-                                        @Html.AntiForgeryToken()
-                                        <input type="hidden" name="contractFileId" value="@f.Id" />
-                                        <button type="submit" class="btn sm tertiary" title="AI ile analiz et">
+                                    <a href="/@f.FilePath" target="_blank" class="btn sm ghost" title="PDF önizleme">
+                                        <i class="fa fa-eye text-[9px]"></i>
+                                    </a>
+                                    @if (fileExt != null)
+                                    {
+                                        @* Mevcut AI çıkarımı var — sadece izlet *@
+                                        <a href="/Ai/Detail/@fileExt.Id" class="btn sm ghost" title="AI çıkarımını görüntüle">
                                             <i class="fa fa-robot text-[9px]"></i>
-                                        </button>
-                                    </form>
+                                        </a>
+                                    }
+                                    else
+                                    {
+                                        @* AI hiç çalıştırılmamış — kullanıcı isterse tetikleyebilir *@
+                                        <form method="post" action="/Contracts/StartAiExtraction" style="margin:0;">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="contractFileId" value="@f.Id" />
+                                            <button type="submit" class="btn sm ghost" title="AI ile analiz et">
+                                                <i class="fa fa-wand-magic-sparkles text-[9px]"></i>
+                                            </button>
+                                        </form>
+                                    }
                                 }
                             </div>
                         }
