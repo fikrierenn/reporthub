@@ -36,6 +36,12 @@ namespace Mosaik.Models
 
         public int Version { get; set; } = 1;
 
+        // Plan 27 Faz B — AI auto-classification + executive summary (yükleme sonrası).
+        [MaxLength(2000)]
+        public string? AiSummary { get; set; }
+        public string? AiTagsJson { get; set; }     // {"documentType","year","department","tags":[...]}
+        public DateTime? AiClassifiedAt { get; set; }
+
         // Nav properties — form'dan bind/validate edilmez (EF Include yükler).
         [BindNever, ValidateNever]
         public Firma Firma { get; set; } = null!;
