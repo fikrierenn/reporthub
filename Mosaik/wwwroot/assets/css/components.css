@@ -577,6 +577,8 @@ select.inp {
 .alert.success { background: rgba(22, 163, 74, 0.08); border: 1px solid rgba(22, 163, 74, 0.25); color: #166534; }
 .alert.warn { background: rgba(245, 158, 11, 0.08); border: 1px solid rgba(245, 158, 11, 0.25); color: #92400e; }
 .alert.error, .alert.danger { background: rgba(220, 38, 38, 0.08); border: 1px solid rgba(220, 38, 38, 0.25); color: #991b1b; }
+.alert .alert-link { color: inherit; text-decoration: underline; font-weight: 600; }
+.alert .alert-link:hover { text-decoration: none; }
 
 /* Button modifier (AI buton — Contracts/Details.cshtml) */
 .btn.tertiary { background: var(--violet-soft, #f3e8ff); color: var(--violet, #7c3aed); border-color: var(--violet-border, #ddd6fe); }

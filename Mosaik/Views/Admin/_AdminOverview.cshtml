@@ -168,7 +168,7 @@
                 <h2><i class="fas fa-bolt-lightning"></i> Hızlı Eylem</h2>
             </header>
             <div class="overview-actions">
-                <a href="/Admin/CreateReport" class="action-btn primary">
+                <a href="/Admin/CreateReportV2" class="action-btn primary">
                     <i class="fas fa-plus"></i>
                     <span>Yeni Rapor</span>
                 </a>
@@ -208,7 +208,7 @@
                     @foreach (var r in latestReports)
                     {
                         <li>
-                            <a href="/Admin/EditReport/@r.ReportId" title="@r.Title">
+                            <a href="/Admin/EditReportV2/@r.ReportId" title="@r.Title">
                                 <i class="fas fa-file-lines"></i>
                                 <span class="ovl-title">@r.Title</span>
                                 <span class="ovl-meta">@(r.DataSource?.DataSourceKey ?? "—")</span>

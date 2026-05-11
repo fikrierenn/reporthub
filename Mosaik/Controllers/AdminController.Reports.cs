@@ -10,7 +10,9 @@ namespace Mosaik.Controllers
     // BuildReportFormViewModel.
     public partial class AdminController
     {
-        [Route("Admin/CreateReport")]
+        // V1 view (CreateReport.cshtml) silindi — V2 builder canonical. Bu GET method
+        // V2 CreateReportV2 action'ından çağrılır (data load). Route attribute yok =
+        // direkt /Admin/CreateReport URL'i 404 verir, V2'ye yönlendirir aşağıdaki redirect.
         public async Task<IActionResult> CreateReport()
         {
             try
@@ -96,8 +98,9 @@ namespace Mosaik.Controllers
 
             return View(await BuildReportFormViewModel(report, input, result.Message));
         }
-        // V2 — mockup app-shell-builder-v1.html'in birebir portu. V1 (EditReport/CreateReport) el değmez.
-        // Aynı ViewModel, aynı POST endpoint'leri. Sadece view + assets farklı.
+        // V2 — canonical Dashboard Builder. V1 view'ları silindi (CreateReport.cshtml,
+        // EditReport.cshtml). V2 actions data load için private V1 GET method'larını
+        // çağırır + view name'i V2'ye set eder.
         [Route("Admin/CreateReportV2")]
         public async Task<IActionResult> CreateReportV2()
         {
@@ -114,7 +117,18 @@ namespace Mosaik.Controllers
             return result;
         }
 
-        [Route("Admin/EditReport/{id}")]
+        // Eski V1 URL'lerine doğrudan girenleri V2'ye yönlendir (bookmarks vs)
+        [Route("Admin/CreateReport")]
+        [HttpGet]
+        public IActionResult CreateReportLegacyRedirect() =>
+            RedirectToAction(nameof(CreateReportV2));
+
+        [Route("Admin/EditReport/{id:int}")]
+        [HttpGet]
+        public IActionResult EditReportLegacyRedirect(int id) =>
+            RedirectToAction(nameof(EditReportV2), new { id });
+
+        // V1 view (EditReport.cshtml) silindi — V2 canonical. Bu GET method V2'den çağrılır.
         public async Task<IActionResult> EditReport(int id)
         {
             var report = await _context.ReportCatalog.FindAsync(id);
