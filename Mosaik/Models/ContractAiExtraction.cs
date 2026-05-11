@@ -30,8 +30,10 @@ namespace Mosaik.Models
         [MaxLength(100)]
         public string? ModelUsed { get; set; }      // AiSummaryResult.ModelUsed
 
-        public string? RawText { get; set; }        // PDF'ten çıkan ham metin (PdfPig)
-        public string? ExtractionResultJson { get; set; }   // AI'ın döndürdüğü JSON
+        public string? RawText { get; set; }        // PDF'ten çıkan ham metin (PdfPig/Tesseract/vision)
+        public string? ExtractionResultJson { get; set; }   // Stage 1 — AI'ın yapısal JSON çıktısı
+        public string? Stage2ResultText { get; set; }       // Stage 2 — kategori-spesifik derinleştirme (Plan 27 Faz A)
+        public string? ProgressTimestampsJson { get; set; } // Adım başlangıç zamanları JSON (Plan 27 Faz A)
 
         public int InputTokens { get; set; }
         public int OutputTokens { get; set; }

@@ -85,7 +85,7 @@ namespace Mosaik.Services
         private async Task<AiSummaryResult> CallOpenAiCompatibleAsync(AiConfig cfg, AiRequest req, CancellationToken ct)
         {
             var http = _httpFactory.CreateClient("ai");
-            http.Timeout = TimeSpan.FromSeconds(45);
+            http.Timeout = TimeSpan.FromSeconds(180);
 
             var baseUrl = (cfg.BaseUrl ?? DefaultBaseUrlFor(cfg.Provider)).TrimEnd('/');
             var url = baseUrl + "/chat/completions";
@@ -166,7 +166,7 @@ namespace Mosaik.Services
         private async Task<AiSummaryResult> DoZaiAsync(AiConfig cfg, AiRequest req, bool includeJsonFormat, CancellationToken ct)
         {
             var http = _httpFactory.CreateClient("ai");
-            http.Timeout = TimeSpan.FromSeconds(45);
+            http.Timeout = TimeSpan.FromSeconds(180);
 
             var baseUrl = (cfg.BaseUrl ?? "https://api.z.ai/api/paas/v4").TrimEnd('/');
             var url = baseUrl + "/chat/completions";
@@ -267,7 +267,7 @@ namespace Mosaik.Services
         private async Task<AiSummaryResult> CallGeminiAsync(AiConfig cfg, AiRequest req, CancellationToken ct)
         {
             var http = _httpFactory.CreateClient("ai");
-            http.Timeout = TimeSpan.FromSeconds(45);
+            http.Timeout = TimeSpan.FromSeconds(180);
 
             var baseUrl = (cfg.BaseUrl ?? "https://generativelanguage.googleapis.com/v1beta").TrimEnd('/');
             var url = $"{baseUrl}/models/{cfg.Model}:generateContent?key={cfg.ApiKey}";

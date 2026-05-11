@@ -13,7 +13,7 @@ namespace Mosaik.Services.Ai
     // SystemPrompt user içeriğine ilk text element olarak prepend edilir.
     public sealed class ZaiVisionProvider : IAiVisionProvider
     {
-        private const string DefaultVisionModel = "glm-4v-plus";
+        private const string DefaultVisionModel = "glm-4.5v";
 
         private readonly IHttpClientFactory _httpFactory;
         private readonly IAiSettingsProvider _settings;
@@ -101,7 +101,7 @@ namespace Mosaik.Services.Ai
                 {
                     _logger.LogWarning("z.ai vision HTTP {Status}: {Body}", (int)resp.StatusCode, Truncate(text, 1000));
                     return new AiSummaryResult(false, null,
-                        $"z.ai vision sağlayıcısı yanıt vermedi (HTTP {(int)resp.StatusCode}). Lütfen tekrar deneyin.");
+                        $"z.ai vision HTTP {(int)resp.StatusCode}: {Truncate(text, 300)}");
                 }
 
                 // Schema-aware parse — z.ai bazen 200 + HTML rate-limit veya {"error":...} dönebilir.
