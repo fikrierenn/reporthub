@@ -25,6 +25,36 @@
         ExtractionStatus.Failed         => "err",
         _                               => ""
     };
+
+    // Plan 27 — işleniyor adım göstergesi.
+    // Worker step kodları: "" → "ocr" → "ai_stage1" → "ai_stage2" → "done"/"failed"
+    var stepOrder = new[] { "ocr", "ai_stage1", "ai_stage2", "done" };
+    string StepLabel(string code) => code switch
+    {
+        "ocr"       => "Metin Çıkarma",
+        "ai_stage1" => "AI Aşama 1 (Yapısal Çıkarım)",
+        "ai_stage2" => "AI Aşama 2 (Derin Analiz)",
+        "done"      => "Tamamlandı",
+        "failed"    => "Hata",
+        ""          => "Sıraya Alındı",
+        null        => "Sıraya Alındı",
+        _           => code
+    };
+    string StepIcon(string code) => code switch
+    {
+        "ocr"       => "fa-file-image",
+        "ai_stage1" => "fa-brain",
+        "ai_stage2" => "fa-microscope",
+        "done"      => "fa-check",
+        "failed"    => "fa-triangle-exclamation",
+        _           => "fa-hourglass-half"
+    };
+    int StepIndex(string? code)
+    {
+        if (string.IsNullOrEmpty(code)) return -1;
+        var i = Array.IndexOf(stepOrder, code);
+        return i >= 0 ? i : -1;
+    }
 }
 
 @section Breadcrumb {
@@ -103,11 +133,42 @@ else
                                 <br><span class="text-xs" style="color:var(--err);">@x.ErrorMessage</span>
                             }
                         </td>
-                        <td>
+                        <td style="min-width:320px;">
                             <span class="status @StatusClass(x.Status)" id="status-@x.Id">@StatusLabel(x.Status)</span>
-                            @if (!string.IsNullOrWhiteSpace(x.ProgressStep))
+                            @if (x.Status == ExtractionStatus.Processing || x.Status == ExtractionStatus.AwaitingReview || x.Status == ExtractionStatus.Approved)
                             {
-                                <br><span class="mono text-xs" style="color:var(--ink-4);">@x.ProgressStep</span>
+                                var currentIdx = StepIndex(x.ProgressStep);
+                                var doneAll = x.Status != ExtractionStatus.Processing;
+                                <div class="ai-stepper" id="stepper-@x.Id"
+                                     data-step="@(x.ProgressStep ?? "")"
+                                     data-timestamps="@(x.ProgressTimestampsJson ?? "")">
+                                    @for (int si = 0; si < stepOrder.Length; si++)
+                                    {
+                                        var stepCode = stepOrder[si];
+                                        var state = doneAll ? "done"
+                                                    : currentIdx < 0 ? "pending"
+                                                    : si < currentIdx ? "done"
+                                                    : si == currentIdx ? "active"
+                                                    : "pending";
+                                        <div class="ai-step @state" title="@StepLabel(stepCode)" data-step-code="@stepCode">
+                                            <i class="fas @StepIcon(stepCode)"></i>
+                                            <span class="ai-step-label">@StepLabel(stepCode)</span>
+                                            <span class="ai-step-duration" data-step-duration></span>
+                                        </div>
+                                    }
+                                </div>
+                                @if (x.Status == ExtractionStatus.Processing)
+                                {
+                                    <div class="ai-elapsed text-xs" data-start="@DateTime.SpecifyKind((x.UpdatedAt.HasValue && x.UpdatedAt.Value > x.CreatedAt) ? x.UpdatedAt.Value : x.CreatedAt, DateTimeKind.Utc).ToString("yyyy-MM-ddTHH:mm:ss.fffZ")">Süre hesaplanıyor...</div>
+                                }
+                            }
+                            else if (!string.IsNullOrWhiteSpace(x.ProgressStep) && x.ProgressStep != "done")
+                            {
+                                <br>
+                                <span class="text-xs" style="color:var(--ink-4);">
+                                    <i class="fas @StepIcon(x.ProgressStep)" style="margin-right:4px;"></i>
+                                    @StepLabel(x.ProgressStep)
+                                </span>
                             }
                         </td>
                         <td>
@@ -134,12 +195,26 @@ else
                             <span class="ago">@(x.ProcessedAt.HasValue ? x.ProcessedAt.Value.ToLocalTime().ToString("dd.MM.yyyy HH:mm") : "—")</span>
                         </td>
                         <td style="text-align:right;">
+                            <a href="/Ai/Detail/@x.Id" class="btn sm ghost" title="Detay (ham metin + AI çıktıları)">
+                                <i class="fas fa-file-lines text-[9px]"></i>
+                                Detay
+                            </a>
                             @if (x.Status == ExtractionStatus.AwaitingReview)
                             {
                                 <a href="/Ai/Review/@x.Id" class="btn sm primary">
                                     <i class="fas fa-magnifying-glass text-[9px]"></i>
                                     İncele
                                 </a>
+                            }
+                            @if (x.Status == ExtractionStatus.Processing)
+                            {
+                                <form method="post" action="/Ai/Cancel/@x.Id" style="display:inline; margin:0;" onsubmit="return confirm('Bu AI işlemi iptal edilsin mi?')">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn sm danger" title="İptal et">
+                                        <i class="fas fa-stop text-[9px]"></i>
+                                        İptal
+                                    </button>
+                                </form>
                             }
                             @if (x.Status == ExtractionStatus.Failed || x.Status == ExtractionStatus.Rejected)
                             {
@@ -163,31 +238,129 @@ else
 
 @section Scripts {
     <script>
-    // Processing durumundaki kayıtlar için polling
+    // Processing durumundaki kayıtlar için polling + stepper + elapsed time
     (function () {
         var processingIds = [@Html.Raw(string.Join(",", Model.Where(x => x.Status == ExtractionStatus.Processing).Select(x => x.Id)))];
-        if (processingIds.length === 0) return;
+        var STEP_ORDER = ['ocr', 'ai_stage1', 'ai_stage2', 'done'];
+        var STEP_LABELS = {
+            '': 'Sıraya Alındı',
+            'ocr': 'Metin Çıkarma',
+            'ai_stage1': 'AI Aşama 1 (Yapısal Çıkarım)',
+            'ai_stage2': 'AI Aşama 2 (Derin Analiz)',
+            'done': 'Tamamlandı',
+            'failed': 'Hata'
+        };
 
-        var token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+        function fmtElapsed(ms) {
+            var s = Math.floor(ms / 1000);
+            if (s < 60) return s + ' sn';
+            var m = Math.floor(s / 60);
+            var rs = s - m * 60;
+            return m + ' dk ' + rs + ' sn';
+        }
+
+        function updateElapsed() {
+            document.querySelectorAll('.ai-elapsed[data-start]').forEach(function (el) {
+                var start = new Date(el.getAttribute('data-start')).getTime();
+                if (isNaN(start)) return;
+                el.textContent = 'Geçen süre: ' + fmtElapsed(Date.now() - start);
+            });
+        }
+        setInterval(updateElapsed, 1000);
+        updateElapsed();
+
+        function fmtShort(ms) {
+            if (ms < 1000) return ms + 'ms';
+            var s = Math.round(ms / 1000);
+            if (s < 60) return s + 'sn';
+            var m = Math.floor(s / 60);
+            var rs = s - m * 60;
+            return m + 'dk' + (rs > 0 ? ' ' + rs + 'sn' : '');
+        }
+
+        function renderDurations(box, stamps, currentStep) {
+            var nodes = box.querySelectorAll('.ai-step');
+            nodes.forEach(function (n, i) {
+                var code = n.getAttribute('data-step-code');
+                var nextCode = STEP_ORDER[i + 1] || null;
+                var start = stamps[code] ? new Date(stamps[code]).getTime() : null;
+                var end = null;
+                if (nextCode && stamps[nextCode]) end = new Date(stamps[nextCode]).getTime();
+                else if (code === currentStep) end = Date.now();          // şu an aktif adım
+                else if (start && !nextCode) end = start;                  // done adımı
+
+                var dur = n.querySelector('[data-step-duration]');
+                if (!dur) return;
+                if (start && end) {
+                    var d = end - start;
+                    dur.textContent = d > 0 ? '(' + fmtShort(d) + ')' : '';
+                } else {
+                    dur.textContent = '';
+                }
+            });
+        }
+
+        function updateStepper(id, step, timestampsJson) {
+            var box = document.getElementById('stepper-' + id);
+            if (!box) return;
+            box.setAttribute('data-step', step);
+            if (timestampsJson) box.setAttribute('data-timestamps', timestampsJson);
+
+            var idx = STEP_ORDER.indexOf(step);
+            var nodes = box.querySelectorAll('.ai-step');
+            nodes.forEach(function (n, i) {
+                n.classList.remove('done', 'active', 'pending');
+                if (step === 'done') n.classList.add('done');
+                else if (idx < 0) n.classList.add('pending');
+                else if (i < idx) n.classList.add('done');
+                else if (i === idx) n.classList.add('active');
+                else n.classList.add('pending');
+            });
+
+            var stamps = {};
+            try { stamps = JSON.parse(box.getAttribute('data-timestamps') || '{}'); } catch (e) {}
+            renderDurations(box, stamps, step);
+        }
+
+        // Sayfa açılışında mevcut stepper'lar için duration render et + aktif olanlar tick'lensin.
+        document.querySelectorAll('.ai-stepper').forEach(function (box) {
+            var step = box.getAttribute('data-step');
+            var stamps = {};
+            try { stamps = JSON.parse(box.getAttribute('data-timestamps') || '{}'); } catch (e) {}
+            renderDurations(box, stamps, step);
+        });
+        // Processing satırları için aktif adım süresi her saniye güncellensin.
+        setInterval(function () {
+            document.querySelectorAll('.ai-stepper').forEach(function (box) {
+                var step = box.getAttribute('data-step');
+                if (!step || step === 'done') return;
+                var stamps = {};
+                try { stamps = JSON.parse(box.getAttribute('data-timestamps') || '{}'); } catch (e) {}
+                renderDurations(box, stamps, step);
+            });
+        }, 1000);
 
         function poll() {
             processingIds.forEach(function (id) {
                 fetch('/Ai/Status/' + id)
                     .then(function (r) { return r.json(); })
                     .then(function (data) {
-                        var el = document.getElementById('status-' + id);
-                        if (el) el.textContent = data.statusLabel;
+                        var st = document.getElementById('status-' + id);
+                        if (st) st.textContent = data.statusLabel;
+                        if (data.progressStep) updateStepper(id, data.progressStep, data.progressTimestamps);
+
+                        // status 0 = Processing, devam et. Diğer durumlarda durduralım ve reload.
                         if (data.status !== 0) {
                             processingIds = processingIds.filter(function (i) { return i !== id; });
-                            if (data.status === 2) setTimeout(function () { location.reload(); }, 1000);
+                            setTimeout(function () { location.reload(); }, 1200);
                         }
                     })
                     .catch(function () {});
             });
-            if (processingIds.length > 0) setTimeout(poll, 3000);
+            if (processingIds.length > 0) setTimeout(poll, 2500);
         }
 
-        setTimeout(poll, 3000);
+        if (processingIds.length > 0) setTimeout(poll, 1500);
     })();
     </script>
 }

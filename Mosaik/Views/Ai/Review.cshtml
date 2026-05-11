@@ -5,9 +5,11 @@
     ViewData["Title"] = "AI İnceleme";
     ViewData["PageTitle"] = "AI İnceleme";
     var suggestions = ViewBag.Suggestions as List<AiSuggestion> ?? new List<AiSuggestion>();
-    var summary     = ViewBag.Summary     as string;
-    var counterparty= ViewBag.Counterparty as string;
-    var category    = ViewBag.Category    as string;
+    var fields      = ViewBag.Fields as Mosaik.Controllers.AiController.ExtractedFields ?? new Mosaik.Controllers.AiController.ExtractedFields();
+    var summary     = fields.Summary;
+    var counterparty= fields.Counterparty;
+    var category    = fields.Category;
+    string FmtDate(string? iso) => string.IsNullOrWhiteSpace(iso) ? "—" : (DateTime.TryParse(iso, out var dt) ? dt.ToString("dd.MM.yyyy") : iso);
 
     var obligations = suggestions.Where(s => s.SuggestionType == SuggestionType.Obligation).ToList();
     var events      = suggestions.Where(s => s.SuggestionType == SuggestionType.ContractEvent).ToList();
@@ -51,11 +53,28 @@
     {
         <form method="post" action="/Ai/ApproveAll/@Model.Id" style="margin:0;">
             @Html.AntiForgeryToken()
-            <button type="submit" class="btn primary">
+            <button type="submit" class="btn ghost">
                 <i class="fas fa-check-double text-[10px]"></i>
                 Tümünü Onayla
             </button>
         </form>
+    }
+    @if (Model.ContractId == null)
+    {
+        <form method="post" action="/Ai/CreateContract/@Model.Id" style="margin:0;" onsubmit="return confirm('AI çıkarımından sözleşme taslağı oluşturulacak. Onayladığınız yükümlülükler eklenecek. Devam?')">
+            @Html.AntiForgeryToken()
+            <button type="submit" class="btn primary">
+                <i class="fas fa-file-circle-plus text-[10px]"></i>
+                Sözleşme Olarak Kaydet
+            </button>
+        </form>
+    }
+    else
+    {
+        <a href="/Contracts/Edit/@Model.ContractId" class="btn primary">
+            <i class="fas fa-pen text-[10px]"></i>
+            Sözleşmeyi Düzenle
+        </a>
     }
     <a href="/Ai" class="btn ghost">Geri</a>
 }
@@ -138,6 +157,112 @@
                     }
                 </div>
                 <p style="margin:0; font-size:13px; line-height:1.6; opacity:.95;">@summary</p>
+            </div>
+        }
+
+        @* Sözleşme Bilgileri (yapısal alanlar) *@
+        <div class="form-section-card wide">
+            <div class="form-section-head">
+                <h2><i class="fas fa-file-contract text-muted"></i> Sözleşme Bilgileri</h2>
+            </div>
+            <div class="kv-grid">
+                @if (!string.IsNullOrWhiteSpace(fields.Subject))
+                {
+                    <div class="full">
+                        <div class="kv-label">Konu</div>
+                        <div class="kv-value">@fields.Subject</div>
+                    </div>
+                }
+                <div>
+                    <div class="kv-label">Sözleşme No</div>
+                    <div class="kv-value mono">@(fields.ContractNumber ?? "—")</div>
+                </div>
+                <div>
+                    <div class="kv-label">Kategori</div>
+                    <div class="kv-value">@(fields.Category ?? "—")</div>
+                </div>
+                <div>
+                    <div class="kv-label">İmza Tarihi</div>
+                    <div class="kv-value">@FmtDate(fields.SignedDate)</div>
+                </div>
+                <div>
+                    <div class="kv-label">Yürürlük</div>
+                    <div class="kv-value">@FmtDate(fields.StartDate) → @FmtDate(fields.EndDate)</div>
+                </div>
+                @if (fields.TotalAmount.HasValue || !string.IsNullOrWhiteSpace(fields.PaymentTerms))
+                {
+                    <div>
+                        <div class="kv-label">Bedel</div>
+                        <div class="kv-value">
+                            @(fields.TotalAmount.HasValue ? $"{fields.TotalAmount:N2} {fields.Currency ?? ""}" : "—")
+                        </div>
+                    </div>
+                    <div>
+                        <div class="kv-label">Ödeme Koşulları</div>
+                        <div class="kv-value">@(fields.PaymentTerms ?? "—")</div>
+                    </div>
+                }
+                @if (!string.IsNullOrWhiteSpace(fields.Jurisdiction))
+                {
+                    <div class="full">
+                        <div class="kv-label">Yetkili Mahkeme</div>
+                        <div class="kv-value">@fields.Jurisdiction</div>
+                    </div>
+                }
+            </div>
+        </div>
+
+        @* Taraflar *@
+        @if (fields.Parties.Any())
+        {
+            <div class="form-section-card wide">
+                <div class="form-section-head">
+                    <h2><i class="fas fa-handshake text-muted"></i> Taraflar <span class="pill">@fields.Parties.Count</span></h2>
+                </div>
+                <div class="form-section-body stack-12">
+                    @foreach (var p in fields.Parties)
+                    {
+                        <div class="party-card">
+                            <div class="party-card-head">
+                                <span class="party-card-title">@p.Name</span>
+                                @if (!string.IsNullOrWhiteSpace(p.Role))
+                                {
+                                    <span class="pill">@p.Role</span>
+                                }
+                            </div>
+                            <div class="party-card-meta">
+                                @if (!string.IsNullOrWhiteSpace(p.TaxId))
+                                { <div><strong>Vergi/TCKN:</strong> <span class="mono">@p.TaxId</span></div> }
+                                @if (!string.IsNullOrWhiteSpace(p.Signatory))
+                                { <div><strong>İmzacı:</strong> @p.Signatory @(p.SignatoryTitle is null ? "" : $"({p.SignatoryTitle})")</div> }
+                                @if (!string.IsNullOrWhiteSpace(p.Address))
+                                { <div class="full"><strong>Adres:</strong> @p.Address</div> }
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+
+        @* Anahtar şartlar *@
+        @if (fields.KeyTerms.Any())
+        {
+            <div class="form-section-card wide">
+                <div class="form-section-head">
+                    <h2><i class="fas fa-list-check text-muted"></i> Önemli Şartlar <span class="pill">@fields.KeyTerms.Count</span></h2>
+                </div>
+                <div class="form-section-body stack-12">
+                    @foreach (var t in fields.KeyTerms)
+                    {
+                        <div class="term-block">
+                            <div class="term-block-title">@t.Title</div>
+                            @if (!string.IsNullOrWhiteSpace(t.Detail))
+                            {
+                                <div class="term-block-detail">@t.Detail</div>
+                            }
+                        </div>
+                    }
+                </div>
             </div>
         }
 

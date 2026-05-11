@@ -1,0 +1,260 @@
+@model Mosaik.Models.ContractAiExtraction
+@using System.Text.Json
+@{
+    Layout = "_AppLayout";
+    ViewData["Title"] = "AI Çıkarım Detayı";
+    ViewData["PageTitle"] = "AI Çıkarım Detayı";
+
+    string PrettyJson(string? raw)
+    {
+        if (string.IsNullOrWhiteSpace(raw)) return "";
+        try
+        {
+            using var doc = JsonDocument.Parse(raw);
+            return JsonSerializer.Serialize(doc.RootElement, new JsonSerializerOptions { WriteIndented = true });
+        }
+        catch { return raw; }
+    }
+
+    // Plan 27 Faz A — adım timeline'ı (her adımın süresi)
+    var stepOrder = new[] { "ocr", "ai_stage1", "ai_stage2", "done" };
+    var stepLabels = new Dictionary<string, string>
+    {
+        ["ocr"] = "Metin Çıkarma",
+        ["ai_stage1"] = "AI Stage 1 (Yapısal)",
+        ["ai_stage2"] = "AI Stage 2 (Derin Analiz)",
+        ["done"] = "Tamamlandı"
+    };
+    var stepIcons = new Dictionary<string, string>
+    {
+        ["ocr"] = "fa-file-image",
+        ["ai_stage1"] = "fa-brain",
+        ["ai_stage2"] = "fa-microscope",
+        ["done"] = "fa-check"
+    };
+    Dictionary<string, DateTime>? stamps = null;
+    if (!string.IsNullOrWhiteSpace(Model.ProgressTimestampsJson))
+    {
+        try
+        {
+            var raw = JsonSerializer.Deserialize<Dictionary<string, string>>(Model.ProgressTimestampsJson);
+            if (raw != null)
+                stamps = raw.ToDictionary(k => k.Key, v => DateTime.Parse(v.Value, null, System.Globalization.DateTimeStyles.RoundtripKind));
+        }
+        catch { }
+    }
+    string FmtDuration(TimeSpan t)
+    {
+        if (t.TotalSeconds < 1) return $"{t.TotalMilliseconds:F0} ms";
+        if (t.TotalSeconds < 60) return $"{t.TotalSeconds:F1} sn";
+        return $"{(int)t.TotalMinutes} dk {t.Seconds} sn";
+    }
+}
+
+@section Breadcrumb {
+    <nav class="crumbs" aria-label="Sayfa konumu">
+        <a href="/Dashboard">Ana Sayfa</a>
+        <span aria-hidden="true">›</span>
+        <a href="/Ai">AI Analiz</a>
+        <span aria-hidden="true">›</span>
+        <span aria-current="page">Detay</span>
+    </nav>
+}
+
+@section TopActions {
+    @if (Model.Status == Mosaik.Models.ExtractionStatus.AwaitingReview || Model.Status == Mosaik.Models.ExtractionStatus.Approved)
+    {
+        <a href="/Ai/Review/@Model.Id" class="btn primary">
+            <i class="fas fa-magnifying-glass text-[10px]"></i>
+            İnceleme
+        </a>
+    }
+    <a href="/Ai" class="btn ghost">Geri</a>
+}
+
+<div class="hero">
+    <h1>@(Model.ContractFile?.FileName ?? "—")</h1>
+    <div class="sub">
+        @if (Model.Contract != null)
+        {
+            <span><a href="/Contracts/Details/@Model.Contract.Id" class="data-link">@Model.Contract.Title</a></span>
+        }
+        @if (!string.IsNullOrWhiteSpace(Model.ModelUsed))
+        {
+            <span class="pill mono">@Model.ModelUsed</span>
+        }
+        <span class="mono">@(Model.InputTokens) in · @(Model.OutputTokens) out token</span>
+        @if (Model.ProcessedAt.HasValue)
+        {
+            <span class="ago">@Model.ProcessedAt.Value.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</span>
+        }
+    </div>
+</div>
+
+@* Adım Timeline'ı *@
+@if (stamps != null && stamps.Count > 0)
+{
+    <div class="form-section-card wide">
+        <div class="form-section-head">
+            <h2><i class="fas fa-stopwatch text-muted"></i> Adım Süreleri</h2>
+            @{
+                var firstTs = stamps.Values.Min();
+                var lastTs = stamps.ContainsKey("done") ? stamps["done"] : (Model.ProcessedAt ?? DateTime.UtcNow);
+                var totalSpan = lastTs - firstTs;
+            }
+            <span class="pill mono section-head-right">Toplam: @FmtDuration(totalSpan)</span>
+        </div>
+        <div class="form-section-body">
+            <table class="dt timeline-table">
+                <thead>
+                    <tr>
+                        <th scope="col" class="col-icon"></th>
+                        <th scope="col">Adım</th>
+                        <th scope="col">Başlangıç</th>
+                        <th scope="col" class="text-right">Süre</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (int i = 0; i < stepOrder.Length; i++)
+                    {
+                        var code = stepOrder[i];
+                        if (!stamps.ContainsKey(code)) continue;
+                        var start = stamps[code];
+                        DateTime? end = null;
+                        for (int j = i + 1; j < stepOrder.Length; j++)
+                        {
+                            if (stamps.ContainsKey(stepOrder[j])) { end = stamps[stepOrder[j]]; break; }
+                        }
+                        if (end == null && code != "done") end = Model.ProcessedAt;
+                        var dur = end.HasValue ? end.Value - start : TimeSpan.Zero;
+                        <tr>
+                            <td><i class="fas @stepIcons[code] text-muted"></i></td>
+                            <td>@stepLabels[code]</td>
+                            <td><span class="mono text-xs">@start.ToLocalTime().ToString("HH:mm:ss")</span></td>
+                            <td class="text-right">
+                                @if (code == "done")
+                                {
+                                    <span class="status ok">✓</span>
+                                }
+                                else
+                                {
+                                    <span class="mono">@FmtDuration(dur)</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+
+<div x-data="{ tab: 'raw' }">
+
+    @* Tab başlıkları *@
+    <div class="tab-row">
+        <button type="button" class="tab-btn" :class="{ 'active': tab === 'raw' }" @@click="tab = 'raw'">
+            <i class="fas fa-file-lines"></i>
+            Ham Metin (@(Model.RawText?.Length ?? 0) char)
+        </button>
+        <button type="button" class="tab-btn" :class="{ 'active': tab === 'stage1' }" @@click="tab = 'stage1'">
+            <i class="fas fa-brain"></i>
+            Stage 1 — Yapısal JSON
+        </button>
+        <button type="button" class="tab-btn" :class="{ 'active': tab === 'stage2' }" @@click="tab = 'stage2'">
+            <i class="fas fa-microscope"></i>
+            Stage 2 — Derin Analiz
+        </button>
+        @if (!string.IsNullOrWhiteSpace(Model.ErrorMessage))
+        {
+            <button type="button" class="tab-btn danger right-align" :class="{ 'active': tab === 'error' }" @@click="tab = 'error'">
+                <i class="fas fa-triangle-exclamation"></i>
+                Hata
+            </button>
+        }
+    </div>
+
+    @* Ham metin *@
+    <div x-show="tab === 'raw'" class="form-section-card wide">
+        <div class="form-section-head">
+            <h2><i class="fas fa-file-lines text-muted"></i> Ham Metin (PdfPig / Tesseract / Vision)</h2>
+            @if (!string.IsNullOrWhiteSpace(Model.RawText))
+            {
+                <button type="button" class="btn sm ghost section-head-right" onclick="navigator.clipboard.writeText(document.getElementById('raw-text').textContent)">
+                    <i class="fas fa-copy text-[9px]"></i> Kopyala
+                </button>
+            }
+        </div>
+        <div class="form-section-body">
+            @if (string.IsNullOrWhiteSpace(Model.RawText))
+            {
+                <p class="text-muted">Henüz metin çıkarılmadı.</p>
+            }
+            else
+            {
+                <pre id="raw-text" class="code-block">@Model.RawText</pre>
+            }
+        </div>
+    </div>
+
+    @* Stage 1 *@
+    <div x-show="tab === 'stage1'" x-cloak class="form-section-card wide">
+        <div class="form-section-head">
+            <h2><i class="fas fa-brain text-muted"></i> Stage 1 — Yapısal Çıkarım (JSON)</h2>
+            @if (!string.IsNullOrWhiteSpace(Model.ExtractionResultJson))
+            {
+                <button type="button" class="btn sm ghost section-head-right" onclick="navigator.clipboard.writeText(document.getElementById('stage1-json').textContent)">
+                    <i class="fas fa-copy text-[9px]"></i> Kopyala
+                </button>
+            }
+        </div>
+        <div class="form-section-body">
+            @if (string.IsNullOrWhiteSpace(Model.ExtractionResultJson))
+            {
+                <p class="text-muted">Stage 1 henüz tamamlanmadı.</p>
+            }
+            else
+            {
+                <pre id="stage1-json" class="code-block json">@PrettyJson(Model.ExtractionResultJson)</pre>
+            }
+        </div>
+    </div>
+
+    @* Stage 2 *@
+    <div x-show="tab === 'stage2'" x-cloak class="form-section-card wide">
+        <div class="form-section-head">
+            <h2><i class="fas fa-microscope text-muted"></i> Stage 2 — Kategori-Spesifik Derinleştirme</h2>
+            @if (!string.IsNullOrWhiteSpace(Model.Stage2ResultText))
+            {
+                <button type="button" class="btn sm ghost section-head-right" onclick="navigator.clipboard.writeText(document.getElementById('stage2-text').textContent)">
+                    <i class="fas fa-copy text-[9px]"></i> Kopyala
+                </button>
+            }
+        </div>
+        <div class="form-section-body">
+            @if (string.IsNullOrWhiteSpace(Model.Stage2ResultText))
+            {
+                <p class="text-muted">Stage 2 başarısız ya da çalıştırılmadı.</p>
+            }
+            else
+            {
+                <pre id="stage2-text" class="code-block">@Model.Stage2ResultText</pre>
+            }
+        </div>
+    </div>
+
+    @* Hata *@
+    @if (!string.IsNullOrWhiteSpace(Model.ErrorMessage))
+    {
+        <div x-show="tab === 'error'" x-cloak class="form-section-card wide">
+            <div class="form-section-head">
+                <h2 class="text-err"><i class="fas fa-triangle-exclamation"></i> Hata Detayı</h2>
+            </div>
+            <div class="form-section-body stack-12">
+                <pre class="code-block error">@Model.ErrorMessage</pre>
+                <p class="help-text">Progress step: <code>@(Model.ProgressStep ?? "—")</code></p>
+            </div>
+        </div>
+    }
+
+</div>

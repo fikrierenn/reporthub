@@ -2,8 +2,30 @@ using Hangfire;
 using Microsoft.EntityFrameworkCore;
 using Mosaik.Models;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Serilog;
+using Serilog.Events;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Plan 27 Faz A — Serilog file sink. Console + günlük rolling file.
+// Log dosyaları: D:/Dev/reporthub/Mosaik/logs/mosaik-YYYY-MM-DD.log (7 gün retention).
+// AI çağrıları, hatalar, EF query'leri buraya yazılır — UI takılma debug için kritik.
+Log.Logger = new LoggerConfiguration()
+    .MinimumLevel.Information()
+    .MinimumLevel.Override("Microsoft.AspNetCore", LogEventLevel.Warning)
+    .MinimumLevel.Override("Microsoft.EntityFrameworkCore", LogEventLevel.Warning)
+    .MinimumLevel.Override("Mosaik.Services.AiSummaryProvider", LogEventLevel.Information)
+    .MinimumLevel.Override("Mosaik.Services.Ai", LogEventLevel.Information)
+    .Enrich.FromLogContext()
+    .WriteTo.Console()
+    .WriteTo.File(
+        path: Path.Combine(builder.Environment.ContentRootPath, "logs", "mosaik-.log"),
+        rollingInterval: RollingInterval.Day,
+        retainedFileCountLimit: 7,
+        outputTemplate: "{Timestamp:HH:mm:ss.fff} [{Level:u3}] {SourceContext}: {Message:lj}{NewLine}{Exception}")
+    .CreateLogger();
+
+builder.Host.UseSerilog();
 
 // URL launchSettings.json'dan okunuyor
 
@@ -67,6 +89,13 @@ builder.Services.AddScoped<Mosaik.Core.Notification.INotificationService, Mosaik
 builder.Services.AddScoped<Mosaik.Services.ICurrentUserService, Mosaik.Services.CurrentUserService>();
 builder.Services.AddSingleton<Mosaik.Services.Ai.AiPipelineQueue>();
 builder.Services.AddSingleton<Mosaik.Services.Ai.IPdfTextExtractor, Mosaik.Services.Ai.PdfPigTextExtractor>();
+builder.Services.AddSingleton<Mosaik.Services.Ai.TesseractOcrExtractor>();
+// Plan 27 Faz A-01
+builder.Services.AddSingleton<Mosaik.Services.Ai.PageImportanceScorer>();
+// Plan 27 Faz B-01+B-03 — auto-classify + executive summary servisi.
+builder.Services.AddScoped<Mosaik.Services.Ai.DocumentInsightService>();
+// Plan 27 Faz B-05 — single-doc chat (RAG'siz, token <30K direkt z.ai context).
+builder.Services.AddScoped<Mosaik.Services.Ai.DocumentChatService>();
 builder.Services.AddHostedService<Mosaik.Services.Ai.AiExtractionWorker>();
 
 // Plan 25 AI Wizard — vision provider + extraction service (Faz 1).
