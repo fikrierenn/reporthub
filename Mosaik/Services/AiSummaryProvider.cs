@@ -56,11 +56,15 @@ namespace Mosaik.Services
                         _ => await CallOpenAiCompatibleAsync(effective, req, ct)
                     };
                 }
+                catch (OperationCanceledException) when (ct.IsCancellationRequested)
+                {
+                    throw;
+                }
                 catch (Exception ex)
                 {
                     _logger.LogError(ex, "AI provider hata (provider={Provider}, model={Model}, purpose={Purpose})",
                         cfg.Provider, effective.Model, req.Purpose);
-                    result = new AiSummaryResult(false, null, $"{cfg.Provider} exception: {ex.Message}");
+                    result = new AiSummaryResult(false, null, $"{cfg.Provider} bağlantı hatası.");
                 }
 
                 if (result.IsSuccess)
@@ -208,7 +212,7 @@ namespace Mosaik.Services
             }
 
             var bodyJson = JsonSerializer.Serialize(bodyDict);
-            _logger.LogInformation("z.ai REQUEST → {Url} body={Body}", url, Truncate(bodyJson, 600));
+            _logger.LogDebug("z.ai REQUEST → {Url} body={Body}", url, Truncate(bodyJson, 600));
 
             using var msg = new HttpRequestMessage(HttpMethod.Post, url);
             msg.Headers.Add("Authorization", $"Bearer {cfg.ApiKey}");
@@ -217,48 +221,59 @@ namespace Mosaik.Services
             using var resp = await http.SendAsync(msg, ct);
             var text = await resp.Content.ReadAsStringAsync(ct);
 
-            _logger.LogInformation("z.ai RESPONSE ← {Status} body={Body}", (int)resp.StatusCode, Truncate(text, 800));
+            _logger.LogDebug("z.ai RESPONSE ← {Status} body={Body}", (int)resp.StatusCode, Truncate(text, 800));
 
             if (!resp.IsSuccessStatusCode)
             {
                 return new AiSummaryResult(false, null, $"z.ai HTTP {(int)resp.StatusCode}: {Truncate(text, 400)}");
             }
 
-            using var doc = JsonDocument.Parse(text);
-            var firstChoice = doc.RootElement.GetProperty("choices")[0];
-            var message = firstChoice.GetProperty("message");
-            var content = message.GetProperty("content").GetString() ?? "";
-            var finishReason = firstChoice.TryGetProperty("finish_reason", out var fr) ? fr.GetString() : null;
-
-            // content boşsa: reasoning_content'a düşmüş olabilir veya finish_reason=length
-            if (string.IsNullOrWhiteSpace(content))
+            string content;
+            string? finishReason;
+            int inTok = 0, outTok = 0;
+            try
             {
-                if (message.TryGetProperty("reasoning_content", out var rc))
+                using var doc = JsonDocument.Parse(text);
+                var firstChoice = doc.RootElement.GetProperty("choices")[0];
+                var message = firstChoice.GetProperty("message");
+                content = message.GetProperty("content").GetString() ?? "";
+                finishReason = firstChoice.TryGetProperty("finish_reason", out var fr) ? fr.GetString() : null;
+
+                // content boşsa: reasoning_content'a düşmüş olabilir veya finish_reason=length
+                if (string.IsNullOrWhiteSpace(content))
                 {
-                    var reasoning = rc.GetString();
-                    if (!string.IsNullOrWhiteSpace(reasoning))
+                    if (message.TryGetProperty("reasoning_content", out var rc))
                     {
-                        _logger.LogWarning("z.ai content boş, reasoning_content'tan JSON ayıklanıyor (finish={Finish})", finishReason);
-                        // reasoning_content'tan JSON bloğunu çek (markdown ```json...``` veya saf JSON)
-                        var extracted = ExtractJsonBlock(reasoning);
-                        if (!string.IsNullOrWhiteSpace(extracted))
-                            content = extracted;
+                        var reasoning = rc.GetString();
+                        if (!string.IsNullOrWhiteSpace(reasoning))
+                        {
+                            _logger.LogWarning("z.ai content boş, reasoning_content'tan JSON ayıklanıyor (finish={Finish})", finishReason);
+                            var extracted = ExtractJsonBlock(reasoning);
+                            if (!string.IsNullOrWhiteSpace(extracted))
+                                content = extracted;
+                        }
                     }
                 }
 
-                if (string.IsNullOrWhiteSpace(content))
+                if (doc.RootElement.TryGetProperty("usage", out var u))
                 {
-                    return new AiSummaryResult(false, null,
-                        $"z.ai content boş döndü (finish_reason={finishReason}). max_tokens artırılmalı veya farklı model denenebilir.");
+                    if (u.TryGetProperty("prompt_tokens", out var pt)) inTok = pt.GetInt32();
+                    if (u.TryGetProperty("completion_tokens", out var ot)) outTok = ot.GetInt32();
                 }
             }
-
-            int inTok = 0, outTok = 0;
-            if (doc.RootElement.TryGetProperty("usage", out var u))
+            catch (Exception ex)
             {
-                if (u.TryGetProperty("prompt_tokens", out var pt)) inTok = pt.GetInt32();
-                if (u.TryGetProperty("completion_tokens", out var ot)) outTok = ot.GetInt32();
+                return new AiSummaryResult(false, null,
+                    $"z.ai JSON parse/yapı hatası: {ex.Message}. Body: {Truncate(text, 300)}");
             }
+
+            if (string.IsNullOrWhiteSpace(content))
+            {
+                return new AiSummaryResult(false, null,
+                    "z.ai content boş döndü. max_tokens artırılmalı veya farklı model denenebilir.");
+            }
+
+
 
             return new AiSummaryResult(true, content, null, inTok, outTok, cfg.Model);
         }

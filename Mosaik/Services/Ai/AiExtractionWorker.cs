@@ -108,10 +108,7 @@ namespace Mosaik.Services.Ai
                 {
                     _logger.LogError(ex,
                         "AI extraction kalıcı hata (3 deneme tükendi). ExtractionId={Id}.", extractionId);
-                    var detail = $"{ex.GetType().Name}: {ex.Message}";
-                    if (ex.InnerException is not null)
-                        detail += $" → {ex.InnerException.GetType().Name}: {ex.InnerException.Message}";
-                    await MarkFailedAsync(extractionId, $"Beklenmedik hata: {detail}");
+                    await MarkFailedAsync(extractionId, $"Beklenmedik hata: {ex.GetType().Name}. Detay logda.");
                 }
             }
         }
