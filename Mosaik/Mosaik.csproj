@@ -26,7 +26,19 @@
     </PackageReference>
     <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" Version="10.0.1" />
     <PackageReference Include="PdfPig" Version="0.1.9" />
+    <PackageReference Include="PDFtoImage" Version="4.1.0" />
+    <PackageReference Include="Serilog.AspNetCore" Version="9.0.0" />
+    <PackageReference Include="Serilog.Sinks.File" Version="6.0.0" />
     <PackageReference Include="System.DirectoryServices.AccountManagement" Version="10.0.1" />
+    <PackageReference Include="Tesseract" Version="5.2.0" />
   </ItemGroup>
+
+  <!-- Tesseract native DLL'leri build output'a kopyala (Windows x64) -->
+  <Target Name="CopyTesseractNativeDlls" AfterTargets="Build">
+    <ItemGroup>
+      <TesseractNativeDll Include="$(NuGetPackageRoot)tesseract\5.2.0\x64\*.dll" />
+    </ItemGroup>
+    <Copy SourceFiles="@(TesseractNativeDll)" DestinationFolder="$(OutputPath)" SkipUnchangedFiles="true" />
+  </Target>
 
 </Project>

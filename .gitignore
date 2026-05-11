@@ -58,3 +58,6 @@ kodlari_topla_v2.bat
 # OS junk
 .DS_Store
 Thumbs.db
+
+# Tesseract dil dosyaları (büyük binary — ayrıca indir)
+Mosaik/tessdata/*.traineddata

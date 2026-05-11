@@ -22,7 +22,7 @@ namespace Mosaik.Services.Ai
             // Absolute path gelirse direkt kullan; relative ise ContentRoot (App_Data) altında çöz
             var absolute = Path.IsPathRooted(filePath)
                 ? filePath
-                : Path.Combine(_env.ContentRootPath, filePath.TrimStart('/', '\\'));
+                : Path.Combine(_env.WebRootPath, filePath.TrimStart('/', '\\'));
 
             if (!File.Exists(absolute))
             {
