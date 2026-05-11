@@ -82,11 +82,8 @@ namespace Mosaik.Services.Ai
 
                     using (skBitmap)
                     {
-                        // Plan 27 Faz A-02 — Otsu preprocessing geçici olarak devre dışı.
-                        // GetPixel/SetPixel her sayfa için 8M+ sanal call üretiyordu (22 sayfa × 5+ dk).
-                        // Tesseract'ın internal preprocessing'i çoğu durumda yeterli.
-                        // Hızlı versiyon için SKBitmap.GetPixelSpan() unsafe erişim gerekiyor — sonraki sprint.
-                        using var skData = skBitmap.Encode(SKEncodedImageFormat.Png, 100);
+                        using var processed = ApplyOtsuBinarization(skBitmap);
+                        using var skData = processed.Encode(SKEncodedImageFormat.Png, 100);
                         var pngBytes = skData.ToArray();
 
                         using var pix = Pix.LoadFromMemory(pngBytes);
@@ -119,65 +116,54 @@ namespace Mosaik.Services.Ai
         // Plan 27 Faz A-02 — grayscale + Otsu adaptive threshold.
         // Tarayıcı çıkışında zayıf kontrast/gölge varsa Tesseract Türkçe diakritikleri kaçırır.
         // Otsu pixel histogramından optimum threshold bulup binary'e çevirir — kontrast keskinleşir.
+        // Perf: GetPixelSpan (span okuma) + SKData.CreateCopy (managed write) — GetPixel/SetPixel virtual call yok.
         private static SKBitmap ApplyOtsuBinarization(SKBitmap source)
         {
             int width = source.Width;
             int height = source.Height;
+            int total = width * height;
+            int bpp = source.BytesPerPixel; // Bgra8888 = 4
 
-            // 1) Grayscale histogram + gri değerler
-            var grayValues = new byte[width * height];
-            var histogram = new int[256];
-            int idx = 0;
-            for (int y = 0; y < height; y++)
+            // 1) Grayscale + histogram — O(n) tek geçiş, span erişimi (no virtual dispatch)
+            var srcSpan = source.GetPixelSpan(); // ReadOnlySpan<byte>
+            var gray = new byte[total];
+            var hist = new int[256];
+            for (int i = 0; i < total; i++)
             {
-                for (int x = 0; x < width; x++)
-                {
-                    var px = source.GetPixel(x, y);
-                    // luminance (Rec. 601)
-                    byte gray = (byte)((px.Red * 0.299) + (px.Green * 0.587) + (px.Blue * 0.114));
-                    grayValues[idx++] = gray;
-                    histogram[gray]++;
-                }
+                int off = i * bpp;
+                // Bgra8888: off=B, off+1=G, off+2=R. Integer Rec.601: (R*77 + G*150 + B*29) >> 8
+                byte g = (byte)((srcSpan[off + 2] * 77 + srcSpan[off + 1] * 150 + srcSpan[off] * 29) >> 8);
+                gray[i] = g;
+                hist[g]++;
             }
 
-            // 2) Otsu — sınıflar arası varyansı maksimize eden eşik
-            int total = width * height;
+            // 2) Otsu — O(256), ihmal edilebilir
             double sum = 0;
-            for (int t = 0; t < 256; t++) sum += t * histogram[t];
-
-            double sumB = 0;
-            int wB = 0;
-            double maxVar = 0;
-            int threshold = 127;
+            for (int t = 0; t < 256; t++) sum += t * hist[t];
+            double sumB = 0, maxVar = 0;
+            int wB = 0, threshold = 127;
             for (int t = 0; t < 256; t++)
             {
-                wB += histogram[t];
+                wB += hist[t];
                 if (wB == 0) continue;
                 int wF = total - wB;
                 if (wF == 0) break;
-                sumB += t * histogram[t];
+                sumB += t * hist[t];
                 double mB = sumB / wB;
                 double mF = (sum - sumB) / wF;
-                double varBetween = (double)wB * wF * (mB - mF) * (mB - mF);
-                if (varBetween > maxVar)
-                {
-                    maxVar = varBetween;
-                    threshold = t;
-                }
+                double between = (double)wB * wF * (mB - mF) * (mB - mF);
+                if (between > maxVar) { maxVar = between; threshold = t; }
             }
 
-            // 3) Threshold uygula → binary bitmap
-            var output = new SKBitmap(width, height, SKColorType.Bgra8888, SKAlphaType.Opaque);
-            idx = 0;
-            for (int y = 0; y < height; y++)
-            {
-                for (int x = 0; x < width; x++)
-                {
-                    byte v = grayValues[idx++] < threshold ? (byte)0 : (byte)255;
-                    output.SetPixel(x, y, new SKColor(v, v, v));
-                }
-            }
-            return output;
+            // 3) Binary çıktı — managed byte[] + SKData.CreateCopy (SetPixel yok)
+            var rawOut = new byte[total]; // Gray8: 1 byte/pixel
+            for (int i = 0; i < total; i++)
+                rawOut[i] = gray[i] < threshold ? (byte)0 : (byte)255;
+
+            var outInfo = new SKImageInfo(width, height, SKColorType.Gray8, SKAlphaType.Opaque);
+            using var outData = SKData.CreateCopy(rawOut);
+            using var outImage = SKImage.FromPixels(outInfo, outData, width);
+            return SKBitmap.FromImage(outImage) ?? new SKBitmap(width, height);
         }
 
         public bool HasMinimumText(string text) => text.Length >= MinTextLength;
