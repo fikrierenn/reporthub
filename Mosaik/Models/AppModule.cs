@@ -25,5 +25,11 @@ namespace Mosaik.Models
         // 'core' (mevcut: rapor, dashboard, brand) | 'extension' (Plan 17+ vNext)
         [Required, MaxLength(20)]
         public string ModuleType { get; set; } = "core";
+
+        // Plan 23 — sidebar grup atama. Sabit 5 group:
+        // 'main', 'workspace', 'contracts', 'structure', 'system'.
+        // NULL ise sidebar'da "workspace" (Çalışma Alanı) fallback.
+        [MaxLength(50)]
+        public string? GroupKey { get; set; }
     }
 }

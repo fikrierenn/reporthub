@@ -90,3 +90,28 @@
         }, 100);
     });
 })();
+
+// Plan 23 — Sidebar collapsible group Alpine factory.
+// _AppLayout.cshtml her <div class="side-group"> için x-data="sidebarGroup('<key>')" tanımlar.
+// localStorage'a 'mosaik.sidebar.group.<key>' = '0'|'1' yazar (default açık).
+// Mobile (<1024px) drawer'da stored state ignore, hep açık başlar.
+window.sidebarGroup = function (groupKey) {
+    return {
+        key: groupKey,
+        open: true,
+        init: function () {
+            try {
+                var stored = localStorage.getItem('mosaik.sidebar.group.' + this.key);
+                if (stored !== null && window.innerWidth >= 1024) {
+                    this.open = stored !== '0';
+                }
+            } catch (e) { /* ignore */ }
+        },
+        toggle: function () {
+            this.open = !this.open;
+            try {
+                localStorage.setItem('mosaik.sidebar.group.' + this.key, this.open ? '1' : '0');
+            } catch (e) { /* ignore */ }
+        }
+    };
+};

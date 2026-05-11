@@ -110,106 +110,215 @@
 
             @if (isAuthenticated)
             {
-                <div class="side-section">Ana</div>
-                <ul class="nav-list">
-                    <li>
-                        <a href="/Dashboard" class="@(IsActive("Dashboard") ? "active" : "")" aria-current="@(IsActive("Dashboard") ? "page" : null)">
-                            <span class="icon" aria-hidden="true"><i class="fas fa-house"></i></span>
-                            <span class="label">Genel Bakış</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="/OrgChart" class="@(IsActive("OrgChart") ? "active" : "")" aria-current="@(IsActive("OrgChart") ? "page" : null)">
-                            <span class="icon" aria-hidden="true"><i class="fas fa-sitemap"></i></span>
-                            <span class="label">Organizasyon</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="/Contracts" class="@(IsActive("Contracts") ? "active" : "")" aria-current="@(IsActive("Contracts") ? "page" : null)">
-                            <span class="icon" aria-hidden="true"><i class="fas fa-file-contract"></i></span>
-                            <span class="label">Sözleşmeler</span>
-                        </a>
-                    </li>
-                    @{
-                        // Plan 16.6 — vNext modüller için ikon mapping. Yeni modül
-                        // eklendiğinde AppModule seed'inde ModuleKey + buradaki ikon.
-                        // İlerde Mosaik.Core.Module.ModuleLoader.DiscoverModules()'tan
-                        // dinamik Icon çekilebilir (AppModule.Icon kolonu eklenebilir).
-                        var moduleIcons = new Dictionary<string, string>
-                        {
-                            ["circular"]    = "fas fa-bullhorn",
-                            ["hr"]          = "fas fa-users",
-                            ["documents"]   = "fas fa-folder-open",
-                            ["calendar"]    = "fas fa-calendar-days",
-                            ["approval"]    = "fas fa-check-double",
-                            ["ai"]          = "fas fa-robot",
-                            ["compliance"]  = "fas fa-shield-halved"
-                        };
-                    }
-                    @foreach (var module in enabledModules)
+                // Plan 23 — Sidebar 5 grup: main / workspace / contracts / structure / system.
+                // AppModule.GroupKey DB'den, Alpine x-show + transition ile aç/kapat + localStorage.
+                var moduleIcons = new Dictionary<string, string>
                     {
-                        @if (module.ModuleKey == "reports")
-                        {
-                            <li>
-                                <a href="/Reports" class="@(IsActive("Reports") ? "active" : "")" aria-current="@(IsActive("Reports") ? "page" : null)">
-                                    <span class="icon" aria-hidden="true"><i class="fas fa-chart-column"></i></span>
-                                    <span class="label">@module.DisplayName</span>
-                                </a>
-                            </li>
-                        }
-                        else if (module.ModuleKey == "dashboards")
-                        {
-                            // "Genel Bakış" zaten /Dashboard'a gidiyor (yukarıdaki hardcoded link).
-                            // Modül-listesindeki "Panolar" duplicate — atla.
-                            continue;
-                        }
-                        else
-                        {
-                            // vNext modüller (Plan 16.6 extension) — ModuleKey URL prefix'i.
-                            // Circular → /Circular, HR → /HR vs.
-                            var icon = moduleIcons.TryGetValue(module.ModuleKey, out var ic) ? ic : "fas fa-cube";
-                            var moduleUrl = "/" + char.ToUpper(module.ModuleKey[0]) + module.ModuleKey.Substring(1);
-                            var showTamimBadge = module.ModuleKey == "circular" && todaysCircular != null;
-                            <li>
-                                <a href="@moduleUrl" class="@(IsActive(moduleUrl.TrimStart('/')) ? "active" : "")" aria-current="@(IsActive(moduleUrl.TrimStart('/')) ? "page" : null)">
-                                    <span class="icon" aria-hidden="true"><i class="@icon"></i></span>
-                                    <span class="label">@module.DisplayName</span>
-                                    @if (showTamimBadge)
-                                    {
-                                        <span class="badge" style="background:var(--accent); color:#fff;" aria-label="Bugünün tamimi yayınlandı">Yeni</span>
-                                    }
-                                </a>
-                            </li>
-                        }
-                    }
-                </ul>
+                        ["reports"]     = "fas fa-chart-column",
+                        ["dashboards"]  = "fas fa-table-columns",
+                        ["calendar"]    = "fas fa-calendar-days",
+                        ["documents"]   = "fas fa-folder-open",
+                        ["tamim"]       = "fas fa-bullhorn",
+                        ["circular"]    = "fas fa-bullhorn",
+                        ["contracts"]   = "fas fa-file-contract",
+                        ["obligations"] = "fas fa-list-check",
+                        ["compliance"]  = "fas fa-shield-halved",
+                        ["orgchart"]    = "fas fa-sitemap",
+                        ["ai"]          = "fas fa-robot",
+                        ["hr"]          = "fas fa-users",
+                        ["approval"]    = "fas fa-check-double"
+                    };
 
+                    // ModuleKey → controller-route URL mapping. Default: PascalCase ModuleKey.
+                    string ModuleUrl(string key) => key switch
+                    {
+                        "reports"     => "/Reports",
+                        "dashboards"  => "/Dashboard",
+                        "contracts"   => "/Contracts",
+                        "obligations" => "/Obligations",
+                        "documents"   => "/Documents",
+                        "orgchart"    => "/OrgChart",
+                        "calendar"    => "/Calendar",
+                        "compliance"  => "/Compliance",
+                        "ai"          => "/Ai",
+                        "circular"    => "/Circular/Circular",
+                        _             => "/" + char.ToUpper(key[0]) + key.Substring(1)
+                    };
+
+                    // Group sıralaması + display name.
+                    var groupOrder = new[]
+                    {
+                        ("main",      "Ana"),
+                        ("workspace", "Çalışma Alanı"),
+                        ("contracts", "Sözleşmeler & Uyum"),
+                        ("structure", "Yapı & Yapay Zeka")
+                    };
+
+                var modulesByGroup = enabledModules
+                    .GroupBy(m => string.IsNullOrEmpty(m.GroupKey) ? "workspace" : m.GroupKey!)
+                    .ToDictionary(g => g.Key, g => g.OrderBy(m => m.SortOrder).ToList());
+
+                @* Sabit "Ana" grubu — Dashboard core link. *@
+                <div class="side-group" x-data="sidebarGroup('main')">
+                    <button type="button" class="side-section side-group-head" @@click="toggle()" :aria-expanded="open.toString()">
+                        <span>Ana</span>
+                        <i class="fas fa-chevron-down side-group-chevron" :class="{ 'is-collapsed': !open }" aria-hidden="true"></i>
+                    </button>
+                    <ul class="nav-list" x-show="open" x-transition.duration.150ms>
+                        <li>
+                            <a href="/Dashboard" class="@(IsActive("Dashboard") ? "active" : "")" aria-current="@(IsActive("Dashboard") ? "page" : null)">
+                                <span class="icon" aria-hidden="true"><i class="fas fa-house"></i></span>
+                                <span class="label">Genel Bakış</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+                @* DB-driven gruplar (workspace, contracts, structure). *@
+                @foreach (var (groupKey, groupLabel) in groupOrder.Skip(1))
+                {
+                    if (!modulesByGroup.TryGetValue(groupKey, out var groupMods) || groupMods.Count == 0)
+                    {
+                        continue;
+                    }
+
+                    <div class="side-group" x-data="sidebarGroup('@groupKey')">
+                        <button type="button" class="side-section side-group-head" @@click="toggle()" :aria-expanded="open.toString()">
+                            <span>@groupLabel</span>
+                            <i class="fas fa-chevron-down side-group-chevron" :class="{ 'is-collapsed': !open }" aria-hidden="true"></i>
+                        </button>
+                        <ul class="nav-list" x-show="open" x-transition.duration.150ms>
+                            @foreach (var module in groupMods)
+                            {
+                                // "dashboards" modülü "Genel Bakış" ile duplicate — Ana'da var, burada atla.
+                                if (module.ModuleKey == "dashboards") { continue; }
+
+                                var icon = moduleIcons.TryGetValue(module.ModuleKey, out var ic) ? ic : "fas fa-cube";
+                                var moduleUrl = ModuleUrl(module.ModuleKey);
+                                var routeKey = moduleUrl.TrimStart('/').Split('/')[0];
+                                var isCircular = module.ModuleKey == "circular";
+                                var showTamimBadge = isCircular && todaysCircular != null;
+                                <li>
+                                    <a href="@moduleUrl" class="@(IsActive(routeKey) ? "active" : "")" aria-current="@(IsActive(routeKey) ? "page" : null)">
+                                        <span class="icon" aria-hidden="true"><i class="@icon"></i></span>
+                                        <span class="label">@module.DisplayName</span>
+                                        @if (showTamimBadge)
+                                        {
+                                            <span class="nav-badge" aria-label="Bugünün tamimi yayınlandı">Yeni</span>
+                                        }
+                                    </a>
+                                </li>
+                            }
+                        </ul>
+                    </div>
+                }
+
+                @* "Sistem" grubu — sadece admin. Logs + tüm admin alt-sayfaları. *@
                 @if (isAdminUser)
                 {
-                    <div class="side-section">Sistem</div>
-                    <ul class="nav-list">
-                        <li>
-                            <a href="/Logs" class="@(IsActive("Logs") ? "active" : "")" aria-current="@(IsActive("Logs") ? "page" : null)">
-                                <span class="icon" aria-hidden="true"><i class="fas fa-clock-rotate-left"></i></span>
-                                <span class="label">Geçmiş / Loglar</span>
-                            </a>
-                        </li>
-                    </ul>
+                    // Plan 23 — admin alt-sayfaları sidebar'da doğrudan erişilebilir.
+                    // /Admin/Index (subnav) duplicate kalıyor ama sidebar hızlı erişim verir.
+                    var adminAction = (ViewContext.RouteData.Values["action"]?.ToString() ?? "").ToLowerInvariant();
+                    var adminTab = (Context.Request.Query["tab"].FirstOrDefault() ?? "").ToLowerInvariant();
+                    bool TabActive(string tab) =>
+                        IsActive("Admin") &&
+                        ((adminAction == "index" && adminTab == tab) ||
+                         (string.IsNullOrEmpty(adminTab) && adminAction == "index" && tab == "datasources"));
+                    bool ActionActive(string actionName) =>
+                        IsActive("Admin") && adminAction == actionName.ToLowerInvariant();
 
-                    @* M-13 Plan 03 Faz D: Yönetim section sadeleştirildi.
-                       Eski: 6 link (Yönetim Paneli + Rapor/Kullanıcı/Rol/Kategori/Veri Kaynağı yönetimleri).
-                       Sorun: 5 alt-link sidebar + Admin/Index subnav'da duplicate; üstelik /Admin/Reports vb.
-                       AdminController'da action olmadığından 404 dönüyordu.
-                       Yeni: Tek "Yönetim Paneli" linki, alt-section'lar Admin/Index içindeki subnav'da. *@
-                    <div class="side-section">Yönetim</div>
-                    <ul class="nav-list">
-                        <li>
-                            <a href="/Admin" class="@(IsActive("Admin") ? "active" : "")" aria-current="@(IsActive("Admin") ? "page" : null)">
-                                <span class="icon" aria-hidden="true"><i class="fas fa-gauge-high"></i></span>
-                                <span class="label">Yönetim Paneli</span>
-                            </a>
-                        </li>
-                    </ul>
+                    <div class="side-group" x-data="sidebarGroup('system')">
+                        <button type="button" class="side-section side-group-head" @@click="toggle()" :aria-expanded="open.toString()">
+                            <span>Sistem</span>
+                            <i class="fas fa-chevron-down side-group-chevron" :class="{ 'is-collapsed': !open }" aria-hidden="true"></i>
+                        </button>
+                        <ul class="nav-list" x-show="open" x-transition.duration.150ms>
+                            <li>
+                                <a href="/Admin" class="@(adminAction == "index" && string.IsNullOrEmpty(adminTab) ? "active" : "")">
+                                    <span class="icon" aria-hidden="true"><i class="fas fa-gauge-high"></i></span>
+                                    <span class="label">Yönetim Paneli</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="/Admin?tab=datasources" class="@(TabActive("datasources") ? "active" : "")">
+                                    <span class="icon" aria-hidden="true"><i class="fas fa-database"></i></span>
+                                    <span class="label">Veri Kaynakları</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="/Admin?tab=reports" class="@(TabActive("reports") ? "active" : "")">
+                                    <span class="icon" aria-hidden="true"><i class="fas fa-file-lines"></i></span>
+                                    <span class="label">Rapor Kataloğu</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="/Admin?tab=filters" class="@(TabActive("filters") ? "active" : "")">
+                                    <span class="icon" aria-hidden="true"><i class="fas fa-filter"></i></span>
+                                    <span class="label">Filtreler</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="/Admin/Lookup" class="@(ActionActive("lookup") ? "active" : "")">
+                                    <span class="icon" aria-hidden="true"><i class="fas fa-list"></i></span>
+                                    <span class="label">Lookup</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="/Admin?tab=users" class="@(TabActive("users") ? "active" : "")">
+                                    <span class="icon" aria-hidden="true"><i class="fas fa-users"></i></span>
+                                    <span class="label">Kullanıcılar</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="/Admin?tab=roles" class="@(TabActive("roles") ? "active" : "")">
+                                    <span class="icon" aria-hidden="true"><i class="fas fa-shield-halved"></i></span>
+                                    <span class="label">Roller</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="/Admin?tab=groups" class="@(TabActive("groups") ? "active" : "")">
+                                    <span class="icon" aria-hidden="true"><i class="fas fa-folder-tree"></i></span>
+                                    <span class="label">Rapor Grupları</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="/Admin/OrgChart" class="@(ActionActive("orgchart") ? "active" : "")">
+                                    <span class="icon" aria-hidden="true"><i class="fas fa-sitemap"></i></span>
+                                    <span class="label">Organizasyon</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="/Admin/BrandSettings" class="@(ActionActive("brandsettings") ? "active" : "")">
+                                    <span class="icon" aria-hidden="true"><i class="fas fa-palette"></i></span>
+                                    <span class="label">Marka Ayarları</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="/Admin/Modules" class="@(ActionActive("modules") ? "active" : "")">
+                                    <span class="icon" aria-hidden="true"><i class="fas fa-puzzle-piece"></i></span>
+                                    <span class="label">Modüller</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="/Admin/AiSettings" class="@(ActionActive("aisettings") ? "active" : "")">
+                                    <span class="icon" aria-hidden="true"><i class="fas fa-wand-magic-sparkles"></i></span>
+                                    <span class="label">AI Ayarları</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="/Logs" class="@(IsActive("Logs") ? "active" : "")" aria-current="@(IsActive("Logs") ? "page" : null)">
+                                    <span class="icon" aria-hidden="true"><i class="fas fa-clock-rotate-left"></i></span>
+                                    <span class="label">Geçmiş / Loglar</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="/hangfire" target="_blank" rel="noopener">
+                                    <span class="icon" aria-hidden="true"><i class="fas fa-server"></i></span>
+                                    <span class="label">Hangfire</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
                 }
             }
         </div>

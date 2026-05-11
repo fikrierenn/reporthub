@@ -185,6 +185,71 @@ body {
     background: var(--line);
 }
 
+/* Plan 23 — Collapsible group header. .side-section button reset + chevron + hover. */
+button.side-section.side-group-head {
+    width: 100%;
+    background: transparent;
+    border: 0;
+    text-align: left;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-family: inherit;
+    transition: color .15s ease;
+}
+
+button.side-section.side-group-head:hover {
+    color: var(--ink-2);
+}
+
+button.side-section.side-group-head:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: -2px;
+    border-radius: 4px;
+}
+
+.side-group-chevron {
+    font-size: 9px;
+    transition: transform .15s ease;
+    color: var(--ink-4);
+    margin-left: 6px;
+}
+
+.side-group-chevron.is-collapsed {
+    transform: rotate(-90deg);
+}
+
+/* Collapsed (icon-only) modda group header gizlenir — sadece ikon listesi. */
+.collapsed button.side-section.side-group-head {
+    pointer-events: none;
+}
+
+.collapsed .side-group-chevron {
+    display: none;
+}
+
+/* Group separator — sıkışıklığı azaltır */
+.side-group + .side-group {
+    margin-top: 2px;
+}
+
+/* "Yeni" badge — circular bugünün tamimi göstergesi (inline style yerine class) */
+.nav-list a .nav-badge {
+    margin-left: auto;
+    background: var(--accent);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: 8px;
+    letter-spacing: .02em;
+}
+
+.collapsed .nav-list a .nav-badge {
+    display: none;
+}
+
 /* Nav item */
 .nav-list {
     list-style: none;
