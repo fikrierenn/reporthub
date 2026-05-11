@@ -523,12 +523,14 @@ namespace Mosaik.Services.Ai
             el.TryGetProperty(prop, out var v) && v.ValueKind == JsonValueKind.String && !string.IsNullOrWhiteSpace(v.GetString())
                 ? v.GetString() : null;
 
-        private static Confidence ParseConfidence(string? s) => s?.ToLowerInvariant() switch
+        private static Confidence ParseConfidence(string? s)
         {
-            "high"   => Confidence.High,
-            "low"    => Confidence.Low,
-            _        => Confidence.Medium
-        };
+            var v = s?.Trim().ToLowerInvariant();
+            if (v == null) return Confidence.Medium;
+            if (v.StartsWith("high") || v.Contains("yüksek")) return Confidence.High;
+            if (v.StartsWith("low")  || v.Contains("düşük"))  return Confidence.Low;
+            return Confidence.Medium;
+        }
 
         private static string? Truncate(string? s, int max) =>
             string.IsNullOrEmpty(s) ? s : (s.Length <= max ? s : s[..max]);

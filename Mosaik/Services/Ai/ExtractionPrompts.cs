@@ -30,11 +30,12 @@ namespace Mosaik.Services.Ai
             - Adres imza/kaşe bölümünde de olabilir, oraya da bak.
 
             VERGİ NO / TİCARET SİCİL NO — KRİTİK:
-            - taxId: SADECE 10 haneli vergi numarası VEYA 11 haneli TCKN.
-            - "Ticaret Sicil No", "Sicil No", "MERSIS No" → taxId DEĞİL,
-              ayrı bilgi. Bunları parties[].address veya parties.address sonuna
-              "(Sicil No: XXXX)" şeklinde ek yapabilirsin.
-            - Vergi no/TCKN sadece numerik. Şüpheliyse null.
+            - taxId: SADECE tam olarak 10 haneli vergi numarası (VKN) VEYA 11 haneli TCKN.
+            - Sadece rakamdan oluşmalı (harf, tire, nokta, eğik çizgi içeriyorsa → taxId DEĞİL).
+            - "Ticaret Sicil No", "Sicil No", "MERSIS No", "Ticaret Sicil Numarası" → taxId DEĞİL.
+              Bunları parties[].address sonuna "(Sicil No: XXXX)" ekleyebilirsin.
+            - Hane sayısı 10 veya 11 değilse → taxId null.
+            - Şüpheliyse null (halüsinasyon yapma).
 
             SÖZLEŞME NO / ABONELIK NO — KRİTİK:
             - contractNumber alanı için ara: "Sözleşme No", "Abonelik No",
