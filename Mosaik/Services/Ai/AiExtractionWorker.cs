@@ -310,7 +310,9 @@ namespace Mosaik.Services.Ai
             extraction.OutputTokens = stage1Result.OutputTokens + stage2Result.OutputTokens;
             extraction.ProcessedAt = DateTime.UtcNow;
             UpdateProgress(db, extraction, "done");
-            extraction.ErrorMessage = null;
+            extraction.ErrorMessage = stage2Result.IsSuccess
+                ? null
+                : $"Uyarı: Kategori analizi (Stage 2) başarısız — temel çıkarım gösteriliyor. Hata: {stage2Result.Error}";
 
             // Adım 4 — JSON'daki obligations/events/risks → AiSuggestions tablosuna ekle.
             // Retry durumunda eski Pending önerileri sil; Approved/Rejected olanları koru.
