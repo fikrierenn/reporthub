@@ -70,6 +70,31 @@ git status --porcelain | wc -l
 git log --since=midnight --oneline
 ```
 
+### Adim 1.5 — ARCHITECTURE_MAP.md refresh (ZORUNLU)
+
+Karar 2026-05-12 (kullanici): "Bu dosyayi da surekli besle".
+
+```bash
+bash scripts/refresh-arch-map.sh
+```
+
+Script § 7 (AppModules live state — sqlcli), § 12 (Admin views envanteri
++ inline-style sayimi), § 13 (Controller routes), Last refresh tarihi
+guncellenir. El yazimi bolumler (§ 2-6, 8-11) etkilenmez.
+
+Diff varsa kullanici-degisikligine eklenmis sayilir; **journal commit'inde
+ayri commit at**:
+
+```bash
+if ! git diff --quiet -- docs/ARCHITECTURE_MAP.md; then
+    git add docs/ARCHITECTURE_MAP.md
+    git commit -m "docs(map): ARCHITECTURE_MAP auto-refresh $(date +%Y-%m-%d)"
+fi
+```
+
+Yapi degisiklikleri (yeni AppModule, view ekleme, controller action) varsa
+handoff icin journal'da "Mimari etkileri" bolumu ekle.
+
 ### Adim 2 — Mevcut Journal'i Kontrol Et
 ```bash
 JOURNAL="docs/journal/$(date +%Y-%m-%d).md"
