@@ -500,8 +500,54 @@ select.inp {
 
 /* Checkbox grup (CreateUser/EditUser pattern) */
 .checkbox-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 8px 10px; background: var(--canvas, #fafafa); border: 1px solid var(--line, #e5e7eb); border-radius: 8px; }
+.checkbox-grid.auto-fit-160 { grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); }
+.checkbox-grid.auto-fit-140 { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); }
 .checkbox-row { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--ink-2, #4b5563); cursor: pointer; }
 .checkbox { width: 14px; height: 14px; accent-color: var(--accent); }
+
+/* Mono input (SP adı, JSON, ID) */
+.inp.mono, .inp-mono { font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace; }
+.inp.json { font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 12px; height: auto; padding: 10px 12px; resize: vertical; }
+.inp.disabled-mono { background: var(--canvas); color: var(--ink-3); cursor: not-allowed; font-family: 'JetBrains Mono', ui-monospace, monospace; }
+.textarea-auto { height: auto; padding: 10px 12px; resize: vertical; }
+
+/* Status pill (Aktif/Pasif vs) */
+.pill.danger { background: rgba(220,38,38,0.06); border-color: rgba(220,38,38,0.2); }
+.pill.danger .dot { background: var(--danger, #dc2626); }
+.pill.ok-tone .dot { background: var(--ok, #10b981); }
+
+/* Inline form helper — küçük açıklama metni */
+.help-text { margin: 6px 0 0; font-size: 11px; color: var(--ink-3); }
+.help-text.error { color: var(--accent-ink, #b91c1c); }
+
+/* Input + buton birleşik satır (SP adı + SP Önizle vb) */
+.inp-with-action { display: flex; gap: 6px; }
+.inp-with-action .inp { flex: 1; min-width: 0; }
+.inp-with-action .btn { flex-shrink: 0; }
+
+/* Parametre builder satır — 7 col + 2 buton */
+.param-builder-row { display: grid; grid-template-columns: repeat(7, 1fr) auto auto; gap: 8px; align-items: end; }
+.param-required-cell { display: flex; align-items: center; gap: 6px; height: 34px; }
+
+/* Aktif satırı (checkbox + label tek satır kart) */
+.toggle-row { display: flex; align-items: center; gap: 10px; padding: 14px 20px; background: var(--paper); border: 1px solid var(--line); border-radius: 10px; margin-bottom: 14px; }
+
+/* Footer hint row (Geri Dön + ipucu) */
+.action-row.with-hint { display: flex; align-items: center; justify-content: space-between; }
+.action-row .hint-text { font-size: 11px; color: var(--ink-3); }
+
+/* Spacing micro utilities (admin form'larda gerekli) */
+.mt-14 { margin-top: 14px; }
+.mb-8 { margin-bottom: 8px; }
+
+/* Parametre listesi yığını (dinamik render) */
+.param-list-stack { display: flex; flex-direction: column; gap: 6px; }
+
+/* Hata / vurgu rengi inline metin */
+.text-danger { color: var(--accent, #dc2626); font-weight: 600; }
+
+/* Büyük checkbox (toggle satırı) */
+.checkbox.checkbox-lg { width: 16px; height: 16px; }
 .pill-icon { font-size: 9px; color: var(--ink-3, #9ca3af); }
 
 /* Detail page utilities (Contracts/Details.cshtml) */
