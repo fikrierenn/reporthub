@@ -370,6 +370,7 @@ namespace Mosaik.Services.Ai
 
             var pdfBytes = await File.ReadAllBytesAsync(absolute, ct);
             int idx = 0;
+            int failedCount = 0;
             using var stream = new MemoryStream(pdfBytes);
             foreach (var bmp in PDFtoImage.Conversion.ToImages(stream, options: new(Dpi: 200)))
             {
@@ -394,11 +395,15 @@ namespace Mosaik.Services.Ai
                             if (result.IsSuccess && !string.IsNullOrWhiteSpace(result.RawJson))
                                 byPage[idx] = result.RawJson!;
                             else
+                            {
+                                failedCount++;
                                 _logger.LogWarning("Vision rescue sayfa {Page} başarısız: {Err}", idx + 1, result.Error);
+                            }
                         }
                     }
                     catch (Exception ex)
                     {
+                        failedCount++;
                         _logger.LogWarning(ex, "Vision rescue sayfa {Page} exception", idx + 1);
                     }
                 }
@@ -409,7 +414,10 @@ namespace Mosaik.Services.Ai
                 idx++;
             }
 
-            return (byPage, byPage.Count == 0 ? "Vision rescue: tüm sayfalar boş döndü" : null);
+            string? diag = failedCount == 0 ? null
+                : failedCount == pageIndices.Count ? $"Vision rescue: {failedCount}/{pageIndices.Count} sayfa başarısız (tümü)"
+                : $"Vision rescue: {failedCount}/{pageIndices.Count} sayfa başarısız";
+            return (byPage, diag);
         }
 
         [SupportedOSPlatform("windows")]
