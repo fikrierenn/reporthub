@@ -14,6 +14,7 @@ namespace Mosaik.Controllers
         private readonly ICurrentUserService _currentUser;
         private readonly IWebHostEnvironment _env;
         private readonly AiPipelineQueue _queue;
+        private readonly IServiceScopeFactory _scopeFactory;
         private readonly ILogger<DocumentsController> _logger;
 
         private static readonly byte[] PdfMagic = new byte[] { 0x25, 0x50, 0x44, 0x46 };
@@ -24,12 +25,14 @@ namespace Mosaik.Controllers
             ICurrentUserService currentUser,
             IWebHostEnvironment env,
             AiPipelineQueue queue,
+            IServiceScopeFactory scopeFactory,
             ILogger<DocumentsController> logger)
         {
             _db = db;
             _currentUser = currentUser;
             _env = env;
             _queue = queue;
+            _scopeFactory = scopeFactory;
             _logger = logger;
         }
 
@@ -62,7 +65,7 @@ namespace Mosaik.Controllers
                 .AsNoTracking()
                 .Where(c => firmas.Contains(c.FirmaId))
                 .OrderBy(c => c.Title)
-                .Select(c => new { c.Id, c.Title })
+                .Select(c => new ValueTuple<int, string>(c.Id, c.Title))
                 .ToListAsync();
 
             ViewBag.ContractFilter = contractId;
@@ -154,6 +157,11 @@ namespace Mosaik.Controllers
                 TempData["Success"] = $"'{file.FileName}' başarıyla yüklendi.";
             }
 
+            // Plan 27 Faz B-02 — auto-classify + summary fire-and-forget (PDF/DOCX dahil).
+            // Sözleşme extraction'ı zaten Stage 1 özetini üretiyor; bu sadece liste tooltip için
+            // hızlı bir özet + tag üretir. Hata fırlatmaz, kullanıcıyı bekletmez.
+            _ = Task.Run(async () => await RunDocumentInsightAsync(cf.Id));
+
             return RedirectToAction(nameof(Index), new { contractId });
         }
 
@@ -164,6 +172,18 @@ namespace Mosaik.Controllers
             var firmas = FirmaIds;
             var file = await _db.ContractFiles.FirstOrDefaultAsync(f => f.Id == id && firmas.Contains(f.FirmaId));
             if (file is null) return NotFound();
+
+            // FK_ContractAiExt_Files: önce bağlı AI extraction'ları + suggestion'ları temizle.
+            var extractions = await _db.ContractAiExtractions
+                .Where(x => x.ContractFileId == file.Id)
+                .ToListAsync();
+            if (extractions.Count > 0)
+            {
+                var extIds = extractions.Select(e => e.Id).ToList();
+                var suggestions = await _db.AiSuggestions.Where(s => extIds.Contains(s.ExtractionId)).ToListAsync();
+                if (suggestions.Count > 0) _db.AiSuggestions.RemoveRange(suggestions);
+                _db.ContractAiExtractions.RemoveRange(extractions);
+            }
 
             var abs = Path.Combine(_env.WebRootPath, file.FilePath.Replace('/', Path.DirectorySeparatorChar));
             if (System.IO.File.Exists(abs))
@@ -176,6 +196,50 @@ namespace Mosaik.Controllers
             await _db.SaveChangesAsync();
             TempData["Success"] = "Dosya silindi.";
             return RedirectToAction(nameof(Index));
+        }
+
+        // Plan 27 Faz B-02 — fire-and-forget background AI insight.
+        // PdfPig ile text extract → DocumentInsightService → DB'ye AiSummary + AiTagsJson yaz.
+        // DI scope manuel oluşturulur (controller scope upload sonrası dispose olur).
+        private async Task RunDocumentInsightAsync(int contractFileId)
+        {
+            try
+            {
+                using var scope = _scopeFactory.CreateScope();
+                var sp = scope.ServiceProvider;
+                var db = sp.GetRequiredService<MosaikContext>();
+                var insight = sp.GetRequiredService<DocumentInsightService>();
+                var pdfX = sp.GetRequiredService<IPdfTextExtractor>();
+                var env = sp.GetRequiredService<IWebHostEnvironment>();
+
+                var cf = await db.ContractFiles.FirstOrDefaultAsync(f => f.Id == contractFileId);
+                if (cf is null) return;
+
+                // Sadece PDF için PdfPig text extract; diğer formatlar şimdilik atlanıyor.
+                if (!cf.MimeType.Contains("pdf", StringComparison.OrdinalIgnoreCase)) return;
+
+                var text = await pdfX.ExtractAsync(cf.FilePath, CancellationToken.None);
+                if (string.IsNullOrWhiteSpace(text) || text.Length < 100)
+                {
+                    _logger.LogInformation("Insight: PDF text yetersiz ({Len} char), atlanıyor. FileId={Id}", text?.Length ?? 0, contractFileId);
+                    return;
+                }
+
+                var result = await insight.AnalyzeAsync(text, cf.FileName, CancellationToken.None);
+                if (result is null) return;
+
+                cf.AiSummary = result.Summary;
+                cf.AiTagsJson = result.TagsJson;
+                cf.AiClassifiedAt = DateTime.UtcNow;
+                cf.UpdatedAt = DateTime.UtcNow;
+                await db.SaveChangesAsync();
+                _logger.LogInformation("Insight tamam: FileId={Id}, summary={SL} char, tokens={In}+{Out}",
+                    contractFileId, result.Summary?.Length ?? 0, result.InputTokens, result.OutputTokens);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "RunDocumentInsightAsync hata. FileId={Id}", contractFileId);
+            }
         }
     }
 }
