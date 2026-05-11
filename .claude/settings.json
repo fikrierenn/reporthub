@@ -30,6 +30,24 @@
             "command": "bash D:/Dev/reporthub/.claude/hooks/post-commit-journal.sh"
           }
         ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash D:/Dev/reporthub/.claude/hooks/post-tool-size-warn.sh"
+          }
+        ]
+      }
+    ],
+    "PreCompact": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash D:/Dev/reporthub/.claude/hooks/pre-compact.sh"
+          }
+        ]
       }
     ]
   }
