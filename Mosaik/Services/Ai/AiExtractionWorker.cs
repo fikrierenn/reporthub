@@ -239,31 +239,49 @@ namespace Mosaik.Services.Ai
             }
 
             // Adım 1 — Aşama 1 AI çağrısı
-            UpdateProgress(db, extraction, "ai_stage1");
-            await db.SaveChangesAsync(ct);
+            // Retry: önceki denemede Stage1 başarılı olmuş ve ExtractionResultJson kaydedilmişse
+            // tekrar LLM çağrısı yapmaktan kaçın (hem maliyet hem tutarsızlık).
+            string? stage1Json = extraction.ExtractionResultJson;
+            string? stage1ModelUsed = null;
+            int stage1InputTokens = 0, stage1OutputTokens = 0;
 
-            var title = extraction.Contract?.Title;
-            var stage1Result = await ai.GenerateAsync(new AiRequest(
-                SystemPrompt: ExtractionPrompts.Stage1SystemPrompt,
-                UserPrompt: ExtractionPrompts.BuildUserPrompt(rawText, title),
-                RequireJson: true,
-                Purpose: "contract_extraction_stage1"
-            ), ct);
+            if (string.IsNullOrWhiteSpace(stage1Json))
+            {
+                UpdateProgress(db, extraction, "ai_stage1");
+                await db.SaveChangesAsync(ct);
 
-            if (!stage1Result.IsSuccess)
-                throw new InvalidOperationException($"AI Stage1 başarısız: {stage1Result.Error}");
+                var title = extraction.Contract?.Title;
+                var stage1Result = await ai.GenerateAsync(new AiRequest(
+                    SystemPrompt: ExtractionPrompts.Stage1SystemPrompt,
+                    UserPrompt: ExtractionPrompts.BuildUserPrompt(rawText, title),
+                    RequireJson: true,
+                    Purpose: "contract_extraction_stage1"
+                ), ct);
 
-            // Plan 27 Faz A — Stage 1 sonucunu hemen kaydet ki Detail sayfası
-            // Stage 2 beklerken Stage 1 JSON'u görebilsin (kullanıcı görünürlük).
-            extraction.ExtractionResultJson = stage1Result.RawJson;
-            db.Entry(extraction).Property(x => x.ExtractionResultJson).IsModified = true;
-            await db.SaveChangesAsync(ct);
+                if (!stage1Result.IsSuccess)
+                    throw new InvalidOperationException($"AI Stage1 başarısız: {stage1Result.Error}");
+
+                stage1Json = stage1Result.RawJson;
+                stage1ModelUsed = stage1Result.ModelUsed;
+                stage1InputTokens = stage1Result.InputTokens;
+                stage1OutputTokens = stage1Result.OutputTokens;
+
+                extraction.ExtractionResultJson = stage1Json;
+                db.Entry(extraction).Property(x => x.ExtractionResultJson).IsModified = true;
+                await db.SaveChangesAsync(ct);
+
+                _logger.LogInformation("Stage1 tamamlandı. ExtractionId={Id}, Model={Model}", extractionId, stage1ModelUsed);
+            }
+            else
+            {
+                _logger.LogInformation("Stage1 atlandı (retry — önceki denemeden JSON mevcut). ExtractionId={Id}", extractionId);
+            }
 
             // Aşama 1 sonucundan kategori belirle → Aşama 2 prompt seç
             string? detectedCategory = null;
             try
             {
-                using var doc1 = JsonDocument.Parse(stage1Result.RawJson ?? "{}");
+                using var doc1 = JsonDocument.Parse(stage1Json ?? "{}");
                 if (doc1.RootElement.TryGetProperty("contractCategory", out var cat))
                     detectedCategory = cat.GetString();
             }
@@ -280,7 +298,7 @@ namespace Mosaik.Services.Ai
             var stage2Prompt = ExtractionPrompts.GetStage2SystemPrompt(detectedCategory ?? "Other");
             var stage2UserPrompt = $"""
                 Stage 1 çıktısı:
-                {stage1Result.RawJson}
+                {stage1Json}
 
                 Orijinal sözleşme metni:
                 {rawText}
@@ -302,12 +320,12 @@ namespace Mosaik.Services.Ai
 
             // Adım 3 — Sonuçları kaydet
             extraction.Status = ExtractionStatus.AwaitingReview;
-            extraction.ExtractionResultJson = stage1Result.RawJson;   // Stage1 yapısal JSON
+            extraction.ExtractionResultJson = stage1Json;
             extraction.Stage2ResultText = stage2Result.IsSuccess ? stage2Result.RawJson : null;
             extraction.PromptVersion = ExtractionPrompts.PromptVersion;
-            extraction.ModelUsed = stage1Result.ModelUsed ?? "";
-            extraction.InputTokens = stage1Result.InputTokens + stage2Result.InputTokens;
-            extraction.OutputTokens = stage1Result.OutputTokens + stage2Result.OutputTokens;
+            extraction.ModelUsed = stage1ModelUsed ?? "";
+            extraction.InputTokens = stage1InputTokens + stage2Result.InputTokens;
+            extraction.OutputTokens = stage1OutputTokens + stage2Result.OutputTokens;
             extraction.ProcessedAt = DateTime.UtcNow;
             UpdateProgress(db, extraction, "done");
             extraction.ErrorMessage = stage2Result.IsSuccess
@@ -321,7 +339,7 @@ namespace Mosaik.Services.Ai
                 .ToListAsync(ct);
             db.AiSuggestions.RemoveRange(oldPending);
 
-            var newSuggestions = BuildSuggestions(extractionId, extraction.FirmaId, stage1Result.RawJson);
+            var newSuggestions = BuildSuggestions(extractionId, extraction.FirmaId, stage1Json);
             if (newSuggestions.Count > 0)
                 db.AiSuggestions.AddRange(newSuggestions);
 
