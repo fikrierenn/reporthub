@@ -27,6 +27,7 @@ Bu dosya her Claude oturumunun başında okunur. **Değişmez kurallar + kimlik.
 2. `docs/journal/` altındaki **son 2 dosyayı** oku (özellikle yarım kalan işler bölümü).
 3. `TODO.md` → "BIRLESIK ONCELIK SIRASI" → Faz 0 + aktif bug'ları gözden geçir.
 4. **Uncommitted backlog'unu hatırla** (`git status --porcelain | wc -l`, 15 eşiği).
+5. **`docs/ARCHITECTURE_MAP.md` oku.** Sidebar → route → view canonical map, V1/V2 deprecated tablosu, refactor öncesi zorunlu çek-liste. Silme/rename öncesi **mutlaka** bu dosyayı kontrol et — "V1 var sandım, V2 zaten varmış" tarzı kaybı bu engeller.
 
 Ritüel sonrasında kullanıcının sorusuna cevap ver. "Nerede kaldık?" / "devam" / "günaydın" tetiklerinde cevap **bu okumalara dayanır**, hafıza tahminine değil, context'teki hook çıktısına değil.
 
@@ -110,6 +111,8 @@ Ayrıntılı kurallar `.claude/rules/` altında — burada sadece değişmez pre
 9. **Kodlama disiplini.** Spekülatif feature/abstraction ekleme, drive-by refactoring yapma. Detay: [`.claude/rules/coding-discipline.md`](.claude/rules/coding-discipline.md).
 
 10. **Yanıt özlülüğü.** Uzun açıklama yasak. Yap, bir cümleyle bildir, devam et. Özet / iltifat / adım duyurusu yok. Detay: [`.claude/rules/response-style.md`](.claude/rules/response-style.md).
+
+11. **Büyük değişiklik öncesi çek-liste.** Silme / rename / refactor / route kaldırma öncesi `docs/ARCHITECTURE_MAP.md` oku + referans tara + V1/V2 deprecated tablosu kontrol et. Tahmin etme — doğrula. Detay: [`.claude/rules/before-major-change.md`](.claude/rules/before-major-change.md).
 
 ---
 
