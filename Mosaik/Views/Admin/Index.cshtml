@@ -26,46 +26,52 @@
     </div>
 }
 
-<nav class="subnav" aria-label="Yönetim alt-navigasyonu">
-    <a href="/Admin?tab=datasources" class="@TabClass("datasources")">
+@* Plan 23 — Yatay subnav kaldırıldı, sidebar Sistem grubu erişim sağlar.
+   Kayıt sayıları KPI kartları olarak gösterilir (navigasyon değil, özet). *@
+<div class="admin-kpi-grid">
+    <a href="/Admin?tab=datasources" class="admin-kpi-card @TabClass("datasources")">
         <i class="fas fa-database"></i>
-        <span>Veri Kaynakları</span>
-        <span class="count">@Model.DataSources.Count</span>
+        <div class="kpi-meta">
+            <div class="kpi-label">Veri Kaynakları</div>
+            <div class="kpi-count">@Model.DataSources.Count</div>
+        </div>
     </a>
-    <a href="/Admin?tab=reports" class="@TabClass("reports")">
+    <a href="/Admin?tab=reports" class="admin-kpi-card @TabClass("reports")">
         <i class="fas fa-file-lines"></i>
-        <span>Rapor Kataloğu</span>
-        <span class="count">@Model.Reports.Count</span>
+        <div class="kpi-meta">
+            <div class="kpi-label">Raporlar</div>
+            <div class="kpi-count">@Model.Reports.Count</div>
+        </div>
     </a>
-    <a href="/Admin?tab=users" class="@TabClass("users")">
+    <a href="/Admin?tab=users" class="admin-kpi-card @TabClass("users")">
         <i class="fas fa-users"></i>
-        <span>Kullanıcılar</span>
-        <span class="count">@Model.Users.Count</span>
+        <div class="kpi-meta">
+            <div class="kpi-label">Kullanıcılar</div>
+            <div class="kpi-count">@Model.Users.Count</div>
+        </div>
     </a>
-    <a href="/Admin?tab=roles" class="@TabClass("roles")">
+    <a href="/Admin?tab=roles" class="admin-kpi-card @TabClass("roles")">
         <i class="fas fa-shield-halved"></i>
-        <span>Roller</span>
-        <span class="count">@Model.Roles.Count</span>
+        <div class="kpi-meta">
+            <div class="kpi-label">Roller</div>
+            <div class="kpi-count">@Model.Roles.Count</div>
+        </div>
     </a>
-    <a href="/Admin?tab=groups" class="@TabClass("groups")">
+    <a href="/Admin?tab=groups" class="admin-kpi-card @TabClass("groups")">
         <i class="fas fa-folder-tree"></i>
-        <span>Gruplar</span>
-        <span class="count">@Model.Groups.Count</span>
+        <div class="kpi-meta">
+            <div class="kpi-label">Rapor Grupları</div>
+            <div class="kpi-count">@Model.Groups.Count</div>
+        </div>
     </a>
-    <a href="/Admin?tab=filters" class="@TabClass("filters")">
+    <a href="/Admin?tab=filters" class="admin-kpi-card @TabClass("filters")">
         <i class="fas fa-filter"></i>
-        <span>Filtreler</span>
-        <span class="count">@Model.FilterDefinitions.Count</span>
+        <div class="kpi-meta">
+            <div class="kpi-label">Filtreler</div>
+            <div class="kpi-count">@Model.FilterDefinitions.Count</div>
+        </div>
     </a>
-    <a href="/Admin/BrandSettings">
-        <i class="fas fa-palette"></i>
-        <span>Marka</span>
-    </a>
-    <a href="/Admin/Modules">
-        <i class="fas fa-puzzle-piece"></i>
-        <span>Modüller</span>
-    </a>
-</nav>
+</div>
 
 @switch (tab)
 {

@@ -26,8 +26,6 @@
     <div class="sub"><span>Marka, modül ve sistem yapılandırması</span></div>
 </div>
 
-@await Html.PartialAsync("_AdminSubnav")
-
 @if (TempData["Message"] != null)
 {
     var isSuccess = TempData["MessageType"]?.ToString() == "success";

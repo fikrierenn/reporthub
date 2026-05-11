@@ -776,3 +776,50 @@ select.inp {
 .form-section-card.full-width { max-width: 100%; }
 .form-section-card.mb-16 { margin-bottom: 16px; }
 
+
+/* Plan 23 — Admin KPI kart grid (yatay subnav yerine).
+   Sidebar Sistem grubu navigasyonu sağlar, bu kartlar sadece sayım özet + tab geçişi. */
+.admin-kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+    gap: 10px;
+    margin: 14px 0 18px;
+}
+
+.admin-kpi-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    text-decoration: none;
+    color: var(--ink-2);
+    transition: background .12s ease, border-color .12s ease, transform .12s ease;
+}
+
+.admin-kpi-card:hover {
+    background: var(--line-2);
+    border-color: var(--ink-5);
+    transform: translateY(-1px);
+}
+
+.admin-kpi-card.active {
+    border-color: var(--accent);
+    background: var(--paper);
+    box-shadow: 0 0 0 1px var(--accent) inset;
+}
+
+.admin-kpi-card i {
+    font-size: 18px;
+    color: var(--ink-3);
+    width: 22px;
+    text-align: center;
+}
+
+.admin-kpi-card.active i { color: var(--accent); }
+
+.admin-kpi-card .kpi-meta { display: flex; flex-direction: column; gap: 2px; }
+.admin-kpi-card .kpi-label { font-size: 11.5px; font-weight: 600; color: var(--ink-3); letter-spacing: .01em; }
+.admin-kpi-card .kpi-count { font-size: 18px; font-weight: 700; color: var(--ink-1); font-feature-settings: "tnum"; line-height: 1; }
