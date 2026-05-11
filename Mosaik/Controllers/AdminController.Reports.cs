@@ -99,18 +99,20 @@ namespace Mosaik.Controllers
         // V2 — mockup app-shell-builder-v1.html'in birebir portu. V1 (EditReport/CreateReport) el değmez.
         // Aynı ViewModel, aynı POST endpoint'leri. Sadece view + assets farklı.
         [Route("Admin/CreateReportV2")]
-        public Task<IActionResult> CreateReportV2() => CreateReport().ContinueWith(t =>
+        public async Task<IActionResult> CreateReportV2()
         {
-            if (t.Result is ViewResult vr) vr.ViewName = "CreateReportV2";
-            return t.Result;
-        });
+            var result = await CreateReport();
+            if (result is ViewResult vr) vr.ViewName = "CreateReportV2";
+            return result;
+        }
 
         [Route("Admin/EditReportV2/{id}")]
-        public Task<IActionResult> EditReportV2(int id) => EditReport(id).ContinueWith(t =>
+        public async Task<IActionResult> EditReportV2(int id)
         {
-            if (t.Result is ViewResult vr) vr.ViewName = "EditReportV2";
-            return t.Result;
-        });
+            var result = await EditReport(id);
+            if (result is ViewResult vr) vr.ViewName = "EditReportV2";
+            return result;
+        }
 
         [Route("Admin/EditReport/{id}")]
         public async Task<IActionResult> EditReport(int id)
