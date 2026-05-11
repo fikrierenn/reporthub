@@ -336,9 +336,13 @@ namespace Mosaik.Services.Ai
                 .ToListAsync(ct);
             db.AiSuggestions.RemoveRange(oldPending);
 
-            var newSuggestions = BuildSuggestions(extractionId, extraction.FirmaId, stage1Json);
+            var (newSuggestions, suggParseError) = BuildSuggestions(extractionId, extraction.FirmaId, stage1Json);
             if (newSuggestions.Count > 0)
                 db.AiSuggestions.AddRange(newSuggestions);
+            if (suggParseError is not null)
+                extraction.ErrorMessage = extraction.ErrorMessage is null
+                    ? $"Uyarı: {suggParseError}"
+                    : extraction.ErrorMessage + $" Uyarı: {suggParseError}";
 
             await db.SaveChangesAsync(ct);
 
@@ -452,10 +456,10 @@ namespace Mosaik.Services.Ai
             return (string.Empty, $"Vision full: IsSuccess={result.IsSuccess}, Hata={result.Error}");
         }
 
-        private List<ContractAiSuggestionDraft> ParseDrafts(string? rawJson)
+        private (List<ContractAiSuggestionDraft> Drafts, string? ParseError) ParseDrafts(string? rawJson)
         {
             var list = new List<ContractAiSuggestionDraft>();
-            if (string.IsNullOrWhiteSpace(rawJson)) return list;
+            if (string.IsNullOrWhiteSpace(rawJson)) return (list, null);
 
             try
             {
@@ -504,15 +508,16 @@ namespace Mosaik.Services.Ai
                 _logger.LogWarning(jex,
                     "AI öneri JSON parse başarısız — extraction sıfır öneriyle kaydediliyor. RawJson(ilk 200): {Raw}",
                     rawJson?[..Math.Min(200, rawJson.Length)]);
+                return (list, $"AI öneri JSON parse başarısız: {jex.GetType().Name}.");
             }
-            return list;
+            return (list, null);
         }
 
-        private List<AiSuggestion> BuildSuggestions(int extractionId, int firmaId, string? rawJson)
+        private (List<AiSuggestion> Suggestions, string? ParseError) BuildSuggestions(int extractionId, int firmaId, string? rawJson)
         {
-            var drafts = ParseDrafts(rawJson);
+            var (drafts, parseError) = ParseDrafts(rawJson);
             var now = DateTime.UtcNow;
-            return drafts.Select(d => new AiSuggestion
+            var suggestions = drafts.Select(d => new AiSuggestion
             {
                 ExtractionId = extractionId,
                 FirmaId = firmaId,
@@ -525,6 +530,7 @@ namespace Mosaik.Services.Ai
                 CreatedAt = now,
                 UpdatedAt = now
             }).ToList();
+            return (suggestions, parseError);
         }
 
         private sealed record ContractAiSuggestionDraft(
