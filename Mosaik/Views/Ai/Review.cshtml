@@ -51,7 +51,7 @@
 @section TopActions {
     @if (suggestions.Any(s => s.Status == SuggestionStatus.Pending))
     {
-        <form method="post" action="/Ai/ApproveAll/@Model.Id" style="margin:0;">
+        <form method="post" action="/Ai/ApproveAll/@Model.Id" class="form-inline">
             @Html.AntiForgeryToken()
             <button type="submit" class="btn ghost">
                 <i class="fas fa-check-double text-[10px]"></i>
@@ -61,7 +61,7 @@
     }
     @if (Model.ContractId == null)
     {
-        <form method="post" action="/Ai/CreateContract/@Model.Id" style="margin:0;" onsubmit="return confirm('AI çıkarımından sözleşme taslağı oluşturulacak. Onayladığınız yükümlülükler eklenecek. Devam?')">
+        <form method="post" action="/Ai/CreateContract/@Model.Id" class="form-inline" onsubmit="return confirm('AI çıkarımından sözleşme taslağı oluşturulacak. Onayladığınız yükümlülükler eklenecek. Devam?')">
             @Html.AntiForgeryToken()
             <button type="submit" class="btn primary">
                 <i class="fas fa-file-circle-plus text-[10px]"></i>
@@ -82,16 +82,16 @@
 @await Html.PartialAsync("_AlertMessage", TempData["Success"] != null ? ("success", TempData["Success"]!.ToString()!) : ("", ""))
 
 @* Token istatistikleri *@
-<div class="form-section-card" style="margin-bottom:16px; max-width:100%;">
-    <div style="padding:12px 18px; display:flex; gap:20px; flex-wrap:wrap; align-items:center;">
-        <span style="font-size:12.5px; color:var(--ink-2);">
+<div class="form-section-card full-width mb-16">
+    <div class="token-bar">
+        <span class="tb-item">
             <strong>Dosya:</strong> @(Model.ContractFile?.FileName ?? "—")
         </span>
         @if (Model.Contract != null)
         {
-            <span style="font-size:12.5px; color:var(--ink-2);">
+            <span class="tb-item">
                 <strong>Sözleşme:</strong>
-                <a href="/Contracts/Details/@Model.Contract.Id" style="color:var(--accent);">@Model.Contract.Title</a>
+                <a href="/Contracts/Details/@Model.Contract.Id" class="link-accent">@Model.Contract.Title</a>
             </span>
         }
         @if (!string.IsNullOrWhiteSpace(Model.ModelUsed))
@@ -100,8 +100,8 @@
         }
         @if (Model.InputTokens > 0)
         {
-            <span style="font-size:12px; color:var(--ink-4);">
-                <i class="fas fa-coins" style="font-size:10px;"></i>
+            <span class="tb-dim">
+                <i class="fas fa-coins icon-xs"></i>
                 @Model.InputTokens giriş · @Model.OutputTokens çıkış token
             </span>
         }
@@ -112,18 +112,18 @@
     </div>
 </div>
 
-<div style="display:grid; grid-template-columns:5fr 7fr; gap:20px; align-items:start;">
+<div class="review-grid">
 
     @* Sol: PDF önizleme *@
-    <div style="position:sticky; top:80px;">
+    <div class="pdf-panel">
         @if (Model.ContractFile != null)
         {
-            <div style="background:var(--paper); border:1px solid var(--line); border-radius:10px; overflow:hidden;">
-                <div style="padding:10px 14px; border-bottom:1px solid var(--line); font-size:12.5px; font-weight:600; color:var(--ink-1);">
-                    <i class="fas fa-file-pdf" style="color:var(--err); margin-right:6px;"></i>
+            <div class="pdf-box">
+                <div class="pdf-box-head">
+                    <i class="fas fa-file-pdf icon-err"></i>
                     Belge Önizleme
                 </div>
-                <iframe src="/@Model.ContractFile.FilePath" style="width:100%; height:600px; border:none;" title="PDF önizleme">
+                <iframe src="/@Model.ContractFile.FilePath" class="pdf-iframe" title="PDF önizleme">
                     PDF görüntülenemiyor.
                 </iframe>
             </div>
@@ -131,32 +131,32 @@
         else
         {
             <div class="empty-state">
-                <i class="fas fa-file-slash" style="font-size:36px; opacity:.3;"></i>
+                <i class="fas fa-file-slash icon-lg"></i>
                 <p>Dosya bulunamadı.</p>
             </div>
         }
     </div>
 
     @* Sağ: AI sonuçları *@
-    <div style="display:flex; flex-direction:column; gap:16px;">
+    <div class="results-col">
 
         @* AI Özeti *@
         @if (!string.IsNullOrWhiteSpace(summary))
         {
-            <div style="background:linear-gradient(135deg,var(--accent) 0%,#7c3aed 100%); border-radius:10px; padding:18px 20px; color:#fff;">
-                <div style="display:flex; gap:8px; align-items:center; margin-bottom:10px;">
-                    <i class="fas fa-robot" style="font-size:14px;"></i>
-                    <span style="font-size:12.5px; font-weight:600; text-transform:uppercase; letter-spacing:.05em; opacity:.9;">AI Özeti</span>
+            <div class="ai-summary-card">
+                <div class="ai-summary-head">
+                    <i class="fas fa-robot icon-14"></i>
+                    <span class="ai-summary-title">AI Özeti</span>
                     @if (!string.IsNullOrWhiteSpace(counterparty))
                     {
-                        <span style="margin-left:auto; background:rgba(255,255,255,.2); border-radius:20px; padding:2px 10px; font-size:11.5px;">@counterparty</span>
+                        <span class="ai-badge">@counterparty</span>
                     }
                     @if (!string.IsNullOrWhiteSpace(category))
                     {
-                        <span style="background:rgba(255,255,255,.15); border-radius:20px; padding:2px 10px; font-size:11.5px;">@category</span>
+                        <span class="ai-badge">@category</span>
                     }
                 </div>
-                <p style="margin:0; font-size:13px; line-height:1.6; opacity:.95;">@summary</p>
+                <p class="ai-summary-text">@summary</p>
             </div>
         }
 
@@ -269,30 +269,30 @@
         @* Yükümlülük önerileri *@
         @if (obligations.Any())
         {
-            <div class="form-section-card" style="max-width:100%;">
-                <div style="padding:12px 16px; border-bottom:1px solid var(--line);">
-                    <span style="font-size:13px; font-weight:600;">Yükümlülükler <span class="pill">@obligations.Count</span></span>
+            <div class="form-section-card full-width">
+                <div class="section-head-bar">
+                    <span class="sh-title">Yükümlülükler <span class="pill">@obligations.Count</span></span>
                 </div>
-                <div style="padding:12px 16px; display:flex; flex-direction:column; gap:10px;">
+                <div class="section-body-list">
                     @foreach (var s in obligations)
                     {
-                        <div style="border-left:3px solid var(--@(ConfClass(s.Confidence) == "ok" ? "ok" : ConfClass(s.Confidence) == "warn" ? "warn" : "err")); padding:10px 14px; background:var(--canvas); border-radius:0 6px 6px 0;">
-                            <div style="display:flex; justify-content:space-between; align-items:start; gap:8px;">
-                                <span style="font-size:13px; font-weight:500; color:var(--ink-1);">@s.Title</span>
-                                <span class="status @ConfClass(s.Confidence)" style="white-space:nowrap;">@ConfLabel(s.Confidence)</span>
+                        <div class="suggestion-item @ConfClass(s.Confidence)">
+                            <div class="suggestion-row">
+                                <span class="suggestion-title">@s.Title</span>
+                                <span class="status @ConfClass(s.Confidence) nowrap">@ConfLabel(s.Confidence)</span>
                             </div>
                             @if (!string.IsNullOrWhiteSpace(s.Description))
                             {
-                                <p style="margin:6px 0 0; font-size:12px; color:var(--ink-3);">@s.Description</p>
+                                <p class="suggestion-desc">@s.Description</p>
                             }
                             @if (s.Status == SuggestionStatus.Pending)
                             {
-                                <div style="display:flex; gap:6px; margin-top:10px;">
-                                    <form method="post" action="/Ai/ApproveSuggestion/@s.Id" style="margin:0;">
+                                <div class="suggestion-actions">
+                                    <form method="post" action="/Ai/ApproveSuggestion/@s.Id" class="form-inline">
                                         @Html.AntiForgeryToken()
                                         <button type="submit" class="btn sm primary">Onayla</button>
                                     </form>
-                                    <form method="post" action="/Ai/RejectSuggestion/@s.Id" style="margin:0;">
+                                    <form method="post" action="/Ai/RejectSuggestion/@s.Id" class="form-inline">
                                         @Html.AntiForgeryToken()
                                         <button type="submit" class="btn sm ghost">Reddet</button>
                                     </form>
@@ -300,7 +300,7 @@
                             }
                             else
                             {
-                                <span class="status @(s.Status == SuggestionStatus.Approved ? "ok" : "err")" style="margin-top:8px; display:inline-block;">
+                                <span class="status @(s.Status == SuggestionStatus.Approved ? "ok" : "err") status-mt">
                                     @StatusLabel(s.Status)
                                 </span>
                             }
@@ -313,30 +313,30 @@
         @* Takvim etkinlikleri *@
         @if (events.Any())
         {
-            <div class="form-section-card" style="max-width:100%;">
-                <div style="padding:12px 16px; border-bottom:1px solid var(--line);">
-                    <span style="font-size:13px; font-weight:600;">Takvim Etkinlikleri <span class="pill">@events.Count</span></span>
+            <div class="form-section-card full-width">
+                <div class="section-head-bar">
+                    <span class="sh-title">Takvim Etkinlikleri <span class="pill">@events.Count</span></span>
                 </div>
-                <div style="padding:12px 16px; display:flex; flex-direction:column; gap:10px;">
+                <div class="section-body-list">
                     @foreach (var s in events)
                     {
-                        <div style="border-left:3px solid var(--@(ConfClass(s.Confidence) == "ok" ? "ok" : ConfClass(s.Confidence) == "warn" ? "warn" : "err")); padding:10px 14px; background:var(--canvas); border-radius:0 6px 6px 0;">
-                            <div style="display:flex; justify-content:space-between; align-items:start;">
-                                <span style="font-size:13px; font-weight:500; color:var(--ink-1);">@s.Title</span>
+                        <div class="suggestion-item @ConfClass(s.Confidence)">
+                            <div class="suggestion-row">
+                                <span class="suggestion-title">@s.Title</span>
                                 <span class="status @ConfClass(s.Confidence)">@ConfLabel(s.Confidence)</span>
                             </div>
                             @if (!string.IsNullOrWhiteSpace(s.Description))
                             {
-                                <p style="margin:6px 0 0; font-size:12px; color:var(--ink-3);">@s.Description</p>
+                                <p class="suggestion-desc">@s.Description</p>
                             }
                             @if (s.Status == SuggestionStatus.Pending)
                             {
-                                <div style="display:flex; gap:6px; margin-top:10px;">
-                                    <form method="post" action="/Ai/ApproveSuggestion/@s.Id" style="margin:0;">
+                                <div class="suggestion-actions">
+                                    <form method="post" action="/Ai/ApproveSuggestion/@s.Id" class="form-inline">
                                         @Html.AntiForgeryToken()
                                         <button type="submit" class="btn sm primary">Onayla</button>
                                     </form>
-                                    <form method="post" action="/Ai/RejectSuggestion/@s.Id" style="margin:0;">
+                                    <form method="post" action="/Ai/RejectSuggestion/@s.Id" class="form-inline">
                                         @Html.AntiForgeryToken()
                                         <button type="submit" class="btn sm ghost">Reddet</button>
                                     </form>
@@ -344,7 +344,7 @@
                             }
                             else
                             {
-                                <span class="status @(s.Status == SuggestionStatus.Approved ? "ok" : "err")" style="margin-top:8px; display:inline-block;">
+                                <span class="status @(s.Status == SuggestionStatus.Approved ? "ok" : "err") status-mt">
                                     @StatusLabel(s.Status)
                                 </span>
                             }
@@ -357,24 +357,24 @@
         @* Risk uyarıları *@
         @if (risks.Any())
         {
-            <div class="form-section-card" style="max-width:100%;">
-                <div style="padding:12px 16px; border-bottom:1px solid var(--line);">
-                    <span style="font-size:13px; font-weight:600; color:var(--err);">
-                        <i class="fas fa-triangle-exclamation" style="margin-right:4px;"></i>
+            <div class="form-section-card full-width">
+                <div class="section-head-bar err">
+                    <span class="sh-title">
+                        <i class="fas fa-triangle-exclamation icon-mr"></i>
                         Risk Uyarıları <span class="pill">@risks.Count</span>
                     </span>
                 </div>
-                <div style="padding:12px 16px; display:flex; flex-direction:column; gap:10px;">
+                <div class="section-body-list">
                     @foreach (var s in risks)
                     {
-                        <div style="border-left:3px solid var(--err); padding:10px 14px; background:var(--canvas); border-radius:0 6px 6px 0;">
-                            <div style="display:flex; justify-content:space-between; align-items:start;">
-                                <span style="font-size:13px; font-weight:500; color:var(--ink-1);">@s.Title</span>
+                        <div class="suggestion-item err">
+                            <div class="suggestion-row">
+                                <span class="suggestion-title">@s.Title</span>
                                 <span class="status err">Risk</span>
                             </div>
                             @if (!string.IsNullOrWhiteSpace(s.Description))
                             {
-                                <p style="margin:6px 0 0; font-size:12px; color:var(--ink-3);">@s.Description</p>
+                                <p class="suggestion-desc">@s.Description</p>
                             }
                         </div>
                     }
@@ -385,7 +385,7 @@
         @if (!suggestions.Any())
         {
             <div class="empty-state">
-                <i class="fas fa-robot" style="font-size:40px; opacity:.3;"></i>
+                <i class="fas fa-robot icon-lg"></i>
                 <h3>Öneri bulunamadı</h3>
                 <p>AI bu belgeden henüz öneri çıkarmadı.</p>
             </div>

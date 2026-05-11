@@ -76,7 +76,7 @@
                 </div>
                 @if (!string.IsNullOrEmpty(Model.Notes))
                 {
-                    <div style="grid-column:span 2;"><span class="text-muted">Notlar</span><br/>@Model.Notes</div>
+                    <div class="col-span-2"><span class="text-muted">Notlar</span><br/>@Model.Notes</div>
                 }
             </div>
         </div>
@@ -204,7 +204,7 @@
                             var fileExt = extractions.FirstOrDefault(e => e.ContractFileId == f.Id);
                             var isPdf = f.MimeType == "application/pdf";
                             <div class="file-row__head">
-                                <i class="fa fa-file-pdf text-err" style="font-size:16px;"></i>
+                                <i class="fa fa-file-pdf text-err icon-md"></i>
                                 <div class="flex-fill">
                                     <div class="text-strong text-truncate">@f.FileName</div>
                                     <div class="text-muted">@(f.FileSize / 1024) KB</div>
@@ -224,7 +224,7 @@
                                     else
                                     {
                                         @* AI hiç çalıştırılmamış — kullanıcı isterse tetikleyebilir *@
-                                        <form method="post" action="/Contracts/StartAiExtraction" style="margin:0;">
+                                        <form method="post" action="/Contracts/StartAiExtraction" class="m-0">
                                             @Html.AntiForgeryToken()
                                             <input type="hidden" name="contractFileId" value="@f.Id" />
                                             <button type="submit" class="btn sm ghost" title="AI ile analiz et">

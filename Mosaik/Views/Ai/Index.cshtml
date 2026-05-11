@@ -86,7 +86,7 @@
 @await Html.PartialAsync("_AlertMessage", TempData["Success"] != null ? ("success", TempData["Success"]!.ToString()!) : ("", ""))
 
 @* Durum filtresi *@
-<div style="display:flex; gap:6px; margin-bottom:18px; flex-wrap:wrap;">
+<div class="filter-chip-row">
     <a href="/Ai" class="btn @(statusFilter == null ? "primary" : "ghost") sm">Tümü</a>
     @foreach (var s in Enum.GetValues<ExtractionStatus>())
     {
@@ -97,15 +97,15 @@
 @if (!Model.Any())
 {
     <div class="empty-state">
-        <i class="fas fa-robot" style="font-size:48px; opacity:.3; margin-bottom:12px;"></i>
+        <i class="fas fa-robot icon-lg"></i>
         <h3>AI analiz kaydı bulunamadı</h3>
         <p>PDF belgesi yükleyin — analiz otomatik başlar.</p>
-        <a href="/Documents" class="btn primary" style="margin-top:12px;">Belge Yükle</a>
+        <a href="/Documents" class="btn primary mt-12">Belge Yükle</a>
     </div>
 }
 else
 {
-    <div style="background:var(--paper); border:1px solid var(--line); border-radius:10px; overflow:hidden;">
+    <div class="paper-table">
         <table class="dt">
             <thead>
                 <tr>
@@ -114,7 +114,7 @@ else
                     <th scope="col">Model</th>
                     <th scope="col">Öneriler</th>
                     <th scope="col">İşlenme</th>
-                    <th scope="col" style="text-align:right;">İşlemler</th>
+                    <th scope="col" class="text-right">İşlemler</th>
                 </tr>
             </thead>
             <tbody>
@@ -123,17 +123,17 @@ else
                     var pending = pendingCounts.TryGetValue(x.Id, out var pc) ? pc : 0;
                     <tr id="row-@x.Id">
                         <td>
-                            <span style="font-size:13px; font-weight:500; color:var(--ink-1);">@(x.ContractFile?.FileName ?? "—")</span>
+                            <span class="text-strong">@(x.ContractFile?.FileName ?? "—")</span>
                             @if (x.Contract != null)
                             {
-                                <br><a href="/Contracts/Details/@x.Contract.Id" style="font-size:12px; color:var(--accent);">@x.Contract.Title</a>
+                                <br><a href="/Contracts/Details/@x.Contract.Id" class="text-accent">@x.Contract.Title</a>
                             }
                             @if (!string.IsNullOrWhiteSpace(x.ErrorMessage))
                             {
-                                <br><span class="text-xs" style="color:var(--err);">@x.ErrorMessage</span>
+                                <br><span class="text-xs text-err">@x.ErrorMessage</span>
                             }
                         </td>
-                        <td style="min-width:320px;">
+                        <td class="min-w-320">
                             <span class="status @StatusClass(x.Status)" id="status-@x.Id">@StatusLabel(x.Status)</span>
                             @if (x.Status == ExtractionStatus.Processing || x.Status == ExtractionStatus.AwaitingReview || x.Status == ExtractionStatus.Approved)
                             {
@@ -165,8 +165,8 @@ else
                             else if (!string.IsNullOrWhiteSpace(x.ProgressStep) && x.ProgressStep != "done")
                             {
                                 <br>
-                                <span class="text-xs" style="color:var(--ink-4);">
-                                    <i class="fas @StepIcon(x.ProgressStep)" style="margin-right:4px;"></i>
+                                <span class="text-xs text-dim">
+                                    <i class="fas @StepIcon(x.ProgressStep) mr-1"></i>
                                     @StepLabel(x.ProgressStep)
                                 </span>
                             }
@@ -184,7 +184,7 @@ else
                         <td>
                             @if (pending > 0)
                             {
-                                <span class="pill" style="background:var(--warn-bg); color:var(--warn);">@pending bekliyor</span>
+                                <span class="pill warn">@pending bekliyor</span>
                             }
                             else
                             {
@@ -194,7 +194,7 @@ else
                         <td>
                             <span class="ago">@(x.ProcessedAt.HasValue ? x.ProcessedAt.Value.ToLocalTime().ToString("dd.MM.yyyy HH:mm") : "—")</span>
                         </td>
-                        <td style="text-align:right;">
+                        <td class="text-right">
                             <a href="/Ai/Detail/@x.Id" class="btn sm ghost" title="Detay (ham metin + AI çıktıları)">
                                 <i class="fas fa-file-lines text-[9px]"></i>
                                 Detay
@@ -208,7 +208,7 @@ else
                             }
                             @if (x.Status == ExtractionStatus.Processing)
                             {
-                                <form method="post" action="/Ai/Cancel/@x.Id" style="display:inline; margin:0;" onsubmit="return confirm('Bu AI işlemi iptal edilsin mi?')">
+                                <form method="post" action="/Ai/Cancel/@x.Id" class="form-inline" onsubmit="return confirm('Bu AI işlemi iptal edilsin mi?')">
                                     @Html.AntiForgeryToken()
                                     <button type="submit" class="btn sm danger" title="İptal et">
                                         <i class="fas fa-stop text-[9px]"></i>
@@ -218,7 +218,7 @@ else
                             }
                             @if (x.Status == ExtractionStatus.Failed || x.Status == ExtractionStatus.Rejected)
                             {
-                                <form method="post" action="/Ai/Retry/@x.Id" style="display:inline; margin:0;">
+                                <form method="post" action="/Ai/Retry/@x.Id" class="form-inline">
                                     @Html.AntiForgeryToken()
                                     <button type="submit" class="btn sm ghost">
                                         <i class="fas fa-rotate-right text-[9px]"></i>
