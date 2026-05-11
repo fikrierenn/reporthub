@@ -128,19 +128,32 @@ namespace Mosaik.Services
                     $"{cfg.Provider} HTTP {(int)resp.StatusCode}: {Truncate(text, 400)}");
             }
 
-            using var doc = JsonDocument.Parse(text);
-            var content = doc.RootElement
-                .GetProperty("choices")[0]
-                .GetProperty("message")
-                .GetProperty("content")
-                .GetString() ?? "";
-
+            string content;
             int inTok = 0, outTok = 0;
-            if (doc.RootElement.TryGetProperty("usage", out var u))
+            try
             {
-                if (u.TryGetProperty("prompt_tokens", out var pt)) inTok = pt.GetInt32();
-                if (u.TryGetProperty("completion_tokens", out var ot)) outTok = ot.GetInt32();
+                using var doc = JsonDocument.Parse(text);
+                content = doc.RootElement
+                    .GetProperty("choices")[0]
+                    .GetProperty("message")
+                    .GetProperty("content")
+                    .GetString() ?? "";
+
+                if (doc.RootElement.TryGetProperty("usage", out var u))
+                {
+                    if (u.TryGetProperty("prompt_tokens", out var pt)) inTok = pt.GetInt32();
+                    if (u.TryGetProperty("completion_tokens", out var ot)) outTok = ot.GetInt32();
+                }
             }
+            catch (Exception ex)
+            {
+                return new AiSummaryResult(false, null,
+                    $"{cfg.Provider} JSON parse/yapı hatası: {ex.Message}. Body: {Truncate(text, 300)}");
+            }
+
+            if (string.IsNullOrWhiteSpace(content))
+                return new AiSummaryResult(false, null,
+                    $"{cfg.Provider} content boş döndü (HTTP 200 ama içerik yok).");
 
             return new AiSummaryResult(true, content, null, inTok, outTok, cfg.Model);
         }
@@ -304,20 +317,33 @@ namespace Mosaik.Services
                     $"Gemini HTTP {(int)resp.StatusCode}: {Truncate(text, 400)}");
             }
 
-            using var doc = JsonDocument.Parse(text);
-            var content = doc.RootElement
-                .GetProperty("candidates")[0]
-                .GetProperty("content")
-                .GetProperty("parts")[0]
-                .GetProperty("text")
-                .GetString() ?? "";
-
+            string content;
             int inTok = 0, outTok = 0;
-            if (doc.RootElement.TryGetProperty("usageMetadata", out var u))
+            try
             {
-                if (u.TryGetProperty("promptTokenCount", out var pt)) inTok = pt.GetInt32();
-                if (u.TryGetProperty("candidatesTokenCount", out var ot)) outTok = ot.GetInt32();
+                using var doc = JsonDocument.Parse(text);
+                content = doc.RootElement
+                    .GetProperty("candidates")[0]
+                    .GetProperty("content")
+                    .GetProperty("parts")[0]
+                    .GetProperty("text")
+                    .GetString() ?? "";
+
+                if (doc.RootElement.TryGetProperty("usageMetadata", out var u))
+                {
+                    if (u.TryGetProperty("promptTokenCount", out var pt)) inTok = pt.GetInt32();
+                    if (u.TryGetProperty("candidatesTokenCount", out var ot)) outTok = ot.GetInt32();
+                }
             }
+            catch (Exception ex)
+            {
+                return new AiSummaryResult(false, null,
+                    $"Gemini JSON parse/yapı hatası: {ex.Message}. Body: {Truncate(text, 300)}");
+            }
+
+            if (string.IsNullOrWhiteSpace(content))
+                return new AiSummaryResult(false, null,
+                    "Gemini content boş döndü (HTTP 200 ama içerik yok).");
 
             return new AiSummaryResult(true, content, null, inTok, outTok, cfg.Model);
         }
