@@ -240,7 +240,7 @@ Bir view/method/file silmeden veya rename etmeden önce **hepsini sırayla** yap
 _Otomatik üretildi. Mosaik/Views/Admin/*.cshtml (partial hariç)._
 
 - `AiSettings.cshtml` (lines=181, inline-style=30)
-- `AiSettingsEdit.cshtml` (lines=254, inline-style=55)
+- `AiSettingsEdit.cshtml` (lines=230, inline-style=0)
 - `BrandSettings.cshtml` (lines=110, inline-style=21)
 - `CreateDataSource.cshtml` (lines=149, inline-style=36)
 - `CreateFilter.cshtml` (lines=57, inline-style=7)

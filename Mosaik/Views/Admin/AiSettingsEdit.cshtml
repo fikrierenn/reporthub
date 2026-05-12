@@ -4,22 +4,24 @@
     ViewData["Title"] = "Yapay Zeka Ayarları - Mosaik";
     ViewData["PageTitle"] = "Yapay Zeka Ayarları";
     var hasKey = !string.IsNullOrWhiteSpace(Model.ApiKey);
+    var isActive = Model.IsEnabled && hasKey;
 }
 
 @section Breadcrumb {
     <nav class="crumbs" aria-label="Sayfa konumu">
-        <a href="/Dashboard">BKM Kitap</a>
+        <a href="/Dashboard">Mosaik</a>
         <span class="sep" aria-hidden="true">/</span>
         <a href="/Admin">Yönetim</a>
         <span class="sep" aria-hidden="true">/</span>
-        <span class="current" aria-current="page">Yapay Zeka</span>
+        <a href="/Admin/AiSettings">Yapay Zeka</a>
+        <span class="sep" aria-hidden="true">/</span>
+        <span class="current" aria-current="page">@(Model.Id > 0 ? "Düzenle" : "Yeni")</span>
     </nav>
 }
 
 @section TopActions {
-    <a href="/Admin" class="btn">
-        <i class="fas fa-xmark text-[10px]"></i>
-        İptal
+    <a href="/Admin/AiSettings" class="btn">
+        <i class="fas fa-xmark icon-xs"></i> İptal
     </a>
 }
 
@@ -27,56 +29,44 @@
     <h1>Yapay Zeka Ayarları</h1>
     <div class="sub">
         <span>AI özet (tamim derleme), kategori önerisi, içerik analizi için provider yapılandırması</span>
-        @if (Model.IsEnabled && hasKey)
+        @if (isActive)
         {
-            <span class="pill" style="background:var(--success-bg-soft); border-color:rgba(16,185,129,.30); color:var(--success-ink-soft);">
-                <span class="dot" style="background:var(--ok);"></span>Aktif
-            </span>
+            <span class="pill ok-tone"><span class="dot"></span>Aktif</span>
         }
         else
         {
-            <span class="pill" style="background:var(--warn-bg-soft); border-color:rgba(245,158,11,.30); color:var(--warn-ink-soft);">
-                <span class="dot" style="background:var(--warn);"></span>Kapalı
-            </span>
+            <span class="pill warn"><span class="dot"></span>Kapalı</span>
         }
     </div>
 </div>
 
 @if (TempData["Message"] != null)
 {
-    var t = TempData["MessageType"]?.ToString();
-    <div role="alert" style="margin-bottom:18px; padding:12px 16px; border-radius:10px; font-size:13px; max-width:880px;
-                background: @(t == "success" ? "var(--success-bg-soft)" : "var(--danger-bg-soft)");
-                border: 1px solid @(t == "success" ? "rgba(16,185,129,0.25)" : "rgba(220,38,38,0.25)");
-                color: @(t == "success" ? "var(--success-ink-soft)" : "var(--accent-ink)");">
-        <i class="fas @(t == "success" ? "fa-check-circle" : "fa-exclamation-circle")" style="margin-right:8px;"></i>
-        @TempData["Message"]
-    </div>
+    @await Html.PartialAsync("_AlertMessage", (TempData["MessageType"]?.ToString() ?? "info", TempData["Message"]?.ToString() ?? ""))
 }
 
-<form method="post" action="@(Model.Id > 0 ? $"/Admin/AiSettings/Edit/{Model.Id}" : "/Admin/AiSettings/Edit")">
+<form method="post" action="@(Model.Id > 0 ? $"/Admin/AiSettings/Edit/{Model.Id}" : "/Admin/AiSettings/Edit")" novalidate>
     @Html.AntiForgeryToken()
 
-    <div style="background:var(--paper); border:1px solid var(--line); border-radius:10px; overflow:hidden; max-width:880px; margin-bottom:18px;">
-        <div style="padding:14px 18px; border-bottom:1px solid var(--line);">
-            <h2 style="font-size:13px; font-weight:600; color:var(--ink-1); margin:0;">
-                <i class="fas fa-wand-magic-sparkles" style="margin-right:6px; color:var(--ink-3);"></i>
-                Provider Ayarları
+    <div class="form-section-card wide">
+        <div class="form-section-head">
+            <h2 class="form-section-head__title">
+                <i class="fas fa-wand-magic-sparkles icon-mr"></i> Provider Ayarları
             </h2>
-            <div style="font-size:12px; color:var(--ink-3); margin-top:2px;">Open-source / free-tier önerilir: Groq Llama 3.3 (14400 req/gün), Gemini Flash (1500 req/gün)</div>
+            <p class="form-section-head__sub">Open-source / free-tier önerilir: Groq Llama 3.3 (14 400 req/gün), Gemini Flash (1 500 req/gün)</p>
         </div>
 
-        <div style="padding:20px;">
+        <div class="form-section-body stack">
             <div class="field">
                 <label class="lab" for="Name">Profil Adı</label>
                 <input type="text" id="Name" name="Name" value="@(Model.Name ?? "")" class="inp" maxlength="50"
                        placeholder="örn: Groq Production / Gemini Backup / z.ai Free" />
-                <div style="font-size:11px; color:var(--ink-3); margin-top:4px;">UI'da tanımak için etiket. Boş bırakırsan provider adı kullanılır.</div>
+                <p class="help-text">UI'da tanımak için etiket. Boş bırakırsan provider adı kullanılır.</p>
             </div>
 
-            <div style="display:grid; grid-template-columns:200px 1fr; gap:14px; margin-bottom:14px;">
-                <div class="field" style="margin-bottom:0;">
-                    <label class="lab" for="Provider">Provider <span style="color:var(--accent);">*</span></label>
+            <div class="grid-200-1fr">
+                <div class="field">
+                    <label class="lab" for="Provider">Provider <span class="text-danger">*</span></label>
                     <select id="Provider" name="Provider" class="inp" required>
                         <option value="groq" selected="@(Model.Provider == "groq")">Groq (Llama 3.x — hızlı, free)</option>
                         <option value="grok" selected="@(Model.Provider == "grok")">Grok (xAI — paid)</option>
@@ -87,8 +77,8 @@
                         <option value="ollama" selected="@(Model.Provider == "ollama")">Ollama (local)</option>
                     </select>
                 </div>
-                <div class="field" style="margin-bottom:0;">
-                    <label class="lab" for="Model">Model <span style="color:var(--accent);">*</span></label>
+                <div class="field">
+                    <label class="lab" for="Model">Model <span class="text-danger">*</span></label>
                     <input type="text" id="Model" name="Model" value="@Model.Model" class="inp" maxlength="100" required
                            placeholder="örn: llama-3.3-70b-versatile / gemini-1.5-flash / gpt-4o-mini" />
                 </div>
@@ -102,117 +92,104 @@
                        @(hasKey ? "" : "required") />
                 @if (hasKey)
                 {
-                    <div style="font-size:11px; color:var(--ok); margin-top:4px;">
-                        <i class="fas fa-key" style="font-size:10px;"></i>
-                        Anahtar kayıtlı. Değiştirmek için yeni anahtar gir.
-                    </div>
+                    <p class="help-text help-success">
+                        <i class="fas fa-key icon-xs"></i> Anahtar kayıtlı. Değiştirmek için yeni anahtar gir.
+                    </p>
                 }
                 else
                 {
-                    <div style="font-size:11px; color:var(--accent-ink); margin-top:4px;">
-                        <i class="fas fa-triangle-exclamation" style="font-size:10px;"></i>
-                        API anahtarı henüz kaydedilmemiş. Provider panelinden aldığın anahtarı buraya yapıştır.
-                    </div>
+                    <p class="help-text error">
+                        <i class="fas fa-triangle-exclamation icon-xs"></i> API anahtarı henüz kaydedilmemiş. Provider panelinden aldığın anahtarı buraya yapıştır.
+                    </p>
                 }
-                <div style="font-size:11px; color:var(--warn); margin-top:6px; background:rgba(245,158,11,0.08); border:1px solid rgba(245,158,11,0.25); border-radius:6px; padding:6px 10px;">
-                    <i class="fas fa-circle-info" style="font-size:10px;"></i>
-                    <strong>Önemli:</strong> Her provider'ın ayrı API anahtarı vardır.
-                    Provider değiştirdiysen yeni provider'dan <em>ayrı bir anahtar</em> al ve buraya yapıştır
-                    (Groq key Gemini'da çalışmaz, tersi de geçerli).
+                <div class="field-warn-banner">
+                    <i class="fas fa-circle-info icon-xs"></i>
+                    <strong>Önemli:</strong> Her provider'ın ayrı API anahtarı vardır. Provider değiştirdiysen yeni provider'dan <em>ayrı bir anahtar</em> al ve buraya yapıştır (Groq key Gemini'da çalışmaz, tersi de geçerli).
                 </div>
             </div>
 
-            <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px; margin-bottom:14px;">
-                <div class="field" style="margin-bottom:0;">
+            <div class="grid-3col">
+                <div class="field">
                     <label class="lab" for="MaxTokens">Max Token</label>
                     <input type="number" id="MaxTokens" name="MaxTokens" value="@Model.MaxTokens" class="inp"
                            min="128" max="8192" step="128" />
                 </div>
-                <div class="field" style="margin-bottom:0;">
+                <div class="field">
                     <label class="lab" for="Temperature">Temperature</label>
-                    <input type="number" id="Temperature" name="Temperature" value="@Model.Temperature.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture)" class="inp"
-                           min="0" max="2" step="0.1" />
+                    <input type="number" id="Temperature" name="Temperature"
+                           value="@Model.Temperature.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture)"
+                           class="inp" min="0" max="2" step="0.1" />
                 </div>
-                <div class="field" style="margin-bottom:0;">
+                <div class="field">
                     <label class="lab" for="BaseUrl">Base URL (ops.)</label>
                     <input type="text" id="BaseUrl" name="BaseUrl" value="@(Model.BaseUrl ?? "")" class="inp"
                            placeholder="Provider default için boş bırak" />
                 </div>
             </div>
 
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:14px;">
-                <div class="field" style="margin-bottom:0;">
-                    <label class="lab" style="display:flex; align-items:center; gap:8px; cursor:pointer;">
-                        <input type="checkbox" id="IsEnabled" name="IsEnabled" value="true" @(Model.IsEnabled ? "checked" : "")
-                               style="width:16px; height:16px; accent-color:var(--accent); margin:0;" />
-                        <span style="text-transform:none; letter-spacing:0; font-weight:400; display:inline-flex; align-items:center; gap:6px;">
-                            <i class="fas fa-power-off" style="font-size:11px;"></i>
-                            Aktif (kullanılabilir)
-                        </span>
+            <div class="grid-2col">
+                <div class="field">
+                    <label class="lab toggle-label" for="IsEnabled">
+                        <input type="checkbox" id="IsEnabled" name="IsEnabled" value="true" @(Model.IsEnabled ? "checked" : "") class="checkbox checkbox-lg" />
+                        <span><i class="fas fa-power-off icon-xs"></i> Aktif (kullanılabilir)</span>
                     </label>
                 </div>
-                <div class="field" style="margin-bottom:0;">
-                    <label class="lab" style="display:flex; align-items:center; gap:8px; cursor:pointer;">
-                        <input type="checkbox" id="IsPrimary" name="IsPrimary" value="true" @(Model.IsPrimary ? "checked" : "")
-                               style="width:16px; height:16px; accent-color:var(--accent); margin:0;" />
-                        <span style="text-transform:none; letter-spacing:0; font-weight:400; display:inline-flex; align-items:center; gap:6px;">
-                            <i class="fas fa-star" style="font-size:11px; color:var(--accent);"></i>
-                            Birincil (primary) — ilk denenir
-                        </span>
+                <div class="field">
+                    <label class="lab toggle-label" for="IsPrimary">
+                        <input type="checkbox" id="IsPrimary" name="IsPrimary" value="true" @(Model.IsPrimary ? "checked" : "") class="checkbox checkbox-lg" />
+                        <span><i class="fas fa-star icon-xs text-accent"></i> Birincil (primary) — ilk denenir</span>
                     </label>
                 </div>
             </div>
 
-            <div class="field" style="margin-bottom:0;">
+            <div class="field">
                 <label class="lab" for="Priority">Fallback önceliği</label>
-                <input type="number" id="Priority" name="Priority" value="@Model.Priority" class="inp"
-                       min="0" max="999" step="10" style="max-width:160px;" />
-                <div style="font-size:11px; color:var(--ink-3); margin-top:4px;">
-                    <i class="fas fa-circle-info" style="font-size:10px;"></i>
+                <input type="number" id="Priority" name="Priority" value="@Model.Priority" class="inp inp-narrow"
+                       min="0" max="999" step="10" />
+                <p class="help-text">
+                    <i class="fas fa-circle-info icon-xs"></i>
                     Düşük = önce. Birincil başarısız olursa diğer aktif profiller bu sıraya göre denenir. Default 100.
-                </div>
+                </p>
             </div>
         </div>
     </div>
 
     @if (Model.LastTestAt.HasValue)
     {
-        <div style="background:var(--paper); border:1px solid var(--line); border-radius:10px; padding:12px 16px; max-width:880px; margin-bottom:18px; font-size:12.5px; color:var(--ink-2);">
-            <i class="fas @(Model.LastTestSuccess ? "fa-circle-check" : "fa-circle-xmark")" style="color:@(Model.LastTestSuccess ? "var(--ok)" : "var(--accent)"); margin-right:6px;"></i>
+        <div class="test-result-bar">
+            <i class="fas @(Model.LastTestSuccess ? "fa-circle-check ok" : "fa-circle-xmark err")"></i>
             <strong>Son test:</strong> @Model.LastTestAt.Value.ToLocalTime().ToString("dd.MM.yyyy HH:mm") · @Model.LastTestMessage
         </div>
     }
 
-    <div style="display:flex; align-items:center; justify-content:space-between; max-width:880px; padding:14px 20px; background:var(--paper); border:1px solid var(--line); border-radius:10px;">
-        <a href="/Admin" class="btn ghost">
-            <i class="fas fa-arrow-left text-[10px]"></i>
-            Geri Dön
+    <div class="action-row wide">
+        <a href="/Admin/AiSettings" class="btn ghost">
+            <i class="fas fa-arrow-left icon-xs"></i> Geri Dön
         </a>
-        <div style="display:flex; gap:8px;">
-            <button type="submit" formaction="@($"/Admin/AiSettings/Test/{Model.Id}")" class="btn" title="Bağlantıyı test et (önce kaydet)" @(Model.Id > 0 ? "" : "disabled")>
-                <i class="fas fa-bolt text-[10px]"></i>
-                Test Et
+        <div class="btn-group">
+            <button type="submit" formaction="@($"/Admin/AiSettings/Test/{Model.Id}")" class="btn"
+                    title="Bağlantıyı test et (önce kaydet)" @(Model.Id > 0 ? "" : "disabled")>
+                <i class="fas fa-bolt icon-xs"></i> Test Et
             </button>
             <button type="submit" class="btn primary">
-                <i class="fas fa-check text-[10px]"></i>
-                Kaydet
+                <i class="fas fa-check icon-xs"></i> Kaydet
             </button>
         </div>
     </div>
 </form>
 
-<div style="max-width:880px; margin-top:14px; font-size:12px; color:var(--ink-3);">
+<div class="help-card">
     <strong>Provider seçim rehberi:</strong>
-    <ul style="margin:8px 0 0; padding-left:20px;">
-        <li><strong>Gemini</strong> (Türkçe için önerilir, free) — Doğal Türkçe çıktı. Model: <code>gemini-2.0-flash</code> veya <code>gemini-1.5-flash</code>, 1 500 req/gün ücretsiz. API: <a href="https://aistudio.google.com/apikey" target="_blank" style="color:var(--accent);">aistudio.google.com/apikey</a></li>
-        <li><strong>Groq</strong> (hızlı, free) — Llama 3.3 70B / 3.1 8B, 14 400 req/gün, ~1-2sn. <em>Türkçe'de Gemini'den zayıf</em>. Model: <code>llama-3.3-70b-versatile</code>. API: <a href="https://console.groq.com/keys" target="_blank" style="color:var(--accent);">console.groq.com/keys</a></li>
-        <li><strong>Grok (xAI)</strong> — grok-2-1212, grok-3, grok-3-mini. Model: <code>grok-2-1212</code>. API: <a href="https://console.x.ai/" target="_blank" style="color:var(--accent);">console.x.ai</a></li>
-        <li><strong>z.ai (Zhipu GLM)</strong> — Modeller: <code>glm-4.5</code> / <code>glm-4.6</code> / <code>glm-4.7</code> / <code>glm-5.1</code> (flagship). API: <a href="https://z.ai/manage-apikey/apikey-list" target="_blank" style="color:var(--accent);">z.ai/manage-apikey</a> · BaseUrl otomatik <code>https://api.z.ai/api/paas/v4</code> · <em>Free tier sınırlı, çoğu model paid.</em></li>
-        <li><strong>OpenRouter</strong> — Multi-provider proxy (DeepSeek/Llama/Mistral free models). Model: <code>deepseek/deepseek-chat</code>. API: <a href="https://openrouter.ai/keys" target="_blank" style="color:var(--accent);">openrouter.ai/keys</a></li>
+    <ul>
+        <li><strong>Gemini</strong> (Türkçe için önerilir, free) — Doğal Türkçe çıktı. Model: <code>gemini-2.0-flash</code> veya <code>gemini-1.5-flash</code>, 1 500 req/gün ücretsiz. API: <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a></li>
+        <li><strong>Groq</strong> (hızlı, free) — Llama 3.3 70B / 3.1 8B, 14 400 req/gün, ~1-2sn. <em>Türkçe'de Gemini'den zayıf</em>. Model: <code>llama-3.3-70b-versatile</code>. API: <a href="https://console.groq.com/keys" target="_blank" rel="noopener">console.groq.com/keys</a></li>
+        <li><strong>Grok (xAI)</strong> — grok-2-1212, grok-3, grok-3-mini. Model: <code>grok-2-1212</code>. API: <a href="https://console.x.ai/" target="_blank" rel="noopener">console.x.ai</a></li>
+        <li><strong>z.ai (Zhipu GLM)</strong> — Modeller: <code>glm-4.5</code> / <code>glm-4.6</code> / <code>glm-4.7</code> / <code>glm-5.1</code> (flagship). API: <a href="https://z.ai/manage-apikey/apikey-list" target="_blank" rel="noopener">z.ai/manage-apikey</a> · BaseUrl otomatik <code>https://api.z.ai/api/paas/v4</code> · <em>Free tier sınırlı, çoğu model paid.</em></li>
+        <li><strong>OpenRouter</strong> — Multi-provider proxy (DeepSeek/Llama/Mistral free models). Model: <code>deepseek/deepseek-chat</code>. API: <a href="https://openrouter.ai/keys" target="_blank" rel="noopener">openrouter.ai/keys</a></li>
         <li><strong>Ollama</strong> — yerel kurulum, tamamen free, internet yok. BaseUrl: <code>http://localhost:11434/v1</code>. Model: <code>llama3.1</code></li>
         <li><strong>OpenAI</strong> — Model: <code>gpt-4o-mini</code> (paid).</li>
     </ul>
-    <p style="margin-top:10px; color:var(--ink-3); font-size:11.5px;">
+    <p>
         <i class="fas fa-circle-info" aria-hidden="true"></i>
         <strong>Not:</strong> Modüller (Tamim, ileride HR/Doküman vb) bu tek ayara bağlanır. Modüller kendi prompt'larını gönderir + opsiyonel olarak model/temperature override edebilir.
     </p>
@@ -226,13 +203,13 @@
     if (!providerEl || !modelEl) return;
 
     const suggestions = {
-        groq:        { model: 'llama-3.3-70b-versatile',        hint: 'llama-3.3-70b-versatile / llama-3.1-8b-instant / gemma2-9b-it' },
-        grok:        { model: 'grok-2-1212',                    hint: 'grok-2-1212 / grok-3-mini / grok-3 / grok-2-vision-1212' },
-        zai:         { model: 'glm-4.5',                        hint: 'glm-4.5 / glm-4.6 / glm-4.7 / glm-5 / glm-5.1 (flagship) / glm-5v-turbo (vision)' },
-        gemini:      { model: 'gemini-1.5-flash',               hint: 'gemini-2.0-flash / gemini-1.5-flash / gemini-1.5-pro' },
+        groq:        { model: 'llama-3.3-70b-versatile',         hint: 'llama-3.3-70b-versatile / llama-3.1-8b-instant / gemma2-9b-it' },
+        grok:        { model: 'grok-2-1212',                     hint: 'grok-2-1212 / grok-3-mini / grok-3 / grok-2-vision-1212' },
+        zai:         { model: 'glm-4.5',                         hint: 'glm-4.5 / glm-4.6 / glm-4.7 / glm-5 / glm-5.1 (flagship) / glm-5v-turbo (vision)' },
+        gemini:      { model: 'gemini-1.5-flash',                hint: 'gemini-2.0-flash / gemini-1.5-flash / gemini-1.5-pro' },
         openrouter:  { model: 'qwen/qwen-2.5-72b-instruct:free', hint: 'qwen/qwen-2.5-72b-instruct:free (Türkçe iyi) / meta-llama/llama-3.3-70b-instruct:free / deepseek/deepseek-chat:free / google/gemma-3-27b-it:free' },
-        openai:      { model: 'gpt-4o-mini',                    hint: 'gpt-4o-mini / gpt-4o / o1-mini' },
-        ollama:      { model: 'llama3.1',                       hint: 'llama3.1 / qwen2.5:7b / mistral / phi3' }
+        openai:      { model: 'gpt-4o-mini',                     hint: 'gpt-4o-mini / gpt-4o / o1-mini' },
+        ollama:      { model: 'llama3.1',                        hint: 'llama3.1 / qwen2.5:7b / mistral / phi3' }
     };
 
     function updateHint() {
@@ -240,7 +217,6 @@
         const sug = suggestions[p];
         if (!sug) return;
         modelEl.placeholder = 'örn: ' + sug.hint;
-        // Sadece kullanıcı henüz manuel girmediyse otomatik doldur
         if (!modelEl.value || modelEl.dataset.autoFilled === '1') {
             modelEl.value = sug.model;
             modelEl.dataset.autoFilled = '1';
