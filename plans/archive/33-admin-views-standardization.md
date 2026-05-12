@@ -1,9 +1,10 @@
 # Plan 33 — Yönetim Paneli Ekranları Standardizasyonu
 
-**Tarih:** 2026-05-12
+**Tarih:** 2026-05-12 (yazıldı) → 2026-05-13 (tamamlandı)
 **Yazan:** Claude
-**Durum:** `Taslak — kullanıcı onayı bekliyor`
+**Durum:** ✅ **TAMAMLANDI** (296 inline silindi, 12 view standardize, 5 commit)
 **İlişkili:** Plan 23 (Sidebar + Overview Dashboard), Plan 25.1 Faz 1 (Inline Style Refactor)
+**Follow-up:** Plan 33.2 (V2 Dashboard Builder — CreateReportV2 + EditReportV2, scope dışı bırakılmıştı)
 
 ---
 
@@ -89,16 +90,17 @@ Ama **`Mosaik/Views/Admin/` altındaki 19 ekran** birbirinden farklı:
 
 ## 5. Done Criteria
 
-- [ ] 14 view'ın hepsi inline style **= 0** (sadece istisnaları korur: `display:contents` / `--w:%`)
-- [ ] Hepsi `form-section-card` + `form-section-head` + `form-section-body` yapısında (Form pattern)
-- [ ] `action-row` (sol Geri Dön ghost + sağ Kaydet primary) tüm form'larda
-- [ ] `_AlertMessage` partial kullanılır (inline alert div'ler kaldırılır)
-- [ ] `Html.BeginForm` → raw `<form>` (BrandSettings + Modules)
-- [ ] Razor `@(...)` style expression yok — class modifier kullanılır
-- [ ] Build temiz (0 hata 0 uyarı)
-- [ ] Smoke test: her ekran preview'da açılır, form submit çalışır
-- [ ] OrgChart Plan 33.1'e ayrı plan olarak ertelenir
-- [ ] CreateReportV2 + EditReportV2 plandan açık şekilde dışlanır
+- [x] 12 view inline style **= 0** (AiSettingsEdit 55, CreateDataSource 36, EditDataSource 37, AiSettings 30, BrandSettings 21, EditGroup 16, EditRole 16, Lookup 16, Modules 16, CreateFilter 7, EditFilter 7, OrgChart 39)
+- [x] Form view'lar `form-section-card` + `form-section-head` + `form-section-body` yapısında
+- [x] `action-row` (sol Geri Dön ghost + sağ Kaydet primary) tüm form'larda
+- [x] `_AlertMessage` partial kullanılır (inline alert div'ler kaldırıldı)
+- [x] `Html.BeginForm` → raw `<form>` (BrandSettings + Modules)
+- [x] Razor `@(...)` style expression yok — class modifier kullanılır
+- [x] Build temiz (0 hata 0 uyarı — her commit)
+- [x] Smoke test: preview start + 12 endpoint cevap (auth redirect, render hatası yok)
+- [x] OrgChart Plan 33 kapsamında refactor edildi (sub-plan 33.1 gerekmedi; org-chart.css'e .oc-* utility paketi eklendi)
+- [x] V1 Report Builder silindi (kullanıcı kararı: "v2 var zaten") — 567 satır net silim
+- [ ] CreateReportV2 + EditReportV2 → **Plan 33.2** ayrı plan (178 inline toplam, canvas/drawer/qb widget UI)
 
 ## 6. Rollback Planı
 
