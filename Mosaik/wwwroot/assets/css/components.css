@@ -928,6 +928,11 @@ select.inp {
 .mt-12 { margin-top: 12px; }
 .mr-1 { margin-right: 4px; }
 .m-0 { margin: 0; }
+.ml-auto { margin-left: auto; }
+/* Visibility helpers (layout korur, görünmez) */
+.invisible, .is-invisible { visibility: hidden; }
+/* Readonly input görsel ipucu (form input disabled state alternatifi) */
+.inp.readonly, .inp-readonly { opacity: 0.6; cursor: not-allowed; }
 .icon-md { font-size: 16px; }
 .icon-lg { font-size: 48px; opacity: .3; margin-bottom: 12px; }
 .text-truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -2076,3 +2081,129 @@ select.inp {
 @media (max-width: 900px) {
     .list-grid-2 { grid-template-columns: 1fr; }
 }
+
+/* ============================================================
+   Plan 25.1 P7 — OrgChart'tan genericleştirilen utility'ler (2026-05-13)
+   Modüller-arası reuse: view-tabs, modal-overlay (Alpine x-show),
+   modal-desc/list, split-grid, side-card, scroll-canvas, status-line,
+   flat-list, tag-grid, render-error.
+   ============================================================ */
+
+/* View switcher sekmeleri — tab list + sağa itilen export butonu */
+.view-tabs { display: flex; gap: 6px; margin: 14px 0; align-items: center; }
+.view-tabs__spacer { margin-left: auto; }
+
+/* Alpine x-show kontrollü modal overlay (display:none x-cloak ile gizlenir,
+   açıkken display:flex). Sınıf-toggled .modal-backdrop varyantından ayrıdır. */
+.modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.4);
+    z-index: 9999;
+    display: flex; align-items: center; justify-content: center;
+}
+
+/* .modal-card varyantı — scrollable, flex column (uzun liste içeren modal) */
+.modal-card.scrollable {
+    width: min(520px, 90vw); max-height: 80vh;
+    padding: 20px;
+    display: flex; flex-direction: column; gap: 12px;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.18);
+}
+
+/* Modal alt-başlık (açıklama) */
+.modal-desc { margin: 0; font-size: 13px; color: var(--ink-mute, var(--ink-3)); }
+
+/* Modal scroll bölgesi (uzun liste) */
+.modal-scroll { overflow: auto; max-height: 55vh; }
+
+/* Modal list wrap + liste + öğeleri (seçilebilir liste modal'ı) */
+.modal-list-wrap { overflow: auto; max-height: 50vh; border: 1px solid var(--line); border-radius: 8px; }
+.modal-list { list-style: none; padding: 0; margin: 0; }
+.modal-list__item {
+    padding: 8px 14px; cursor: pointer;
+    border-bottom: 1px solid var(--line); font-size: 13px;
+}
+.modal-list__item.is-root {
+    padding: 10px 14px; font-style: italic; color: var(--ink-mute, var(--ink-3));
+}
+.modal-list__item.is-selected { background: #ecfdf5; }
+.modal-list__item-title { font-weight: 500; }
+.modal-list__item-code { font-size: 11px; color: var(--ink-mute, var(--ink-3)); margin-left: 8px; }
+.modal-list__item-inactive { background: var(--line); margin-left: 6px; font-size: 10px; }
+.modal-list-empty {
+    padding: 14px; text-align: center;
+    color: var(--ink-mute, var(--ink-3)); font-size: 12px;
+}
+
+/* .modal-actions space-between varyantı (İptal sol, Kaydet sağ) */
+.modal-actions.between { justify-content: space-between; }
+
+/* Modal head — title + count + close (Alpine modal'da kullanılır) */
+.modal-head-block { display: flex; align-items: flex-start; justify-content: space-between; }
+.modal-head-block h3 { margin: 0; font-size: 16px; }
+.modal-head-block__count { margin: 2px 0 0 0; font-size: 12px; color: var(--ink-mute, var(--ink-3)); }
+.modal-list__item-meta { font-size: 11px; color: var(--ink-mute, var(--ink-3)); margin-top: 2px; }
+
+/* Split grid — sol içerik + sağ side panel (320px) */
+.split-grid {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 18px;
+    align-items: start;
+}
+@media (max-width: 900px) {
+    .split-grid { grid-template-columns: 1fr; }
+}
+
+/* Paper card varyantı — 18px padding */
+.paper-card.with-padding-lg { padding: 18px; }
+
+/* Scroll edilebilir geniş canvas (chart, embed iframe vs.) */
+.scroll-canvas { overflow: auto; min-height: 500px; }
+
+/* Tek satır status/help yazısı (drag-drop "kaydediliyor…" vs.) */
+.status-line { font-size: 12px; color: var(--ink-mute, var(--ink-3)); margin-bottom: 10px; min-height: 18px; }
+.status-line.is-error { color: #b91c1c; }
+
+/* Side card — paper card varyantı, 16px padding (overview sidebar widget) */
+.side-card { background: var(--paper); border: 1px solid var(--line); border-radius: 10px; padding: 16px; }
+.side-card.mt-18 { margin-top: 18px; }
+.side-card__title { margin: 0 0 4px 0; font-size: 14px; }
+.side-card__desc { font-size: 12px; color: var(--ink-mute, var(--ink-3)); margin: 0 0 12px 0; }
+.side-card__empty {
+    font-size: 12px; color: var(--ink-mute, var(--ink-3));
+    padding: 12px; text-align: center;
+    border: 1px dashed var(--line); border-radius: 8px;
+}
+.side-card__empty i { color: #16a34a; margin-right: 4px; }
+
+/* Flat list — küçük rozet/anahtar satırları (her satırda mini form) */
+.flat-list {
+    list-style: none; padding: 0; margin: 0;
+    display: flex; flex-direction: column; gap: 6px;
+    max-height: 400px; overflow-y: auto;
+}
+.flat-list__row {
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    padding: 6px 10px; background: #f9fafb; border-radius: 6px; border: 1px solid var(--line);
+}
+.flat-list__row-code {
+    font-size: 11.5px; flex: 1;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
+/* Tag grid — küçük rozet/etiket kutucukları (responsive) */
+.tag-grid {
+    list-style: none; padding: 0; margin: 0;
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 6px;
+}
+.tag-grid__item {
+    font-size: 12px; padding: 6px 10px;
+    background: #f9fafb; border-radius: 6px; border: 1px solid var(--line);
+}
+.tag-grid__role { color: var(--ink-mute, var(--ink-3)); }
+.tag-grid__meta { font-size: 10.5px; color: var(--ink-mute, var(--ink-3)); }
+.tag-grid__more { font-size: 11px; color: var(--ink-mute, var(--ink-3)); margin-top: 8px; }
+
+/* Render hata fallback (chart/canvas render fail mesajı) */
+.render-error { padding: 20px; color: #b91c1c; }

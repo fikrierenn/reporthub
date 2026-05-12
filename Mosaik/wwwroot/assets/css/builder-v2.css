@@ -1233,8 +1233,8 @@ body.builder-v2-page .builder-v2:not(.preview-mode) .w-content {
     border-radius: 10px; font-size: 13px;
 }
 
-/* Parametre listesi (drawer / panel içinde) */
-.builder-param-empty { font-size: 11px; color: var(--ink-4); }
+/* Parametre listesi (drawer / panel içinde)
+   .builder-param-empty → kaldırıldı, view'da `help-text text-xs` kullan (P7). */
 .builder-param-default-edit {
     width: 130px; height: 22px;
     border: 1px solid var(--accent); border-radius: 4px;
@@ -1295,17 +1295,8 @@ body.builder-v2-page .builder-v2:not(.preview-mode) .w-content {
     font-variant-numeric: tabular-nums;
 }
 
-/* Sarı uyarı banner'ları (build/qb içinde inline warn) */
-.builder-warn-banner {
-    background: var(--warn-bg-soft, #fef3c7);
-    border: 1px solid #fde68a;
-    color: var(--warn-ink-soft, #92400e);
-    padding: 8px 10px; border-radius: 6px;
-    font-size: 11px; margin-bottom: 10px;
-}
-
-/* 10px küçük açıklama (chart/kpi field açıklama satırları) */
-.builder-help-xs { font-size: 10px; color: var(--ink-4); margin-top: 4px; }
+/* .builder-warn-banner / .builder-qb-warn → kaldırıldı, view'da `alert warn` kullan (P7). */
+/* .builder-help-xs → kaldırıldı, view'da `help-text` kullan (P7). */
 
 /* Chart series builder satırı (Yön + Tip + Kolon + Sil) */
 .builder-series-row {
@@ -1329,14 +1320,9 @@ body.builder-v2-page .builder-v2:not(.preview-mode) .w-content {
 }
 .builder-series-remove:hover { color: var(--accent-ink); }
 
-/* Section toggle blokları arası gap (margin-top:14px gibi tek-kullanımlık) */
-.builder-section-gap { margin-top: 14px; }
-
-/* Tek-element görünmezlik (layout korur) — Alpine :class içinde */
-.invisible { visibility: hidden; }
-
-/* Readonly input görsel ipucu (calc-col alias edit modu) */
-.inp-readonly { opacity: 0.6; cursor: not-allowed; }
+/* .builder-section-gap → kaldırıldı, view'da `mt-14` kullan (P7).
+   .invisible / .is-invisible → components.css'e taşındı (P7).
+   .inp-readonly → components.css'e taşındı (P7). */
 
 /* Formül textarea (mono font, kompakt) */
 .builder-formula-textarea {
@@ -1402,8 +1388,7 @@ body.builder-v2-page .builder-v2:not(.preview-mode) .w-content {
 .variant-card .variant-icon { font-size: 16px; margin-bottom: 4px; }
 .variant-card--sm .variant-icon { font-size: 14px; margin-bottom: 0; }
 
-/* Span (genişlik) yardımcı satırı + renk/ikon "Kaldır" link satırı */
-.builder-span-hint { font-size: 10px; color: var(--ink-4); margin-top: 6px; }
+/* .builder-span-hint → kaldırıldı, view'da `help-text` kullan (P7). */
 .builder-icon-empty {
     text-align: center; padding: 12px; color: var(--ink-4); font-size: 11px;
 }
@@ -1417,8 +1402,7 @@ body.builder-v2-page .builder-v2:not(.preview-mode) .w-content {
 .builder-icon-manual-row .btn { height: 30px; }
 .builder-icon-manual-details { margin-top: 10px; font-size: 11px; }
 
-/* Settings panel intro ("Tüm alanlar form POST'a dahil") */
-.builder-settings-intro { font-size: 11px; color: var(--ink-3); margin-bottom: 14px; }
+/* .builder-settings-intro → kaldırıldı, view'da `help-text mb-14` kullan (P7). */
 
 /* SP'den çek small button (datalist üstü) */
 .builder-sp-reload-btn {
@@ -1438,8 +1422,7 @@ body.builder-v2-page .builder-v2:not(.preview-mode) .w-content {
 /* Preview modal iframe (full height inside m-body) */
 .builder-preview-iframe { width: 100%; height: 100%; border: 0; }
 
-/* Modal foot info text */
-.builder-modal-foot-hint { margin-left: auto; }
+/* .builder-modal-foot-hint → kaldırıldı, view'da `ml-auto` kullan (P7). */
 
 /* Data modal — boş satır mesajı */
 .builder-data-empty {
@@ -1465,8 +1448,7 @@ body.builder-v2-page .builder-v2:not(.preview-mode) .w-content {
     font-size: 10px; color: var(--ink-4); margin-left: 6px;
 }
 
-/* Builder foot — right-align kısayolu */
-.builder-v2-foot .right { margin-left: auto; }
+/* .builder-v2-foot .right → kaldırıldı, view'da `ml-auto` kullan (P7). */
 
 /* Active toggle label (Aktif satır) */
 .builder-active-label { display: flex; align-items: center; gap: 8px; }
@@ -1484,8 +1466,7 @@ body.builder-v2-page .builder-v2:not(.preview-mode) .w-content {
     font-size: 11px; margin-bottom: 10px;
 }
 
-/* Boş tablo / panel mini hint (drawer içinde "Henüz yok" satırı) */
-.builder-empty-hint { font-size: 11px; color: var(--ink-4); padding: 8px 0; }
+/* .builder-empty-hint → kaldırıldı, view'da `help-text` kullan (P7). */
 
 /* İleri ayar açılınca üst kenarlık + iç boşluk (advanced section wrapper) */
 .builder-advanced-section {
@@ -1591,16 +1572,14 @@ body.builder-v2-page .builder-v2:not(.preview-mode) .w-content {
 /* Data modal info row küçük metin */
 .m-info { font-size: 11px; color: var(--ink-3); }
 
-/* Footer right-aligned span helper */
-.foot-stats-right { margin-left: auto; }
+/* .foot-stats-right → kaldırıldı, view'da `ml-auto` kullan (P7). */
 
 /* Variant icon emoji-ish boyut çeşitleri (Tailwind text-[Npx] yerine sabitleştirme) */
 .variant-icon-md { font-size: 16px; margin-bottom: 4px; }
 .variant-icon-sm { font-size: 14px; }
 .variant-icon-xs { font-size: 13px; }
 
-/* Visibility helper (drag-handle gizli) */
-.is-invisible { visibility: hidden; }
+/* .is-invisible → components.css'e taşındı (P7). */
 
 /* Variant kpi card icon (önceki üyeleri override etmemek için scoped değil — sınıf adı tek) */
 

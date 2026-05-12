@@ -80,7 +80,7 @@
 </div>
 
 @* Görünüm seçici *@
-<div role="tablist" aria-label="Görünüm seçici" class="oc-view-tabs">
+<div role="tablist" aria-label="Görünüm seçici" class="view-tabs">
     @{
         (string Key, string Label, string Icon)[] views = new[] {
             ("list",       "Liste",         "fa-list-ul"),
@@ -100,7 +100,7 @@
     }
     @if (view != "list")
     {
-        <button type="button" id="oc-export-btn" class="btn ghost sm oc-export-spacer" title="Mevcut görünümü PNG olarak indir">
+        <button type="button" id="oc-export-btn" class="btn ghost sm view-tabs__spacer" title="Mevcut görünümü PNG olarak indir">
             <i class="fas fa-image icon-xs" aria-hidden="true"></i>
             PNG indir
         </button>
@@ -108,7 +108,7 @@
 </div>
 
 @* Reorder + import için sayfa düzeyinde antiforgery token. *@
-<form id="oc-antiforgery" class="oc-hidden-form">@Html.AntiForgeryToken()</form>
+<form id="oc-antiforgery" class="hidden">@Html.AntiForgeryToken()</form>
 
 @* Tüm pozisyonları client'a inline JSON olarak ver (sağ-tık modalı için). *@
 <script id="oc-flat-data" type="application/json">@Html.Raw(flatJson)</script>
@@ -119,40 +119,40 @@
      x-cloak
      @@oc-open-move.window="openFor($event.detail.id, $event.detail.title)"
      @@keydown.escape.window="cancel()"
-     class="oc-modal-overlay">
-    <div @@click.outside="cancel()" class="oc-modal-card">
-        <h3 class="oc-modal-title">
+     class="modal-overlay">
+    <div @@click.outside="cancel()" class="modal-card scrollable">
+        <h3 class="modal-title">
             <i class="fas fa-arrows-up-down-left-right" aria-hidden="true"></i>
             Üst görevi değiştir
         </h3>
-        <p class="oc-modal-desc">
+        <p class="modal-desc">
             <strong x-text="draggedTitle"></strong> görevini hangi görevin altına taşımak istiyorsun?
         </p>
         <input type="text" class="inp" placeholder="Görev ara…" x-model="search"
                @@keydown.enter.prevent />
-        <div class="oc-modal-list-wrap">
-            <ul class="oc-modal-list">
+        <div class="modal-list-wrap">
+            <ul class="modal-list">
                 <li @@click="setRoot()"
-                    class="oc-modal-list-item is-root"
+                    class="modal-list__item is-root"
                     :class="{ 'is-selected': newParentId === null }">
                     <i class="fas fa-house" aria-hidden="true"></i>
                     Üst Düzey (kök) — kimseye bağlama
                 </li>
                 <template x-for="p in filtered()" :key="p.id">
                     <li @@click="newParentId = p.id"
-                        class="oc-modal-list-item"
+                        class="modal-list__item"
                         :class="{ 'is-selected': newParentId === p.id }">
-                        <span class="oc-modal-list-item__title" x-text="p.title"></span>
-                        <span class="mono oc-modal-list-item__code" x-text="p.code"></span>
-                        <span x-show="!p.isActive" class="pill oc-modal-list-item__inactive">Pasif</span>
+                        <span class="modal-list__item-title" x-text="p.title"></span>
+                        <span class="mono modal-list__item-code" x-text="p.code"></span>
+                        <span x-show="!p.isActive" class="pill modal-list__item-inactive">Pasif</span>
                     </li>
                 </template>
-                <li x-show="filtered().length === 0" class="oc-modal-list-empty">
+                <li x-show="filtered().length === 0" class="modal-list-empty">
                     Eşleşen görev yok.
                 </li>
             </ul>
         </div>
-        <div class="oc-modal-actions">
+        <div class="modal-actions between">
             <button type="button" class="btn ghost" @@click="cancel()">İptal</button>
             <button type="button" class="btn primary" @@click="save()" :disabled="saving"
                     x-text="saving ? 'Kaydediliyor…' : 'Taşı'"></button>
@@ -258,16 +258,16 @@ document.addEventListener('contextmenu', (e) => {
     </div>
 }
 
-<div class="oc-split-grid">
+<div class="split-grid">
 
     @* === SOL: Görünüm — list (SortableJS) veya tree/horizontal (jQuery OrgChart.js, dahili drag-drop) === *@
-    <div class="oc-chart-card">
-        <div id="oc-status" class="oc-chart-status"></div>
+    <div class="paper-card with-padding-lg">
+        <div id="oc-status" class="status-line"></div>
 
         @if (totalCount == 0)
         {
-            <div class="oc-chart-empty">
-                <i class="fas fa-folder-open" aria-hidden="true"></i>
+            <div class="dashed-card">
+                <i class="fas fa-folder-open dc-icon" aria-hidden="true"></i>
                 <h3>Henüz görev tanımlı değil</h3>
                 <p>Migration 40 seed çalıştırılmamış olabilir veya tüm görevler silinmiş.</p>
             </div>
@@ -283,36 +283,36 @@ document.addEventListener('contextmenu', (e) => {
         }
         else
         {
-            <div id="oc-d3" data-mode="@view" class="oc-chart-canvas"></div>
+            <div id="oc-d3" data-mode="@view" class="scroll-canvas"></div>
             <script id="oc-tree-data" type="application/json">@Html.Raw(treeJson)</script>
         }
     </div>
 
     @* === SAĞ: Tanımsız Zirve unvanları widget === *@
-    <aside class="oc-aside">
-        <h3 class="oc-aside__title">
+    <aside class="side-card">
+        <h3 class="side-card__title">
             <i class="fas fa-cloud-arrow-down" aria-hidden="true"></i>
             Zirve'den İçe Aktarılmamış
         </h3>
-        <p class="oc-aside__desc">
+        <p class="side-card__desc">
             Zirve'de aktif personeli olan ama Mosaik'te tanımsız unvanlar.
         </p>
 
         @if (Model.UnknownZirveCodes.Count == 0)
         {
-            <div class="oc-aside__empty">
+            <div class="side-card__empty">
                 <i class="fas fa-check-circle" aria-hidden="true"></i>
                 Tüm Zirve unvanları içe aktarılmış.
             </div>
         }
         else
         {
-            <ul class="oc-unknown-list">
+            <ul class="flat-list">
                 @foreach (var code in Model.UnknownZirveCodes)
                 {
-                    <li class="oc-unknown-row">
-                        <span class="mono oc-unknown-row__code" title="@code">@code</span>
-                        <form method="post" action="/Admin/ImportZirvePosition" class="oc-unknown-row__form">
+                    <li class="flat-list__row">
+                        <span class="mono flat-list__row-code" title="@code">@code</span>
+                        <form method="post" action="/Admin/ImportZirvePosition" class="inline-form">
                             @Html.AntiForgeryToken()
                             <input type="hidden" name="code" value="@code" />
                             <button type="submit" class="btn sm primary" title="İçe aktar">

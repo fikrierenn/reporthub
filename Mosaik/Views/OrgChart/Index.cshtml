@@ -84,7 +84,7 @@
     </div>
 }
 
-<div role="tablist" aria-label="Görünüm seçici" class="oc-view-tabs">
+<div role="tablist" aria-label="Görünüm seçici" class="view-tabs">
     @{
         (string Key, string Label, string Icon)[] views = new[] {
             ("tree",       "Klasik",       "fa-sitemap"),
@@ -104,11 +104,11 @@
     }
 </div>
 
-<div class="oc-chart-card">
+<div class="paper-card with-padding-lg">
     @if (totalCount == 0)
     {
-        <div class="oc-chart-empty">
-            <i class="fas fa-folder-open" aria-hidden="true"></i>
+        <div class="dashed-card">
+            <i class="fas fa-folder-open dc-icon" aria-hidden="true"></i>
             <h3>Organizasyon şeması henüz tanımlanmamış</h3>
         </div>
     }
@@ -144,35 +144,35 @@
     }
     else
     {
-        <div id="oc-d3" data-mode="@view" class="oc-chart-canvas"></div>
+        <div id="oc-d3" data-mode="@view" class="scroll-canvas"></div>
         <script id="oc-tree-data" type="application/json">@Html.Raw(treeJson)</script>
     }
 </div>
 
 @if (Model.UnmatchedIncumbents.Count > 0)
 {
-    <div class="oc-pub-unmatched">
-        <h3 class="oc-pub-unmatched__title">
+    <div class="side-card mt-18">
+        <h3 class="side-card__title">
             <i class="fas fa-user-slash" aria-hidden="true"></i>
             Eşleşmeyen çalışanlar (@Model.UnmatchedIncumbents.Count)
         </h3>
-        <p class="oc-pub-unmatched__desc">
+        <p class="side-card__desc">
             Zirve'de aktif ama bilinen bir Mosaik pozisyonuna eşleşmeyen çalışanlar.
         </p>
-        <ul class="oc-pub-unmatched__grid">
+        <ul class="tag-grid">
             @foreach (var inc in Model.UnmatchedIncumbents.Take(60))
             {
-                <li class="oc-pub-unmatched__item">
+                <li class="tag-grid__item">
                     <strong>@inc.AdSoyad</strong>
-                    <span class="oc-pub-unmatched__role">— @inc.Unvan</span>
+                    <span class="tag-grid__role">— @inc.Unvan</span>
                     <br />
-                    <span class="mono oc-pub-unmatched__meta">@inc.AltLokasyon · @inc.Departman</span>
+                    <span class="mono tag-grid__meta">@inc.AltLokasyon · @inc.Departman</span>
                 </li>
             }
         </ul>
         @if (Model.UnmatchedIncumbents.Count > 60)
         {
-            <p class="oc-pub-unmatched__more">
+            <p class="tag-grid__more">
                 ve @(Model.UnmatchedIncumbents.Count - 60) kişi daha…
             </p>
         }
@@ -185,12 +185,12 @@
      x-cloak
      @@oc-show-personel.window="show($event.detail.code, $event.detail.title)"
      @@keydown.escape.window="open = false"
-     class="oc-modal-overlay">
-    <div @@click.outside="open = false" class="oc-modal-card">
-        <div class="oc-pub-modal-head">
+     class="modal-overlay">
+    <div @@click.outside="open = false" class="modal-card scrollable">
+        <div class="modal-head-block">
             <div>
                 <h3 x-text="title"></h3>
-                <p class="oc-pub-modal-head__count">
+                <p class="modal-head-block__count">
                     <span x-text="people.length"></span> çalışan
                 </p>
             </div>
@@ -199,19 +199,19 @@
             </button>
         </div>
         <input type="text" class="inp" placeholder="Ad/lokasyon ara…" x-model="search" />
-        <div class="oc-pub-modal-scroll">
-            <ul class="oc-pub-modal-list">
+        <div class="modal-scroll">
+            <ul class="modal-list">
                 <template x-for="p in filtered()" :key="p.PersonelNo">
-                    <li class="oc-pub-modal-list__item">
+                    <li class="modal-list__item">
                         <strong x-text="p.AdSoyad"></strong>
-                        <div class="oc-pub-modal-list__meta">
+                        <div class="modal-list__item-meta">
                             <span x-text="p.AltLokasyon || '—'"></span>
                             <span x-show="p.Departman"> · <span x-text="p.Departman"></span></span>
                             <span x-show="p.Firma"> · <span x-text="p.Firma"></span></span>
                         </div>
                     </li>
                 </template>
-                <li x-show="filtered().length === 0" class="oc-modal-list-empty">
+                <li x-show="filtered().length === 0" class="modal-list-empty">
                     Eşleşen çalışan yok.
                 </li>
             </ul>
@@ -282,7 +282,7 @@ document.addEventListener('click', (e) => {
         try { data = JSON.parse(document.getElementById('oc-tree-data').textContent); }
         catch (e) {
             const err = document.createElement('div');
-            err.className = 'oc-pub-render-error';
+            err.className = 'render-error';
             err.textContent = 'Veri hatası: ' + e.message;
             container.innerHTML = '';
             container.appendChild(err);

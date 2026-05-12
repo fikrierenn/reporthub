@@ -148,7 +148,7 @@ window.__availableDataSources = @Html.Raw(System.Text.Json.JsonSerializer.Serial
 
             @* Hiç param yoksa minik bir not *@
             <template x-if="paramFields().length === 0">
-                <span class="builder-param-empty">Bu raporda parametre tanımı yok</span>
+                <span class="help-text text-xs">Bu raporda parametre tanımı yok</span>
             </template>
 
             @* Her ParamSchema field için bir chip — tıklanır, inline edit *@
@@ -341,7 +341,7 @@ window.__availableDataSources = @Html.Raw(System.Text.Json.JsonSerializer.Serial
                         <div>
                             @* Capacity warning *@
                             <template x-if="kpiCapacityWarning()">
-                                <div class="builder-warn-banner">
+                                <div class="alert warn">
                                     <i class="fas fa-triangle-exclamation text-[10px]"></i>
                                     <span x-text="kpiCapacityWarning()"></span>
                                 </div>
@@ -360,7 +360,7 @@ window.__availableDataSources = @Html.Raw(System.Text.Json.JsonSerializer.Serial
                                                 <option :value="col" x-text="col"></option>
                                             </template>
                                         </select>
-                                        <p class="builder-help-xs">Değişim yüzdesi bu kolona göre hesaplanır.</p>
+                                        <p class="help-text">Değişim yüzdesi bu kolona göre hesaplanır.</p>
                                     </div>
                                     <div class="field">
                                         <label class="lab">Karşılaştırma Etiketi</label>
@@ -385,7 +385,7 @@ window.__availableDataSources = @Html.Raw(System.Text.Json.JsonSerializer.Serial
                                                 <option :value="col" x-text="col"></option>
                                             </template>
                                         </select>
-                                        <p class="builder-help-xs">Mini grafik bu kolonun satır-satır değerlerini çizer.</p>
+                                        <p class="help-text">Mini grafik bu kolonun satır-satır değerlerini çizer.</p>
                                     </div>
                                 </div>
                             </template>
@@ -407,7 +407,7 @@ window.__availableDataSources = @Html.Raw(System.Text.Json.JsonSerializer.Serial
                                                    :value="(selected.progress && selected.progress.targetValue != null) ? selected.progress.targetValue : ''"
                                                    @@input="setProgressField('targetValue', $event.target.value)"
                                                    placeholder="örn: 100" />
-                                            <p class="builder-help-xs">İlerleme yüzdesi (Değer / Hedef × 100) ile hesaplanır.</p>
+                                            <p class="help-text">İlerleme yüzdesi (Değer / Hedef × 100) ile hesaplanır.</p>
                                         </div>
                                     </template>
                                     <template x-if="progressTargetMode() === 'column'">
@@ -421,7 +421,7 @@ window.__availableDataSources = @Html.Raw(System.Text.Json.JsonSerializer.Serial
                                                     <option :value="col" x-text="col"></option>
                                                 </template>
                                             </select>
-                                            <p class="builder-help-xs">Hedef ilk satırın bu kolonu olarak alınır.</p>
+                                            <p class="help-text">Hedef ilk satırın bu kolonu olarak alınır.</p>
                                         </div>
                                     </template>
                                 </div>
@@ -433,13 +433,13 @@ window.__availableDataSources = @Html.Raw(System.Text.Json.JsonSerializer.Serial
                 @* M-11 chart binding: variant'a göre otomatik X/Y doldurur, manuel override edilebilir *@
                 <template x-if="selected && selected.type === 'chart' && selected.result">
                     <div class="col-picker-block">
-                        <div class="qb-header builder-section-gap">
+                        <div class="qb-header mt-14">
                             <i class="fas fa-chart-column text-[10px]"></i> Eksen Bağlantıları
                         </div>
 
                         @* Capacity uyarısı — yetersiz kolon *@
                         <template x-if="chartCapacityWarning()">
-                            <div class="builder-qb-warn">
+                            <div class="alert warn">
                                 <i class="fas fa-triangle-exclamation text-[10px]"></i>
                                 <span x-text="chartCapacityWarning()"></span>
                             </div>
@@ -458,7 +458,7 @@ window.__availableDataSources = @Html.Raw(System.Text.Json.JsonSerializer.Serial
                                             x-text="col + ' · ' + columnKindFor(col)"></option>
                                 </template>
                             </select>
-                            <p class="builder-help-xs">Tarih veya metin kolonu — kategorileri ayırır.</p>
+                            <p class="help-text">Tarih veya metin kolonu — kategorileri ayırır.</p>
                         </div>
 
                         @* Y serileri — datasets[] *@
@@ -502,7 +502,7 @@ window.__availableDataSources = @Html.Raw(System.Text.Json.JsonSerializer.Serial
                                     </button>
                                 </div>
                             </template>
-                            <p class="builder-help-xs">
+                            <p class="help-text">
                                 <i class="fas fa-wand-magic-sparkles text-[9px]"></i>
                                 Grafik tipini seçince varsayılan kolonlar otomatik atanır.
                             </p>
@@ -513,7 +513,7 @@ window.__availableDataSources = @Html.Raw(System.Text.Json.JsonSerializer.Serial
                 @* Plan 05.A: Tablo widget — kolon checkbox + drag-drop sıralama + hizalama *@
                 <template x-if="selected && selected.type === 'table'">
                     <div class="col-picker-block">
-                        <div class="qb-header builder-section-gap">
+                        <div class="qb-header mt-14">
                             <i class="fas fa-table-cells text-[10px]"></i> Kolonlar
                         </div>
                         <template x-if="!selected.result">
@@ -645,7 +645,7 @@ window.__availableDataSources = @Html.Raw(System.Text.Json.JsonSerializer.Serial
                                     </div>
 
                                     @* 2-kolon formül — A (op) B → KPI *@
-                                    <div class="section-hd builder-section-gap">
+                                    <div class="section-hd mt-14">
                                         Formül (2-kolon)
                                         <span class="section-hd-hint">opsiyonel — fark / yüzde / oran</span>
                                     </div>
@@ -764,7 +764,7 @@ window.__availableDataSources = @Html.Raw(System.Text.Json.JsonSerializer.Serial
                                             x-text="s === 1 ? '¼' : s === 2 ? '½' : s === 3 ? '¾' : 'Tam'"></button>
                                 </template>
                             </div>
-                            <p class="builder-span-hint">1 = çeyrek satır · 4 = tam satır.</p>
+                            <p class="help-text">1 = çeyrek satır · 4 = tam satır.</p>
                         </div>
 
                         <div class="field">
@@ -811,9 +811,9 @@ window.__availableDataSources = @Html.Raw(System.Text.Json.JsonSerializer.Serial
                                     <input type="text" class="inp" placeholder="fa-rocket veya rocket" x-model="iconCustom" @@keydown.enter="applyCustomIcon()" />
                                     <button type="button" class="btn" @@click="applyCustomIcon()">Uygula</button>
                                 </div>
-                                <p class="builder-help-xs">Font Awesome 6 kütüphanesindeki herhangi bir <code>fa-*</code> sınıfı.</p>
+                                <p class="help-text">Font Awesome 6 kütüphanesindeki herhangi bir <code>fa-*</code> sınıfı.</p>
                             </details>
-                            <p class="builder-span-hint">İkon KPI başlığında görünür.</p>
+                            <p class="help-text">İkon KPI başlığında görünür.</p>
                         </div>
                     </div>
                 </template>
@@ -825,7 +825,7 @@ window.__availableDataSources = @Html.Raw(System.Text.Json.JsonSerializer.Serial
                     <span class="ico"><i class="fas fa-gear"></i></span>
                     <span class="name">Rapor Ayarları</span>
                 </div>
-                <p class="builder-settings-intro">Tüm alanlar form POST'a dahil olur. Reaktif değişiklik dirty chip'i tetikler.</p>
+                <p class="help-text mb-14">Tüm alanlar form POST'a dahil olur. Reaktif değişiklik dirty chip'i tetikler.</p>
 
                 <div class="field">
                     <label class="lab">Rapor Adı</label>
@@ -1012,7 +1012,7 @@ window.__availableDataSources = @Html.Raw(System.Text.Json.JsonSerializer.Serial
                 <template x-if="dataModal.comp">
                     <span>Widget: <strong x-text="dataModal.comp.title || dataModal.comp.type"></strong></span>
                 </template>
-                <span class="builder-modal-foot-hint">
+                <span class="ml-auto">
                     <i class="fas fa-circle-info text-[10px] icon-mr"></i>
                     Bağlı kolon kırmızı vurgulu
                 </span>

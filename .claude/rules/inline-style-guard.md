@@ -32,13 +32,32 @@ _Kullanıcı kararı 2026-05-10. Bu kural `.cshtml` view yazarken / düzenlerken
 
 ## CSS dosyası seçimi — ortak vs modül-özel (2026-05-13 kuralı)
 
+**Temel kural (2026-05-13 kullanıcı netleştirmesi):**
+> **Tüm modüller ortak generic yapı kullanır.** Modül-özel eklemeler **istisnai** —
+> sadece o modülün gerçekten kendine özgü görsel/iş kuralı kimliği için.
+> Pattern (filter, list, card, modal, badge, pill, form, table, upload) → **her zaman** components.css.
+
 | Pattern türü | Hedef CSS | Örnek |
 |---|---|---|
-| Generic (her modülde reuse edilebilir) | `Mosaik/wwwroot/assets/css/components.css` | filter-bar, table-card, cell-muted, info-card, content-card, paper-card, btn-count, status-pill, dashed-card |
+| Generic (her modülde reuse edilebilir) — **DEFAULT** | `Mosaik/wwwroot/assets/css/components.css` | filter-bar, list-item, content-card, file-pill, upload-zone, read-receipt, badge.is-*, type-chip, pill.*, modal-*, dashed-card, action-row |
 | Sayfa-tipi pattern (admin dashboard, liste, form) | `components.css` | overview-*, kpi-tile, admin-* |
-| Modül-spesifik (sadece o modülün özel bileşeni) | `components-<modül>.css` | tamim-envelope, tamim-quill, tamim-upload-zone, oc-pub-* (orgchart) |
+| **İSTİSNA — sadece o modülün özgün marka/domain görseli** | `components-<modül>.css` | tamim-envelope (resmi yazı zarfı kırmızı şerit), tamim-quill, builder-v2 canvas, oc-children (chart drag-drop tree) |
 
-**Kural:** Yeni utility eklerken kendine sor — "Başka bir modül de bu pattern'i kullanabilir mi?" Cevap **evet** → `components.css`. **Hayır, sadece bu modülün özel görsel öğesi** → modül CSS'i.
+**Karar testi (skill css-classify Adım 2-3):**
+1. "Bu pattern başka modül de kullanır mı?" → **evet** → generic, components.css, **prefix yok**
+2. "Sadece bu modülün marka/domain kimliği mi?" → **evet** → modül-özel, `components-<modül>.css`, **prefix var**
+3. Şüphede kal? → **generic varsay** (sonradan modül-özel olduğu anlaşılırsa taşı, tersi daha zor)
+
+**Anti-pattern:** `.tamim-filterbar`, `.tamim-content-card`, `.tcc-*`, `.tamim-card`, `.builder-paper-card` gibi modül-prefixli ama gerçekte generic olan sınıflar. **Bunlar yasak.** Var olanları components.css'e taşı + view'larda rename.
+
+**Refactor agent prompt'una eklenecek satır:**
+> Yeni utility eklerken — generic (başka modülde reuse edilebilir) ise `components.css`'e, modül-spesifik ise `components-<modül>.css`'e ekle. Mevcut generic'i modül CSS'inde yaratma; varsa onu kullan. Şüphedeyim → generic varsay.
+
+**Plan 25.1 P1-P7 sonuçları (2026-05-13):**
+- components-tamim.css 1368 → 95 satır (sadece envelope/quill/urgent-toggle/scope kaldı)
+- Cross-file class collision: 0
+- Hardcoded renk modül CSS'inde: 0 (tokens.css semantic değişkenler)
+- Modül CSS'lerinde generic class yok — hepsi components.css canonical
 
 **Anti-pattern:** `.tamim-filterbar`, `.tamim-content-card`, `.tcc-*` gibi modül-prefixli ama generic olan sınıflar. Bunlar `components.css`'te `filter-bar`, `content-card` olarak yaşamalı (zaten varlardır veya buraya gelmeliler).
 
