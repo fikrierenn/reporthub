@@ -23,7 +23,7 @@
         <a href="/Admin?tab=reports">Raporlar</a>
         <span class="sep">/</span>
         <span class="current">@Model.Report.Title</span>
-        <span class="sp-chip mono">@Model.Report.ProcName</span>
+        <span class="code-chip">@Model.Report.ProcName</span>
     </div>
 }
 
@@ -615,7 +615,7 @@ window.__availableDataSources = @Html.Raw(System.Text.Json.JsonSerializer.Serial
                                         </select>
                                     </div>
                                     <div class="calc-col-form-actions">
-                                        <button type="button" class="btn btn-soft" x-on:click="cancelCalcColForm()">İptal</button>
+                                        <button type="button" class="btn ghost" x-on:click="cancelCalcColForm()">İptal</button>
                                         <button type="button" class="btn"
                                                 :disabled="calcColForm.busy"
                                                 x-on:click="addCalcColumn()">

@@ -588,7 +588,7 @@ window.__availableDataSources = @Html.Raw(System.Text.Json.JsonSerializer.Serial
                                         </select>
                                     </div>
                                     <div class="calc-col-form-actions">
-                                        <button type="button" class="btn btn-soft" x-on:click="cancelCalcColForm()">İptal</button>
+                                        <button type="button" class="btn ghost" x-on:click="cancelCalcColForm()">İptal</button>
                                         <button type="button" class="btn"
                                                 :disabled="calcColForm.busy"
                                                 x-on:click="addCalcColumn()">
