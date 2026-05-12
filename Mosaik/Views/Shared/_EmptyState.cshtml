@@ -13,19 +13,16 @@
 @using Mosaik.ViewModels.Ui
 @model EmptyStateViewModel
 
-<div style="background:var(--paper); border:1px dashed var(--line); border-radius:10px;
-            padding:48px 24px; text-align:center; color:var(--ink-3);">
-    <i class="fas @Model.Icon" style="font-size:48px; opacity:.4; margin-bottom:12px;" aria-hidden="true"></i>
-    <h3 style="font-size:14px; font-weight:600; color:var(--ink-1); margin:0 0 4px;">
-        @Model.Title
-    </h3>
+<div class="empty-state">
+    <i class="fas @Model.Icon empty-state__icon" aria-hidden="true"></i>
+    <h3>@Model.Title</h3>
     @if (!string.IsNullOrEmpty(Model.Message))
     {
-        <p style="margin:0; font-size:12.5px;">
+        <p>
             @Model.Message
             @if (!string.IsNullOrEmpty(Model.ActionUrl) && !string.IsNullOrEmpty(Model.ActionText))
             {
-                <a href="@Model.ActionUrl" style="color:var(--accent); font-weight:500;">@Model.ActionText</a><text>.</text>
+                <a href="@Model.ActionUrl" class="empty-state__action">@Model.ActionText</a><text>.</text>
             }
         </p>
     }

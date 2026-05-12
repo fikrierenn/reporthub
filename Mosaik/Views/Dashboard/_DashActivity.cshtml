@@ -24,9 +24,9 @@
 
 @if (!Model.RecentLogs.Any())
 {
-    <div style="background:var(--paper); border:1px solid var(--line); border-radius:10px; padding:32px; text-align:center; color:var(--ink-3);">
-        <i class="fas fa-history text-4xl mb-3 opacity-40"></i>
-        <p style="margin:0; font-size:13px;">Henüz aktivite kaydı yok.</p>
+    <div class="empty-state solid">
+        <i class="fas fa-history empty-state__icon"></i>
+        <p>Henüz aktivite kaydı yok.</p>
     </div>
 }
 else
@@ -35,7 +35,7 @@ else
         <table class="dt">
             <thead>
                 <tr>
-                    <th style="width:28%;">Kullanıcı</th>
+                    <th class="w-28p">Kullanıcı</th>
                     <th>Eylem</th>
                     <th>Hedef</th>
                     <th class="num">Sonuç</th>

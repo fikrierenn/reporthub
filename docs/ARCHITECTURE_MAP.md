@@ -253,7 +253,7 @@ _Otomatik üretildi. Mosaik/Views/Admin/*.cshtml (partial hariç)._
 - `EditReportV2.cshtml` (lines=1049, inline-style=0)
 - `EditRole.cshtml` (lines=88, inline-style=0)
 - `EditUser.cshtml` (lines=177, inline-style=0)
-- `Index.cshtml` (lines=36, inline-style=2)
+- `Index.cshtml` (lines=30, inline-style=0)
 - `Lookup.cshtml` (lines=123, inline-style=0)
 - `Modules.cshtml` (lines=78, inline-style=0)
 - `OrgChart.cshtml` (lines=429, inline-style=0)

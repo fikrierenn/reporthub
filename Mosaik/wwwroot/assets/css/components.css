@@ -329,6 +329,20 @@ select.inp {
     color: var(--ink-3); margin: 0 2px;
 }
 
+/* ---- Generic kbd token (klavye kısayolu görseli) ---- */
+.kbd {
+    display: inline-block;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-bottom-width: 2px;
+    border-radius: 4px;
+    padding: 1px 6px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-2);
+}
+.kbd-sep { color: var(--ink-4); margin: 0 4px; font-size: 11px; }
+
 /* ============================================================
    Form Section Card + Action Row Pattern (ui-patterns.md §7)
    Kullanım:
@@ -697,6 +711,24 @@ select.inp {
 .search-input-wrap .inp { padding-left: 32px; }
 .search-input-wrap__icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); font-size: 12px; color: var(--muted); pointer-events: none; }
 
+/* Auth shell — sidebar'sız ortalanmış paper card (Login, AccessDenied) */
+.auth-shell {
+    background: var(--canvas); min-height: 100vh;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+}
+.auth-shell__container { width: 100%; max-width: 420px; }
+.auth-shell__brand { text-align: center; margin-bottom: 18px; }
+.auth-shell__logo { height: 40px; width: auto; display: block; margin: 0 auto 8px; }
+.auth-shell__title { font-size: 14px; font-weight: 600; color: var(--ink-1); margin: 0; line-height: 1.3; }
+.auth-shell__subtitle { font-size: 11px; color: var(--ink-3); margin-top: 2px; }
+.auth-shell__card {
+    background: var(--paper); border: 1px solid var(--line);
+    border-radius: 10px; padding: 24px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+.auth-shell__footer { text-align: center; margin-top: 16px; font-size: 11px; color: var(--ink-3); }
+
 /* Filter bar (liste sayfaları — arama + filtre satırı) */
 .filter-bar {
     background: var(--paper); border: 1px solid var(--line);
@@ -725,8 +757,9 @@ select.inp {
     padding: 48px 24px; text-align: center; color: var(--muted);
 }
 .empty-state__icon { font-size: 48px; margin-bottom: 16px; display: block; opacity: .4; }
-.empty-state h3 { font-size: 16px; font-weight: 600; margin: 0 0 6px; }
+.empty-state h3 { font-size: 16px; font-weight: 600; margin: 0 0 6px; color: var(--ink-1); }
 .empty-state p { font-size: 13px; margin: 0; }
+.empty-state__action { color: var(--accent); font-weight: 500; }
 
 /* Table data link + cell emphasis */
 .data-link { color: var(--accent); text-decoration: none; }
@@ -1385,6 +1418,7 @@ select.inp {
 
 /* Tablo başlık sabit genişlik (admin reading report gibi) */
 .dt th.w-100 { width: 100px; }
+.dt th.w-28p { width: 28%; }
 .dt th.w-40p { width: 40%; }
 
 /* Subject link (liste cell'inde başlık link) */
@@ -1467,3 +1501,195 @@ select.inp {
 }
 .state-meta strong { color: var(--ink-2); }
 .state-meta .mono { color: var(--ink-1); }
+
+/* Pill mute — pasif/gri etiket (org chart "Pasif" gibi) */
+.pill.mute { background: var(--line); color: var(--ink-mute); }
+
+/* Footer hint inline separator dot ("·" arası ayraç) */
+.footer-hint .sep { margin: 0 8px; }
+
+/* Password input — eye toggle wrap (auth + profile + create user) */
+.pwd-wrap { position: relative; }
+.pwd-wrap .inp { padding-right: 38px; }
+.pwd-toggle {
+    position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+    background: none; border: none; cursor: pointer;
+    color: var(--ink-3); padding: 4px;
+}
+.pwd-toggle:hover { color: var(--ink-2); }
+
+/* Builder feedback overlay — toast stack (sağ alt, fixed, V2 builder feedback layer) */
+.toast-stack {
+    position: fixed; bottom: 16px; right: 16px; z-index: 50;
+    display: flex; flex-direction: column; gap: 8px;
+    pointer-events: none;
+    max-width: 360px;
+}
+
+/* Display contents bridge — Alpine x-data sarmalayıcı görünmesin, child'lar grid/flex parent'ına yapışsın */
+.contents { display: contents; }
+
+/* ---- Dashboard widget utilities (Plan 25.1 — _Dash* partial refactor) ---- */
+
+/* Dash info card — icon + body + action satırı (Tamim bekleme / yok durumu) */
+.dash-info-card {
+    background: var(--paper); border: 1px solid var(--line); border-radius: 10px;
+    padding: 18px 22px; margin-bottom: 24px;
+    display: flex; align-items: center; gap: 14px;
+}
+.dash-info-card.dashed { border-style: dashed; }
+.dash-info-card__icon {
+    width: 40px; height: 40px; border-radius: 8px;
+    display: grid; place-items: center; flex-shrink: 0; font-size: 16px;
+    background: var(--line-2); color: var(--ink-3);
+}
+.dash-info-card__icon.tone-warn    { background: rgba(245,158,11,.12); color: var(--warn-ink-soft); }
+.dash-info-card__icon.tone-neutral { background: var(--line-2); color: var(--ink-3); }
+.dash-info-card__body  { flex: 1; }
+.dash-info-card__title { font-size: 13.5px; font-weight: 600; color: var(--ink-0); margin-bottom: 2px; }
+.dash-info-card__desc  { font-size: 12px; color: var(--ink-3); }
+
+/* qcard ek modifier'lar (DashCircular: accent-soft border, bugün rozeti, urgent vurgu) */
+.qcard.accent-soft { border-color: var(--accent-soft); }
+.qcard__date-badge {
+    background: var(--accent); color: #fff;
+    font-size: 10px; font-weight: 600;
+    padding: 2px 7px; border-radius: 999px; margin-left: 6px;
+}
+.qcard__urgent { margin-left: 8px; color: var(--accent); font-weight: 600; }
+.qcard__urgent i { font-size: 9px; }
+.qcard__sub-icon  { font-size: 9px; color: var(--ink-4); margin-right: 3px; }
+.qcard__meta-icon { font-size: 9px; color: var(--ink-4); margin-right: 3px; }
+
+/* mini-chart — başlık satırı, alt başlık, sağ metric, inline empty (DashMiniCharts) */
+.mini-chart__title-row    { display: flex; flex-direction: column; gap: 2px; }
+.mini-chart__subtitle     { font-size: 12px; color: var(--ink-3); }
+.mini-chart__metric       { text-align: right; }
+.mini-chart__metric-value {
+    font-size: 22px; font-weight: 700; color: var(--ink-0);
+    line-height: 1; letter-spacing: -.02em; font-variant-numeric: tabular-nums;
+}
+.mini-chart__metric-label { font-size: 11.5px; color: var(--ok); font-weight: 600; }
+.mini-chart__empty {
+    font-size: 12px; color: var(--ink-4);
+    padding: 16px 0; text-align: center;
+}
+.mini-chart__empty i { opacity: .4; font-size: 24px; display: block; margin-bottom: 8px; }
+
+/* top-list — sıralı rank + isim + count + trend bar (DashMiniCharts "en çok çalıştırılan") */
+.top-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px; }
+.top-list__item { display: flex; align-items: center; gap: 10px; }
+.top-list__rank { font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: var(--ink-4); width: 22px; }
+.top-list__name {
+    flex: 1; min-width: 0; font-size: 12.5px; color: var(--ink-1); font-weight: 500;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.top-list__count { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--ink-3); }
+.top-list__bar-wrap {
+    width: 60px; height: 6px; background: var(--line-2);
+    border-radius: 3px; overflow: hidden;
+}
+.top-list__bar { height: 100%; background: var(--accent); width: var(--w, 0%); }
+
+/* empty-state — paper bg + solid border varyantı (DashActivity boş hal) */
+.empty-state.solid {
+    background: var(--paper); border: 1px solid var(--line); border-style: solid;
+    border-radius: 10px; padding: 32px; text-align: center; color: var(--ink-3);
+}
+.empty-state.solid p { margin: 0; font-size: 13px; }
+/* empty-state — paper bg + dashed (DashFavorites boş hal) */
+.empty-state.paper-dashed {
+    background: var(--paper); border: 1px dashed var(--line);
+    border-radius: 10px; padding: 32px; text-align: center; color: var(--ink-3);
+}
+.empty-state.paper-dashed p { margin: 0; font-size: 13px; }
+
+/* Form body padding wrapper (when form has no section-card; e.g. partial with internal padding) */
+.form-body { padding: 20px; }
+
+/* 3-col grid with fixed-end column (1fr 1fr 120px) — filter/report form pattern */
+.grid-3col-fixed-end { display: grid; grid-template-columns: 1fr 1fr 120px; gap: 14px; }
+
+/* Inline form footer — separator + ghost left + primary right, used inside form (no separate card) */
+.form-inline-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 18px;
+    border-top: 1px solid var(--line);
+}
+
+/* Active toggle row — checkbox + label inline (alternative to .toggle-label when used outside .lab) */
+.active-toggle-row { display: flex; align-items: center; gap: 8px; margin-bottom: 18px; }
+.active-toggle-row .lab { margin: 0; }
+
+/* Code/SQL textarea (smaller mono variant) */
+.inp.code, .inp-code {
+    font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 12px;
+    height: auto;
+    padding: 10px 12px;
+    resize: vertical;
+}
+
+/* Query test result preview box (collapsible, scroll-y) */
+.query-preview-box {
+    margin-top: 10px;
+    background: rgba(0,0,0,0.03);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 10px;
+    font-size: 12px;
+    max-height: 240px;
+    overflow: auto;
+}
+.query-preview-box .dt { width: 100%; }
+
+/* Status text variants (under buttons / inline) */
+.status-text { font-size: 11px; color: var(--ink-3); }
+.status-text.err { color: var(--danger, #b91c1c); }
+.status-text.ok  { color: #065f46; }
+.status-text.muted { color: var(--ink-3); }
+
+/* ============================================================
+   Plan 25.1 Faz 1 — Admin tab partial'ları (2026-05-12)
+   _AdminTab* + _AdminUserDataFilterPanel generic pattern'leri.
+   ============================================================ */
+
+.tab-toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.tab-toolbar__desc { font-size: 12px; color: var(--ink-3); }
+
+.paper-card.clip { overflow: hidden; }
+
+.inline-create-card { background: var(--paper); border: 1px solid var(--line); border-radius: 10px; padding: 16px 20px; margin-bottom: 14px; }
+.inline-create-card__title { font-size: 13px; font-weight: 600; color: var(--ink-1); margin: 0 0 12px; display: flex; align-items: center; gap: 6px; }
+.inline-create-card__title i { font-size: 12px; color: var(--ink-3); }
+.inline-create-form { display: grid; grid-template-columns: 1.5fr 2fr auto auto; gap: 10px; align-items: end; }
+.inline-create-form .checkbox-cell { display: flex; align-items: center; gap: 6px; height: 34px; }
+
+.ds-group { margin-bottom: 18px; }
+.ds-group__head { display: flex; align-items: center; gap: 8px; padding: 8px 10px; background: rgba(0,0,0,0.03); border-radius: 6px; margin-bottom: 8px; }
+.ds-group__head i { font-size: 11px; color: var(--ink-3); }
+.ds-group__title { font-size: 12px; font-weight: 600; color: var(--ink-2); text-transform: uppercase; letter-spacing: 0.4px; }
+
+.dt td.cell-mono-sm { font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 11.5px; color: var(--ink-3); }
+.dt td.cell-truncate { font-size: 11px; color: var(--ink-3); max-width: 340px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dt td.cell-name { font-weight: 500; color: var(--ink-1); }
+.dt .cell-stack__sub { font-size: 11px; color: var(--ink-3); margin-top: 2px; }
+
+.empty-note { background: var(--paper); border: 1px solid var(--line); border-radius: 10px; padding: 24px; text-align: center; font-size: 12px; color: var(--ink-3); }
+
+.pill.xs { font-size: 10px; padding: 2px 7px; }
+.pill.info { background: rgba(99,102,241,0.10); border-color: rgba(99,102,241,0.25); color: #4338ca; }
+
+.udf-panel { padding: 18px 20px; }
+.udf-section { border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; margin-bottom: 10px; }
+.udf-section__head { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.udf-section__label { font-size: 13px; font-weight: 600; color: var(--ink-1); }
+.udf-section__all { margin-left: auto; font-size: 12px; color: var(--ink-2); display: flex; align-items: center; gap: 5px; cursor: pointer; }
+.udf-section__select { width: 100%; min-height: 120px; }
+.udf-section__select.is-disabled { background: #f5f5f5; opacity: 0.5; }
+.udf-section__hint { font-size: 11px; margin-top: 4px; min-height: 14px; }
+.udf-section__hint .muted { color: var(--ink-3); }
+.udf-section__hint .err { color: #b91c1c; }
+.udf-empty { font-size: 12px; color: var(--ink-3); }

@@ -6,50 +6,47 @@
 *@
 
 <div x-show="shortcutsModal && shortcutsModal.open" x-cloak
-     class="fixed inset-0 z-40 flex items-center justify-center"
-     style="background:rgba(15, 23, 42, 0.5);"
+     class="builder-v2-modal-backdrop"
      @@click.self="closeShortcutsHelp()">
-    <div class="rounded-xl shadow-xl bg-white border border-slate-200"
-         style="width: min(440px, 90vw);">
-        <div class="flex items-center justify-between px-5 py-3 border-b border-slate-200">
-            <h2 class="text-sm font-semibold text-slate-800">
+    <div class="builder-v2-modal sm">
+        <div class="m-head">
+            <span class="m-title">
                 <i class="fas fa-keyboard text-[12px]"></i> Klavye Kısayolları
-            </h2>
-            <button type="button" @@click="closeShortcutsHelp()"
-                    class="text-slate-500 hover:text-slate-800" title="Kapat">
+            </span>
+            <button type="button" class="m-close" @@click="closeShortcutsHelp()" title="Kapat">
                 <i class="fas fa-xmark"></i>
             </button>
         </div>
-        <div style="padding:14px;">
-            <table class="w-full text-sm" style="border-collapse:collapse;">
+        <div class="m-body padded">
+            <table class="builder-shortcut-table">
                 <tbody>
-                    <tr style="border-bottom:1px solid #e2e8f0;">
-                        <td style="padding:8px 0;">
-                            <span class="kbd">Ctrl/⌘</span> <span class="text-slate-400 mx-1">+</span> <span class="kbd">S</span>
+                    <tr>
+                        <td class="keys">
+                            <span class="kbd">Ctrl/⌘</span><span class="kbd-sep">+</span><span class="kbd">S</span>
                         </td>
-                        <td class="text-slate-700" style="padding:8px 0;">Kaydet</td>
-                    </tr>
-                    <tr style="border-bottom:1px solid #e2e8f0;">
-                        <td style="padding:8px 0;">
-                            <span class="kbd">Ctrl/⌘</span> <span class="text-slate-400 mx-1">+</span> <span class="kbd">P</span>
-                        </td>
-                        <td class="text-slate-700" style="padding:8px 0;">Tam Önizle</td>
-                    </tr>
-                    <tr style="border-bottom:1px solid #e2e8f0;">
-                        <td style="padding:8px 0;"><span class="kbd">Esc</span></td>
-                        <td class="text-slate-700" style="padding:8px 0;">Açık modal'ı kapat veya seçimi bırak</td>
-                    </tr>
-                    <tr style="border-bottom:1px solid #e2e8f0;">
-                        <td style="padding:8px 0;"><span class="kbd">Delete</span></td>
-                        <td class="text-slate-700" style="padding:8px 0;">Seçili bileşeni sil</td>
+                        <td>Kaydet</td>
                     </tr>
                     <tr>
-                        <td style="padding:8px 0;"><span class="kbd">?</span></td>
-                        <td class="text-slate-700" style="padding:8px 0;">Bu yardım penceresini aç/kapat</td>
+                        <td class="keys">
+                            <span class="kbd">Ctrl/⌘</span><span class="kbd-sep">+</span><span class="kbd">P</span>
+                        </td>
+                        <td>Tam Önizle</td>
+                    </tr>
+                    <tr>
+                        <td class="keys"><span class="kbd">Esc</span></td>
+                        <td>Açık modal'ı kapat veya seçimi bırak</td>
+                    </tr>
+                    <tr>
+                        <td class="keys"><span class="kbd">Delete</span></td>
+                        <td>Seçili bileşeni sil</td>
+                    </tr>
+                    <tr>
+                        <td class="keys"><span class="kbd">?</span></td>
+                        <td>Bu yardım penceresini aç/kapat</td>
                     </tr>
                 </tbody>
             </table>
-            <p class="text-[10px] text-slate-500 mt-3">
+            <p class="builder-shortcut-note">
                 <i class="fas fa-circle-info text-[9px]"></i>
                 Form alanlarında yazarken Ctrl+S/P haricindeki kısayollar pasifleşir.
             </p>

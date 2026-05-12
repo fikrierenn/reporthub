@@ -1628,3 +1628,85 @@ body.builder-v2-page .builder-v2:not(.preview-mode) .w-content {
 
 /* Span pick help text alt */
 .builder-span-help { font-size: 10px; color: var(--ink-4); margin-top: 6px; }
+
+/* ============================================================
+   Plan 25.1 Faz 1 — Shortcuts + Templates modal partial'ları
+   (V2 builder F-10 inline-style refactor)
+   ============================================================ */
+
+/* Modal genişlik varyantları — default 1100px max, sm/md daha dar */
+.builder-v2-modal.sm { max-width: 440px; }
+.builder-v2-modal.md { max-width: 640px; max-height: 80vh; }
+
+/* m-body padding modifier — tablo/iframe flush kalır; içerik modal'larında padded */
+.builder-v2-modal .m-body.padded { padding: 14px; }
+
+/* Kısayollar yardım modal'ı — tuş ↔ açıklama tablosu */
+.builder-shortcut-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+.builder-shortcut-table tr { border-bottom: 1px solid var(--line-2); }
+.builder-shortcut-table tr:last-child { border-bottom: none; }
+.builder-shortcut-table td { padding: 8px 0; color: var(--ink-2); }
+.builder-shortcut-table td.keys { white-space: nowrap; }
+
+/* Tablo altı bilgi notu (Form alanlarında kısayollar pasifleşir vb.) */
+.builder-shortcut-note {
+    font-size: 10.5px;
+    color: var(--ink-4);
+    margin-top: 12px;
+}
+
+/* Şablon picker — intro paragraf + inline code chip */
+.builder-template-intro { font-size: 11.5px; color: var(--ink-3); margin-bottom: 12px; }
+.builder-template-intro code {
+    font-size: 10px;
+    background: var(--canvas);
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-family: 'JetBrains Mono', monospace;
+}
+
+/* Şablon kart grid'i */
+.builder-template-grid { display: grid; gap: 10px; }
+.builder-template-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    cursor: pointer;
+    text-align: left;
+    transition: background .12s, border-color .12s;
+    width: 100%;
+}
+.builder-template-card:hover {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+}
+.builder-template-card__icon {
+    width: 36px; height: 36px;
+    border-radius: 8px;
+    background: var(--accent-soft);
+    color: var(--accent-ink);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    font-size: 14px;
+}
+.builder-template-card__body { flex: 1; min-width: 0; }
+.builder-template-card__title {
+    font-size: 13px; font-weight: 600; color: var(--ink-1);
+}
+.builder-template-card__desc {
+    font-size: 11.5px; color: var(--ink-3); margin-top: 2px;
+}
+.builder-template-card__count {
+    font-size: 10px; color: var(--ink-4); margin-top: 6px;
+}
+.builder-template-card__arrow {
+    color: var(--ink-4); font-size: 11px; align-self: center; flex-shrink: 0;
+}

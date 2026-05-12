@@ -12,7 +12,7 @@
    Bu wrapper bir x-data oluşturmaz; parent component'in scope'unda yaşar, runValidation/restoreSnapshot oradan gelir. *@
 <div @@builder-validate.window="runValidation()"
      @@builder-undo.window="restoreSnapshot()"
-     style="display:none;"></div>
+     class="hidden"></div>
 
 @* Validation banner — errors (kırmızı) + warnings (sarı) *@
 <div x-show="validationBanner.visible" x-cloak
@@ -45,7 +45,7 @@
 </div>
 
 @* Toast container — sağ alt, fixed, 3sn auto-dismiss *@
-<div class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 pointer-events-none" style="max-width: 360px;">
+<div class="toast-stack">
     <template x-for="t in toasts" :key="t.id">
         <div class="pointer-events-auto rounded-lg shadow-lg px-4 py-3 text-sm border flex items-start gap-3 animate-fade-in"
              :class="{

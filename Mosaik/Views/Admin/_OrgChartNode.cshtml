@@ -17,14 +17,14 @@
         <span class="oc-code mono">@p.Code</span>
         @if (!p.IsActive)
         {
-            <span class="pill" style="background:var(--line); color:var(--ink-mute);">Pasif</span>
+            <span class="pill mute">Pasif</span>
         }
         <span class="oc-actions">
             <a href="/Admin/EditPosition/@p.Id" class="btn ghost sm" title="Düzenle">
                 <i class="fas fa-pen text-[9px]" aria-hidden="true"></i>
                 Düzenle
             </a>
-            <form method="post" action="/Admin/DeletePosition/@p.Id" style="display:inline;"
+            <form method="post" action="/Admin/DeletePosition/@p.Id" class="inline-form"
                   onsubmit="return confirm('&quot;@p.Title&quot; silinsin mi? Alt görevler varsa silinmez.');">
                 @Html.AntiForgeryToken()
                 <button type="submit" class="btn sm danger" title="Sil">

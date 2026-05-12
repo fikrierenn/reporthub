@@ -6,13 +6,15 @@
           SubmitText = "Kullanıcı Kaydet"
       })
     Detay: .claude/rules/ui-patterns.md §8
+    MaxWidth: "720px" → default, "880px" → .wide modifier (geriye dönük uyumluluk).
 *@
 @using Mosaik.ViewModels.Ui
 @model FormActionRowViewModel
+@{
+    var widthClass = Model.MaxWidth == "720px" ? "" : "wide";
+}
 
-<div style="display:flex; align-items:center; justify-content:space-between;
-            max-width:@Model.MaxWidth; padding:14px 20px;
-            background:var(--paper); border:1px solid var(--line); border-radius:10px;">
+<div class="form-action-row @widthClass">
     <a href="@Model.BackUrl" class="btn ghost">
         <i class="fas fa-arrow-left text-[10px]" aria-hidden="true"></i>
         @Model.BackText

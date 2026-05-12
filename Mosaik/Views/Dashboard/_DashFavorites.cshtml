@@ -2,9 +2,9 @@
 
 @if (!Model.FavoriteReports.Any())
 {
-    <div style="background:var(--paper); border:1px dashed var(--line); border-radius:10px; padding:32px; text-align:center; color:var(--ink-3);">
-        <i class="fas fa-folder-open text-4xl mb-3 opacity-40"></i>
-        <p style="margin:0; font-size:13px;">Henüz erişilebilir rapor yok. Yöneticinizden rol veya rapor erişimi isteyin.</p>
+    <div class="empty-state paper-dashed">
+        <i class="fas fa-folder-open empty-state__icon"></i>
+        <p>Henüz erişilebilir rapor yok. Yöneticinizden rol veya rapor erişimi isteyin.</p>
     </div>
 }
 else
@@ -15,7 +15,7 @@ else
             <a href="/Reports/Run?reportId=@report.ReportId" class="qcard">
                 <div class="row1">
                     <span class="type-chip type-dash">Dashboard</span>
-                    <span class="mono" style="font-size:10.5px; color:var(--ink-4); margin-left:auto;">#@report.ReportId</span>
+                    <span class="qcard__id">#@report.ReportId</span>
                 </div>
                 <h3>@report.Title</h3>
                 <div class="sub">@(string.IsNullOrWhiteSpace(report.Description) ? (report.DataSource?.Title ?? report.DataSourceKey) : report.Description)</div>

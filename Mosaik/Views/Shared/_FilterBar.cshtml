@@ -16,28 +16,24 @@
 @using Mosaik.ViewModels.Ui
 @model FilterBarViewModel
 
-<form method="get" action="@Model.FormAction"
-      style="background:var(--paper); border:1px solid var(--line); border-radius:10px;
-             padding:14px 16px; margin-bottom:18px; display:flex; gap:12px;
-             flex-wrap:wrap; align-items:end;">
+<form method="get" action="@Model.FormAction" class="filter-bar">
 
-    <div style="flex:1; min-width:240px;">
+    <div class="filter-bar__field filter-bar__field--grow">
         <label class="lab" for="filterSearch">Arama</label>
-        <div style="position:relative;">
-            <span style="position:absolute; left:10px; top:50%; transform:translateY(-50%);
-                         color:var(--ink-4); pointer-events:none;">
-                <i class="fas fa-magnifying-glass" style="font-size:12px;" aria-hidden="true"></i>
+        <div class="search-input-wrap">
+            <span class="search-input-wrap__icon">
+                <i class="fas fa-magnifying-glass" aria-hidden="true"></i>
             </span>
             <input type="text" id="filterSearch" name="@Model.SearchParamName"
                    value="@Model.SearchValue" x-model="q"
-                   class="inp" style="padding-left:32px;"
+                   class="inp"
                    placeholder="@Model.SearchPlaceholder" />
         </div>
     </div>
 
     @foreach (var sel in Model.Selects)
     {
-        <div style="min-width:180px;">
+        <div class="filter-bar__field">
             <label class="lab" for="filter-@sel.ParamName">@sel.Label</label>
             <select id="filter-@sel.ParamName" name="@sel.ParamName" class="inp">
                 <option value="">Tümü</option>
@@ -49,7 +45,7 @@
         </div>
     }
 
-    <div style="display:flex; gap:6px;">
+    <div class="filter-bar__actions">
         <button type="submit" class="btn primary" title="URL'ye yansıt (paylaşılabilir link)">
             <i class="fas fa-filter text-[10px]" aria-hidden="true"></i>
             Filtrele

@@ -1,24 +1,24 @@
 @model Mosaik.ViewModels.AdminIndexViewModel
 
-<div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;">
-    <div style="font-size:12px; color:var(--ink-3);">Sistem raporlarını yönetin</div>
+<div class="tab-toolbar">
+    <div class="tab-toolbar__desc">Sistem raporlarını yönetin</div>
     <a href="/Admin/CreateReportV2" class="btn primary">
         <i class="fas fa-plus text-[10px]"></i>
         Yeni Rapor
     </a>
 </div>
 
-<div style="background:var(--paper); border:1px solid var(--line); border-radius:10px; overflow:hidden;">
+<div class="paper-card clip">
     <table class="dt">
         <thead>
             <tr>
-                <th style="width:60px;">ID</th>
+                <th class="w-100">ID</th>
                 <th>Rapor</th>
                 <th>Veri Kaynağı</th>
                 <th>Prosedür</th>
                 <th>Kategori</th>
                 <th>Durum</th>
-                <th style="text-align:right;">İşlemler</th>
+                <th class="col-right">İşlemler</th>
             </tr>
         </thead>
         <tbody>
@@ -31,25 +31,25 @@
                 <tr>
                     <td><span class="mono">#@report.ReportId</span></td>
                     <td>
-                        <div style="font-weight:500; color:var(--ink-1);">@report.Title</div>
+                        <div class="cell-name">@report.Title</div>
                         @if (!string.IsNullOrWhiteSpace(report.Description))
                         {
-                            <div style="font-size:11px; color:var(--ink-3); margin-top:2px;">@report.Description</div>
+                            <div class="cell-stack__sub">@report.Description</div>
                         }
                     </td>
                     <td><span class="mono">@report.DataSourceKey</span></td>
-                    <td><span class="mono" style="font-size:11.5px; color:var(--ink-3);">@report.ProcName</span></td>
-                    <td style="font-size:12px; color:var(--ink-3);">@string.Join(", ", reportGroups)</td>
+                    <td class="cell-mono-sm">@report.ProcName</td>
+                    <td class="cell-muted">@string.Join(", ", reportGroups)</td>
                     <td>
                         <span class="status @(report.IsActive ? "ok" : "err")">@(report.IsActive ? "Aktif" : "Pasif")</span>
                     </td>
-                    <td style="text-align:right;">
-                        <div style="display:inline-flex; gap:6px;">
+                    <td class="cell-right">
+                        <div class="row-actions">
                             <a href="/Admin/EditReportV2/@report.ReportId" class="btn ghost sm">
                                 <i class="fas fa-pen text-[9px]"></i>
                                 Düzenle
                             </a>
-                            <form method="post" style="display:inline;" onsubmit="return confirm('Bu raporu silmek istediğinizden emin misiniz?')">
+                            <form method="post" class="inline-form" onsubmit="return confirm('Bu raporu silmek istediğinizden emin misiniz?')">
                                 @Html.AntiForgeryToken()
                                 <input type="hidden" name="action" value="delete_report" />
                                 <input type="hidden" name="id" value="@report.ReportId" />

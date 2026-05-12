@@ -10,21 +10,12 @@
 @{
     if (string.IsNullOrEmpty(Model.message)) { return; }
     var t = Model.type ?? "error";
-    var bg = t == "success" ? "rgba(16,185,129,0.10)"
-           : t == "warn"    ? "rgba(245,158,11,0.10)"
-                            : "rgba(220,38,38,0.10)";
-    var border = t == "success" ? "rgba(16,185,129,0.25)"
-               : t == "warn"    ? "rgba(245,158,11,0.30)"
-                                : "rgba(220,38,38,0.25)";
-    var color = t == "success" ? "#065f46"
-              : t == "warn"    ? "#92400e"
-                               : "var(--accent-ink)";
+    var cls = t == "success" ? "success" : t == "warn" ? "warn" : "error";
     var icon = t == "success" ? "fa-check-circle"
              : t == "warn"    ? "fa-triangle-exclamation"
                               : "fa-exclamation-circle";
 }
-<div role="alert" style="margin-bottom:18px; padding:12px 16px; border-radius:10px; font-size:13px;
-            background: @bg; border: 1px solid @border; color: @color;">
-    <i class="fas @icon" style="margin-right:8px;" aria-hidden="true"></i>
+<div role="alert" class="alert @cls">
+    <i class="fas @icon alert-icon" aria-hidden="true"></i>
     @Model.message
 </div>
