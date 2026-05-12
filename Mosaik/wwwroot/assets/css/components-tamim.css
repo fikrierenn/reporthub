@@ -13,14 +13,6 @@
  * Depends: tokens.css, components.css
  */
 
-/* ---- Focus ring güçlendirme (Tamim sayfa-içi WCAG override) ----
-   Global --accent-soft: 0.12 opacity çok soluk. Tamim 0.40 ile güçlendirir. */
-.tamim-scope *:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: 2px;
-    box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.40);
-}
-
 /* ---- Tamim zarfı — resmi yazı başlığı (kırmızı üst şerit + uppercase no + meta)
        Tamim'in marka kimliği. Başka modülde aynı görünüm kullanılmaz. ---- */
 .tamim-envelope {

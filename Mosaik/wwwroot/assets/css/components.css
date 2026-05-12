@@ -275,26 +275,6 @@ select.inp {
     text-decoration: none;
     transition: color .12s, border-color .12s, background .12s;
 }
-/* Yönetim subnav — gruplandırılmış, daha kompakt */
-.subnav-grouped a {
-    padding: 8px 10px;
-    font-size: 12.5px;
-    gap: 6px;
-}
-.subnav-sep {
-    display: inline-block;
-    width: 1px;
-    align-self: stretch;
-    background: var(--line);
-    margin: 4px 6px;
-}
-/* Responsive: 1400px altında label gizle, ikon + tooltip kalsın (11 öğe sığsın) */
-@media (max-width: 1400px) {
-    .subnav-grouped a span { display: none; }
-    .subnav-grouped a { padding: 8px 12px; }
-    .subnav-grouped a i { font-size: 15px; }
-    .subnav-sep { margin: 4px 8px; }
-}
 .subnav a:hover { color: var(--ink-1); background: var(--line-2); }
 .subnav a.active {
     color: var(--accent);
@@ -488,15 +468,12 @@ select.inp {
 .text-xs { font-size: 11px; }
 .text-sm { font-size: 12px; }
 .text-strong { font-weight: 500; }
-.link-emph { color: var(--accent); font-weight: 500; }
 /* .help-text + .req canonical tanımları aşağıda (line ~572 ve ~656). */
 
 /* Layout helpers */
 .ta-right { text-align: right; }
 .ta-center { text-align: center; }
-.stack-8 { display: flex; flex-direction: column; gap: 8px; }
 .stack-14 { display: flex; flex-direction: column; gap: 14px; }
-.inline-actions { display: inline-flex; gap: 4px; }
 .toolbar-row { display: flex; flex-wrap: wrap; gap: 18px; padding-top: 8px; }
 .flex-between { display: flex; justify-content: space-between; align-items: center; }
 
@@ -512,10 +489,9 @@ select.inp {
 .checkbox { width: 14px; height: 14px; accent-color: var(--accent); }
 
 /* Mono input (SP adı, JSON, ID) */
-.inp.mono, .inp-mono { font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace; }
+.inp.mono { font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace; }
 .inp.json { font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 12px; height: auto; padding: 10px 12px; resize: vertical; }
 .inp.disabled-mono { background: var(--canvas); color: var(--ink-3); cursor: not-allowed; font-family: 'JetBrains Mono', ui-monospace, monospace; }
-.textarea-auto { height: auto; padding: 10px 12px; resize: vertical; }
 
 /* Status pill (Aktif/Pasif vs) */
 .pill.danger { background: rgba(220,38,38,0.06); border-color: rgba(220,38,38,0.2); }
@@ -578,21 +554,8 @@ select.inp {
 .help-text { margin: 6px 0 0; font-size: 11px; color: var(--ink-3); }
 .help-text.error { color: var(--accent-ink, #b91c1c); }
 
-/* Input + buton birleşik satır (SP adı + SP Önizle vb) */
-.inp-with-action { display: flex; gap: 6px; }
-.inp-with-action .inp { flex: 1; min-width: 0; }
-.inp-with-action .btn { flex-shrink: 0; }
-
-/* Parametre builder satır — 7 col + 2 buton */
-.param-builder-row { display: grid; grid-template-columns: repeat(7, 1fr) auto auto; gap: 8px; align-items: end; }
-.param-required-cell { display: flex; align-items: center; gap: 6px; height: 34px; }
-
 /* Aktif satırı (checkbox + label tek satır kart) */
 .toggle-row { display: flex; align-items: center; gap: 10px; padding: 14px 20px; background: var(--paper); border: 1px solid var(--line); border-radius: 10px; margin-bottom: 14px; }
-
-/* Footer hint row (Geri Dön + ipucu) */
-.action-row.with-hint { display: flex; align-items: center; justify-content: space-between; }
-.action-row .hint-text { font-size: 11px; color: var(--ink-3); }
 
 /* Spacing micro utilities (admin form'larda gerekli) */
 .mt-8 { margin-top: 8px; }
@@ -682,7 +645,6 @@ select.inp {
 .file-row { display: flex; flex-direction: column; gap: 8px; padding: 12px 16px; border-top: 1px solid var(--border); }
 .file-row:first-child { border-top: 0; }
 .file-row__head { display: flex; gap: 12px; align-items: center; }
-.file-row__meta { display: flex; gap: 8px; align-items: center; font-size: 11px; color: var(--muted); }
 
 /* Notification badge (_AppLayout.cshtml) */
 .notif-link { position: relative; }
@@ -833,7 +795,6 @@ select.inp {
 
 /* Stack utility (form-section-body içinde dikey gap) */
 .stack-12 > * + * { margin-top: 12px; }
-.stack-16 > * + * { margin-top: 16px; }
 
 /* Tab buttons (alt-çizgili tab pattern — Detail/Review sayfalarında üst seçim) */
 .tab-row {
@@ -951,44 +912,18 @@ select.inp {
 .pdf-box-head { padding: 10px 14px; border-bottom: 1px solid var(--line); font-size: 12.5px; font-weight: 600; color: var(--ink-1); }
 .pdf-iframe { width: 100%; height: 600px; border: none; display: block; }
 .results-col { display: flex; flex-direction: column; gap: 16px; }
-/* AI özet kartı — Plan 25.1 P4: components-tamim'den zenginleştirilmiş tanım taşındı.
-   .asc-head + .asc-badge + .asc-footer alt parçalarıyla generic AI summary widget. */
+/* AI özet kartı — Tamim Details + Ai/Review canonical naming (.ai-head / .ai-badge /
+   .ai-time / .ai-summary-list / .ai-topics-*). */
 .ai-summary-card {
     background: linear-gradient(135deg, var(--info-bg-soft), var(--info-bg-softer));
     border: 1px dashed var(--info-border-soft);
     border-radius: 10px; padding: 16px 20px; margin-bottom: 18px;
-}
-.ai-summary-card .asc-head {
-    display: flex; align-items: center; gap: 8px; margin-bottom: 10px;
-    font-size: 12px; font-weight: 700; letter-spacing: .06em;
-    text-transform: uppercase; color: var(--info-ink);
-}
-.ai-summary-card .asc-head .asc-badge {
-    background: var(--info-bg-badge); color: var(--info-ink);
-    padding: 2px 7px; border-radius: 999px;
-    font-size: 10px; font-weight: 700;
 }
 .ai-summary-card ul {
     margin: 0; padding-left: 20px;
     font-size: 13.5px; color: var(--ink-1); line-height: 1.7;
 }
 .ai-summary-card ul li { margin-bottom: 4px; }
-.ai-summary-card .asc-footer {
-    margin-top: 10px; font-size: 11px; color: var(--ink-3);
-    display: flex; justify-content: space-between; align-items: center;
-    flex-wrap: wrap; gap: 8px;
-}
-.ai-summary-card .asc-footer button {
-    background: transparent; border: 1px solid var(--info-border-soft);
-    color: var(--info-ink); padding: 4px 10px; border-radius: 6px;
-    font-size: 11px; cursor: pointer; min-height: 28px;
-    display: inline-flex; align-items: center; gap: 5px;
-    transition: background .12s;
-}
-.ai-summary-card .asc-footer button:hover { background: var(--info-bg-hover); }
-
-/* .ai-head / .ai-badge / .ai-time / .ai-summary-list / .ai-topics-* — view'larda
-   gerçekten kullanılan canonical naming (Tamim Details + Ai/Review). */
 .ai-summary-card .ai-head {
     display: flex; align-items: center; gap: 8px; margin-bottom: 10px;
     font-size: 12px; font-weight: 700; letter-spacing: .06em;
@@ -1480,15 +1415,6 @@ select.inp {
 }
 .file-pill:hover { background: var(--paper); border-color: var(--ink-4); }
 .file-pill:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-.file-pill .fp-ext {
-    font-size: 10px; font-weight: 700;
-    padding: 1px 5px; border-radius: 3px;
-    background: var(--ink-3); color: white; flex-shrink: 0;
-}
-.file-pill .fp-ext.pdf  { background: #dc2626; }
-.file-pill .fp-ext.xlsx { background: #16a34a; }
-.file-pill .fp-ext.docx { background: #2563eb; }
-.file-pill .fp-size { color: var(--ink-4); font-size: 11px; }
 .file-pill .fp-ext-generic { font-size: 10px; color: var(--ink-4); font-weight: 600; }
 .file-pill .fp-size-dot { font-size: 9px; color: var(--ink-4); }
 
@@ -1805,12 +1731,10 @@ select.inp {
 .type-chip.type-uyari    { background: var(--uyari-bg-soft); color: var(--uyari-ink); }
 .type-chip.type-bilgi    { background: var(--bilgi-bg-soft); color: var(--bilgi-ink); }
 .type-chip.type-duyuru   { background: var(--duyuru-bg-soft); color: var(--duyuru-ink); }
-.type-chip.type-prosedur { background: var(--line-2); color: var(--ink-2); }
 .type-karar    { background: var(--karar-bg-soft); color: var(--karar-ink); }
 .type-uyari    { background: var(--uyari-bg-soft); color: var(--uyari-ink); }
 .type-bilgi    { background: var(--bilgi-bg-soft); color: var(--bilgi-ink); }
 .type-duyuru   { background: var(--duyuru-bg-soft); color: var(--duyuru-ink); }
-.type-prosedur { background: var(--line-2); color: var(--ink-2); }
 
 /* ---- List stack — dikey kart listesi (her modülün liste sayfaları için) ---- */
 .list-stack { display: flex; flex-direction: column; gap: 12px; }
@@ -1851,11 +1775,6 @@ select.inp {
     font-weight: 600;
     color: var(--ink-0);
     margin: 0 0 6px;
-}
-.list-item__desc {
-    font-size: 12.5px;
-    color: var(--ink-3);
-    margin: 0 0 8px;
 }
 .list-item__body {
     font-size: 13.5px;
@@ -2022,29 +1941,7 @@ select.inp {
     margin-top: 2px;
 }
 
-/* Ack (acknowledge) butonu + durum */
-.ack-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 7px;
-    background: var(--accent);
-    color: white;
-    border: none;
-    padding: 10px 18px;
-    border-radius: 8px;
-    font-size: 13px;
-    font-weight: 600;
-    cursor: pointer;
-    min-height: 44px;
-    transition: background .12s;
-}
-.ack-btn:hover { background: var(--accent-ink); }
-.ack-btn.acked { background: var(--ok); }
-.ack-btn:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: 2px;
-    box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.40);
-}
+/* Ack (acknowledge) durum işareti */
 .ack-status {
     display: inline-flex;
     align-items: center;
@@ -2071,16 +1968,6 @@ select.inp {
 }
 .badge.is-read { background: rgba(16, 185, 129, .12); color: var(--duyuru-ink); }
 .badge.is-new  { background: rgba(220, 38, 38, .10); color: var(--accent-ink); }
-
-/* ---- 2-col responsive list grid (kart görünümü) ---- */
-.list-grid-2 {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 14px;
-}
-@media (max-width: 900px) {
-    .list-grid-2 { grid-template-columns: 1fr; }
-}
 
 /* ============================================================
    Plan 25.1 P7 — OrgChart'tan genericleştirilen utility'ler (2026-05-13)

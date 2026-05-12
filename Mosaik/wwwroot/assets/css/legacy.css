@@ -8,10 +8,8 @@
  * components.css'te tanımlı.
  */
 
-/* === Kullanılan: shadow-brand ailesi (component'larda inline shadow yerine) === */
-.shadow-brand    { box-shadow: var(--shadow); }
-.shadow-brand-md { box-shadow: var(--shadow-md); }
-.shadow-brand-lg { box-shadow: var(--shadow-lg); }
+/* === Kullanılan: shadow-brand (Home views) === */
+.shadow-brand { box-shadow: var(--shadow); }
 
 /* === Reports/Run body class view modes === */
 /* AppLayout main genişliği + iframe full-screen toggle. Run.cshtml ViewData["BodyClass"] üzerinden gelir. */
@@ -51,6 +49,3 @@ body.table-focus #reportFormCard {
     margin-bottom: 1rem;
 }
 
-body.wide-view #resultsTableWrap .result-table {
-    font-size: 0.9rem;
-}

@@ -159,5 +159,3 @@ body.oc-dragging .oc-children:empty::before {
 #oc-d3 .orgchart .oc-inactive .content { opacity: 0.65; }
 #oc-d3 .orgchart .node.allowedDrop { box-shadow: 0 0 0 3px #10b981; }
 
-/* Public sayfada node tıklanabilir (cursor) */
-.oc-public #oc-d3 .orgchart .node { cursor: pointer; }

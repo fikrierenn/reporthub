@@ -217,13 +217,6 @@ body.builder-v2-page .builder-v2:not(.preview-mode) .w-content {
     50% { box-shadow: 0 0 0 6px rgba(220, 38, 38, 0); }
 }
 
-/* Widget grid (CSS Grid + Gridstack hybrid) */
-.builder-v2 .wgrid {
-    display: grid;
-    grid-template-columns: repeat(12, 1fr);
-    grid-auto-rows: 80px;
-    gap: 8px;
-}
 /* .widget Gridstack item'a uygulandığında SADECE görsel — Gridstack `position: absolute`
    kuralını override etmemek için position/display BURADA TANIMLI DEĞİL. Aksi halde
    widget'lar block-flow olarak diagonal akar. */
@@ -301,29 +294,6 @@ body.builder-v2-page .builder-v2:not(.preview-mode) .w-content {
 .builder-v2 .w-actions button.danger:hover { background: rgba(220, 38, 38, 0.10); color: var(--danger); }
 
 .builder-v2 .w-body { flex: 1; min-height: 0; padding: 12px; display: flex; flex-direction: column; }
-
-/* KPI inside widget */
-.builder-v2 .kpi-label {
-    font-size: 10.5px;
-    color: var(--ink-3);
-    text-transform: uppercase;
-    letter-spacing: .06em;
-    font-weight: 700;
-    margin-bottom: 4px;
-}
-.builder-v2 .kpi-value {
-    font-size: 32px;
-    font-weight: 700;
-    color: var(--ink-0);
-    line-height: 1;
-    letter-spacing: -.02em;
-    font-variant-numeric: tabular-nums;
-}
-.builder-v2 .kpi-sub { display: flex; align-items: center; gap: 6px; margin-top: 6px; }
-.builder-v2 .kpi-delta { font-size: 11px; font-weight: 600; display: inline-flex; align-items: center; gap: 3px; }
-.builder-v2 .kpi-delta.up { color: var(--ok); }
-.builder-v2 .kpi-delta.down { color: var(--danger); }
-.builder-v2 .kpi-desc { font-size: 11px; color: var(--ink-4); }
 
 /* Table inside widget */
 .builder-v2 .dt { width: 100%; border-collapse: collapse; font-size: 12px; }
@@ -535,94 +505,6 @@ body.builder-v2-page .builder-v2:not(.preview-mode) .w-content {
     margin: 18px 0 12px;
 }
 
-/* Drawer Veri tab — kolon kartları (1-tıkla bağla) */
-.builder-v2 .rs-group {
-    border: 1px solid var(--line);
-    border-radius: 8px;
-    background: #fafafa;
-    margin-bottom: 12px;
-    overflow: hidden;
-}
-.builder-v2 .rs-group .rs-head {
-    padding: 9px 12px;
-    border-bottom: 1px solid var(--line);
-    background: var(--paper);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-.builder-v2 .rs-group .rs-head .rs-name {
-    font-size: 12.5px;
-    font-weight: 600;
-    color: var(--ink-1);
-    flex: 1;
-    background: transparent;
-    border: 1px dashed transparent;
-    border-radius: 4px;
-    padding: 1px 4px;
-    cursor: text;
-}
-.builder-v2 .rs-group .rs-head .rs-name:hover { border-color: var(--line); }
-.builder-v2 .rs-group .rs-head .rs-name:focus { outline: none; border-color: var(--accent); background: var(--paper); }
-.builder-v2 .rs-group .rs-head .rs-meta {
-    font-size: 10.5px;
-    color: var(--ink-4);
-    font-family: 'JetBrains Mono', monospace;
-}
-.builder-v2 .rs-group .col-list { padding: 6px; display: flex; flex-direction: column; gap: 3px; }
-
-.builder-v2 .col-card {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 6px 9px;
-    background: var(--paper);
-    border: 1px solid var(--line);
-    border-radius: 6px;
-    cursor: pointer;
-    transition: all .12s;
-}
-.builder-v2 .col-card:hover {
-    border-color: var(--accent);
-    background: var(--accent-soft);
-}
-.builder-v2 .col-card.bound {
-    border-color: var(--accent);
-    background: var(--accent-soft);
-}
-.builder-v2 .col-card .name {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 11.5px;
-    color: var(--ink-1);
-    flex: 1;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    font-weight: 500;
-}
-.builder-v2 .col-card .kind {
-    font-size: 9.5px;
-    padding: 1px 6px;
-    border-radius: 3px;
-    text-transform: uppercase;
-    font-weight: 700;
-    letter-spacing: .04em;
-    flex-shrink: 0;
-}
-.builder-v2 .col-card .kind.k-num { background: rgba(220, 38, 38, 0.10); color: var(--accent-ink); }
-.builder-v2 .col-card .kind.k-text { background: var(--line-2); color: var(--ink-2); }
-.builder-v2 .col-card .kind.k-date { background: rgba(16, 185, 129, 0.12); color: #065f46; }
-.builder-v2 .col-card .sample {
-    font-size: 11px;
-    color: var(--ink-4);
-    font-family: 'JetBrains Mono', monospace;
-    flex-shrink: 0;
-    max-width: 90px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
 /* Bound chip — widget içinde "→ KadroToplam" gibi bağlı kolon göstergesi */
 .builder-v2 .bound-chip {
     margin-top: 6px;
@@ -715,31 +597,6 @@ body.builder-v2-page .builder-v2:not(.preview-mode) .w-content {
 .builder-v2 .advanced-toggle i { transition: transform .12s; }
 .builder-v2 .advanced-toggle.open i { transform: rotate(90deg); }
 
-.builder-v2 .pills { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; }
-.builder-v2 .pill-sug {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    background: var(--chip);
-    color: var(--ink-2);
-    border-radius: 999px;
-    padding: 3px 8px;
-    font-size: 11px;
-    font-family: 'JetBrains Mono', monospace;
-    cursor: pointer;
-    transition: background .12s;
-}
-.builder-v2 .pill-sug:hover { background: var(--line); }
-.builder-v2 .pill-sug .fx {
-    background: var(--accent);
-    color: #fff;
-    font-size: 9px;
-    font-weight: 700;
-    padding: 0 4px;
-    border-radius: 3px;
-    letter-spacing: .02em;
-}
-
 /* ============ FOOTER (kbd shortcut bar) ============ */
 .builder-v2-foot {
     height: 30px;
@@ -786,13 +643,6 @@ body.builder-v2-page .builder-v2:not(.preview-mode) .w-content {
 .builder-v2 .grid-stack-item.ui-draggable-dragging > .grid-stack-item-content {
     box-shadow: 0 8px 24px -8px rgba(17, 24, 39, 0.25);
 }
-.builder-v2 .grid-stack > .grid-stack-placeholder > .placeholder-content {
-    background: var(--accent-soft);
-    border: 1.5px dashed var(--accent);
-    border-radius: 10px;
-    inset: 4px !important;
-}
-
 /* ============ DATA MODAL — Widget çift-tıkla / palette RS satır click ============ */
 .builder-v2-modal-backdrop {
     position: fixed;
@@ -1171,16 +1021,6 @@ body.builder-v2-page .builder-v2:not(.preview-mode) .w-content {
     color: var(--accent, #3b82f6);
 }
 
-/* Widget seçilince drawer Veri tab'ında bağlı kolon kartı pulse highlight */
-.builder-v2 .col-card.focus-pulse {
-    animation: bv2-col-pulse 1.4s ease-out;
-}
-@keyframes bv2-col-pulse {
-    0% { box-shadow: 0 0 0 0 rgba(220,38,38,0.55), inset 0 0 0 2px rgba(220,38,38,0.6); }
-    70% { box-shadow: 0 0 0 10px rgba(220,38,38,0), inset 0 0 0 2px rgba(220,38,38,0); }
-    100% { box-shadow: 0 0 0 0 rgba(220,38,38,0), inset 0 0 0 2px rgba(220,38,38,0); }
-}
-
 /* F-9 Full Preview iframe modal */
 .builder-v2 .builder-v2-preview-backdrop {
     position: fixed; inset: 0; z-index: 1000;
@@ -1404,13 +1244,6 @@ body.builder-v2-page .builder-v2:not(.preview-mode) .w-content {
 
 /* .builder-settings-intro → kaldırıldı, view'da `help-text mb-14` kullan (P7). */
 
-/* SP'den çek small button (datalist üstü) */
-.builder-sp-reload-btn {
-    background: transparent; border: none;
-    color: var(--accent-ink); font-size: 10px; font-weight: 600;
-    cursor: pointer; text-transform: uppercase; letter-spacing: .04em;
-}
-
 /* SP params details/summary */
 .builder-sp-details { margin-top: 6px; }
 .builder-sp-summary { cursor: pointer; font-size: 10.5px; color: var(--ink-3); padding: 4px 0; }
@@ -1458,13 +1291,6 @@ body.builder-v2-page .builder-v2:not(.preview-mode) .w-content {
 
 /* İkon arama input alt boşluğu */
 .builder-icon-search { margin-bottom: 8px; }
-
-/* QB header altında dar warning chip (Stage1/2 hatalı durumda) */
-.builder-qb-warn {
-    background: #fef3c7; border: 1px solid #fde68a; color: #92400e;
-    padding: 8px 10px; border-radius: 6px;
-    font-size: 11px; margin-bottom: 10px;
-}
 
 /* .builder-empty-hint → kaldırıldı, view'da `help-text` kullan (P7). */
 
