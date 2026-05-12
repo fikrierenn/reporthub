@@ -103,7 +103,7 @@
 
 .badge-okundu {
     background: rgba(16, 185, 129, .12);
-    color: #065f46;
+    color: var(--duyuru-ink);
 }
 
 .badge-yeni {
@@ -167,7 +167,7 @@
 }
 
 .blok-item.blok-acil { border-left-color: var(--accent); }
-.blok-item.blok-karar { border-left-color: #4338ca; }
+.blok-item.blok-karar { border-left-color: var(--karar-ink); }
 .blok-item.blok-uyari { border-left-color: var(--warn); }
 .blok-item.blok-bilgi { border-left-color: #2563eb; }
 .blok-item.blok-duyuru { border-left-color: var(--ok); }
@@ -224,10 +224,10 @@
 /* .bi-acil-pill Plan 25.1 P5: dead — hiçbir view'da kullanılmıyor. .pill.urgent generic var. */
 
 /* ---- type-chip varyantları (global .type-chip base'i extend eder) ---- */
-.type-karar  { background: rgba(99, 102, 241, .12); color: #4338ca; }
-.type-uyari  { background: rgba(245, 158, 11, .15); color: #92400e; }
-.type-bilgi  { background: rgba(59, 130, 246, .10); color: #1e40af; }
-.type-duyuru { background: rgba(16, 185, 129, .10); color: #065f46; }
+.type-karar  { background: var(--karar-bg-soft); color: var(--karar-ink); }
+.type-uyari  { background: var(--uyari-bg-soft); color: var(--uyari-ink); }
+.type-bilgi  { background: var(--bilgi-bg-soft); color: var(--bilgi-ink); }
+.type-duyuru { background: var(--duyuru-bg-soft); color: var(--duyuru-ink); }
 .type-prosedur { background: var(--line-2); color: var(--ink-2); }
 
 /* ---- Dosya eki pill ---- */
@@ -760,7 +760,7 @@
     padding: 6px 12px;
     border-radius: 999px;
     background: rgba(16, 185, 129, .12);
-    color: var(--success-ink-soft, #065f46);
+    color: var(--success-ink-soft, var(--duyuru-ink));
 }
 
 .ack-status i { font-size: 12px; }

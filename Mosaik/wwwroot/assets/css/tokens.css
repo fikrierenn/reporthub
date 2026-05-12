@@ -108,4 +108,23 @@
     --violet: #7c3aed;
     --violet-soft: #f3e8ff;
     --violet-border: #ddd6fe;
+
+    /* === Plan 25.1 P6 — Info tone (AI summary kartı + tamim type-bilgi) === */
+    --info-ink: #1e40af;                            /* koyu mavi başlık/text */
+    --info-bg-soft: rgba(59, 130, 246, 0.06);       /* AI summary gradient sol */
+    --info-bg-softer: rgba(220, 38, 38, 0.04);      /* AI summary gradient sağ (kırmızı tonu) */
+    --info-bg-hover: rgba(59, 130, 246, 0.08);      /* hover background */
+    --info-bg-chip: rgba(59, 130, 246, 0.10);       /* topic chip background */
+    --info-bg-badge: rgba(59, 130, 246, 0.15);      /* badge background */
+    --info-border-soft: rgba(59, 130, 246, 0.30);   /* dashed border */
+
+    /* === Plan 25.1 P6 — Tamim blok tipi renkleri (domain-spesifik ama tokens'ta merkezi) === */
+    --karar-ink: #4338ca;                           /* indigo — type-karar */
+    --karar-bg-soft: rgba(99, 102, 241, 0.12);
+    --bilgi-ink: var(--info-ink);
+    --bilgi-bg-soft: var(--info-bg-chip);
+    --uyari-ink: var(--warn-ink-soft);
+    --uyari-bg-soft: rgba(245, 158, 11, 0.15);
+    --duyuru-ink: var(--success-ink-soft);
+    --duyuru-bg-soft: rgba(16, 185, 129, 0.10);
 }

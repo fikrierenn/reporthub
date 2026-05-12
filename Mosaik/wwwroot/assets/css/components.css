@@ -949,17 +949,17 @@ select.inp {
 /* AI özet kartı — Plan 25.1 P4: components-tamim'den zenginleştirilmiş tanım taşındı.
    .asc-head + .asc-badge + .asc-footer alt parçalarıyla generic AI summary widget. */
 .ai-summary-card {
-    background: linear-gradient(135deg, rgba(59, 130, 246, .06), rgba(220, 38, 38, .04));
-    border: 1px dashed rgba(59, 130, 246, .30);
+    background: linear-gradient(135deg, var(--info-bg-soft), var(--info-bg-softer));
+    border: 1px dashed var(--info-border-soft);
     border-radius: 10px; padding: 16px 20px; margin-bottom: 18px;
 }
 .ai-summary-card .asc-head {
     display: flex; align-items: center; gap: 8px; margin-bottom: 10px;
     font-size: 12px; font-weight: 700; letter-spacing: .06em;
-    text-transform: uppercase; color: #1e40af;
+    text-transform: uppercase; color: var(--info-ink);
 }
 .ai-summary-card .asc-head .asc-badge {
-    background: rgba(59, 130, 246, .15); color: #1e40af;
+    background: var(--info-bg-badge); color: var(--info-ink);
     padding: 2px 7px; border-radius: 999px;
     font-size: 10px; font-weight: 700;
 }
@@ -974,23 +974,23 @@ select.inp {
     flex-wrap: wrap; gap: 8px;
 }
 .ai-summary-card .asc-footer button {
-    background: transparent; border: 1px solid rgba(59, 130, 246, .30);
-    color: #1e40af; padding: 4px 10px; border-radius: 6px;
+    background: transparent; border: 1px solid var(--info-border-soft);
+    color: var(--info-ink); padding: 4px 10px; border-radius: 6px;
     font-size: 11px; cursor: pointer; min-height: 28px;
     display: inline-flex; align-items: center; gap: 5px;
     transition: background .12s;
 }
-.ai-summary-card .asc-footer button:hover { background: rgba(59, 130, 246, .08); }
+.ai-summary-card .asc-footer button:hover { background: var(--info-bg-hover); }
 
 /* .ai-head / .ai-badge / .ai-time / .ai-summary-list / .ai-topics-* — view'larda
    gerçekten kullanılan canonical naming (Tamim Details + Ai/Review). */
 .ai-summary-card .ai-head {
     display: flex; align-items: center; gap: 8px; margin-bottom: 10px;
     font-size: 12px; font-weight: 700; letter-spacing: .06em;
-    text-transform: uppercase; color: #1e40af;
+    text-transform: uppercase; color: var(--info-ink);
 }
 .ai-summary-card .ai-badge {
-    background: rgba(59, 130, 246, .15); color: #1e40af;
+    background: var(--info-bg-badge); color: var(--info-ink);
     padding: 2px 7px; border-radius: 999px;
     font-size: 10px; font-weight: 700;
 }
@@ -1010,7 +1010,7 @@ select.inp {
     font-size: 11px; font-weight: 700; letter-spacing: .06em;
     text-transform: uppercase; color: var(--ink-3);
 }
-.ai-summary-card .ai-topic-chip { background: rgba(59, 130, 246, .10); color: #1e40af; }
+.ai-summary-card .ai-topic-chip { background: var(--info-bg-chip); color: var(--info-ink); }
 .ai-summary-card .ai-empty-text { margin: 0; font-size: 13px; color: var(--ink-3); }
 
 /* Section title trailing count (e.g. "Bloklar (5)") — generic */
