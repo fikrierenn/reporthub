@@ -36,7 +36,6 @@
     var flatJson = JsonSerializer.Serialize(flatPositions);
 }
 
-
 @section Breadcrumb {
     <nav class="crumbs" aria-label="Sayfa konumu">
         <a href="/Admin">Yönetim</a>
@@ -47,7 +46,7 @@
 
 @section TopActions {
     <a href="/Admin/CreatePosition" class="btn primary">
-        <i class="fas fa-plus text-[10px]" aria-hidden="true"></i>
+        <i class="fas fa-plus icon-xs" aria-hidden="true"></i>
         Yeni Görev
     </a>
     <a href="#" class="icon-btn" title="Yardım: Görevleri sürükleyerek hiyerarşiyi düzenleyebilirsiniz.">
@@ -65,15 +64,15 @@
         }
         else
         {
-            <span class="pill" style="background:#e0f2fe; color:#0369a1;">
-                <i class="fas fa-eye text-[9px]" aria-hidden="true"></i>
+            <span class="pill info-tone">
+                <i class="fas fa-eye icon-xs" aria-hidden="true"></i>
                 Görünüm modu — düzenlemek için Liste'ye geçin
             </span>
         }
         @if (unknownCount > 0)
         {
-            <span class="pill" style="background:#fef3c7; color:#92400e;">
-                <i class="fas fa-triangle-exclamation text-[9px]" aria-hidden="true"></i>
+            <span class="pill warn">
+                <i class="fas fa-triangle-exclamation icon-xs" aria-hidden="true"></i>
                 @unknownCount Zirve unvanı içe aktarılmamış
             </span>
         }
@@ -81,7 +80,7 @@
 </div>
 
 @* Görünüm seçici *@
-<div role="tablist" aria-label="Görünüm seçici" style="display:flex; gap:6px; margin: 14px 0;">
+<div role="tablist" aria-label="Görünüm seçici" class="oc-view-tabs">
     @{
         (string Key, string Label, string Icon)[] views = new[] {
             ("list",       "Liste",         "fa-list-ul"),
@@ -95,21 +94,21 @@
         <a role="tab" aria-selected="@(isActive ? "true" : "false")"
            href="?view=@v.Key"
            class="btn @(isActive ? "primary" : "ghost") sm">
-            <i class="fas @v.Icon text-[10px]" aria-hidden="true"></i>
+            <i class="fas @v.Icon icon-xs" aria-hidden="true"></i>
             @v.Label
         </a>
     }
     @if (view != "list")
     {
-        <button type="button" id="oc-export-btn" class="btn ghost sm" style="margin-left:auto;" title="Mevcut görünümü PNG olarak indir">
-            <i class="fas fa-image text-[10px]" aria-hidden="true"></i>
+        <button type="button" id="oc-export-btn" class="btn ghost sm oc-export-spacer" title="Mevcut görünümü PNG olarak indir">
+            <i class="fas fa-image icon-xs" aria-hidden="true"></i>
             PNG indir
         </button>
     }
 </div>
 
 @* Reorder + import için sayfa düzeyinde antiforgery token. *@
-<form id="oc-antiforgery" style="display:none;">@Html.AntiForgeryToken()</form>
+<form id="oc-antiforgery" class="oc-hidden-form">@Html.AntiForgeryToken()</form>
 
 @* Tüm pozisyonları client'a inline JSON olarak ver (sağ-tık modalı için). *@
 <script id="oc-flat-data" type="application/json">@Html.Raw(flatJson)</script>
@@ -120,45 +119,40 @@
      x-cloak
      @@oc-open-move.window="openFor($event.detail.id, $event.detail.title)"
      @@keydown.escape.window="cancel()"
-     style="position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:9999;
-            display:flex; align-items:center; justify-content:center;">
-    <div @@click.outside="cancel()"
-         style="background:#fff; border-radius:10px; padding:20px;
-                width:min(520px, 90vw); max-height:80vh; display:flex; flex-direction:column; gap:12px;
-                box-shadow:0 12px 40px rgba(0,0,0,0.18);">
-        <h3 style="margin:0; font-size:16px;">
+     class="oc-modal-overlay">
+    <div @@click.outside="cancel()" class="oc-modal-card">
+        <h3 class="oc-modal-title">
             <i class="fas fa-arrows-up-down-left-right" aria-hidden="true"></i>
             Üst görevi değiştir
         </h3>
-        <p style="margin:0; font-size:13px; color:var(--ink-mute);">
+        <p class="oc-modal-desc">
             <strong x-text="draggedTitle"></strong> görevini hangi görevin altına taşımak istiyorsun?
         </p>
         <input type="text" class="inp" placeholder="Görev ara…" x-model="search"
-               @@keydown.enter.prevent style="margin:0;" />
-        <div style="overflow:auto; max-height:50vh; border:1px solid var(--line); border-radius:8px;">
-            <ul style="list-style:none; padding:0; margin:0;">
+               @@keydown.enter.prevent />
+        <div class="oc-modal-list-wrap">
+            <ul class="oc-modal-list">
                 <li @@click="setRoot()"
-                    style="padding:10px 14px; cursor:pointer; border-bottom:1px solid var(--line);
-                           font-style:italic; color:var(--ink-mute);"
-                    :style="newParentId === null ? 'background:#ecfdf5;' : ''">
+                    class="oc-modal-list-item is-root"
+                    :class="{ 'is-selected': newParentId === null }">
                     <i class="fas fa-house" aria-hidden="true"></i>
                     Üst Düzey (kök) — kimseye bağlama
                 </li>
                 <template x-for="p in filtered()" :key="p.id">
                     <li @@click="newParentId = p.id"
-                        :style="newParentId === p.id ? 'background:#ecfdf5;' : ''"
-                        style="padding:8px 14px; cursor:pointer; border-bottom:1px solid var(--line); font-size:13px;">
-                        <span x-text="p.title" style="font-weight:500;"></span>
-                        <span class="mono" x-text="p.code" style="font-size:11px; color:var(--ink-mute); margin-left:8px;"></span>
-                        <span x-show="!p.isActive" class="pill" style="background:var(--line); margin-left:6px; font-size:10px;">Pasif</span>
+                        class="oc-modal-list-item"
+                        :class="{ 'is-selected': newParentId === p.id }">
+                        <span class="oc-modal-list-item__title" x-text="p.title"></span>
+                        <span class="mono oc-modal-list-item__code" x-text="p.code"></span>
+                        <span x-show="!p.isActive" class="pill oc-modal-list-item__inactive">Pasif</span>
                     </li>
                 </template>
-                <li x-show="filtered().length === 0" style="padding:14px; text-align:center; color:var(--ink-mute); font-size:12px;">
+                <li x-show="filtered().length === 0" class="oc-modal-list-empty">
                     Eşleşen görev yok.
                 </li>
             </ul>
         </div>
-        <div style="display:flex; justify-content:space-between; gap:8px;">
+        <div class="oc-modal-actions">
             <button type="button" class="btn ghost" @@click="cancel()">İptal</button>
             <button type="button" class="btn primary" @@click="save()" :disabled="saving"
                     x-text="saving ? 'Kaydediliyor…' : 'Taşı'"></button>
@@ -258,25 +252,24 @@ document.addEventListener('contextmenu', (e) => {
 
 @if (!string.IsNullOrWhiteSpace(Model.ZirveDiscoveryError))
 {
-    <div role="alert" style="margin-bottom:14px; padding:10px 14px; border-radius:8px;
-                              background:#fef3c7; color:#92400e; border:1px solid #fcd34d;">
-        <i class="fas fa-triangle-exclamation" aria-hidden="true"></i>
+    <div role="alert" class="alert warn">
+        <i class="fas fa-triangle-exclamation icon-mr" aria-hidden="true"></i>
         Zirve canlı keşif başarısız: @Model.ZirveDiscoveryError
     </div>
 }
 
-<div style="display:grid; grid-template-columns: 1fr 320px; gap:18px; align-items:start;">
+<div class="oc-split-grid">
 
     @* === SOL: Görünüm — list (SortableJS) veya tree/horizontal (jQuery OrgChart.js, dahili drag-drop) === *@
-    <div style="background:var(--paper); border:1px solid var(--line); border-radius:10px; padding:18px;">
-        <div id="oc-status" style="font-size:12px; color:var(--ink-mute); margin-bottom:10px; min-height:18px;"></div>
+    <div class="oc-chart-card">
+        <div id="oc-status" class="oc-chart-status"></div>
 
         @if (totalCount == 0)
         {
-            <div style="text-align:center; padding:40px; border:2px dashed var(--line); border-radius:10px;">
-                <i class="fas fa-folder-open" style="font-size:48px; color:var(--ink-mute);" aria-hidden="true"></i>
-                <h3 style="margin-top:10px;">Henüz görev tanımlı değil</h3>
-                <p style="color:var(--ink-mute);">Migration 40 seed çalıştırılmamış olabilir veya tüm görevler silinmiş.</p>
+            <div class="oc-chart-empty">
+                <i class="fas fa-folder-open" aria-hidden="true"></i>
+                <h3>Henüz görev tanımlı değil</h3>
+                <p>Migration 40 seed çalıştırılmamış olabilir veya tüm görevler silinmiş.</p>
             </div>
         }
         else if (view == "list")
@@ -290,43 +283,40 @@ document.addEventListener('contextmenu', (e) => {
         }
         else
         {
-            <div id="oc-d3" data-mode="@view" style="overflow:auto; min-height:500px;"></div>
+            <div id="oc-d3" data-mode="@view" class="oc-chart-canvas"></div>
             <script id="oc-tree-data" type="application/json">@Html.Raw(treeJson)</script>
         }
     </div>
 
     @* === SAĞ: Tanımsız Zirve unvanları widget === *@
-    <aside style="background:var(--paper); border:1px solid var(--line); border-radius:10px; padding:16px;">
-        <h3 style="margin:0 0 4px 0; font-size:14px;">
+    <aside class="oc-aside">
+        <h3 class="oc-aside__title">
             <i class="fas fa-cloud-arrow-down" aria-hidden="true"></i>
             Zirve'den İçe Aktarılmamış
         </h3>
-        <p style="font-size:12px; color:var(--ink-mute); margin:0 0 12px 0;">
+        <p class="oc-aside__desc">
             Zirve'de aktif personeli olan ama Mosaik'te tanımsız unvanlar.
         </p>
 
         @if (Model.UnknownZirveCodes.Count == 0)
         {
-            <div style="font-size:12px; color:var(--ink-mute); padding:12px; text-align:center;
-                        border:1px dashed var(--line); border-radius:8px;">
-                <i class="fas fa-check-circle" style="color:#16a34a;" aria-hidden="true"></i>
+            <div class="oc-aside__empty">
+                <i class="fas fa-check-circle" aria-hidden="true"></i>
                 Tüm Zirve unvanları içe aktarılmış.
             </div>
         }
         else
         {
-            <ul style="list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:6px; max-height:400px; overflow-y:auto;">
+            <ul class="oc-unknown-list">
                 @foreach (var code in Model.UnknownZirveCodes)
                 {
-                    <li style="display:flex; align-items:center; justify-content:space-between; gap:8px;
-                               padding:6px 10px; background:#f9fafb; border-radius:6px; border:1px solid var(--line);">
-                        <span class="mono" style="font-size:11.5px; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"
-                              title="@code">@code</span>
-                        <form method="post" action="/Admin/ImportZirvePosition" style="margin:0;">
+                    <li class="oc-unknown-row">
+                        <span class="mono oc-unknown-row__code" title="@code">@code</span>
+                        <form method="post" action="/Admin/ImportZirvePosition" class="oc-unknown-row__form">
                             @Html.AntiForgeryToken()
                             <input type="hidden" name="code" value="@code" />
                             <button type="submit" class="btn sm primary" title="İçe aktar">
-                                <i class="fas fa-plus text-[9px]" aria-hidden="true"></i>
+                                <i class="fas fa-plus icon-xs" aria-hidden="true"></i>
                             </button>
                         </form>
                     </li>
@@ -344,7 +334,7 @@ document.addEventListener('contextmenu', (e) => {
     const status = document.getElementById('oc-status');
     const showStatus = (msg, isError) => {
         status.textContent = msg;
-        status.style.color = isError ? '#b91c1c' : 'var(--ink-mute)';
+        status.classList.toggle('is-error', !!isError);
         if (!isError) setTimeout(() => { if (status.textContent === msg) status.textContent = ''; }, 2500);
     };
 

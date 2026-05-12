@@ -256,7 +256,7 @@ _Otomatik üretildi. Mosaik/Views/Admin/*.cshtml (partial hariç)._
 - `Index.cshtml` (lines=36, inline-style=2)
 - `Lookup.cshtml` (lines=123, inline-style=0)
 - `Modules.cshtml` (lines=78, inline-style=0)
-- `OrgChart.cshtml` (lines=439, inline-style=39)
+- `OrgChart.cshtml` (lines=429, inline-style=0)
 <!-- AUTO:ADMIN_VIEWS:END -->
 
 `inline-style=0` → standart. `>10` → Plan 33 standardizasyon hedefi.

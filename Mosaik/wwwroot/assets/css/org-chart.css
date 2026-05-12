@@ -139,3 +139,102 @@ body.oc-dragging .oc-children:empty::before {
 
 /* Public sayfada node tıklanabilir (cursor) */
 .oc-public #oc-d3 .orgchart .node { cursor: pointer; }
+
+/* ============================================================
+   Plan 33 — OrgChart admin view inline-style refactor utility'leri
+   /Admin/OrgChart.cshtml içindeki inline'lar buraya taşındı (2026-05-13).
+   ============================================================ */
+
+/* Görünüm sekmeleri (tab list) + export butonu */
+.oc-view-tabs { display: flex; gap: 6px; margin: 14px 0; align-items: center; }
+.oc-view-tabs .oc-export-spacer { margin-left: auto; }
+
+/* Antiforgery hidden form */
+.oc-hidden-form { display: none; }
+
+/* Modal — Alpine kontrollü tam ekran overlay */
+.oc-modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.4);
+    z-index: 9999;
+    display: flex; align-items: center; justify-content: center;
+}
+.oc-modal-card {
+    background: #fff; border-radius: 10px; padding: 20px;
+    width: min(520px, 90vw); max-height: 80vh;
+    display: flex; flex-direction: column; gap: 12px;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.18);
+}
+.oc-modal-title { margin: 0; font-size: 16px; }
+.oc-modal-desc { margin: 0; font-size: 13px; color: var(--ink-mute, #6b7280); }
+.oc-modal-list-wrap { overflow: auto; max-height: 50vh; border: 1px solid var(--line); border-radius: 8px; }
+.oc-modal-list { list-style: none; padding: 0; margin: 0; }
+.oc-modal-list-item {
+    padding: 8px 14px; cursor: pointer;
+    border-bottom: 1px solid var(--line); font-size: 13px;
+}
+.oc-modal-list-item.is-root {
+    padding: 10px 14px; font-style: italic; color: var(--ink-mute, #6b7280);
+}
+.oc-modal-list-item.is-selected { background: #ecfdf5; }
+.oc-modal-list-item__title { font-weight: 500; }
+.oc-modal-list-item__code { font-size: 11px; color: var(--ink-mute, #6b7280); margin-left: 8px; }
+.oc-modal-list-item__inactive { background: var(--line); margin-left: 6px; font-size: 10px; }
+.oc-modal-list-empty {
+    padding: 14px; text-align: center;
+    color: var(--ink-mute, #6b7280); font-size: 12px;
+}
+.oc-modal-actions { display: flex; justify-content: space-between; gap: 8px; }
+
+/* Sayfa düzeni — sol chart card + sağ aside */
+.oc-split-grid {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 18px;
+    align-items: start;
+}
+@media (max-width: 900px) {
+    .oc-split-grid { grid-template-columns: 1fr; }
+}
+
+/* Sol kart — chart container */
+.oc-chart-card { background: var(--paper); border: 1px solid var(--line); border-radius: 10px; padding: 18px; }
+.oc-chart-status { font-size: 12px; color: var(--ink-mute, #6b7280); margin-bottom: 10px; min-height: 18px; }
+.oc-chart-status.is-error { color: #b91c1c; }
+.oc-chart-empty {
+    text-align: center; padding: 40px;
+    border: 2px dashed var(--line); border-radius: 10px;
+}
+.oc-chart-empty i { font-size: 48px; color: var(--ink-mute, #6b7280); }
+.oc-chart-empty h3 { margin-top: 10px; }
+.oc-chart-empty p { color: var(--ink-mute, #6b7280); }
+.oc-chart-canvas { overflow: auto; min-height: 500px; }
+
+/* Sağ aside — Zirve unknown widget */
+.oc-aside { background: var(--paper); border: 1px solid var(--line); border-radius: 10px; padding: 16px; }
+.oc-aside__title { margin: 0 0 4px 0; font-size: 14px; }
+.oc-aside__desc { font-size: 12px; color: var(--ink-mute, #6b7280); margin: 0 0 12px 0; }
+.oc-aside__empty {
+    font-size: 12px; color: var(--ink-mute, #6b7280);
+    padding: 12px; text-align: center;
+    border: 1px dashed var(--line); border-radius: 8px;
+}
+.oc-aside__empty i { color: #16a34a; margin-right: 4px; }
+
+.oc-unknown-list {
+    list-style: none; padding: 0; margin: 0;
+    display: flex; flex-direction: column; gap: 6px;
+    max-height: 400px; overflow-y: auto;
+}
+.oc-unknown-row {
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    padding: 6px 10px; background: #f9fafb; border-radius: 6px; border: 1px solid var(--line);
+}
+.oc-unknown-row__code {
+    font-size: 11.5px; flex: 1;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.oc-unknown-row__form { margin: 0; }
+
+/* Pill renkli varyantları (Görünüm modu + Zirve uyarısı) */
+.pill.info-tone { background: #e0f2fe; color: #0369a1; border-color: rgba(2,132,199,0.2); }
