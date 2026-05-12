@@ -239,23 +239,23 @@ Bir view/method/file silmeden veya rename etmeden önce **hepsini sırayla** yap
 <!-- AUTO:ADMIN_VIEWS:START -->
 _Otomatik üretildi. Mosaik/Views/Admin/*.cshtml (partial hariç)._
 
-- `AiSettings.cshtml` (lines=181, inline-style=30)
+- `AiSettings.cshtml` (lines=184, inline-style=0)
 - `AiSettingsEdit.cshtml` (lines=230, inline-style=0)
-- `BrandSettings.cshtml` (lines=110, inline-style=21)
+- `BrandSettings.cshtml` (lines=106, inline-style=0)
 - `CreateDataSource.cshtml` (lines=145, inline-style=0)
-- `CreateFilter.cshtml` (lines=57, inline-style=7)
+- `CreateFilter.cshtml` (lines=51, inline-style=0)
 - `CreateReportV2.cshtml` (lines=967, inline-style=81)
 - `CreateUser.cshtml` (lines=172, inline-style=0)
 - `EditDataSource.cshtml` (lines=155, inline-style=0)
-- `EditFilter.cshtml` (lines=63, inline-style=7)
-- `EditGroup.cshtml` (lines=91, inline-style=16)
+- `EditFilter.cshtml` (lines=57, inline-style=0)
+- `EditGroup.cshtml` (lines=85, inline-style=0)
 - `EditPosition.cshtml` (lines=144, inline-style=0)
 - `EditReportV2.cshtml` (lines=1067, inline-style=97)
-- `EditRole.cshtml` (lines=92, inline-style=16)
+- `EditRole.cshtml` (lines=88, inline-style=0)
 - `EditUser.cshtml` (lines=177, inline-style=0)
 - `Index.cshtml` (lines=36, inline-style=2)
-- `Lookup.cshtml` (lines=118, inline-style=16)
-- `Modules.cshtml` (lines=92, inline-style=16)
+- `Lookup.cshtml` (lines=123, inline-style=0)
+- `Modules.cshtml` (lines=78, inline-style=0)
 - `OrgChart.cshtml` (lines=439, inline-style=39)
 <!-- AUTO:ADMIN_VIEWS:END -->
 

@@ -36,28 +36,30 @@
 
 @foreach (var type in Model)
 {
-    <div style="background:var(--paper); border:1px solid var(--border); border-radius:10px; margin-bottom:18px; max-width:880px;">
-        <div style="padding:14px 18px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between;">
-            <div>
-                <strong>@type.Name</strong>
-                <span class="mono" style="margin-left:8px; font-size:11px; color:var(--muted);">@type.Code</span>
+    <div class="form-section-card wide">
+        <div class="form-section-head">
+            <div class="lookup-head-row">
+                <div>
+                    <span class="form-section-head__title">@type.Name</span>
+                    <span class="mono text-muted ml-4 text-xs">@type.Code</span>
+                </div>
+                <span class="mono text-muted text-xs">@type.Values.Count(v => v.IsActive) aktif değer</span>
             </div>
-            <span class="mono" style="font-size:11px; color:var(--muted);">@type.Values.Count(v => v.IsActive) aktif değer</span>
         </div>
-        <div style="padding:16px 18px;">
+        <div class="form-section-body stack">
             @if (!type.Values.Any())
             {
-                <p style="color:var(--muted); font-size:13px;">Henüz değer eklenmemiş.</p>
+                <p class="text-muted text-xs">Henüz değer eklenmemiş.</p>
             }
             else
             {
-                <table class="dt" style="margin-bottom:14px;">
+                <table class="dt mb-8">
                     <thead>
                         <tr>
                             <th scope="col">Kod</th>
                             <th scope="col">Etiket</th>
                             <th scope="col">Sıra</th>
-                            <th scope="col" style="text-align:right;">Durum</th>
+                            <th scope="col" class="th-right">Durum</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -67,8 +69,8 @@
                                 <td><span class="mono">@val.Code</span></td>
                                 <td>@val.Label</td>
                                 <td>@val.DisplayOrder</td>
-                                <td style="text-align:right;">
-                                    <form method="post" action="/Admin/LookupToggleValue" style="display:inline;">
+                                <td class="td-right">
+                                    <form method="post" action="/Admin/LookupToggleValue" class="inline-form">
                                         @Html.AntiForgeryToken()
                                         <input type="hidden" name="valueId" value="@val.Id" />
                                         <input type="hidden" name="active" value="@(!val.IsActive ? "true" : "false")" />
@@ -83,22 +85,23 @@
                 </table>
             }
 
-            <details style="margin-top:8px;">
-                <summary style="cursor:pointer; font-size:12px; color:var(--muted); user-select:none;">+ Yeni Değer Ekle</summary>
-                <form method="post" action="/Admin/LookupAddValue" style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap; align-items:flex-end;">
+            @* TODO(Plan 25.1): <details>/summary için utility class yok — minimum inline kalıyor (cursor + user-select). *@
+            <details class="lookup-add-details">
+                <summary class="lookup-add-summary">+ Yeni Değer Ekle</summary>
+                <form method="post" action="/Admin/LookupAddValue" class="lookup-add-form">
                     @Html.AntiForgeryToken()
                     <input type="hidden" name="typeId" value="@type.Id" />
                     <div class="field">
                         <label class="lab">Kod</label>
-                        <input class="inp" type="text" name="code" placeholder="camelCase" style="width:130px;" required />
+                        <input class="inp inp-code" type="text" name="code" placeholder="camelCase" required />
                     </div>
                     <div class="field">
                         <label class="lab">Etiket</label>
-                        <input class="inp" type="text" name="label" placeholder="Türkçe görünen ad" style="width:200px;" required />
+                        <input class="inp inp-label" type="text" name="label" placeholder="Türkçe görünen ad" required />
                     </div>
                     <div class="field">
                         <label class="lab">Sıra</label>
-                        <input class="inp" type="number" name="displayOrder" value="@(type.Values.Any() ? type.Values.Max(v => v.DisplayOrder) + 10 : 10)" style="width:70px;" />
+                        <input class="inp inp-order" type="number" name="displayOrder" value="@(type.Values.Any() ? type.Values.Max(v => v.DisplayOrder) + 10 : 10)" />
                     </div>
                     <button type="submit" class="btn primary">Ekle</button>
                 </form>
@@ -116,3 +119,5 @@
         Message = "DictionaryTypes tablosuna kayıt eklendiğinde burada görünür."
     })
 }
+
+@* Plan 33: utility'ler components.css'e taşındı (lookup-head-row, inp-code/label/order, th-right/td-right, inline-form). *@

@@ -583,6 +583,68 @@ select.inp {
 /* Form altında bağlantı testi gibi tek butonlu yan form */
 .test-form-row { max-width: 880px; margin-top: 14px; }
 
+/* ───────────────────────────────────────────────────────────────
+   Plan 33 paralel agent batch — eksik utility'ler (2026-05-13)
+   AiSettings + BrandSettings + Lookup view'ları için.
+   ─────────────────────────────────────────────────────────────── */
+
+/* Lookup admin (head-row + dar input'lar + collapsible details) */
+.lookup-head-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.lookup-add-details { margin-top: 4px; }
+.lookup-add-summary { cursor: pointer; font-size: 12px; color: var(--muted, #6b7280); user-select: none; }
+.lookup-add-form { margin-top: 12px; display: flex; gap: 8px; flex-wrap: wrap; align-items: flex-end; }
+
+/* Generic tablo hizalama (Lookup + AiSettings için) */
+.th-right, .td-right { text-align: right; }
+
+/* Inline form (delete button vs aksiyon tablosu içi) */
+.inline-form { display: inline; }
+
+/* Sabit-genişlik dar input'lar */
+.inp-code  { width: 130px; }
+.inp-label { width: 200px; }
+.inp-order { width: 70px; }
+.inp-hex   { width: 110px; }
+
+/* BrandSettings — logo önizleme + dosya inputu + renk seçici */
+.logo-preview { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; padding: 8px 10px; background: var(--canvas, #fafafa); border: 1px solid var(--line, #e5e7eb); border-radius: 8px; }
+.logo-preview__img { max-height: 40px; max-width: 200px; border: 1px solid var(--line, #e5e7eb); border-radius: 4px; padding: 4px; background: #fff; }
+
+.inp.inp-file, .inp-file { height: auto; padding: 6px 12px; cursor: pointer; }
+
+.color-picker-row { display: flex; gap: 10px; align-items: center; }
+.color-swatch { width: 40px; height: 34px; padding: 2px; border: 1px solid var(--line, #e5e7eb); border-radius: 6px; cursor: pointer; background: #fff; }
+
+/* AiSettings liste (provider + key + son test) */
+.text-ink-1 { color: var(--ink-1, #1f2937); }
+.text-dim   { color: var(--ink-4, #9ca3af); }
+.fw-500     { font-weight: 500; }
+.th-w-30    { width: 30%; }
+
+/* Key indicator (anahtar kayıtlı / değil) */
+.key-ind { display: inline-flex; align-items: center; gap: 4px; font-size: 11.5px; font-weight: 600; }
+.key-ind.ok  { color: var(--ok, #10b981); }
+.key-ind.err { color: var(--accent, #dc2626); }
+
+/* Provider adı mono pill */
+.provider-mono { font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 12px; background: var(--line-2); padding: 2px 6px; border-radius: 4px; }
+
+/* Son test "X dakika önce" + başarı/hata tonu */
+.test-ago     { font-size: 11.5px; color: var(--ink-4, #9ca3af); }
+.test-ago.ok  { color: var(--ok, #10b981); }
+.test-ago.err { color: var(--accent, #dc2626); }
+
+/* Display:block helper (flex/grid içi span'lar) */
+.d-block { display: block; }
+
+/* Form inline + zorunlu yıldız + paper-table alias (agent'lar kullandı) */
+.req { color: var(--accent, #dc2626); font-weight: 600; }
+.form-inline { display: flex; align-items: center; gap: 8px; }
+.paper-table { background: var(--paper); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+
+/* Boş durum 48px ikon (existing pattern + AiSettings için) */
+.empty-state__icon { font-size: 48px; opacity: .4; display: block; margin-bottom: 8px; color: var(--ink-4, #9ca3af); }
+
 /* Parametre listesi yığını (dinamik render) */
 .param-list-stack { display: flex; flex-direction: column; gap: 6px; }
 

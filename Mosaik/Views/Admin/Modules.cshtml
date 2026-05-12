@@ -16,7 +16,7 @@
 
 @section TopActions {
     <a href="/Admin" class="btn">
-        <i class="fas fa-xmark" style="font-size:10px;"></i>
+        <i class="fas fa-xmark icon-xs"></i>
         İptal
     </a>
 }
@@ -28,65 +28,51 @@
 
 @if (TempData["Message"] != null)
 {
-    var isSuccess = TempData["MessageType"]?.ToString() == "success";
-    <div role="alert" style="margin-bottom:18px; padding:12px 16px; border-radius:10px; font-size:13px;
-        background:@(isSuccess ? "var(--success-bg-soft)" : "var(--danger-bg-soft)");
-        border:1px solid @(isSuccess ? "rgba(16,185,129,0.25)" : "rgba(220,38,38,0.25)");
-        color:@(isSuccess ? "var(--success-ink-soft)" : "var(--accent-ink)");">
-        <i class="fas @(isSuccess ? "fa-check-circle" : "fa-exclamation-circle")" style="margin-right:8px;"></i>
-        @TempData["Message"]
-    </div>
+    @await Html.PartialAsync("_AlertMessage", (TempData["MessageType"]?.ToString() ?? "info", TempData["Message"]?.ToString() ?? ""))
 }
 
-@using (Html.BeginForm("Modules", "Admin", FormMethod.Post, new { }))
-{
+<form method="post" action="/Admin/Modules">
     @Html.AntiForgeryToken()
 
-    <div style="background:var(--paper); border:1px solid var(--line); border-radius:10px; overflow:hidden; max-width:560px; margin-bottom:18px;">
-        <div style="padding:14px 18px; border-bottom:1px solid var(--line);">
-            <h2 style="font-size:13px; font-weight:600; color:var(--ink-1); margin:0;">
-                <i class="fas fa-puzzle-piece" style="margin-right:6px; color:var(--ink-3);"></i>
+    <div class="form-section-card narrow">
+        <div class="form-section-head">
+            <h2 class="form-section-head__title">
+                <i class="fas fa-puzzle-piece icon-mr"></i>
                 Aktif Modüller
             </h2>
-            <div style="font-size:12px; color:var(--ink-3); margin-top:2px;">Sidebar'da görünecek modülleri seçin</div>
+            <p class="form-section-head__sub">Sidebar'da görünecek modülleri seçin</p>
         </div>
 
-        <div style="padding:16px 18px;">
+        <div class="form-section-body stack">
             @if (!Model.Any())
             {
-                <div style="font-size:13px; color:var(--ink-3); padding:8px 0;">
-                    Henüz modül tanımlanmamış.
-                </div>
+                <p class="text-muted">Henüz modül tanımlanmamış.</p>
             }
             else
             {
-                <div style="display:flex; flex-direction:column; gap:8px;">
-                    @foreach (var module in Model)
-                    {
-                        <label style="display:flex; align-items:center; gap:12px; padding:12px 14px;
-                                      background:var(--canvas); border:1px solid var(--line); border-radius:8px;
-                                      cursor:pointer; transition:border-color .12s, background .12s;"
-                               onmouseover="this.style.borderColor='var(--ink-4)'"
-                               onmouseout="this.style.borderColor='var(--line)'">
-                            <input type="checkbox" name="enabledIds" value="@module.ModuleId"
-                                   @(module.IsEnabled ? "checked" : "")
-                                   style="width:16px; height:16px; accent-color:var(--accent); flex-shrink:0;" />
-                            <div>
-                                <div style="font-size:13px; font-weight:600; color:var(--ink-1);">@module.DisplayName</div>
-                                <div style="font-size:11px; color:var(--ink-3); font-family:'JetBrains Mono',monospace; margin-top:1px;">@module.ModuleKey</div>
-                            </div>
-                        </label>
-                    }
-                </div>
+                @foreach (var module in Model)
+                {
+                    @* TODO inline-style-guard: module-row utility (paper card + hover) components.css'e eklenmeli *@
+                    <label class="toggle-row">
+                        <input type="checkbox" name="enabledIds" value="@module.ModuleId"
+                               @(module.IsEnabled ? "checked" : "")
+                               class="checkbox checkbox-lg" />
+                        <span>
+                            <span class="d-block">@module.DisplayName</span>
+                            <span class="mono text-xs text-muted">@module.ModuleKey</span>
+                        </span>
+                    </label>
+                }
             }
         </div>
-
-        <div style="padding:14px 18px; border-top:1px solid var(--line); display:flex; align-items:center; gap:8px;">
-            <button type="submit" class="btn primary">
-                <i class="fas fa-save"></i>
-                Kaydet
-            </button>
-            <a href="/Admin" class="btn">İptal</a>
-        </div>
     </div>
-}
+
+    <div class="action-row narrow">
+        <a href="/Admin" class="btn ghost">
+            <i class="fas fa-arrow-left icon-xs"></i> Geri Dön
+        </a>
+        <button type="submit" class="btn primary">
+            <i class="fas fa-save icon-xs"></i> Kaydet
+        </button>
+    </div>
+</form>
