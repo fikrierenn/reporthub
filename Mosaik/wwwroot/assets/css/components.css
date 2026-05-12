@@ -122,6 +122,16 @@
     display: grid; place-items: center;
 }
 .qcard .fav.on { color: var(--accent); }
+
+/* qcard BEM child'ları (Plan 25.1 P4 — Tamim'den taşındı, generic kart pattern) */
+.qcard.has-overlay { position: relative; }
+.qcard__date-icon,
+.qcard__time-icon { font-size: 9px; color: var(--ink-4); margin-right: 3px; }
+.qcard__ago-mono { font-family: 'JetBrains Mono', monospace; }
+.qcard__num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10.5px; color: var(--ink-4); margin-left: auto;
+}
 .qcard .fav:hover { background: var(--line-2); }
 
 /* ---- Type chip (KPI/Chart/Table/Dashboard) ---- */
@@ -512,6 +522,10 @@ select.inp {
 .pill.danger .dot { background: var(--danger, #dc2626); }
 .pill.ok-tone .dot { background: var(--ok, #10b981); }
 .pill.warn .dot { background: var(--warn, #f59e0b); }
+.pill.info-tone { background: #e0f2fe; color: #0369a1; border-color: rgba(2,132,199,0.2); }
+
+/* Compact small button (24px — chart series remove, qb compact) */
+.btn.compact-sm { height: 24px; font-size: 10px; padding: 0 8px; }
 
 /* Help/info kart (form altında provider rehberi vb) */
 .help-card { max-width: 880px; margin-top: 14px; padding: 14px 18px; background: var(--paper); border: 1px solid var(--line); border-radius: 10px; font-size: 12px; color: var(--ink-3); }
@@ -931,7 +945,75 @@ select.inp {
 .pdf-box-head { padding: 10px 14px; border-bottom: 1px solid var(--line); font-size: 12.5px; font-weight: 600; color: var(--ink-1); }
 .pdf-iframe { width: 100%; height: 600px; border: none; display: block; }
 .results-col { display: flex; flex-direction: column; gap: 16px; }
-.ai-summary-card { background: linear-gradient(135deg, var(--accent) 0%, #7c3aed 100%); border-radius: 10px; padding: 18px 20px; color: #fff; }
+/* AI özet kartı — Plan 25.1 P4: components-tamim'den zenginleştirilmiş tanım taşındı.
+   .asc-head + .asc-badge + .asc-footer alt parçalarıyla generic AI summary widget. */
+.ai-summary-card {
+    background: linear-gradient(135deg, rgba(59, 130, 246, .06), rgba(220, 38, 38, .04));
+    border: 1px dashed rgba(59, 130, 246, .30);
+    border-radius: 10px; padding: 16px 20px; margin-bottom: 18px;
+}
+.ai-summary-card .asc-head {
+    display: flex; align-items: center; gap: 8px; margin-bottom: 10px;
+    font-size: 12px; font-weight: 700; letter-spacing: .06em;
+    text-transform: uppercase; color: #1e40af;
+}
+.ai-summary-card .asc-head .asc-badge {
+    background: rgba(59, 130, 246, .15); color: #1e40af;
+    padding: 2px 7px; border-radius: 999px;
+    font-size: 10px; font-weight: 700;
+}
+.ai-summary-card ul {
+    margin: 0; padding-left: 20px;
+    font-size: 13.5px; color: var(--ink-1); line-height: 1.7;
+}
+.ai-summary-card ul li { margin-bottom: 4px; }
+.ai-summary-card .asc-footer {
+    margin-top: 10px; font-size: 11px; color: var(--ink-3);
+    display: flex; justify-content: space-between; align-items: center;
+    flex-wrap: wrap; gap: 8px;
+}
+.ai-summary-card .asc-footer button {
+    background: transparent; border: 1px solid rgba(59, 130, 246, .30);
+    color: #1e40af; padding: 4px 10px; border-radius: 6px;
+    font-size: 11px; cursor: pointer; min-height: 28px;
+    display: inline-flex; align-items: center; gap: 5px;
+    transition: background .12s;
+}
+.ai-summary-card .asc-footer button:hover { background: rgba(59, 130, 246, .08); }
+
+/* .ai-head / .ai-badge / .ai-time / .ai-summary-list / .ai-topics-* — view'larda
+   gerçekten kullanılan canonical naming (Tamim Details + Ai/Review). */
+.ai-summary-card .ai-head {
+    display: flex; align-items: center; gap: 8px; margin-bottom: 10px;
+    font-size: 12px; font-weight: 700; letter-spacing: .06em;
+    text-transform: uppercase; color: #1e40af;
+}
+.ai-summary-card .ai-badge {
+    background: rgba(59, 130, 246, .15); color: #1e40af;
+    padding: 2px 7px; border-radius: 999px;
+    font-size: 10px; font-weight: 700;
+}
+.ai-summary-card .ai-badge.ready { background: rgba(16, 185, 129, .15); color: var(--success-ink-soft); }
+.ai-summary-card .ai-time { font-size: 11px; color: var(--ink-3); margin-left: auto; }
+.ai-summary-card .ai-regen-form { display: inline; margin-left: 8px; }
+.ai-summary-card .ai-summary-list {
+    margin: 8px 0 0; padding-left: 20px;
+    font-size: 13.5px; color: var(--ink-1); line-height: 1.7;
+}
+.ai-summary-card .ai-topics-row {
+    margin-top: 10px; padding-top: 10px;
+    border-top: 1px dashed var(--line);
+    display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
+}
+.ai-summary-card .ai-topics-label {
+    font-size: 11px; font-weight: 700; letter-spacing: .06em;
+    text-transform: uppercase; color: var(--ink-3);
+}
+.ai-summary-card .ai-topic-chip { background: rgba(59, 130, 246, .10); color: #1e40af; }
+.ai-summary-card .ai-empty-text { margin: 0; font-size: 13px; color: var(--ink-3); }
+
+/* Section title trailing count (e.g. "Bloklar (5)") — generic */
+.section-title .st-count { font-size: 12px; color: var(--ink-3); font-weight: 400; }
 .ai-summary-head { display: flex; gap: 8px; align-items: center; margin-bottom: 10px; }
 .ai-summary-title { font-size: 12.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; opacity: .9; }
 .ai-badge { margin-left: auto; background: rgba(255,255,255,.2); border-radius: 20px; padding: 2px 10px; font-size: 11.5px; }
@@ -1380,13 +1462,27 @@ select.inp {
     margin: 14px 0;
 }
 
-/* File pill (eklenen dosya rozeti — Tamim + Documents + Contracts paylaşır) */
+/* File pill (eklenen dosya rozeti — Tamim + Documents + Contracts paylaşır)
+   Plan 25.1 P4: components-tamim.css'ten zenginleştirilmiş tanım buraya taşındı. */
 .file-pill {
     display: inline-flex; align-items: center; gap: 6px;
-    padding: 4px 10px; background: var(--line-2);
-    border: 1px solid var(--line); border-radius: 999px;
-    font-size: 11.5px; color: var(--ink-2);
+    padding: 6px 10px; background: var(--canvas);
+    border: 1px solid var(--line); border-radius: 7px;
+    font-size: 12px; color: var(--ink-1);
+    text-decoration: none; min-height: 32px;
+    transition: border-color .12s, background .12s;
 }
+.file-pill:hover { background: var(--paper); border-color: var(--ink-4); }
+.file-pill:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.file-pill .fp-ext {
+    font-size: 10px; font-weight: 700;
+    padding: 1px 5px; border-radius: 3px;
+    background: var(--ink-3); color: white; flex-shrink: 0;
+}
+.file-pill .fp-ext.pdf  { background: #dc2626; }
+.file-pill .fp-ext.xlsx { background: #16a34a; }
+.file-pill .fp-ext.docx { background: #2563eb; }
+.file-pill .fp-size { color: var(--ink-4); font-size: 11px; }
 .file-pill .fp-ext-generic { font-size: 10px; color: var(--ink-4); font-weight: 600; }
 .file-pill .fp-size-dot { font-size: 9px; color: var(--ink-4); }
 

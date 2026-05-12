@@ -72,38 +72,8 @@
     color: var(--ink-2);
 }
 
-/* ---- Filter bar — filtre + arama satırı ---- */
-.filter-bar {
-    background: var(--paper);
-    border: 1px solid var(--line);
-    border-radius: 10px;
-    padding: 10px 14px;
-    display: flex;
-    gap: 10px;
-    align-items: center;
-    margin-bottom: 16px;
-    flex-wrap: wrap;
-}
-
-.filter-bar .fb-search {
-    flex: 1;
-    min-width: 200px;
-    position: relative;
-}
-
-.filter-bar .fb-search .ico {
-    position: absolute;
-    left: 10px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: var(--ink-4);
-    font-size: 12px;
-    pointer-events: none;
-}
-
-.filter-bar .fb-search .inp {
-    padding-left: 30px;
-}
+/* .filter-bar + .fb-search Plan 25.1 P4: components.css canonical (Tamim view'ları
+   .fb-search-grow kullanır, eski .fb-search hiçbir view'da yok). */
 
 /* ---- Tamim kart grid (2 sütun — kart görünümü) ---- */
 .tamim-grid {
@@ -257,75 +227,7 @@
 
 .tamim-envelope .env-meta i { margin-right: 5px; }
 
-/* ---- AI özet kartı ---- */
-.ai-summary-card {
-    background: linear-gradient(135deg, rgba(59, 130, 246, .06), rgba(220, 38, 38, .04));
-    border: 1px dashed rgba(59, 130, 246, .30);
-    border-radius: 10px;
-    padding: 16px 20px;
-    margin-bottom: 18px;
-}
-
-.ai-summary-card .asc-head {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 10px;
-    font-size: 12px;
-    font-weight: 700;
-    letter-spacing: .06em;
-    text-transform: uppercase;
-    color: #1e40af;
-}
-
-.ai-summary-card .asc-head .asc-badge {
-    background: rgba(59, 130, 246, .15);
-    color: #1e40af;
-    padding: 2px 7px;
-    border-radius: 999px;
-    font-size: 10px;
-    font-weight: 700;
-}
-
-.ai-summary-card ul {
-    margin: 0;
-    padding-left: 20px;
-    font-size: 13.5px;
-    color: var(--ink-1);
-    line-height: 1.7;
-}
-
-.ai-summary-card ul li { margin-bottom: 4px; }
-
-.ai-summary-card .asc-footer {
-    margin-top: 10px;
-    font-size: 11px;
-    color: var(--ink-3);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 8px;
-}
-
-.ai-summary-card .asc-footer button {
-    background: transparent;
-    border: 1px solid rgba(59, 130, 246, .30);
-    color: #1e40af;
-    padding: 4px 10px;
-    border-radius: 6px;
-    font-size: 11px;
-    cursor: pointer;
-    min-height: 28px;
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    transition: background .12s;
-}
-
-.ai-summary-card .asc-footer button:hover {
-    background: rgba(59, 130, 246, .08);
-}
+/* .ai-summary-card + child'lar Plan 25.1 P4: components.css'e taşındı (generic AI summary widget). */
 
 /* ---- Blok satırı — sol renk şeridi + tip badge ---- */
 .blok-list {
@@ -426,49 +328,7 @@
     flex-wrap: wrap;
 }
 
-.file-pill {
-    background: var(--canvas);
-    border: 1px solid var(--line);
-    border-radius: 7px;
-    padding: 6px 10px;
-    font-size: 12px;
-    color: var(--ink-1);
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    text-decoration: none;
-    transition: border-color .12s, background .12s;
-    min-height: 32px;
-}
-
-.file-pill:hover {
-    background: var(--paper);
-    border-color: var(--ink-4);
-}
-
-.file-pill:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: 2px;
-}
-
-.file-pill .fp-ext {
-    font-size: 10px;
-    font-weight: 700;
-    padding: 1px 5px;
-    border-radius: 3px;
-    background: var(--ink-3);
-    color: white;
-    flex-shrink: 0;
-}
-
-.file-pill .fp-ext.pdf  { background: #dc2626; }
-.file-pill .fp-ext.xlsx { background: #16a34a; }
-.file-pill .fp-ext.docx { background: #2563eb; }
-
-.file-pill .fp-size {
-    color: var(--ink-4);
-    font-size: 11px;
-}
+/* .file-pill + .fp-ext + .fp-size Plan 25.1 P4: components.css'e taşındı (Tamim + Documents + Contracts ortak). */
 
 /* ---- Okuma kaydı (read receipt) ---- */
 .read-receipt {
@@ -893,22 +753,7 @@
 /* Index — top-action inline form (Şimdi Derle) */
 .tamim-compile-form { display: inline; margin: 0; }
 
-/* Index — qcard small icons */
-.qcard__date-icon,
-.qcard__time-icon {
-    font-size: 9px;
-    color: var(--ink-4);
-    margin-right: 3px;
-}
-
-.qcard__ago-mono { font-family: 'JetBrains Mono', monospace; }
-.qcard.has-overlay { position: relative; }
-.qcard__num {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 10.5px;
-    color: var(--ink-4);
-    margin-left: auto;
-}
+/* .qcard.has-overlay + .qcard__* Plan 25.1 P4: components.css'e taşındı (generic kart). */
 
 /* Index — empty state (dashed paper card) */
 .tamim-empty {
@@ -927,67 +772,8 @@
 /* Details — envelope acil emphasis */
 .tamim-envelope .te-meta .te-acil { color: var(--accent); font-weight: 600; }
 
-/* Details — AI summary aliases (view kullanır: .ai-head, .ai-badge) */
-.ai-summary-card .ai-head {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 10px;
-    font-size: 12px;
-    font-weight: 700;
-    letter-spacing: .06em;
-    text-transform: uppercase;
-    color: #1e40af;
-}
-
-.ai-summary-card .ai-badge {
-    background: rgba(59, 130, 246, .15);
-    color: #1e40af;
-    padding: 2px 7px;
-    border-radius: 999px;
-    font-size: 10px;
-    font-weight: 700;
-}
-
-.ai-summary-card .ai-badge.ready {
-    background: rgba(16, 185, 129, .15);
-    color: var(--success-ink-soft);
-}
-
-.ai-summary-card .ai-time { font-size: 11px; color: var(--ink-3); margin-left: auto; }
-.ai-summary-card .ai-regen-form { display: inline; margin-left: 8px; }
-
-.ai-summary-card .ai-summary-list {
-    margin: 8px 0 0;
-    padding-left: 20px;
-    font-size: 13.5px;
-    color: var(--ink-1);
-    line-height: 1.7;
-}
-
-.ai-summary-card .ai-topics-row {
-    margin-top: 10px;
-    padding-top: 10px;
-    border-top: 1px dashed var(--line);
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    align-items: center;
-}
-
-.ai-summary-card .ai-topics-label {
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: .06em;
-    text-transform: uppercase;
-    color: var(--ink-3);
-}
-
-.ai-summary-card .ai-topic-chip { background: rgba(59, 130, 246, .10); color: #1e40af; }
-.ai-summary-card .ai-empty-text { margin: 0; font-size: 13px; color: var(--ink-3); }
-
-/* Details — section-title trailing count */
-.section-title .st-count { font-size: 12px; color: var(--ink-3); font-weight: 400; }
+/* .ai-summary-card .ai-* + .section-title .st-count Plan 25.1 P4: components.css'e taşındı
+   (Tamim Details + Ai/Review iki modülde de kullanılır — generic). */
 
 /* Details — empty blocks (solid border) */
 .empty-blocks {

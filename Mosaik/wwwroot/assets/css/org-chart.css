@@ -237,7 +237,7 @@ body.oc-dragging .oc-children:empty::before {
 .oc-unknown-row__form { margin: 0; }
 
 /* Pill renkli varyantları (Görünüm modu + Zirve uyarısı) */
-.pill.info-tone { background: #e0f2fe; color: #0369a1; border-color: rgba(2,132,199,0.2); }
+/* .pill.info-tone Plan 25.1 P4: components.css'e taşındı (generic pill varyantı). */
 
 /* ============================================================
    Public OrgChart (read-only) utility'leri — Plan 25.1 Faz 1 (2026-05-12)
