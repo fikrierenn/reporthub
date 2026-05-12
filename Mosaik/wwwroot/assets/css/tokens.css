@@ -92,4 +92,20 @@
     --success-ink-soft: #065f46;
     --warn-bg-soft: rgba(234, 179, 8, 0.10);
     --warn-ink-soft: #92400e;
+
+    /* === Plan 25.1 Faz 1 — Alias'lar (eski adlandırma uyumluluk için) ===
+       Refactor sırasında bazı view/CSS'lerde alternatif isimler kullanıldı.
+       Bunları canonical isme bağla — view'larda rename yapmak yerine
+       tokens'ta alias tek source-of-truth. */
+    --border: var(--line);             /* eski isim — components.css'te yaygın kullanım */
+    --muted: var(--ink-3);             /* eski isim — Tamim CSS ve form-help */
+    --ink-mute: var(--ink-3);          /* eski isim — orgchart + Tamim */
+    --ink-5: var(--brand-gray-300);    /* d1d5db — line'dan biraz daha açık */
+    --err: var(--danger);              /* eski isim — code-block.error */
+    --bg-1: var(--canvas);             /* sayfa arkaplan alias */
+
+    /* === Plan 25.1 — Violet (AI badge tonu, Plan 27 sözleşme AI özet) === */
+    --violet: #7c3aed;
+    --violet-soft: #f3e8ff;
+    --violet-border: #ddd6fe;
 }
