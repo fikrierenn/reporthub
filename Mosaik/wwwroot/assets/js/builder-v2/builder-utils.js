@@ -6,6 +6,8 @@
 //   __BuilderV2.escHtml(s)              — XSS-safe HTML escape (incl. &quot;)
 //   __BuilderV2.fmtCell(rawVal, fmt)    — table cell formatter (currency/number/percent/date/text/auto)
 //   __BuilderV2.fmtChart(v, numFormat)  — chart axis/tooltip formatter
+//
+// AntiForgery token global: window.getAntiForgeryToken() (app-shell.js)
 
 (function () {
     "use strict";

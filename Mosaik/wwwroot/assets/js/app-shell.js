@@ -91,6 +91,20 @@
     });
 })();
 
+// Plan 25.2 — Global AntiForgery helper. POST fetch'lerinde her dosyada
+// `document.querySelector('input[name="__RequestVerificationToken"]')` duplicate
+// edilmesin diye burada (her sayfada yüklü) tek source. Cache after first lookup.
+(function () {
+    "use strict";
+    var __aftCache = null;
+    window.getAntiForgeryToken = function () {
+        if (__aftCache !== null) return __aftCache;
+        var el = document.querySelector('input[name="__RequestVerificationToken"]');
+        __aftCache = el ? el.value : '';
+        return __aftCache;
+    };
+})();
+
 // Plan 23 — Sidebar collapsible group Alpine factory.
 // _AppLayout.cshtml her <div class="side-group"> için x-data="sidebarGroup('<key>')" tanımlar.
 // localStorage'a 'mosaik.sidebar.group.<key>' = '0'|'1' yazar (default açık).

@@ -32,9 +32,8 @@
                     return;
                 }
 
-                // AntiForgery token — sayfada @Html.AntiForgeryToken() ile DOM'da var
-                var tokenEl = document.querySelector('input[name="__RequestVerificationToken"]');
-                var token = tokenEl ? tokenEl.value : '';
+                // AntiForgery token — global helper (app-shell.js, cached)
+                var token = window.getAntiForgeryToken ? window.getAntiForgeryToken() : '';
                 if (!token) {
                     this.previewModal = { open: true, html: '', loading: false,
                         error: 'AntiForgery token bulunamadı; sayfayı yenileyin.' };

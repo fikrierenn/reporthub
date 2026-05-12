@@ -66,8 +66,7 @@
                     return Promise.resolve(false);
                 }
 
-                var tokenEl = document.querySelector('input[name="__RequestVerificationToken"]');
-                var token = tokenEl ? tokenEl.value : '';
+                var token = window.getAntiForgeryToken ? window.getAntiForgeryToken() : '';
                 if (!token) {
                     this.pushToast('AntiForgery token bulunamadı; sayfayı yenileyin.', 'error');
                     return Promise.resolve(false);

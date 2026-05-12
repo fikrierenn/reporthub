@@ -119,7 +119,7 @@
             validateFormulaLive() {
                 var f = this.calcColForm;
                 if (!f.formula || !f.formula.trim()) { f.error = null; f.errorPos = null; return; }
-                var token = document.querySelector('input[name="__RequestVerificationToken"]');
+                var token = window.getAntiForgeryToken ? window.getAntiForgeryToken() : "";
                 if (!token) { f.error = 'AntiForgery token yok'; return; }
                 f.busy = true;
                 var body = new URLSearchParams();
@@ -129,7 +129,7 @@
                     credentials: 'same-origin',
                     headers: {
                         'Content-Type': 'application/x-www-form-urlencoded',
-                        'RequestVerificationToken': token.value
+                        "RequestVerificationToken": token
                     },
                     body: body.toString()
                 })
@@ -172,7 +172,7 @@
                     f.error = 'Bu kolon adı zaten kullanılıyor.'; return;
                 }
                 var self = this;
-                var token = document.querySelector('input[name="__RequestVerificationToken"]');
+                var token = window.getAntiForgeryToken ? window.getAntiForgeryToken() : "";
                 if (!token) { f.error = 'AntiForgery token yok'; return; }
                 f.busy = true;
                 var body = new URLSearchParams();
@@ -182,7 +182,7 @@
                     credentials: 'same-origin',
                     headers: {
                         'Content-Type': 'application/x-www-form-urlencoded',
-                        'RequestVerificationToken': token.value
+                        "RequestVerificationToken": token
                     },
                     body: body.toString()
                 })

@@ -23,7 +23,12 @@
     let raw;
     try { raw = JSON.parse(dataEl.textContent); }
     catch (e) {
-        container.innerHTML = '<div style="padding:20px;color:#b91c1c;">Veri ayrıştırma hatası: ' + e.message + '</div>';
+        // XSS-safe: e.message JSON içeriğinden gelebilir, textContent ile yaz
+        container.innerHTML = '';
+        const err = document.createElement('div');
+        err.className = 'render-error';
+        err.textContent = 'Veri ayrıştırma hatası: ' + e.message;
+        container.appendChild(err);
         return;
     }
 
@@ -46,7 +51,7 @@
 
     container.innerHTML = '';
 
-    const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+    const token = window.getAntiForgeryToken ? window.getAntiForgeryToken() : '';
 
     // Drag-drop kapalı — taşıma sağ-tık modalı ile yapılıyor (view'daki Alpine ocMoveModal).
     // Lib drag-drop UX'i sorunluydu (cross-parent, JSONDigger quirks); sağ-tık güvenilir.
