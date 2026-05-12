@@ -71,7 +71,7 @@
         </div>
 
         <div class="form-section-body">
-            <div class="tamim-form-row-type-subject">
+            <div class="form-row-2col">
                 <div class="field">
                     <label class="lab" for="BlockTypeId">Blok Türü <span class="text-danger">*</span></label>
                     <select id="BlockTypeId" name="BlockTypeId" class="inp" required>
@@ -123,7 +123,7 @@
             <div class="form-section-head__sub-tight">PDF, DOCX, XLSX, JPG, PNG, TXT — max 10 MB her dosya</div>
         </div>
         <div class="form-section-body">
-            <div class="tamim-upload-zone">
+            <div class="upload-zone">
                 <i class="fas fa-cloud-arrow-up upload-icon" aria-hidden="true"></i>
                 <input type="file" name="files" multiple
                        accept=".pdf,.docx,.xlsx,.jpg,.jpeg,.png,.txt"
@@ -158,15 +158,15 @@
     <div class="form-section-body">
         @if (files.Any())
         {
-            <div class="tamim-file-list">
+            <div class="attached-file-list">
                 @foreach (var d in files)
                 {
                     var extCls = ExtClass(d.Extension);
-                    <div class="tamim-file-row">
-                        <div class="tamim-file-row__main">
-                            <span class="tamim-file-row__ext ext @extCls">@d.Extension</span>
-                            <a href="@Url.Action("DownloadFile", new { id = d.Id })" class="tamim-file-row__name">@d.FileName</a>
-                            <span class="tamim-file-row__size">@FormatBoyut(d.FileSize)</span>
+                    <div class="attached-file">
+                        <div class="attached-file__main">
+                            <span class="attached-file__ext ext @extCls">@d.Extension</span>
+                            <a href="@Url.Action("DownloadFile", new { id = d.Id })" class="attached-file__name">@d.FileName</a>
+                            <span class="attached-file__size">@FormatBoyut(d.FileSize)</span>
                         </div>
                         <form method="post" action="@Url.Action("DeleteFile", new { id = d.Id })" class="inline-form"
                               onsubmit="return confirm('Dosya silinsin mi?');">
@@ -182,7 +182,7 @@
 
         @if (!files.Any())
         {
-            <div class="tamim-empty-files">
+            <div class="attached-file-list-empty">
                 Henüz dosya yok. Üstteki "Yeni Dosya Ekle" alanından dosya seçip "Değişiklikleri Kaydet"e bas.
             </div>
         }

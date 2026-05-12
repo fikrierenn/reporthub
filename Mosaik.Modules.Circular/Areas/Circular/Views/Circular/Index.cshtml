@@ -19,7 +19,7 @@
 @section TopActions {
     @if (User.IsInRole("admin"))
     {
-        <form method="post" action="@Url.Action("CompileNow", "Admin")" class="tamim-compile-form"
+        <form method="post" action="@Url.Action("CompileNow", "Admin")" class="inline-form"
               onsubmit="return confirm('Bugünün pending bloklarını şimdi derleyip tamim olarak yayınla?');">
             @Html.AntiForgeryToken()
             <button type="submit" class="btn primary" title="Cron'u beklemeden manuel derleme">
@@ -45,19 +45,16 @@
 
 <div x-data="{ q: '' }">
 
-<form method="get" class="tamim-filter">
-    <div class="tamim-filter__field">
-        <label class="lab" for="tamimSearch">Arama</label>
-        <div class="tamim-filter__search">
-            <span class="tamim-filter__icon">
-                <i class="fas fa-magnifying-glass"></i>
-            </span>
-            <input type="text" id="tamimSearch" name="q" x-model="q"
-                   class="inp"
-                   placeholder="Tamim no, başlık veya tarih..." />
-        </div>
+<form method="get" class="filter-bar with-toggle">
+    <div class="fb-search-grow">
+        <span class="fb-icon">
+            <i class="fas fa-magnifying-glass"></i>
+        </span>
+        <input type="text" id="tamimSearch" name="q" x-model="q"
+               class="inp"
+               placeholder="Tamim no, başlık veya tarih..." />
     </div>
-    <div class="tamim-filter__actions">
+    <div class="filter-bar__actions">
         <button type="submit" class="btn primary" title="URL'ye yansıt (paylaşılabilir link)">
             <i class="fas fa-filter text-[10px]"></i>
             Filtrele
@@ -71,8 +68,8 @@
 
 @if (!Model.Any())
 {
-    <div class="tamim-empty">
-        <i class="fas fa-folder-open tamim-empty__icon"></i>
+    <div class="empty-state paper-dashed">
+        <i class="fas fa-folder-open empty-state__icon"></i>
         <h3>Son 30 günde yayınlanmış tamim yok</h3>
         <p>Sistem her gün <strong>17:00</strong>'de o güne ait blokları otomatik tamim olarak yayınlar.</p>
     </div>

@@ -1777,3 +1777,302 @@ select.inp {
 .udf-section__hint .muted { color: var(--ink-3); }
 .udf-section__hint .err { color: #b91c1c; }
 .udf-empty { font-size: 12px; color: var(--ink-3); }
+
+/* ============================================================
+   Plan 25.1 P7 — Tamim'den generic'leştirme
+   ============================================================ */
+
+/* ---- .sr-only — ekran okuyucu için görsel olarak gizli metin ---- */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* ---- Type chip varyantları — her modülde domain etiket renkleri ---- */
+.type-chip.type-karar    { background: var(--karar-bg-soft); color: var(--karar-ink); }
+.type-chip.type-uyari    { background: var(--uyari-bg-soft); color: var(--uyari-ink); }
+.type-chip.type-bilgi    { background: var(--bilgi-bg-soft); color: var(--bilgi-ink); }
+.type-chip.type-duyuru   { background: var(--duyuru-bg-soft); color: var(--duyuru-ink); }
+.type-chip.type-prosedur { background: var(--line-2); color: var(--ink-2); }
+.type-karar    { background: var(--karar-bg-soft); color: var(--karar-ink); }
+.type-uyari    { background: var(--uyari-bg-soft); color: var(--uyari-ink); }
+.type-bilgi    { background: var(--bilgi-bg-soft); color: var(--bilgi-ink); }
+.type-duyuru   { background: var(--duyuru-bg-soft); color: var(--duyuru-ink); }
+.type-prosedur { background: var(--line-2); color: var(--ink-2); }
+
+/* ---- List stack — dikey kart listesi (her modülün liste sayfaları için) ---- */
+.list-stack { display: flex; flex-direction: column; gap: 12px; }
+
+/* ---- List item — sol renk şeridi + tip badge (blok/talep/görev/bildirim ortak) ---- */
+.list-item {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--ink-4);
+    border-radius: 8px;
+    padding: 14px 18px;
+}
+.list-item.urgent  { border-left-color: var(--accent); }
+.list-item.karar   { border-left-color: var(--karar-ink); }
+.list-item.uyari   { border-left-color: var(--warn); }
+.list-item.bilgi   { border-left-color: #2563eb; }
+.list-item.duyuru  { border-left-color: var(--ok); }
+
+.list-item__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+.list-item__no {
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    font-variant-numeric: tabular-nums;
+}
+.list-item__tip-row { display: flex; gap: 6px; align-items: center; }
+.list-item h4 {
+    font-size: 14.5px;
+    font-weight: 600;
+    color: var(--ink-0);
+    margin: 0 0 6px;
+}
+.list-item__desc {
+    font-size: 12.5px;
+    color: var(--ink-3);
+    margin: 0 0 8px;
+}
+.list-item__body {
+    font-size: 13.5px;
+    color: var(--ink-1);
+    line-height: 1.65;
+}
+.list-item__meta {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid var(--line);
+    font-size: 11.5px;
+    color: var(--ink-3);
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+.list-item__files { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 6px; }
+
+/* ---- File chip mini (file-pill'in kompakt varyantı — list-item içi) ---- */
+.file-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 9px;
+    background: var(--canvas);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    text-decoration: none;
+    color: var(--ink-1);
+    font-size: 12px;
+}
+.file-chip:hover { border-color: var(--ink-4); }
+.file-chip__ext {
+    font-size: 9.5px;
+    font-weight: 700;
+    padding: 2px 5px;
+    border-radius: 3px;
+    background: var(--accent);
+    color: #fff;
+    text-transform: uppercase;
+}
+.file-chip__size { color: var(--ink-3); font-size: 10.5px; }
+
+/* ---- 2-col form row (sabit + esnek genişlik) ---- */
+.form-row-2col {
+    display: grid;
+    grid-template-columns: 160px 1fr;
+    gap: 14px;
+    margin-bottom: 14px;
+}
+.form-row-2col .field { margin-bottom: 0; }
+
+/* ---- Upload zone (drag-drop dosya alanı — Documents+Tamim+Contracts ortak) ---- */
+.upload-zone {
+    border: 2px dashed var(--line);
+    border-radius: 10px;
+    padding: 20px;
+    text-align: center;
+}
+.upload-zone.lg { padding: 24px; }
+.upload-zone .upload-icon {
+    font-size: 28px;
+    color: var(--ink-4);
+    margin-bottom: 6px;
+}
+.upload-zone.lg .upload-icon { font-size: 32px; margin-bottom: 8px; }
+.upload-zone .upload-input { max-width: 420px; padding: 6px; }
+.upload-zone .upload-title { font-size: 13px; font-weight: 500; color: var(--ink-1); }
+.upload-zone .upload-sub { font-size: 11.5px; }
+
+/* ---- Attached file row (form-içi yatay strip — Edit'te mevcut dosya listesi) ---- */
+.attached-file-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 14px;
+}
+.attached-file {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px;
+    background: var(--canvas);
+    border-radius: 8px;
+}
+.attached-file__main {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+}
+.attached-file__ext {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 3px 6px;
+    border-radius: 3px;
+    background: var(--accent);
+    color: #fff;
+    text-transform: uppercase;
+}
+.attached-file__name {
+    font-size: 13px;
+    color: var(--ink-1);
+    font-weight: 500;
+    text-decoration: none;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.attached-file__size {
+    font-size: 11px;
+    color: var(--ink-3);
+}
+.attached-file-list-empty {
+    font-size: 12.5px;
+    color: var(--ink-3);
+    padding: 16px 0;
+    text-align: center;
+}
+
+/* ---- Read receipt — okundu makbuzu (Tamim + Plan 28 İç İletişim + Bildirim ortak) ---- */
+.read-receipt {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin-top: 18px;
+}
+.read-receipt .rr-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+.read-receipt .rr-head h3 {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.read-receipt .rr-body {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+}
+.read-receipt .rr-info {
+    font-size: 13px;
+    color: var(--ink-2);
+}
+.read-receipt .rr-info small {
+    display: block;
+    color: var(--ink-3);
+    font-size: 12px;
+    margin-top: 2px;
+}
+
+/* Ack (acknowledge) butonu + durum */
+.ack-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    background: var(--accent);
+    color: white;
+    border: none;
+    padding: 10px 18px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    min-height: 44px;
+    transition: background .12s;
+}
+.ack-btn:hover { background: var(--accent-ink); }
+.ack-btn.acked { background: var(--ok); }
+.ack-btn:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+    box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.40);
+}
+.ack-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12.5px;
+    font-weight: 600;
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: rgba(16, 185, 129, .12);
+    color: var(--success-ink-soft, var(--duyuru-ink));
+}
+.ack-status i { font-size: 12px; }
+
+/* ---- Badge — okundu / yeni durum işareti (bildirim/mesaj listelerinde) ---- */
+.badge.is-read,
+.badge.is-new {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-weight: 600;
+}
+.badge.is-read { background: rgba(16, 185, 129, .12); color: var(--duyuru-ink); }
+.badge.is-new  { background: rgba(220, 38, 38, .10); color: var(--accent-ink); }
+
+/* ---- 2-col responsive list grid (kart görünümü) ---- */
+.list-grid-2 {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+}
+@media (max-width: 900px) {
+    .list-grid-2 { grid-template-columns: 1fr; }
+}

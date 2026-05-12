@@ -171,21 +171,21 @@
 
 @if (!blocks.Any())
 {
-    <div class="empty-blocks">
-        Bu tamim'e bağlı blok bulunamadı.
+    <div class="empty-state">
+        <p>Bu tamim'e bağlı blok bulunamadı.</p>
     </div>
 }
 else
 {
-    <div class="blok-list">
+    <div class="list-stack">
         @foreach (var b in blocks.OrderByDescending(x => x.IsUrgent).ThenBy(x => x.Id))
         {
             blockTypeMap.TryGetValue(b.BlockTypeId, out var turLabel);
             var tipCls = TipKey(turLabel);
-            <article class="blok-item @(b.IsUrgent ? "acil" : "")">
-                <div class="bi-head">
-                    <span class="bi-no">@b.BlockNumber</span>
-                    <div class="bi-tip-row">
+            <article class="list-item @(b.IsUrgent ? "urgent" : "")">
+                <div class="list-item__head">
+                    <span class="list-item__no">@b.BlockNumber</span>
+                    <div class="list-item__tip-row">
                         @if (b.IsUrgent)
                         {
                             <span class="pill urgent"><i class="fas fa-bolt" aria-hidden="true"></i> IsUrgent</span>
@@ -198,21 +198,21 @@ else
                 </div>
                 <h4>@b.Subject</h4>
                 @* Content QuillContentSanitizer ile save-time sanitize edildi (BlockService) *@
-                <div class="bi-icerik">@Html.Raw(b.Content)</div>
+                <div class="list-item__body">@Html.Raw(b.Content)</div>
                 @if (fileMap.TryGetValue(b.Id, out var blockFiles) && blockFiles.Any())
                 {
-                    <div class="bi-files">
+                    <div class="list-item__files">
                         @foreach (var d in blockFiles)
                         {
-                            <a href="@Url.Action("DownloadFile", "Block", new { id = d.Id })" class="bi-file-link">
-                                <span class="bf-ext">@d.Extension</span>
+                            <a href="@Url.Action("DownloadFile", "Block", new { id = d.Id })" class="file-chip">
+                                <span class="file-chip__ext">@d.Extension</span>
                                 <span>@d.FileName</span>
-                                <span class="bf-size">· @FormatBoyut(d.FileSize)</span>
+                                <span class="file-chip__size">· @FormatBoyut(d.FileSize)</span>
                             </a>
                         }
                     </div>
                 }
-                <div class="bi-meta">
+                <div class="list-item__meta">
                     <span><i class="fas fa-building" aria-hidden="true"></i>@b.Department</span>
                     <span><i class="fas fa-calendar" aria-hidden="true"></i>@b.BlockDate.ToString("dd MMM", tr)</span>
                 </div>

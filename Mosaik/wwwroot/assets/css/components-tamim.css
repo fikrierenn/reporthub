@@ -1,117 +1,28 @@
 /**
- * components-tamim.css — Tamim modülüne özel component'ler.
+ * components-tamim.css — Tamim modülünün GERÇEKTEN domain-spesifik component'leri.
  *
- * Global components.css / app-shell.css ile çakışmaz — sadece Tamim-spesifik
- * yeni pattern'ler burada yaşar. Tamim view'larında <link> ile yüklenir.
- * Depends: tokens.css (var(--accent), var(--ink-*), vs.)
+ * Plan 25.1 P7 (2026-05-13): Bu dosya baştan sona temizlendi. Generic pattern'lar
+ * (list-item, read-receipt, ack-btn, upload-zone, attached-file, type-chip varyantları,
+ * file-chip, form-row-2col, list-grid-2, badge.is-*, list-stack, sr-only) artık
+ * components.css'te yaşıyor — Tamim view'ları onları reuse ediyor.
+ *
+ * Burada KALAN sınıflar gerçekten Tamim domain'inin "resmi yazı / zarf" görsel
+ * kimliğine veya Quill rich-text editor wrapper'ına özgüdür. Plan 28 İç İletişim,
+ * Plan 25 Sözleşme gibi diğer modüllerde bu pattern'leri reuse etmeyiz.
+ *
+ * Depends: tokens.css, components.css
  */
 
-/* ---- .sr-only — ekran okuyucu için görsel olarak gizli metin ---- */
-.sr-only {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    padding: 0;
-    margin: -1px;
-    overflow: hidden;
-    clip: rect(0, 0, 0, 0);
-    white-space: nowrap;
-    border: 0;
-}
-
-/* ---- Focus ring güçlendirme (WCAG 2.1 AA — minimum 3:1 kontrast) ----
-   Global --accent-soft: rgba(220,38,38,0.12) çok soluk.
-   Tamim view'larında 0.40 opacity ile override edilir. */
+/* ---- Focus ring güçlendirme (Tamim sayfa-içi WCAG override) ----
+   Global --accent-soft: 0.12 opacity çok soluk. Tamim 0.40 ile güçlendirir. */
 .tamim-scope *:focus-visible {
     outline: 2px solid var(--accent);
     outline-offset: 2px;
     box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.40);
 }
 
-/* ---- Segmented control — liste/kart toggle ---- */
-.seg-ctrl {
-    display: inline-flex;
-    background: var(--canvas);
-    border: 1px solid var(--line);
-    border-radius: 8px;
-    padding: 3px;
-    gap: 2px;
-}
-
-.seg-ctrl button {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 6px 14px;
-    min-height: 34px;
-    font-size: 12.5px;
-    font-weight: 500;
-    color: var(--ink-3);
-    background: transparent;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: background .12s, color .12s, box-shadow .12s;
-}
-
-.seg-ctrl button[aria-pressed="true"] {
-    background: var(--paper);
-    color: var(--ink-0);
-    box-shadow: var(--shadow-sm);
-    font-weight: 600;
-}
-
-.seg-ctrl button .count {
-    font-size: 11px;
-    font-weight: 600;
-    color: var(--ink-4);
-    font-variant-numeric: tabular-nums;
-}
-
-.seg-ctrl button[aria-pressed="true"] .count {
-    color: var(--ink-2);
-}
-
-/* .filter-bar + .fb-search Plan 25.1 P4: components.css canonical (Tamim view'ları
-   .fb-search-grow kullanır, eski .fb-search hiçbir view'da yok). */
-
-/* ---- Tamim kart grid (2 sütun — kart görünümü) ---- */
-.tamim-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 14px;
-}
-
-@media (max-width: 900px) {
-    .tamim-grid { grid-template-columns: 1fr; }
-}
-
-/* .tamim-card + .tc-* Plan 25.1 P5: hiçbir view'da kullanılmıyordu — silindi.
-   Tamim listesinde .qcard generic kart pattern'i kullanılır. */
-
-/* Badge: okundu / yeni */
-.badge-okundu,
-.badge-yeni {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    font-size: 11px;
-    padding: 2px 8px;
-    border-radius: 999px;
-    font-weight: 600;
-}
-
-.badge-okundu {
-    background: rgba(16, 185, 129, .12);
-    color: var(--duyuru-ink);
-}
-
-.badge-yeni {
-    background: rgba(220, 38, 38, .10);
-    color: var(--accent-ink);
-}
-
-/* ---- Tamim zarfı — resmi yazı header layout ---- */
+/* ---- Tamim zarfı — resmi yazı başlığı (kırmızı üst şerit + uppercase no + meta)
+       Tamim'in marka kimliği. Başka modülde aynı görünüm kullanılmaz. ---- */
 .tamim-envelope {
     background: var(--paper);
     border: 1px solid var(--line);
@@ -119,15 +30,6 @@
     border-radius: 10px;
     padding: 22px 26px;
     margin-bottom: 18px;
-}
-
-.tamim-envelope .env-no {
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: .08em;
-    text-transform: uppercase;
-    color: var(--accent);
-    margin-bottom: 6px;
 }
 
 .tamim-envelope h1 {
@@ -138,347 +40,6 @@
     letter-spacing: -.01em;
 }
 
-.tamim-envelope .env-meta {
-    display: flex;
-    gap: 18px;
-    font-size: 12.5px;
-    color: var(--ink-3);
-    flex-wrap: wrap;
-    align-items: center;
-}
-
-.tamim-envelope .env-meta i { margin-right: 5px; }
-
-/* .ai-summary-card + child'lar Plan 25.1 P4: components.css'e taşındı (generic AI summary widget). */
-
-/* ---- Blok satırı — sol renk şeridi + tip badge ---- */
-.blok-list {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-
-.blok-item {
-    background: var(--paper);
-    border: 1px solid var(--line);
-    border-left: 3px solid var(--ink-4);
-    border-radius: 8px;
-    padding: 14px 18px;
-}
-
-.blok-item.blok-acil { border-left-color: var(--accent); }
-.blok-item.blok-karar { border-left-color: var(--karar-ink); }
-.blok-item.blok-uyari { border-left-color: var(--warn); }
-.blok-item.blok-bilgi { border-left-color: #2563eb; }
-.blok-item.blok-duyuru { border-left-color: var(--ok); }
-
-.blok-item .bi-head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 8px;
-    gap: 10px;
-    flex-wrap: wrap;
-}
-
-.blok-item .bi-no {
-    font-size: 10.5px;
-    font-weight: 700;
-    letter-spacing: .06em;
-    text-transform: uppercase;
-    color: var(--ink-3);
-    font-variant-numeric: tabular-nums;
-}
-
-.blok-item h4 {
-    font-size: 14.5px;
-    font-weight: 600;
-    color: var(--ink-0);
-    margin: 0 0 6px;
-}
-
-.blok-item .bi-desc {
-    font-size: 12.5px;
-    color: var(--ink-3);
-    margin: 0 0 8px;
-}
-
-.blok-item .bi-body {
-    font-size: 13.5px;
-    color: var(--ink-1);
-    line-height: 1.65;
-}
-
-.blok-item .bi-meta {
-    margin-top: 10px;
-    padding-top: 10px;
-    border-top: 1px solid var(--line);
-    font-size: 11.5px;
-    color: var(--ink-3);
-    display: flex;
-    gap: 14px;
-    flex-wrap: wrap;
-    align-items: center;
-}
-
-/* .bi-acil-pill Plan 25.1 P5: dead — hiçbir view'da kullanılmıyor. .pill.urgent generic var. */
-
-/* ---- type-chip varyantları (global .type-chip base'i extend eder) ---- */
-.type-karar  { background: var(--karar-bg-soft); color: var(--karar-ink); }
-.type-uyari  { background: var(--uyari-bg-soft); color: var(--uyari-ink); }
-.type-bilgi  { background: var(--bilgi-bg-soft); color: var(--bilgi-ink); }
-.type-duyuru { background: var(--duyuru-bg-soft); color: var(--duyuru-ink); }
-.type-prosedur { background: var(--line-2); color: var(--ink-2); }
-
-/* ---- Dosya eki pill ---- */
-.file-list {
-    margin-top: 10px;
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-}
-
-/* .file-pill + .fp-ext + .fp-size Plan 25.1 P4: components.css'e taşındı (Tamim + Documents + Contracts ortak). */
-
-/* ---- Okuma kaydı (read receipt) ---- */
-.read-receipt {
-    background: var(--paper);
-    border: 1px solid var(--line);
-    border-radius: 10px;
-    padding: 16px 20px;
-    margin-top: 18px;
-}
-
-.read-receipt .rr-head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 10px;
-    flex-wrap: wrap;
-    gap: 10px;
-}
-
-.read-receipt .rr-head h3 {
-    font-size: 13px;
-    font-weight: 700;
-    letter-spacing: .06em;
-    text-transform: uppercase;
-    color: var(--ink-3);
-    margin: 0;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.read-receipt .rr-body {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 14px;
-    flex-wrap: wrap;
-}
-
-.read-receipt .rr-info {
-    font-size: 13px;
-    color: var(--ink-2);
-}
-
-.read-receipt .rr-info small {
-    display: block;
-    color: var(--ink-3);
-    font-size: 12px;
-    margin-top: 2px;
-}
-
-.ack-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 7px;
-    background: var(--accent);
-    color: white;
-    border: none;
-    padding: 10px 18px;
-    border-radius: 8px;
-    font-size: 13px;
-    font-weight: 600;
-    cursor: pointer;
-    min-height: 44px;
-    transition: background .12s;
-}
-
-.ack-btn:hover { background: var(--accent-ink); }
-
-.ack-btn.acked {
-    background: var(--ok);
-}
-
-.ack-btn:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: 2px;
-    box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.40);
-}
-
-/* ---- ok-tbl — .dt extend (sticky header + zebra + progress bar hücre) ---- */
-.ok-tbl {
-    width: 100%;
-    border-collapse: collapse;
-    background: var(--paper);
-    font-size: 13px;
-}
-
-.ok-tbl thead th {
-    position: sticky;
-    top: 0;
-    z-index: 1;
-    text-align: left;
-    background: var(--canvas);
-    padding: 10px 14px;
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: .06em;
-    text-transform: uppercase;
-    color: var(--ink-3);
-    border-bottom: 1px solid var(--line);
-}
-
-.ok-tbl tbody tr:nth-child(even) td {
-    background: var(--canvas);
-}
-
-.ok-tbl tbody td {
-    padding: 11px 14px;
-    color: var(--ink-1);
-    border-bottom: 1px solid var(--line);
-    vertical-align: middle;
-}
-
-.ok-tbl tbody tr:last-child td { border-bottom: none; }
-
-.ok-tbl tbody tr:hover td {
-    background: rgba(220, 38, 38, .04);
-    cursor: default;
-}
-
-/* Durum sütunu — ikon + metin (renk tek başına değil) */
-.ok-tbl .st-okundu {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    color: var(--ok);
-    font-weight: 600;
-}
-
-.ok-tbl .st-okumadi {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    color: var(--accent);
-    font-weight: 600;
-}
-
-/* Progress bar hücre */
-.ok-tbl .prog-cell {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    min-width: 120px;
-}
-
-.ok-tbl .prog-bar {
-    flex: 1;
-    height: 6px;
-    background: var(--line);
-    border-radius: 3px;
-    overflow: hidden;
-}
-
-.ok-tbl .prog-fill {
-    height: 100%;
-    border-radius: 3px;
-    background: var(--ok);
-}
-
-.ok-tbl .prog-fill.warn { background: var(--warn); }
-.ok-tbl .prog-fill.danger { background: var(--accent); }
-
-/* ---- Drop area — drag-drop dosya zone ---- */
-.drop-area {
-    border: 2px dashed var(--line);
-    border-radius: 10px;
-    padding: 24px;
-    text-align: center;
-    color: var(--ink-3);
-    transition: border-color .15s, background .15s;
-    cursor: pointer;
-    min-height: 100px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-}
-
-.drop-area:hover,
-.drop-area.dragover {
-    border-color: var(--accent);
-    background: rgba(220, 38, 38, .03);
-    color: var(--ink-1);
-}
-
-.drop-area:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: 2px;
-}
-
-.drop-area .da-icon {
-    font-size: 28px;
-    color: var(--ink-4);
-    margin-bottom: 4px;
-}
-
-.drop-area .da-title {
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--ink-1);
-}
-
-.drop-area .da-sub { font-size: 11.5px; }
-
-/* ---- Listeli görünüm tablosu wrap ---- */
-.tamim-list-wrap {
-    background: var(--paper);
-    border: 1px solid var(--line);
-    border-radius: 10px;
-    overflow: hidden;
-}
-
-/* ---- Blok form card section (create/edit form içindeki bölüm) ---- */
-.blok-section {
-    background: var(--paper);
-    border: 1px solid var(--line);
-    border-radius: 10px;
-    max-width: 880px;
-    margin-bottom: 18px;
-}
-
-.blok-section .bs-head {
-    padding: 14px 18px;
-    border-bottom: 1px solid var(--line);
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--ink-1);
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.blok-section .bs-head i { color: var(--ink-3); }
-
-.blok-section .bs-body { padding: 20px; }
-
-/* ---- Tamim list/detail extras (Plan 25.1 Batch B) ---- */
-
-/* Details — meta extras */
 .tamim-envelope .te-no {
     font-size: 11px;
     font-weight: 700;
@@ -488,6 +49,9 @@
     margin-bottom: 6px;
 }
 
+.tamim-envelope .te-no .te-no-sep    { margin-left: 6px; color: var(--ink-3); }
+.tamim-envelope .te-no .te-no-urgent { margin-left: 6px; color: var(--accent); }
+
 .tamim-envelope .te-meta {
     display: flex;
     gap: 18px;
@@ -496,30 +60,12 @@
     flex-wrap: wrap;
     align-items: center;
 }
-
 .tamim-envelope .te-meta i { margin-right: 5px; }
+.tamim-envelope .te-meta .te-acil { color: var(--accent); font-weight: 600; }
 
-.te-no .te-no-sep {
-    margin-left: 6px;
-    color: var(--ink-3);
-}
-
-.te-no .te-no-urgent {
-    margin-left: 6px;
-    color: var(--accent);
-}
-
-/* ---- Block Form (Create/Edit) — Plan 25.1 Batch B ---- */
-/* Tür (160px) + Subject (1fr) iki kolon */
-.tamim-form-row-type-subject {
-    display: grid;
-    grid-template-columns: 160px 1fr;
-    gap: 14px;
-    margin-bottom: 14px;
-}
-.tamim-form-row-type-subject .field { margin-bottom: 0; }
-
-/* Quill editor sarmalayıcısı */
+/* ---- Quill rich-text editor wrapper (Tamim Block form) ----
+       Quill'in default snow theme'ini Mosaik kartı içine sarmalar. Tamim form
+       dışında kullanılmaz (Plan 28 mesajlaşma plain textarea ile gider). */
 .tamim-quill {
     border: 1px solid var(--line);
     border-radius: 8px;
@@ -530,7 +76,7 @@
     background: var(--paper);
 }
 
-/* IsUrgent toggle satırı */
+/* ---- IsUrgent toggle (Tamim Block "acil" işareti) ---- */
 .tamim-urgent-toggle {
     display: flex;
     align-items: center;
@@ -547,220 +93,3 @@
 }
 .tamim-urgent-toggle i { color: var(--accent); font-size: 11px; }
 .tamim-urgent-toggle .checkbox { accent-color: var(--accent); }
-
-/* Dosya yükleme drop zone */
-.tamim-upload-zone {
-    border: 2px dashed var(--line);
-    border-radius: 10px;
-    padding: 20px;
-    text-align: center;
-}
-.tamim-upload-zone.lg { padding: 24px; }
-.tamim-upload-zone .upload-icon {
-    font-size: 28px;
-    color: var(--ink-4);
-    margin-bottom: 6px;
-}
-.tamim-upload-zone.lg .upload-icon { font-size: 32px; margin-bottom: 8px; }
-.tamim-upload-zone .upload-input {
-    max-width: 420px;
-    padding: 6px;
-}
-
-/* Mevcut dosyalar listesi (Edit) */
-.tamim-file-list {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    margin-bottom: 14px;
-}
-.tamim-file-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 10px 12px;
-    background: var(--canvas);
-    border-radius: 8px;
-}
-.tamim-file-row__main {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    min-width: 0;
-}
-.tamim-file-row__ext {
-    font-size: 10px;
-    font-weight: 700;
-    padding: 3px 6px;
-    border-radius: 3px;
-    background: var(--accent);
-    color: #fff;
-    text-transform: uppercase;
-}
-.tamim-file-row__name {
-    font-size: 13px;
-    color: var(--ink-1);
-    font-weight: 500;
-    text-decoration: none;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-.tamim-file-row__size {
-    font-size: 11px;
-    color: var(--ink-3);
-}
-.tamim-empty-files {
-    font-size: 12.5px;
-    color: var(--ink-3);
-    padding: 16px 0;
-    text-align: center;
-}
-/* Section card varyantı — Tamim Block form için header sub satırı */
-.form-section-head__sub-tight {
-    font-size: 12px;
-    color: var(--ink-3);
-    margin-top: 2px;
-}
-.form-section-head__inline-note {
-    font-size: 11px;
-    font-weight: 400;
-    color: var(--ink-3);
-    margin-left: 6px;
-}
-
-/* ---- Plan 25.1 Batch B (Circular Index + Details) — inline style purge ---- */
-
-/* Index — filter bar (paper card, flex end-aligned) */
-.tamim-filter {
-    background: var(--paper);
-    border: 1px solid var(--line);
-    border-radius: 10px;
-    padding: 14px 16px;
-    margin-bottom: 18px;
-    display: flex;
-    gap: 12px;
-    flex-wrap: wrap;
-    align-items: flex-end;
-}
-
-.tamim-filter__field { flex: 1; min-width: 240px; }
-.tamim-filter__search { position: relative; }
-
-.tamim-filter__icon {
-    position: absolute;
-    left: 10px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: var(--ink-4);
-    pointer-events: none;
-    font-size: 12px;
-}
-
-.tamim-filter__search .inp { padding-left: 32px; }
-.tamim-filter__actions { display: flex; gap: 6px; }
-
-/* Index — top-action inline form (Şimdi Derle) */
-.tamim-compile-form { display: inline; margin: 0; }
-
-/* .qcard.has-overlay + .qcard__* Plan 25.1 P4: components.css'e taşındı (generic kart). */
-
-/* Index — empty state (dashed paper card) */
-.tamim-empty {
-    background: var(--paper);
-    border: 1px dashed var(--line);
-    border-radius: 10px;
-    padding: 48px 24px;
-    text-align: center;
-    color: var(--ink-3);
-}
-
-.tamim-empty__icon { font-size: 48px; opacity: .4; margin-bottom: 12px; }
-.tamim-empty h3 { font-size: 14px; font-weight: 600; color: var(--ink-1); margin: 0 0 4px; }
-.tamim-empty p { margin: 0; font-size: 12.5px; }
-
-/* Details — envelope acil emphasis */
-.tamim-envelope .te-meta .te-acil { color: var(--accent); font-weight: 600; }
-
-/* .ai-summary-card .ai-* + .section-title .st-count Plan 25.1 P4: components.css'e taşındı
-   (Tamim Details + Ai/Review iki modülde de kullanılır — generic). */
-
-/* Details — empty blocks (solid border) */
-.empty-blocks {
-    background: var(--paper);
-    border: 1px solid var(--line);
-    border-radius: 10px;
-    padding: 30px;
-    text-align: center;
-    color: var(--ink-3);
-}
-
-/* Details — block head right cluster */
-.blok-item .bi-tip-row { display: flex; gap: 6px; align-items: center; }
-
-/* Details — block urgent class alias */
-.blok-item.acil { border-left-color: var(--accent); }
-
-/* .acil-pill Plan 25.1 P5: components.css'te .pill.urgent generic'e taşındı. */
-
-/* Details — block content body */
-.bi-icerik {
-    font-size: 13.5px;
-    color: var(--ink-1);
-    line-height: 1.65;
-}
-
-/* Details — files row */
-.bi-files { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 6px; }
-
-.bi-file-link {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    padding: 5px 9px;
-    background: var(--canvas);
-    border: 1px solid var(--line);
-    border-radius: 6px;
-    text-decoration: none;
-    color: var(--ink-1);
-    font-size: 12px;
-}
-
-.bi-file-link:hover { border-color: var(--ink-4); }
-
-.bi-file-link .bf-ext {
-    font-size: 9.5px;
-    font-weight: 700;
-    padding: 2px 5px;
-    border-radius: 3px;
-    background: var(--accent);
-    color: #fff;
-    text-transform: uppercase;
-}
-
-.bi-file-link .bf-size { color: var(--ink-3); font-size: 10.5px; }
-
-/* Details — read receipt body + ack badge */
-.read-receipt .rr-body {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 14px;
-    flex-wrap: wrap;
-}
-
-.read-receipt .rr-info { font-size: 13px; color: var(--ink-2); }
-
-.ack-status {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 12.5px;
-    font-weight: 600;
-    padding: 6px 12px;
-    border-radius: 999px;
-    background: rgba(16, 185, 129, .12);
-    color: var(--success-ink-soft, var(--duyuru-ink));
-}
-
-.ack-status i { font-size: 12px; }
