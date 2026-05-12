@@ -23,5 +23,7 @@ namespace Mosaik.ViewModels
         public int TodayAuditCount { get; set; }
         public int FailedLoginCount24h { get; set; }
         public List<AuditLog> RecentAudits { get; set; } = new();
+        // Overview EF query'leri başarısız olursa view widget yerine generic mesaj göster.
+        public bool OverviewError { get; set; }
     }
 }

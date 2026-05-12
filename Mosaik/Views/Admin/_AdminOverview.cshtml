@@ -60,6 +60,12 @@
     var healthOk = moduleHealthy && !loginAlert;
 }
 
+@if (Model.OverviewError)
+{
+    @await Html.PartialAsync("_AlertMessage",
+        ("warning", "Özet verileri şu anda yüklenemiyor. Sistem yöneticisine bildirin; aşağıdaki sayılar eksik olabilir."))
+}
+
 @* ── ÜST: Sistem sağlık göstergesi ──────────────────────────────── *@
 <section class="overview-health" aria-label="Sistem sağlık">
     <div class="health-card @(healthOk ? "ok" : "warn")">

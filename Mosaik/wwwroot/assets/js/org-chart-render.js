@@ -51,8 +51,6 @@
 
     container.innerHTML = '';
 
-    const token = window.getAntiForgeryToken ? window.getAntiForgeryToken() : '';
-
     // Drag-drop kapalı — taşıma sağ-tık modalı ile yapılıyor (view'daki Alpine ocMoveModal).
     // Lib drag-drop UX'i sorunluydu (cross-parent, JSONDigger quirks); sağ-tık güvenilir.
     const oc = $('#oc-d3').orgchart({
@@ -76,8 +74,21 @@
             exportBtn.disabled = true;
             const oldText = exportBtn.textContent;
             exportBtn.textContent = 'Hazırlanıyor…';
+
+            function reportFailure(err) {
+                console.error('OrgChart PNG export failed', err);
+                alert('PNG dışa aktarma başarısız oldu. Sayfayı yenileyip tekrar deneyin.');
+            }
+
             try {
-                oc.export('organizasyon-semasi', 'png');
+                // dabeng/OrgChart `export()` html2canvas ile async çalışır; sync ve
+                // async (Promise rejection) failure'ları ikisini de yakala.
+                const result = oc.export('organizasyon-semasi', 'png');
+                if (result && typeof result.then === 'function') {
+                    result.catch(reportFailure);
+                }
+            } catch (e) {
+                reportFailure(e);
             } finally {
                 setTimeout(() => {
                     exportBtn.disabled = false;

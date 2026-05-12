@@ -11,9 +11,9 @@ namespace Mosaik.Controllers
     public partial class AdminController
     {
         // V1 view (CreateReport.cshtml) silindi — V2 builder canonical. Bu GET method
-        // V2 CreateReportV2 action'ından çağrılır (data load). Route attribute yok =
-        // direkt /Admin/CreateReport URL'i 404 verir, V2'ye yönlendirir aşağıdaki redirect.
-        public async Task<IActionResult> CreateReport()
+        // V2 CreateReportV2 action'ından data-load için çağrılır. `private` = convention
+        // route'la çakışmaz; eski URL CreateReportLegacyRedirect üzerinden V2'ye gider.
+        private async Task<IActionResult> CreateReport()
         {
             try
             {
@@ -125,11 +125,40 @@ namespace Mosaik.Controllers
 
         [Route("Admin/EditReport/{id:int}")]
         [HttpGet]
-        public IActionResult EditReportLegacyRedirect(int id) =>
-            RedirectToAction(nameof(EditReportV2), new { id });
+        public async Task<IActionResult> EditReportLegacyRedirect(int id)
+        {
+            try
+            {
+                var exists = await _context.ReportCatalog
+                    .AsNoTracking()
+                    .AnyAsync(r => r.ReportId == id);
 
-        // V1 view (EditReport.cshtml) silindi — V2 canonical. Bu GET method V2'den çağrılır.
-        public async Task<IActionResult> EditReport(int id)
+                if (!exists)
+                {
+                    TempData["Message"] = "Aradığınız rapor bulunamadı (eski URL).";
+                    TempData["MessageType"] = "warning";
+                    return RedirectToAction("Index", new { tab = "reports" });
+                }
+
+                return RedirectToAction(nameof(EditReportV2), new { id });
+            }
+            catch (OperationCanceledException) when (HttpContext.RequestAborted.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch (Microsoft.Data.SqlClient.SqlException sex)
+            {
+                _logger.LogError(sex, "EditReport legacy redirect DB error for ReportId={Id}", id);
+                TempData["Message"] = "Veritabanı erişiminde sorun var. Lütfen tekrar deneyin.";
+                TempData["MessageType"] = "error";
+                return RedirectToAction("Index", new { tab = "reports" });
+            }
+        }
+
+        // V1 view (EditReport.cshtml) silindi — V2 canonical. Bu GET method V2'den
+        // data-load için çağrılır. `private` = convention route'la çakışmaz; eski URL
+        // EditReportLegacyRedirect üzerinden V2'ye gider.
+        private async Task<IActionResult> EditReport(int id)
         {
             var report = await _context.ReportCatalog.FindAsync(id);
             if (report == null)

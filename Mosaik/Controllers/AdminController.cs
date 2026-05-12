@@ -114,27 +114,48 @@ namespace Mosaik.Controllers
                 .Select(g => new { UserId = g.Key, Names = g.Where(x => x.Role != null).Select(x => x.Role!.Name).ToList() })
                 .ToDictionaryAsync(x => x.UserId, x => x.Names);
 
-            // Plan 23 — Dashboard widget verileri (sadece "overview" tab'da gösterilir)
+            // Plan 23 — Dashboard widget verileri (sadece "overview" tab'da gösterilir).
+            // AuditLogs büyük olabilir (100k+); index yoksa timeout veya SqlException
+            // mümkün. Generic try/catch + OverviewError flag → view widget yerine
+            // "Özet yüklenemedi" mesajı (security-principles §7).
+            // OperationCanceledException client disconnect — rethrow, log gürültüsü olmasın.
             if (string.Equals(tab, "overview", StringComparison.OrdinalIgnoreCase))
             {
-                model.ActiveUserCount = model.Users.Count(u => u.IsActive);
-                model.ActiveModuleCount = await _context.AppModules.CountAsync(m => m.IsEnabled);
-                model.TotalModuleCount = await _context.AppModules.CountAsync();
+                try
+                {
+                    model.ActiveUserCount = model.Users.Count(u => u.IsActive);
+                    model.ActiveModuleCount = await _context.AppModules.CountAsync(m => m.IsEnabled);
+                    model.TotalModuleCount = await _context.AppModules.CountAsync();
 
-                var todayUtc = DateTime.UtcNow.Date;
-                var yesterdayUtc = todayUtc.AddDays(-1);
-                model.TodayAuditCount = await _context.AuditLogs
-                    .AsNoTracking()
-                    .CountAsync(a => a.CreatedAt >= todayUtc);
-                model.FailedLoginCount24h = await _context.AuditLogs
-                    .AsNoTracking()
-                    .CountAsync(a => a.CreatedAt >= yesterdayUtc
-                                  && a.EventType == "login_failed");
-                model.RecentAudits = await _context.AuditLogs
-                    .AsNoTracking()
-                    .OrderByDescending(a => a.CreatedAt)
-                    .Take(10)
-                    .ToListAsync();
+                    var todayUtc = DateTime.UtcNow.Date;
+                    var yesterdayUtc = todayUtc.AddDays(-1);
+                    model.TodayAuditCount = await _context.AuditLogs
+                        .AsNoTracking()
+                        .CountAsync(a => a.CreatedAt >= todayUtc);
+                    model.FailedLoginCount24h = await _context.AuditLogs
+                        .AsNoTracking()
+                        .CountAsync(a => a.CreatedAt >= yesterdayUtc
+                                      && a.EventType == "login_failed");
+                    model.RecentAudits = await _context.AuditLogs
+                        .AsNoTracking()
+                        .OrderByDescending(a => a.CreatedAt)
+                        .Take(10)
+                        .ToListAsync();
+                }
+                catch (OperationCanceledException) when (HttpContext.RequestAborted.IsCancellationRequested)
+                {
+                    throw;
+                }
+                catch (Microsoft.Data.SqlClient.SqlException sex)
+                {
+                    _logger.LogError(sex, "Admin overview DB error");
+                    model.OverviewError = true;
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Admin overview unexpected error");
+                    model.OverviewError = true;
+                }
             }
 
             return View(model);

@@ -412,6 +412,10 @@
 
 </div>
 
+@* AntiForgery global token — sayfa içinde form olmasa bile `window.getAntiForgeryToken()`
+   helper'ı (app-shell.js) için DOM'da daima erişilebilir tek source. Plan 25.2. *@
+@Html.AntiForgeryToken()
+
 <script src="~/assets/js/app-shell.js" asp-append-version="true"></script>
 @if (User?.Identity is { IsAuthenticated: true })
 {

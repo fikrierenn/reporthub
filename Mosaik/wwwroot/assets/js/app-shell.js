@@ -93,16 +93,24 @@
 
 // Plan 25.2 — Global AntiForgery helper. POST fetch'lerinde her dosyada
 // `document.querySelector('input[name="__RequestVerificationToken"]')` duplicate
-// edilmesin diye burada (her sayfada yüklü) tek source. Cache after first lookup.
+// edilmesin diye burada (her sayfada yüklü) tek source.
+//
+// Cache stratejisi: SADECE truthy değer cache edilir. Bir önceki impl boş string'i
+// kalıcı cache'liyordu — token element DOM'da yokken (Login öncesi / async render)
+// `''` set olunca tüm POST'lar 400 alıyordu. Şimdi her çağrıda token bulunana kadar
+// DOM lookup tekrar edilir, bulunduktan sonra cache'lenir.
+// `_AppLayout.cshtml` her sayfada global `@Html.AntiForgeryToken()` render eder.
 (function () {
     "use strict";
-    var __aftCache = null;
+    var __aftCache = '';
     window.getAntiForgeryToken = function () {
-        if (__aftCache !== null) return __aftCache;
+        if (__aftCache) return __aftCache;
         var el = document.querySelector('input[name="__RequestVerificationToken"]');
         __aftCache = el ? el.value : '';
         return __aftCache;
     };
+    // Form swap / HTMX sonrası cache reset için açık API.
+    window.invalidateAntiForgeryToken = function () { __aftCache = ''; };
 })();
 
 // Plan 23 — Sidebar collapsible group Alpine factory.
