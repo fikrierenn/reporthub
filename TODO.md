@@ -12,7 +12,24 @@ Sıra: Plan 14 + Plan 16.5 + IK quick wins birleşik.
 
 - [ ] **Plan 18B · HR Sync** (büyük, ~16-24h) — Hangfire + Mosaik.User ek kolonlar + UserSyncService + Email/TC kararları + UserDataFilter otomatik atama. 18A bittikten sonra.
 - [x] **Plan 16.5 Faz C+D** ✅ — ILlmService + FallbackLlmService + IAiExtractionService + IAiSuggestionService + PromptBase. 337 test. commit d2fd745 + 1b195d4.
-- [ ] **Plan 17 (Tamim)** — vNext modül roadmap'in ilk üyesi (~10h, tamim/ direkt port). Faz H (Bildirim) en sona.
+- [x] **Plan 17 (Tamim)** ✅ — Tüm fazlar tamamlandı. Faz H Bildirim: NotificationService + NotificationsController + sidebar badge + migration 41 + Circular wiring mevcut.
+- [x] **Security altyapısı (3 katman)** ✅ 2026-05-13 — `.claude/agents/security-reviewer.md` + `.claude/skills/mosaik-security/SKILL.md` + `.claude/commands/security-check.md`. CLAUDE.md §2 + security-principles.md güncel. Tetik: yeni POST/SQL/email/JS fetch yazılırken proaktif, `/security-check` ile denetim.
+
+### Code review backlog (oturum 2026-05-13 güvenlik denetimi)
+
+3 paralel agent (code-reviewer + silent-failure-hunter + general-purpose security) son 35 commit'i (e2da9b6 → 0841080) taradı. 0 CRITICAL exploitable. HIGH bulgular fix bekliyor:
+
+- [ ] **HIGH-1 · Route ambiguity** — `AdminController.Reports.cs:16,121,126,132` `CreateReport()`/`EditReport()` + `*LegacyRedirect()` aynı GET route. Fix: V1 GET method'ları `private` yap. ~10dk.
+- [ ] **HIGH-2 · SmtpEmailService exception swallow** — `Services/Email/SmtpEmailService.cs:40-43` Task döner, caller başarısızlık göremez. Fix: `Task<EmailSendResult>` + audit `email_send_failed`. Plan 31 caller eklenmeden önce. ~30dk.
+- [ ] **HIGH-3 · EmailTemplates HtmlEncode** — `Services/Email/EmailTemplates.cs:45-103` raw `$$"""...{{title}}..."""` interpolation, HtmlEncode yok. Fix: `private static string E(s) => WebUtility.HtmlEncode(s)`. ~15dk.
+- [ ] **HIGH-4 · AntiForgery cache null-poison** — `wwwroot/assets/js/app-shell.js:97-106` empty string cache'lenir → sonsuza dek 400. Fix: `if (__aftCache) return __aftCache` truthy check + `_AppLayout.cshtml`'a `@Html.AntiForgeryToken()` global. ~15dk.
+- [ ] **HIGH-5 · `_AdminOverview` query try/catch yok** — `AdminController.cs:117-137` 5 EF query unhandled. Fix: ortak try/catch + `OverviewError` flag. ~20dk.
+- [ ] **HIGH-6 · OrgChart export `try`/`finally` (catch yok)** — `wwwroot/assets/js/org-chart-render.js:74-88`. Fix: `catch (e) { console.error + alert/toast }`. ~10dk.
+- [ ] **HIGH-7 · EditReportLegacyRedirect id validation yok** — `AdminController.Reports.cs:128-130` geçersiz id → 500. Fix: `AnyAsync(r => r.ReportId == id)` + warning redirect. ~15dk.
+- [ ] **MEDIUM · SMTP password User Secrets uyarısı** — README/INSTALL.md notu + pre-commit hook'a non-empty `SmtpSettings.Password` tespit. ~30dk.
+- [ ] **MEDIUM · `Database/56_AppModulesGroupKey.sql` CHECK constraint** — whitelist DB-level enforce. Yeni migration. ~10dk.
+
+Toplam ~2-3h, hepsi bağımsız. Birkaç ayrı commit veya tek "post-review hardening" bundle.
 
 ### IK / HR — Zirve `vw_PersonelDepartman` ile
 

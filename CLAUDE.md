@@ -85,10 +85,12 @@ Ayrıntılı kurallar `.claude/rules/` altında — burada sadece değişmez pre
      - `silent-failure-hunter` — error handling + catch block audit
      - `type-design-analyzer` — invariant strength + encapsulation rating
      - `commit-splitter` — uncommitted'i bucket'lara böl
+     - `security-reviewer` — `security-principles.md` 10 kural denetimi (file:line + attack path + fix)
    - **Slash commands (`.claude/commands/`):**
      - `/feature-dev` — 7 fazlı guided feature development (discovery → exploration → clarify → architect → implement → review → summary)
+     - `/security-check [range]` — 3 paralel agent (security-reviewer + silent-failure-hunter + OWASP sweep) güvenlik denetimi
      - `/review-pr` — multi-agent comprehensive PR review
-   - **Proje skill'leri:** `session-handoff` (oturum sonu journal + auto-commit + memory kaydet + NotebookLM Brain push), `plan-tracker` (TodoWrite ↔ TODO.md senkron), `notebooklm` (Google NotebookLM CLI — podcast/video/rapor/quiz üret).
+   - **Proje skill'leri:** `session-handoff` (oturum sonu journal + auto-commit + memory kaydet + NotebookLM Brain push), `plan-tracker` (TodoWrite ↔ TODO.md senkron), `notebooklm` (Google NotebookLM CLI — podcast/video/rapor/quiz üret), `mosaik-csharp-razor` + `mosaik-css-expert` + `mosaik-js-expert` + `mosaik-security` (proje-spesifik kod yazım uzman skill'leri — yeni controller/view/JS/POST/SQL yazarken otomatik tetiklenir), `css-classify` (CSS ekleme öncesi 3 adım karar).
    - **Frontend tasarım skill'leri** (M-11 F-7+ dashboard builder UI + M-13 Plan 03 sayfa migration fazlarında tetiklenir): `frontend-design`, `visual-design-foundations`, `design-system-patterns`, `interaction-design`, `responsive-design`, `web-component-design` (Razor projesi için SKIP), `accessibility-compliance`.
    - **`ui-ux-pro-max`** (M-13 sırasında en güçlü audit aracı) — 161 color palette, 99 UX guideline, 25 chart type, 10 priority-ranked rule kategorisi (accessibility CRITICAL → charts LOW). UI değişikliği yaparken otomatik tetiklenir, WCAG contrast/touch target/anti-pattern checklist uygular.
    - **`llm-council`** — 5 bağımsız danışman + peer review + chairman sentezi. Tetikleyici: "council this" / "war room this" / "pressure-test this". Mimari seçim, önceliklendirme, scope kararı gibi gerçek tradeoff'larda kullan. Plan sistemi onaylanmış kararlar için değil, "hangi yol" belirsizliği için.

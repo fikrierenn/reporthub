@@ -49,10 +49,20 @@ _Kapsam: Her değişiklikte uygulanacak defansif ilkeler. `paths:` yok — compa
 
 10. **Dashboard iframe:** `sandbox="allow-scripts"` — `allow-same-origin` **ekleme** (XSS izolasyonu kalksın).
 
-## Security Review Ritüeli
+## Security Review Ritüeli (3 katman)
 
-- Her büyük değişiklik **öncesi** `security-review` skill'i çalıştır.
-- Her büyük değişiklik **sonrası** tekrar çalıştır.
+Bu dosya **anayasa** — proje genelindeki defansif kurallar burada yaşar. Uygulama için 3 katman:
+
+1. **`mosaik-security` skill** (proaktif) — yeni controller / POST endpoint / SQL execution / SP wrapper / email / file upload / JS fetch yazılırken **otomatik tetiklenir**. Her kuralın "doğru pattern + anti-pattern" örneği ile uygulamayı garantiler. Dosya: `.claude/skills/mosaik-security/SKILL.md`.
+
+2. **`security-reviewer` agent** (denetleyici) — yazılım sonrası audit. file:line + attack path + fix snippet döner. Confidence ≥ 75 filtreli. Dosya: `.claude/agents/security-reviewer.md`.
+
+3. **`/security-check [range]` slash command** — 3 paralel agent (security-reviewer + silent-failure-hunter + OWASP sweep) tek tetikle çalıştırır. Default scope: `HEAD~1..HEAD` + uncommitted. Dosya: `.claude/commands/security-check.md`.
+
+Pratik akış:
+- Yeni kod yazılırken → `mosaik-security` skill kuralları proaktif uygular.
+- Commit öncesi → `/security-check` çalıştır.
+- Büyük değişiklik öncesi/sonrası → hazır `security-review` skill (Anthropic, current branch pending) **veya** `/security-check origin/main..HEAD`.
 - Bulgulara göre düzelt, commit'le.
 
 ## Audit Log Kapsamı
