@@ -21,9 +21,9 @@
     <h1>Profil</h1>
     <div class="sub">
         <span class="mono">@Model.Username</span>
-        <span class="pill"><i class="fas fa-shield-halved" style="font-size:10px; color:var(--ink-3);"></i> @Model.Roles</span>
-        <span class="pill" style="@(Model.IsActive ? "" : "background:rgba(220,38,38,0.06); border-color:rgba(220,38,38,0.2);")">
-            <span class="dot" style="background:@(Model.IsActive ? "var(--ok)" : "var(--danger)");"></span>
+        <span class="pill"><i class="fas fa-shield-halved icon-xs text-muted"></i> @Model.Roles</span>
+        <span class="pill @(Model.IsActive ? "" : "error")">
+            <span class="dot @(Model.IsActive ? "ok" : "err")"></span>
             @(Model.IsActive ? "Aktif" : "Pasif")
         </span>
     </div>
@@ -31,57 +31,51 @@
 
 @if (!string.IsNullOrWhiteSpace(message))
 {
-    <div style="margin-bottom:18px; padding:12px 16px; border-radius:10px; font-size:13px;
-                background: @(messageType == "success" ? "var(--success-bg-soft)" : "var(--danger-bg-soft)");
-                border: 1px solid @(messageType == "success" ? "rgba(16,185,129,0.25)" : "rgba(220,38,38,0.25)");
-                color: @(messageType == "success" ? "var(--success-ink-soft)" : "var(--accent-ink)");">
-        <i class="fas @(messageType == "success" ? "fa-check-circle" : "fa-exclamation-circle")" style="margin-right:8px;"></i>
-        @message
-    </div>
+    @await Html.PartialAsync("_AlertMessage", (messageType == "success" ? "success" : "error", message))
 }
 
-<div style="background:var(--paper); border:1px solid var(--line); border-radius:10px; overflow:hidden; max-width:720px;">
+<div class="form-section-card narrow">
 
     @* Card header — avatar + isim *@
-    <div style="padding:20px 24px; border-bottom:1px solid var(--line); display:flex; align-items:center; gap:14px;">
-        <div class="avatar" style="width:44px; height:44px; font-size:14px;">@avatar</div>
-        <div style="flex:1; min-width:0;">
-            <h2 style="font-size:15px; font-weight:600; color:var(--ink-1); margin:0 0 2px;">Hesap Bilgileri</h2>
-            <div style="font-size:12px; color:var(--ink-3);">Kişisel bilgilerinizi güncelleyin</div>
+    <div class="profile-card-head">
+        <div class="avatar lg">@avatar</div>
+        <div class="profile-card-head__body">
+            <h2 class="profile-card-head__title">Hesap Bilgileri</h2>
+            <div class="profile-card-head__sub">Kişisel bilgilerinizi güncelleyin</div>
         </div>
     </div>
 
-    <form method="post" style="padding:24px;">
+    <form method="post" class="profile-card-body">
         @Html.AntiForgeryToken()
 
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:14px; margin-bottom:18px;">
-            <div class="field" style="margin-bottom:0;">
+        <div class="grid-2col stack-14">
+            <div class="field">
                 <label class="lab">Kullanıcı Adı</label>
-                <input type="text" value="@Model.Username" readonly class="inp" style="background:var(--canvas); color:var(--ink-3); cursor:not-allowed;" />
+                <input type="text" value="@Model.Username" readonly class="inp disabled-mono" />
             </div>
-            <div class="field" style="margin-bottom:0;">
+            <div class="field">
                 <label class="lab">Durum</label>
-                <input type="text" value="@(Model.IsActive ? "Aktif" : "Pasif")" readonly class="inp" style="background:var(--canvas); color:var(--ink-3); cursor:not-allowed;" />
+                <input type="text" value="@(Model.IsActive ? "Aktif" : "Pasif")" readonly class="inp disabled-mono" />
             </div>
         </div>
 
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:14px; margin-bottom:18px;">
-            <div class="field" style="margin-bottom:0;">
-                <label class="lab">Ad Soyad <span style="color:var(--accent);">*</span></label>
+        <div class="grid-2col stack-14">
+            <div class="field">
+                <label class="lab">Ad Soyad <span class="req">*</span></label>
                 <input type="text" name="FullName" value="@Model.FullName" required class="inp" placeholder="Ad Soyad" />
             </div>
-            <div class="field" style="margin-bottom:0;">
+            <div class="field">
                 <label class="lab">E-posta</label>
                 <input type="email" name="Email" value="@Model.Email" class="inp" placeholder="ornek@bkmkitap.com" />
             </div>
         </div>
 
-        <div class="section-title" style="margin: 18px 0 12px;">
-            <h2 style="font-size:11px;">Şifre Değiştir <span style="color:var(--ink-4); font-weight:400; text-transform:none; letter-spacing:0;">— boş bırakırsanız değişmez</span></h2>
+        <div class="section-title profile-section-divider">
+            <h2>Şifre Değiştir <span class="muted-suffix">— boş bırakırsanız değişmez</span></h2>
         </div>
 
         @* Plan 04 F2.3 (28 Nisan): _PasswordInput partial — DRY + Alpine show/hide toggle. *@
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:14px; margin-bottom:18px;">
+        <div class="grid-2col stack-14">
             @await Html.PartialAsync("_PasswordInput", new Mosaik.ViewModels.PasswordInputViewModel {
                 Id = "NewPassword",
                 Name = "NewPassword",
@@ -98,13 +92,13 @@
             })
         </div>
 
-        <div style="display:flex; align-items:center; justify-content:space-between; padding-top:18px; border-top:1px solid var(--line-2);">
+        <div class="profile-card-actions">
             <a href="/Dashboard" class="btn ghost">
-                <i class="fas fa-arrow-left text-[10px]"></i>
+                <i class="fas fa-arrow-left icon-xs"></i>
                 Geri Dön
             </a>
             <button type="submit" class="btn primary">
-                <i class="fas fa-check text-[10px]"></i>
+                <i class="fas fa-check icon-xs"></i>
                 Profili Güncelle
             </button>
         </div>

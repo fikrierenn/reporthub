@@ -39,7 +39,7 @@
 <div x-data="{ q: '@(q ?? "")' }">
 
     @* Upload formu — collapsible (Yeni Belge butonu tetikler). Default gizli, JS toggle. *@
-    <form id="uploadForm" method="post" action="/Documents/Upload" enctype="multipart/form-data" style="display:none;">
+    <form id="uploadForm" method="post" action="/Documents/Upload" enctype="multipart/form-data" class="hidden">
         @Html.AntiForgeryToken()
         <div class="form-section-card wide">
             <div class="form-section-head">
@@ -85,11 +85,11 @@
 
     @* Filter bar — standart pattern *@
     <form method="get" class="filter-bar">
-        <div class="field" style="flex:1; min-width:240px;">
+        <div class="filter-bar__field filter-bar__field--grow">
             <label class="lab" for="qInput">Dosya adı</label>
             <input class="inp" type="text" id="qInput" name="q" value="@q" placeholder="Dosya ara..." x-model="q">
         </div>
-        <div class="field" style="min-width:200px;">
+        <div class="filter-bar__field">
             <label class="lab" for="contractFilter">Sözleşme</label>
             <select class="inp" id="contractFilter" name="contractId">
                 <option value="">Tümü</option>
@@ -143,7 +143,7 @@ else
                     <th scope="col">Boyut</th>
                     <th scope="col">Versiyon</th>
                     <th scope="col">Yüklenme</th>
-                    <th scope="col" style="text-align:right;">İşlemler</th>
+                    <th scope="col" class="text-right">İşlemler</th>
                 </tr>
             </thead>
             <tbody>
@@ -209,7 +209,7 @@ else
                         <td><span class="mono">@sizeLabel</span></td>
                         <td><span class="pill">v@f.Version</span></td>
                         <td><span class="ago">@f.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</span></td>
-                        <td style="text-align:right;">
+                        <td class="text-right">
                             @if (f.MimeType?.Contains("pdf") == true)
                             {
                                 <button type="button" class="btn sm ghost" title="Belgeye soru sor"
@@ -222,7 +222,7 @@ else
                                     AI
                                 </a>
                             }
-                            <form method="post" action="/Documents/Delete" style="display:inline; margin:0;" onsubmit="return confirm('Bu belge silinsin mi?')">
+                            <form method="post" action="/Documents/Delete" class="inline-form" onsubmit="return confirm('Bu belge silinsin mi?')">
                                 @Html.AntiForgeryToken()
                                 <input type="hidden" name="id" value="@f.Id">
                                 <button type="submit" class="btn sm danger" title="Sil">
@@ -240,7 +240,7 @@ else
 @await Html.PartialAsync("_FooterHint", (string?)$"{Model.Count} belge")
 
 @* Plan 27 Faz B-05 — Belgeye soru sor drawer'ı *@
-<div id="docChatDrawer" class="doc-chat-drawer" style="display:none;">
+<div id="docChatDrawer" class="doc-chat-drawer hidden">
     <div class="doc-chat-head">
         <div>
             <div class="doc-chat-title" id="docChatFileName">—</div>
@@ -268,9 +268,9 @@ else
 window.toggleUpload = function (force) {
     var f = document.getElementById('uploadForm');
     if (!f) return;
-    var shown = f.style.display !== 'none';
+    var shown = !f.classList.contains('hidden');
     var target = (typeof force === 'boolean') ? force : !shown;
-    f.style.display = target ? 'block' : 'none';
+    f.classList.toggle('hidden', !target);
     if (target) {
         var fi = document.getElementById('fileInput');
         if (fi) setTimeout(function () { fi.focus(); }, 50);
@@ -313,12 +313,12 @@ window.toggleUpload = function (force) {
             state.fileName = fileName;
             state.messages = [];
             el('docChatFileName').textContent = fileName;
-            el('docChatDrawer').style.display = 'flex';
+            el('docChatDrawer').classList.remove('hidden');
             render();
             setTimeout(function () { el('docChatQ').focus(); }, 50);
         },
         close: function () {
-            el('docChatDrawer').style.display = 'none';
+            el('docChatDrawer').classList.add('hidden');
         },
         ask: async function () {
             var q = el('docChatQ').value.trim();

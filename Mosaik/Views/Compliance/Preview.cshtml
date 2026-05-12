@@ -38,7 +38,7 @@
 
 @section TopActions {
     <a href="/Compliance" class="btn ghost">
-        <i class="fas fa-arrow-left text-[10px]"></i>
+        <i class="fas fa-arrow-left icon-xs"></i>
         Paketler
     </a>
 }
@@ -59,12 +59,12 @@
     @* Firma seçimi *@
     @if (firmas.Any())
     {
-        <div class="form-section-card" style="max-width:100%; margin-bottom:16px;">
-            <div style="padding:12px 18px; border-bottom:1px solid var(--line);">
-                <span style="font-size:13px; font-weight:600;">Firma Seçin</span>
+        <div class="form-section-card full-width mb-16 split">
+            <div class="form-section-head">
+                <span class="form-section-head__title">Firma Seçin</span>
             </div>
-            <div style="padding:14px 18px;">
-                <select class="inp" name="firmaId" required style="max-width:320px;">
+            <div class="form-section-body">
+                <select class="inp" name="firmaId" required>
                     @foreach (var f in firmas)
                     {
                         <option value="@f.FirmaId">@f.Name</option>
@@ -75,24 +75,24 @@
     }
     else
     {
-        <div class="alert warn" role="alert" style="margin-bottom:16px;">
+        <div class="alert warn" role="alert">
             <i class="fas fa-triangle-exclamation"></i>
             Erişilebilir firma bulunamadı. Yöneticinize başvurun.
         </div>
     }
 
     @* Şablon listesi *@
-    <div style="background:var(--paper); border:1px solid var(--line); border-radius:10px; overflow:hidden; margin-bottom:16px;">
-        <div style="padding:12px 18px; border-bottom:1px solid var(--line); display:flex; justify-content:space-between; align-items:center;">
-            <span style="font-size:13px; font-weight:600;">Şablonlar</span>
-            <label style="font-size:12.5px; color:var(--ink-3); cursor:pointer; display:flex; align-items:center; gap:6px;">
-                <input type="checkbox" id="checkAll"> Tümünü seç
+    <div class="form-section-card full-width mb-16 split">
+        <div class="form-section-head with-actions">
+            <span class="form-section-head__title">Şablonlar</span>
+            <label class="checkbox-row">
+                <input type="checkbox" id="checkAll" class="checkbox"> Tümünü seç
             </label>
         </div>
         <table class="dt">
             <thead>
                 <tr>
-                    <th scope="col" style="width:36px;"></th>
+                    <th scope="col"></th>
                     <th scope="col">Yükümlülük</th>
                     <th scope="col">Kategori</th>
                     <th scope="col">Tekrar</th>
@@ -104,10 +104,10 @@
                 {
                     <tr>
                         <td>
-                            <input type="checkbox" name="templateIds" value="@t.Id" class="template-cb">
+                            <input type="checkbox" name="templateIds" value="@t.Id" class="template-cb checkbox">
                         </td>
                         <td>
-                            <span style="font-size:13px; font-weight:500; color:var(--ink-1);">@t.Title</span>
+                            <span class="fw-500">@t.Title</span>
                             @if (!string.IsNullOrWhiteSpace(t.Description))
                             {
                                 <br><span class="text-muted text-xs">@t.Description</span>
@@ -129,10 +129,10 @@
 
     @if (firmas.Any())
     {
-        <div class="action-row" style="max-width:100%;">
+        <div class="action-row wide">
             <a href="/Compliance" class="btn ghost">İptal</a>
             <button type="submit" class="btn primary">
-                <i class="fas fa-plus text-[10px]"></i>
+                <i class="fas fa-plus icon-xs"></i>
                 Seçilenleri Yükümlülük Olarak Ekle
             </button>
         </div>

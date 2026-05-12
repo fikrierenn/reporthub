@@ -29,7 +29,7 @@
         <span class="mono">@totalCount erişilebilir rapor</span>
         @if (favCount > 0)
         {
-            <span class="pill"><i class="fas fa-star" style="color:var(--accent); font-size:10px;"></i> @favCount favori</span>
+            <span class="pill"><i class="fas fa-star pill__icon"></i> @favCount favori</span>
         }
         @if (Model.UserRoles.Any())
         {
@@ -38,20 +38,20 @@
     </div>
 </div>
 
-<form method="get" class="report-filter-bar" style="background:var(--paper); border:1px solid var(--line); border-radius:10px; padding:14px 16px; margin-bottom:18px; display:flex; gap:12px; flex-wrap:wrap; align-items:end;">
-    <div style="flex:1; min-width:240px;">
+<form method="get" class="filter-bar">
+    <div class="filter-bar__field filter-bar__field--grow">
         <label class="lab" for="reportSearch">Arama</label>
-        <div style="position:relative;">
-            <span style="position:absolute; left:10px; top:50%; transform:translateY(-50%); color:var(--ink-4); pointer-events:none;">
-                <i class="fas fa-magnifying-glass" style="font-size:12px;"></i>
+        <div class="search-input-wrap">
+            <span class="search-input-wrap__icon">
+                <i class="fas fa-magnifying-glass"></i>
             </span>
             <input type="text" id="reportSearch" name="q" value="@Model.SearchTerm"
-                   class="inp" style="padding-left:32px;"
+                   class="inp"
                    placeholder="Rapor adı, açıklama veya grup..." />
         </div>
     </div>
 
-    <div style="min-width:180px;">
+    <div class="filter-bar__field">
         <label class="lab" for="reportGroup">Grup</label>
         <select id="reportGroup" name="group" class="inp">
             <option value="">Tüm gruplar</option>
@@ -69,7 +69,7 @@
         </select>
     </div>
 
-    <div style="display:flex; gap:6px;">
+    <div class="filter-bar__actions">
         <button type="submit" class="btn primary">
             <i class="fas fa-filter text-[10px]"></i>
             Filtrele
@@ -86,16 +86,16 @@
 
 @if (!Model.Reports.Any())
 {
-    <div style="background:var(--paper); border:1px dashed var(--line); border-radius:10px; padding:48px 24px; text-align:center; color:var(--ink-3);">
-        <i class="fas fa-folder-open" style="font-size:48px; opacity:.4; margin-bottom:12px;"></i>
-        <h3 style="font-size:14px; font-weight:600; color:var(--ink-1); margin:0 0 4px;">Erişilebilir rapor bulunamadı</h3>
+    <div class="empty-state">
+        <i class="fas fa-folder-open empty-state__icon"></i>
+        <h3>Erişilebilir rapor bulunamadı</h3>
         @if (!string.IsNullOrWhiteSpace(Model.SearchTerm) || !string.IsNullOrWhiteSpace(Model.SelectedGroup))
         {
-            <p style="margin:0; font-size:12.5px;">Filtre kriterlerini değiştirin veya <a href="/Reports" style="color:var(--accent); font-weight:500;">filtreyi temizle</a>.</p>
+            <p>Filtre kriterlerini değiştirin veya <a href="/Reports" class="data-link fw-500">filtreyi temizle</a>.</p>
         }
         else
         {
-            <p style="margin:0; font-size:12.5px;">Yöneticinizden rol veya rapor erişimi isteyin.</p>
+            <p>Yöneticinizden rol veya rapor erişimi isteyin.</p>
         }
     </div>
 }
@@ -115,32 +115,31 @@ else
             <div class="qcard">
                 <div class="row1">
                     <span class="type-chip type-dash">Dashboard</span>
-                    <span class="mono" style="font-size:10.5px; color:var(--ink-4); margin-left:auto;">#@report.ReportId</span>
-                    <form method="post" action="@(isFavorite ? "/Reports/Unfavorite" : "/Reports/Favorite")" style="display:inline; margin:0;">
+                    <span class="qcard__id">#@report.ReportId</span>
+                    <form method="post" action="@(isFavorite ? "/Reports/Unfavorite" : "/Reports/Favorite")" class="fav-form">
                         @Html.AntiForgeryToken()
                         <input type="hidden" name="reportId" value="@report.ReportId" />
                         <input type="hidden" name="returnUrl" value="@returnUrl" />
                         <button type="submit"
                                 class="fav @(isFavorite ? "on" : "")"
-                                title="@(isFavorite ? "Favoriden kaldır" : "Favorilere ekle")"
-                                style="position:relative; z-index:2;">
+                                title="@(isFavorite ? "Favoriden kaldır" : "Favorilere ekle")">
                             @if (isFavorite)
                             {
-                                <i class="fas fa-star" style="font-size:12px;"></i>
+                                <i class="fas fa-star"></i>
                             }
                             else
                             {
-                                <i class="far fa-star" style="font-size:12px;"></i>
+                                <i class="far fa-star"></i>
                             }
                         </button>
                     </form>
                 </div>
-                <a href="/Reports/Run?reportId=@report.ReportId" style="text-decoration:none; color:inherit;">
+                <a href="/Reports/Run?reportId=@report.ReportId" class="qcard__link">
                     <h3>@report.Title</h3>
                     <div class="sub">@displaySub</div>
                     <div class="meta">
-                        <span class="ago" style="font-family:'JetBrains Mono',monospace;">
-                            <i class="fas fa-database" style="font-size:9px; color:var(--ink-4); margin-right:3px;"></i>
+                        <span class="ago">
+                            <i class="fas fa-database qcard__db-icon"></i>
                             @(report.DataSource?.Title ?? report.DataSourceKey)
                         </span>
                         <span class="run">Çalıştır <i class="fas fa-arrow-right text-[10px]"></i></span>

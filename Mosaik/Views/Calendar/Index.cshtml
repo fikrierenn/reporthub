@@ -34,53 +34,53 @@
 </div>
 
 @* Renk açıklamaları *@
-<div style="display:flex; gap:16px; flex-wrap:wrap; margin-bottom:16px; align-items:center;">
-    <span class="pill"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#dc2626;margin-right:4px;"></span>Ödeme / Son Tarih</span>
-    <span class="pill"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#d97706;margin-right:4px;"></span>Vergi / Uyumluluk</span>
-    <span class="pill"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#92400e;margin-right:4px;"></span>Yenileme</span>
-    <span class="pill"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#2563eb;margin-right:4px;"></span>Operasyon</span>
-    <span class="pill"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#6b7280;margin-right:4px;"></span>Tamamlandı</span>
+<div class="cal-legend">
+    <span class="pill"><span class="legend-dot payment"></span>Ödeme / Son Tarih</span>
+    <span class="pill"><span class="legend-dot tax"></span>Vergi / Uyumluluk</span>
+    <span class="pill"><span class="legend-dot renewal"></span>Yenileme</span>
+    <span class="pill"><span class="legend-dot operational"></span>Operasyon</span>
+    <span class="pill"><span class="legend-dot done"></span>Tamamlandı</span>
 </div>
 
-<div class="form-section-card" style="padding:20px;">
+<div class="form-section-card padded">
     <div id="calendar"></div>
 </div>
 
 @* Etkinlik Detay Modal *@
-<div id="eventModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.4); z-index:9000; align-items:center; justify-content:center;">
-    <div style="background:var(--paper); border-radius:12px; padding:28px; width:480px; max-width:95vw; box-shadow:0 20px 60px rgba(0,0,0,.2);">
-        <div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:16px;">
-            <h3 id="modalTitle" style="font-size:15px; font-weight:600; color:var(--ink-1); margin:0; line-height:1.4;"></h3>
-            <button type="button" class="icon-btn" onclick="closeEventModal()" title="Kapat" style="margin-left:12px; flex-shrink:0;">
+<div id="eventModal" class="modal-backdrop">
+    <div class="modal-card">
+        <div class="modal-head">
+            <h3 id="modalTitle" class="modal-title"></h3>
+            <button type="button" class="icon-btn modal-close" onclick="closeEventModal()" title="Kapat">
                 <i class="fas fa-xmark"></i>
             </button>
         </div>
-        <div style="display:flex; flex-direction:column; gap:10px; font-size:13px; color:var(--ink-2);">
-            <div style="display:flex; gap:8px; align-items:center;">
-                <i class="fas fa-calendar-day" style="color:var(--ink-4); width:16px;"></i>
+        <div class="modal-body">
+            <div class="meta-row">
+                <i class="fas fa-calendar-day"></i>
                 <span id="modalDate"></span>
             </div>
-            <div style="display:flex; gap:8px; align-items:center;">
-                <i class="fas fa-tag" style="color:var(--ink-4); width:16px;"></i>
+            <div class="meta-row">
+                <i class="fas fa-tag"></i>
                 <span id="modalType"></span>
-                <span id="modalStatus" class="pill" style="margin-left:4px;"></span>
+                <span id="modalStatus" class="pill"></span>
             </div>
-            <div id="modalContractRow" style="display:none; gap:8px; align-items:center;">
-                <i class="fas fa-file-contract" style="color:var(--ink-4); width:16px;"></i>
-                <a id="modalContractLink" href="#" style="color:var(--accent); font-size:13px;"></a>
+            <div id="modalContractRow" class="meta-row is-hidden">
+                <i class="fas fa-file-contract"></i>
+                <a id="modalContractLink" href="#" class="accent-link"></a>
             </div>
-            <div id="modalNotesRow" style="display:none; gap:8px; align-items:flex-start;">
-                <i class="fas fa-note-sticky" style="color:var(--ink-4); width:16px; margin-top:2px;"></i>
-                <span id="modalNotes" style="color:var(--ink-3);"></span>
+            <div id="modalNotesRow" class="meta-row top is-hidden">
+                <i class="fas fa-note-sticky mt-2"></i>
+                <span id="modalNotes" class="ink-3"></span>
             </div>
         </div>
-        <div style="display:flex; gap:8px; margin-top:20px; justify-content:flex-end;">
-            <form id="frmComplete" method="post" action="/Calendar/Complete" style="margin:0;">
+        <div class="modal-actions">
+            <form id="frmComplete" method="post" action="/Calendar/Complete" class="inline">
                 @Html.AntiForgeryToken()
                 <input type="hidden" name="id" id="modalEventId">
                 <button type="submit" class="btn sm ghost">Tamamlandı İşaretle</button>
             </form>
-            <form id="frmDelete" method="post" action="/Calendar/Delete" style="margin:0;" onsubmit="return confirm('Etkinlik silinsin mi?')">
+            <form id="frmDelete" method="post" action="/Calendar/Delete" class="inline" onsubmit="return confirm('Etkinlik silinsin mi?')">
                 @Html.AntiForgeryToken()
                 <input type="hidden" name="id" id="modalEventId2">
                 <button type="submit" class="btn sm danger">Sil</button>
@@ -91,16 +91,16 @@
 </div>
 
 @* Etkinlik Oluşturma Modal *@
-<div id="createModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.4); z-index:9000; align-items:center; justify-content:center;">
-    <div style="background:var(--paper); border-radius:12px; padding:28px; width:480px; max-width:95vw; box-shadow:0 20px 60px rgba(0,0,0,.2);">
-        <h3 style="font-size:15px; font-weight:600; margin:0 0 20px; color:var(--ink-1);">Yeni Etkinlik</h3>
+<div id="createModal" class="modal-backdrop">
+    <div class="modal-card">
+        <h3 class="modal-title compact">Yeni Etkinlik</h3>
         <form method="post" action="/Calendar/Create" id="frmCreate">
             @Html.AntiForgeryToken()
             <div class="field">
                 <label class="lab" for="evTitle">Başlık</label>
                 <input class="inp" type="text" id="evTitle" name="Title" required maxlength="200">
             </div>
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:12px;">
+            <div class="modal-form-grid">
                 <div class="field">
                     <label class="lab" for="evDate">Tarih</label>
                     <input class="inp" type="date" id="evDate" name="EventDate" required>
@@ -117,11 +117,11 @@
                     </select>
                 </div>
             </div>
-            <div class="field" style="margin-top:12px;">
+            <div class="field mt-12">
                 <label class="lab" for="evNotes">Not (opsiyonel)</label>
                 <textarea class="inp" id="evNotes" name="Notes" rows="2" maxlength="500"></textarea>
             </div>
-            <div style="display:flex; gap:8px; margin-top:20px; justify-content:flex-end;">
+            <div class="modal-actions">
                 <button type="button" class="btn ghost" onclick="closeCreateModal()">İptal</button>
                 <button type="submit" class="btn primary">Kaydet</button>
             </div>
@@ -148,34 +148,34 @@
             if (p.contractTitle && p.contractId) {
                 document.getElementById('modalContractLink').textContent = p.contractTitle;
                 document.getElementById('modalContractLink').href = '/Contracts/Details/' + p.contractId;
-                contractRow.style.display = 'flex';
+                contractRow.classList.remove('is-hidden');
             } else {
-                contractRow.style.display = 'none';
+                contractRow.classList.add('is-hidden');
             }
 
             var notesRow = document.getElementById('modalNotesRow');
             if (p.notes) {
                 document.getElementById('modalNotes').textContent = p.notes;
-                notesRow.style.display = 'flex';
+                notesRow.classList.remove('is-hidden');
             } else {
-                notesRow.style.display = 'none';
+                notesRow.classList.add('is-hidden');
             }
 
-            document.getElementById('eventModal').style.display = 'flex';
+            document.getElementById('eventModal').classList.add('is-open');
         }
 
         window.closeEventModal = function () {
-            document.getElementById('eventModal').style.display = 'none';
+            document.getElementById('eventModal').classList.remove('is-open');
         };
 
         window.closeCreateModal = function () {
-            document.getElementById('createModal').style.display = 'none';
+            document.getElementById('createModal').classList.remove('is-open');
         };
 
         document.getElementById('btnNewEvent').addEventListener('click', function () {
             var today = new Date().toISOString().split('T')[0];
             document.getElementById('evDate').value = today;
-            document.getElementById('createModal').style.display = 'flex';
+            document.getElementById('createModal').classList.add('is-open');
         });
 
         document.addEventListener('DOMContentLoaded', function () {

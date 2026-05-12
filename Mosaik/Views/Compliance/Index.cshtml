@@ -14,15 +14,6 @@
         "operasyon"=> "fas fa-gears",
         _         => "fas fa-clipboard-check"
     };
-    string PackageColor(string pkg) => pkg.ToLower() switch
-    {
-        "vergi"   => "#dc2626",
-        "ik"      => "#2563eb",
-        "finans"  => "#059669",
-        "hukuk"   => "#7c3aed",
-        "it"      => "#0891b2",
-        _         => "#d97706"
-    };
     string PackageLabel(string pkg) => pkg.ToLower() switch
     {
         "vergi"   => "Vergi & Mali Yükümlülükler",
@@ -69,7 +60,7 @@
 @if (!Model.Any())
 {
     <div class="empty-state">
-        <i class="fas fa-clipboard-check" style="font-size:48px; opacity:.3; margin-bottom:12px;"></i>
+        <i class="fas fa-clipboard-check icon-lg"></i>
         <h3>Uyum şablonu bulunamadı</h3>
         <p>Sistem yöneticisi şablon ekleyebilir.</p>
     </div>
@@ -79,23 +70,20 @@ else
     <div class="quick-grid">
         @foreach (var pkg in Model)
         {
-            var color = PackageColor(pkg);
-            var icon  = PackageIcon(pkg);
-            <div class="qcard" style="text-decoration:none;">
+            var icon = PackageIcon(pkg);
+            <a href="/Compliance/Preview/@pkg" class="qcard">
                 <div class="row1">
-                    <span class="type-chip" style="background:@(color)20; color:@color;">
-                        <i class="@icon" style="margin-right:4px; font-size:10px;"></i>
+                    <span class="type-chip">
+                        <i class="@icon icon-mr icon-xs"></i>
                         @pkg.ToUpperInvariant()
                     </span>
                 </div>
-                <a href="/Compliance/Preview/@pkg" style="text-decoration:none; color:inherit;">
-                    <h3>@PackageLabel(pkg)</h3>
-                    <div class="sub">@PackageDesc(pkg)</div>
-                    <div class="meta">
-                        <span class="run">İncele ve Yükle <i class="fas fa-arrow-right text-[10px]"></i></span>
-                    </div>
-                </a>
-            </div>
+                <h3>@PackageLabel(pkg)</h3>
+                <div class="sub">@PackageDesc(pkg)</div>
+                <div class="meta">
+                    <span class="run">İncele ve Yükle <i class="fas fa-arrow-right icon-xs"></i></span>
+                </div>
+            </a>
         }
     </div>
 }

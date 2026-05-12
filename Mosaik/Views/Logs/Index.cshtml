@@ -39,17 +39,17 @@
         {
             <span class="pill mono">Sayfa @Model.Page / @Model.TotalPages</span>
         }
-        <span class="pill"><i class="fas fa-shield-halved" style="font-size:10px; color:var(--ink-3);"></i> @(Model.IsAdmin ? "Tüm kullanıcılar" : "Sadece sen")</span>
+        <span class="pill"><i class="fas fa-shield-halved pill-icon"></i> @(Model.IsAdmin ? "Tüm kullanıcılar" : "Sadece sen")</span>
     </div>
 </div>
 
-<form method="get" action="/Logs" style="background:var(--paper); border:1px solid var(--line); border-radius:10px; padding:14px 16px; margin-bottom:18px; display:grid; grid-template-columns: repeat(7, 1fr); gap:10px; align-items:end;">
-    <div style="grid-column: span 2;">
+<form method="get" action="/Logs" class="filter-bar">
+    <div class="field tight">
         <label class="lab" for="logSearch">Ara</label>
         <input id="logSearch" name="logSearch" type="text" value="@Model.LogSearch" class="inp"
                placeholder="Kullanıcı, rapor, durum..." />
     </div>
-    <div>
+    <div class="field tight">
         <label class="lab" for="eventType">Olay</label>
         <select id="eventType" name="eventType" class="inp">
             <option value="">Hepsi</option>
@@ -59,7 +59,7 @@
             }
         </select>
     </div>
-    <div>
+    <div class="field tight">
         <label class="lab" for="logUser">Kullanıcı</label>
         <select id="logUser" name="logUser" class="inp">
             <option value="">Hepsi</option>
@@ -69,7 +69,7 @@
             }
         </select>
     </div>
-    <div>
+    <div class="field tight">
         <label class="lab" for="targetType">Hedef</label>
         <select id="targetType" name="targetType" class="inp">
             <option value="">Hepsi</option>
@@ -79,7 +79,7 @@
             }
         </select>
     </div>
-    <div>
+    <div class="field tight">
         <label class="lab" for="success">Durum</label>
         <select id="success" name="success" class="inp">
             <option value="">Hepsi</option>
@@ -87,49 +87,47 @@
             <option value="false" selected="@(Model.SelectedSuccess == "false")">Hatalı</option>
         </select>
     </div>
-    <div>
+    <div class="field tight">
         <label class="lab" for="logDateStart">Başlangıç</label>
         <input id="logDateStart" name="logStart" type="date" value="@Model.LogStart" class="inp" />
     </div>
-    <div style="grid-column: span 7; display:flex; gap:6px; align-items:end;">
-        <div style="flex:1; max-width:200px;">
-            <label class="lab" for="logDateEnd">Bitiş</label>
-            <input id="logDateEnd" name="logEnd" type="date" value="@Model.LogEnd" class="inp" />
-        </div>
-        <button type="submit" class="btn primary">
-            <i class="fas fa-filter text-[10px]"></i>
-            Filtrele
-        </button>
-        @if (hasFilter)
-        {
-            <a href="/Logs" class="btn ghost">
-                <i class="fas fa-xmark text-[10px]"></i>
-                Temizle
-            </a>
-        }
+    <div class="field tight">
+        <label class="lab" for="logDateEnd">Bitiş</label>
+        <input id="logDateEnd" name="logEnd" type="date" value="@Model.LogEnd" class="inp" />
     </div>
+    <button type="submit" class="btn primary">
+        <i class="fas fa-filter text-[10px]"></i>
+        Filtrele
+    </button>
+    @if (hasFilter)
+    {
+        <a href="/Logs" class="btn ghost">
+            <i class="fas fa-xmark text-[10px]"></i>
+            Temizle
+        </a>
+    }
 </form>
 
 @if (!Model.Logs.Any())
 {
-    <div style="background:var(--paper); border:1px dashed var(--line); border-radius:10px; padding:48px 24px; text-align:center; color:var(--ink-3);">
-        <i class="fas fa-history" style="font-size:48px; opacity:.4; margin-bottom:12px;"></i>
-        <h3 style="font-size:14px; font-weight:600; color:var(--ink-1); margin:0 0 4px;">Log bulunamadı</h3>
-        <p style="margin:0; font-size:12.5px;">@(hasFilter ? "Filtre kriterlerini değiştirin." : "Sistemde henüz aktivite kaydı yok.")</p>
+    <div class="empty-state">
+        <i class="fas fa-history empty-state__icon"></i>
+        <h3>Log bulunamadı</h3>
+        <p>@(hasFilter ? "Filtre kriterlerini değiştirin." : "Sistemde henüz aktivite kaydı yok.")</p>
     </div>
 }
 else
 {
-    <div class="activity">
+    <div class="table-card">
         <table class="dt">
             <thead>
                 <tr>
-                    <th style="width:18%;">Kullanıcı</th>
-                    <th>Olay</th>
-                    <th>Hedef</th>
-                    <th class="num">Detay</th>
-                    <th>Durum</th>
-                    <th class="num">Tarih</th>
+                    <th scope="col">Kullanıcı</th>
+                    <th scope="col">Olay</th>
+                    <th scope="col">Hedef</th>
+                    <th scope="col" class="num">Detay</th>
+                    <th scope="col">Durum</th>
+                    <th scope="col" class="num">Tarih</th>
                 </tr>
             </thead>
             <tbody>
@@ -150,7 +148,7 @@ else
                                 <span>@(log.Username ?? "?")</span>
                             </div>
                         </td>
-                        <td><span class="mono" style="font-size:11.5px;">@log.EventType</span></td>
+                        <td><span class="mono text-xs">@log.EventType</span></td>
                         <td>@targetDisplay</td>
                         <td class="num">@detail</td>
                         <td><span class="status @statusClass">@statusText</span></td>
@@ -166,11 +164,11 @@ else
 
 @if (Model.TotalPages > 1)
 {
-    <div style="display:flex; align-items:center; justify-content:space-between; margin-top:18px;">
-        <div class="mono" style="font-size:11.5px; color:var(--ink-3);">
+    <div class="flex-between mt-14">
+        <div class="mono text-xs text-muted">
             Sayfa @Model.Page / @Model.TotalPages · toplam @Model.TotalCount kayıt
         </div>
-        <div style="display:flex; gap:6px;">
+        <div class="btn-group">
             @if (Model.Page > 1)
             {
                 <a class="btn"
