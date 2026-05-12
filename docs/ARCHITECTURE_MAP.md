@@ -318,7 +318,6 @@ _Otomatik üretildi. AdminController partial'larından çıkarılır._
 129:        public async Task<IActionResult> DeletePosition(int id, [FromServices] IOrgChartService orgChart)
 153:        public async Task<IActionResult> OrgChartReorder([FromBody] OrgChartReorderRequest req,
 179:        public async Task<IActionResult> ImportZirvePosition(string code, [FromServices] IOrgChartService orgChart)
-16:        public async Task<IActionResult> CreateReport()
 87:        [Route("Admin/CreateReport")]
 88:        public async Task<IActionResult> CreateReport(ReportCatalog report)
 104:        [Route("Admin/CreateReportV2")]
@@ -328,10 +327,9 @@ _Otomatik üretildi. AdminController partial'larından çıkarılır._
 121:        [Route("Admin/CreateReport")]
 123:        public IActionResult CreateReportLegacyRedirect() =>
 126:        [Route("Admin/EditReport/{id:int}")]
-128:        public IActionResult EditReportLegacyRedirect(int id) =>
-132:        public async Task<IActionResult> EditReport(int id)
-184:        [Route("Admin/EditReport/{id}")]
-185:        public async Task<IActionResult> EditReport(int id, ReportCatalog report)
+128:        public async Task<IActionResult> EditReportLegacyRedirect(int id)
+213:        [Route("Admin/EditReport/{id}")]
+214:        public async Task<IActionResult> EditReport(int id, ReportCatalog report)
 13:        [Route("Admin/EditRole/{id}")]
 14:        public async Task<IActionResult> EditRole(int id)
 32:        [Route("Admin/EditRole/{id}")]
@@ -359,7 +357,7 @@ _Otomatik üretildi. AdminController partial'larından çıkarılır._
 72:        [Route("Admin/EditUser/{id}")]
 73:        public async Task<IActionResult> EditUser(int id, User user)
 82:        public async Task<IActionResult> Index(string tab = "overview")
-145:        public async Task<IActionResult> Index(string tab = "datasources", string action = "", string key = "", int id = 0)
+166:        public async Task<IActionResult> Index(string tab = "datasources", string action = "", string key = "", int id = 0)
 ```
 <!-- AUTO:CONTROLLER_ROUTES:END -->
 
