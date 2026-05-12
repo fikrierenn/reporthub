@@ -2,24 +2,22 @@
     ViewData["Title"] = "Circular & Sirküler";
 }
 
-<div class="container" style="padding: 24px;">
-    <h1 style="margin-bottom: 16px;">
-        <i class="fas fa-bullhorn"></i> Circular & Sirküler
-    </h1>
+<div class="hero">
+    <h1><i class="fas fa-bullhorn" aria-hidden="true"></i> Circular & Sirküler</h1>
+</div>
 
-    <div style="background: var(--paper, #fff); border: 1px solid var(--line, #e5e7eb); border-radius: 8px; padding: 20px;">
-        <p>Bu modül henüz iskelet aşamasında (Plan 17 Faz A — 2026-05-08).</p>
-        <p>Plan 17 v2 ile gelecek özellikler:</p>
-        <ul>
-            <li><strong>Günlük Blok:</strong> Genel Müdürlük çalışanları gün içinde duyuru/karar/uyarı kaydı girer</li>
-            <li><strong>17:00 otomatik derleme:</strong> Hangfire cron job o günkü blokları toplayıp Circular olarak yayınlar</li>
-            <li><strong>Circular zarfı:</strong> TamimBlok junction ile bloklar bir günlük tamime bağlanır</li>
-            <li><strong>Okuma logu:</strong> Kim okudu, ne zaman — "görmedim" bahanesi yok</li>
-            <li><strong>Lookup:</strong> BlockType (Duyuru/Karar/Hadise/Uyarı) Mosaik.Core.Lookup'tan</li>
-        </ul>
-        <p style="color: var(--muted, #6b7280); font-size: 14px; margin-top: 16px;">
-            <i class="fas fa-info-circle"></i> Modül DB-driven olarak <code>AppModules</code>
-            tablosundan etkin/pasif yapılabilir (Plan 12 + 16.6).
-        </p>
-    </div>
+<div class="paper-card with-padding">
+    <p>Bu modül henüz iskelet aşamasında (Plan 17 Faz A — 2026-05-08).</p>
+    <p>Plan 17 v2 ile gelecek özellikler:</p>
+    <ul>
+        <li><strong>Günlük Blok:</strong> Genel Müdürlük çalışanları gün içinde duyuru/karar/uyarı kaydı girer</li>
+        <li><strong>17:00 otomatik derleme:</strong> Hangfire cron job o günkü blokları toplayıp Circular olarak yayınlar</li>
+        <li><strong>Circular zarfı:</strong> TamimBlok junction ile bloklar bir günlük tamime bağlanır</li>
+        <li><strong>Okuma logu:</strong> Kim okudu, ne zaman — "görmedim" bahanesi yok</li>
+        <li><strong>Lookup:</strong> BlockType (Duyuru/Karar/Hadise/Uyarı) Mosaik.Core.Lookup'tan</li>
+    </ul>
+    <p class="text-sm text-muted mt-16">
+        <i class="fas fa-info-circle" aria-hidden="true"></i> Modül DB-driven olarak <code>AppModules</code>
+        tablosundan etkin/pasif yapılabilir (Plan 12 + 16.6).
+    </p>
 </div>

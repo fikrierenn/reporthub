@@ -577,6 +577,7 @@ select.inp {
 /* Spacing micro utilities (admin form'larda gerekli) */
 .mt-8 { margin-top: 8px; }
 .mt-14 { margin-top: 14px; }
+.mt-16 { margin-top: 16px; }
 .mb-8 { margin-bottom: 8px; }
 .ml-4 { margin-left: 4px; }
 
@@ -1296,3 +1297,107 @@ select.inp {
 .profile-card-actions { display: flex; align-items: center; justify-content: space-between; padding-top: 18px; border-top: 1px solid var(--line-2); }
 .profile-section-divider { margin: 18px 0 12px; }
 .section-title .muted-suffix { color: var(--ink-4); font-weight: 400; text-transform: none; letter-spacing: 0; }
+
+/* ============================================================
+   Plan 25.1 Faz 1 — Modül-ortak generic utility'ler (2026-05-13)
+   Önceden modül CSS'lerinde duplike yaratılıyordu (örn. components-tamim'e
+   filter-bar varyantı). Buraya tek source-of-truth taşındı.
+   ============================================================ */
+
+/* Filter bar varyantı — toggle group + ikon + grow search */
+.filter-bar.with-toggle { flex-wrap: wrap; gap: 10px; }
+.filter-bar .fb-search-grow { flex: 1; min-width: 220px; position: relative; }
+.filter-bar .fb-icon {
+    position: absolute; left: 10px; top: 50%; transform: translateY(-50%);
+    color: var(--ink-4); font-size: 13px; pointer-events: none;
+}
+.filter-bar .fb-search-grow .inp { padding-left: 32px; }
+.filter-bar .fb-toggle-group { display: flex; gap: 4px; }
+
+/* Buton içi sayım badge ("Filtrele 3" gibi) */
+.btn .btn-count {
+    margin-left: 6px; padding: 1px 6px;
+    background: var(--line-2); color: var(--ink-2);
+    border-radius: 8px; font-size: 10px; font-weight: 600;
+}
+.btn.primary .btn-count { background: rgba(255,255,255,.2); color: #fff; }
+
+/* Tablo cell helper'ları (her modülde tablo gerek) */
+.dt td.cell-muted { color: var(--ink-3); font-size: 12px; }
+.dt td.cell-right, .dt th.col-right { text-align: right; }
+.dt .row-actions { display: flex; gap: 6px; justify-content: flex-end; }
+
+/* Generic kart varyantları */
+.paper-card { background: var(--paper); border: 1px solid var(--line); border-radius: 10px; }
+.paper-card.with-padding { padding: 16px; }
+.dashed-card {
+    text-align: center; padding: 40px;
+    border: 2px dashed var(--line); border-radius: 10px;
+    color: var(--ink-3);
+}
+.dashed-card .dc-icon { font-size: 48px; opacity: .4; display: block; margin-bottom: 8px; }
+
+/* Content card (label üst + body alt + ekler) — Tamim'den genericleştirildi */
+.content-card {
+    background: var(--paper); border: 1px solid var(--line); border-radius: 10px;
+    padding: 16px; margin-bottom: 14px;
+}
+.content-card__label {
+    font-size: 11px; font-weight: 600;
+    color: var(--ink-3); text-transform: uppercase;
+    letter-spacing: .04em; margin-bottom: 8px;
+}
+.content-card__body { font-size: 14px; line-height: 1.6; color: var(--ink-1); }
+.content-card__files { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line); }
+.content-card__files-list { display: flex; flex-wrap: wrap; gap: 6px; }
+
+/* Info card (status read-only note + benzeri durum kutusu) */
+.info-card {
+    padding: 12px 16px; background: var(--line-2);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 8px 8px 0;
+    font-size: 12.5px; color: var(--ink-2);
+    margin: 14px 0;
+}
+
+/* File pill (eklenen dosya rozeti — Tamim + Documents + Contracts paylaşır) */
+.file-pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 10px; background: var(--line-2);
+    border: 1px solid var(--line); border-radius: 999px;
+    font-size: 11.5px; color: var(--ink-2);
+}
+.file-pill .fp-ext-generic { font-size: 10px; color: var(--ink-4); font-weight: 600; }
+.file-pill .fp-size-dot { font-size: 9px; color: var(--ink-4); }
+
+/* Küçük layout helper'ları */
+.count-suffix { font-size: 12px; color: var(--ink-3); margin-left: 4px; font-weight: 500; }
+.value-sm { font-size: 14px; font-weight: 600; color: var(--ink-1); }
+.row-name { font-weight: 500; color: var(--ink-1); }
+.chip-row { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.hint-row { font-size: 11px; color: var(--ink-3); margin-top: 4px; }
+
+/* Trend bar (data-driven width — `style="--w: @pct"` istisna pattern) */
+.dt .trend-bar { display: block; height: 4px; background: var(--accent); border-radius: 2px; width: var(--w, 0%); }
+
+/* Mini chart paper wrap (dashboard kpi card kapsayıcı) */
+.mini-chart.paper-wrap { padding: 12px; background: var(--paper); border: 1px solid var(--line); border-radius: 8px; }
+
+/* Tablo başlık sabit genişlik (admin reading report gibi) */
+.dt th.w-100 { width: 100px; }
+.dt th.w-40p { width: 40%; }
+
+/* Subject link (liste cell'inde başlık link) */
+.subject-link { color: var(--ink-1); font-weight: 500; text-decoration: none; }
+.subject-link:hover { color: var(--accent); text-decoration: underline; }
+
+/* Urgent icon (acil/önemli işaret — kırmızı bolt vb) */
+.urgent-icon { color: var(--accent); margin-right: 4px; }
+
+/* Tek satır chip (filtre/seçili) */
+.type-chip.type-warn { background: rgba(245,158,11,.12); color: #92400e; border: 1px solid rgba(245,158,11,.25); }
+
+/* Spacing micro additions */
+.mb-18 { margin-bottom: 18px; }
+.field.mt-12 { margin-top: 12px; }
+.field.tight { margin-bottom: 0; }

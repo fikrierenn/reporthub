@@ -58,14 +58,7 @@
 
 @if (TempData["Message"] != null)
 {
-    var t = TempData["MessageType"]?.ToString();
-    <div role="alert" style="margin-bottom:18px; padding:12px 16px; border-radius:10px; font-size:13px;
-                background: @(t == "success" ? "var(--success-bg-soft)" : t == "warn" ? "var(--warn-bg-soft)" : "var(--danger-bg-soft)");
-                border: 1px solid @(t == "success" ? "rgba(16,185,129,0.25)" : t == "warn" ? "rgba(245,158,11,0.30)" : "rgba(220,38,38,0.25)");
-                color: @(t == "success" ? "var(--success-ink-soft)" : t == "warn" ? "var(--warn-ink-soft)" : "var(--accent-ink)");">
-        <i class="fas @(t == "success" ? "fa-check-circle" : t == "warn" ? "fa-triangle-exclamation" : "fa-exclamation-circle")" style="margin-right:8px;"></i>
-        @TempData["Message"]
-    </div>
+    @await Html.PartialAsync("_AlertMessage", (TempData["MessageType"]?.ToString() ?? "info", TempData["Message"]?.ToString() ?? ""))
 }
 
 <article class="tamim-envelope">
@@ -81,7 +74,7 @@
         }
         @if (urgentCount > 0)
         {
-            <span style="color:var(--accent); font-weight:600;"><i class="fas fa-bolt" aria-hidden="true"></i>@urgentCount acil</span>
+            <span class="te-acil"><i class="fas fa-bolt" aria-hidden="true"></i>@urgentCount acil</span>
         }
     </div>
 </article>
@@ -116,10 +109,10 @@
         <span>Yapay zekâ özeti</span>
         @if (hasSummary)
         {
-            <span class="ai-badge" style="background:rgba(16,185,129,.15); color:var(--success-ink-soft);">Hazır</span>
+            <span class="ai-badge ready">Hazır</span>
             @if (Model.AiSummaryAt.HasValue)
             {
-                <span style="font-size:11px; color:var(--ink-3); margin-left:auto;">@Model.AiSummaryAt.Value.ToLocalTime().ToString("dd MMM HH:mm", tr)</span>
+                <span class="ai-time">@Model.AiSummaryAt.Value.ToLocalTime().ToString("dd MMM HH:mm", tr)</span>
             }
         }
         else
@@ -129,7 +122,7 @@
 
         @if (User.IsInRole("admin"))
         {
-            <form method="post" action="@Url.Action("RegenerateSummary", "Admin", new { id = Model.Id })" style="display:inline; margin-left:8px;"
+            <form method="post" action="@Url.Action("RegenerateSummary", "Admin", new { id = Model.Id })" class="ai-regen-form"
                   onsubmit="this.querySelector('button').disabled=true; this.querySelector('button').innerHTML='<i class=\'fas fa-spinner fa-spin text-[9px]\'></i> Üretiliyor...';">
                 @Html.AntiForgeryToken()
                 <button type="submit" class="btn ghost sm" title="AI özetini yeniden üret">
@@ -142,7 +135,7 @@
 
     @if (hasSummary)
     {
-        <ul style="margin:8px 0 0; padding-left:20px; font-size:13.5px; color:var(--ink-1); line-height:1.7;">
+        <ul class="ai-summary-list">
             @foreach (var item in summaryItems!)
             {
                 <li>@item</li>
@@ -150,18 +143,18 @@
         </ul>
         @if (topicItems != null && topicItems.Any())
         {
-            <div style="margin-top:10px; padding-top:10px; border-top:1px dashed var(--line); display:flex; flex-wrap:wrap; gap:6px; align-items:center;">
-                <span style="font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-3);">Konular:</span>
+            <div class="ai-topics-row">
+                <span class="ai-topics-label">Konular:</span>
                 @foreach (var topic in topicItems)
                 {
-                    <span class="type-chip" style="background:rgba(59,130,246,.10); color:#1e40af;">@topic</span>
+                    <span class="type-chip ai-topic-chip">@topic</span>
                 }
             </div>
         }
     }
     else
     {
-        <p style="margin:0; font-size:13px; color:var(--ink-3);">
+        <p class="ai-empty-text">
             AI özet henüz üretilmedi.
             @if (User.IsInRole("admin"))
             {
@@ -173,12 +166,12 @@
 
 <div class="section-title">
     <h2>İçerik blokları</h2>
-    <span style="font-size:12px; color:var(--ink-3);">@blocks.Count blok</span>
+    <span class="st-count">@blocks.Count blok</span>
 </div>
 
 @if (!blocks.Any())
 {
-    <div style="background:var(--paper); border:1px solid var(--line); border-radius:10px; padding:30px; text-align:center; color:var(--ink-3);">
+    <div class="empty-blocks">
         Bu tamim'e bağlı blok bulunamadı.
     </div>
 }
@@ -192,7 +185,7 @@ else
             <article class="blok-item @(b.IsUrgent ? "acil" : "")">
                 <div class="bi-head">
                     <span class="bi-no">@b.BlockNumber</span>
-                    <div style="display:flex; gap:6px; align-items:center;">
+                    <div class="bi-tip-row">
                         @if (b.IsUrgent)
                         {
                             <span class="acil-pill"><i class="fas fa-bolt" aria-hidden="true"></i> IsUrgent</span>
@@ -208,14 +201,13 @@ else
                 <div class="bi-icerik">@Html.Raw(b.Content)</div>
                 @if (fileMap.TryGetValue(b.Id, out var blockFiles) && blockFiles.Any())
                 {
-                    <div style="margin-top:10px; display:flex; flex-wrap:wrap; gap:6px;">
+                    <div class="bi-files">
                         @foreach (var d in blockFiles)
                         {
-                            <a href="@Url.Action("DownloadFile", "Block", new { id = d.Id })"
-                               style="display:inline-flex; align-items:center; gap:5px; padding:5px 9px; background:var(--canvas); border:1px solid var(--line); border-radius:6px; text-decoration:none; color:var(--ink-1); font-size:12px;">
-                                <span style="font-size:9.5px; font-weight:700; padding:2px 5px; border-radius:3px; background:var(--accent); color:#fff; text-transform:uppercase;">@d.Extension</span>
+                            <a href="@Url.Action("DownloadFile", "Block", new { id = d.Id })" class="bi-file-link">
+                                <span class="bf-ext">@d.Extension</span>
                                 <span>@d.FileName</span>
-                                <span style="color:var(--ink-3); font-size:10.5px;">· @FormatBoyut(d.FileSize)</span>
+                                <span class="bf-size">· @FormatBoyut(d.FileSize)</span>
                             </a>
                         }
                     </div>
@@ -233,11 +225,11 @@ else
     <div class="rr-head">
         <h3><i class="fas fa-eye" aria-hidden="true"></i>Okuma kaydı</h3>
     </div>
-    <div style="display:flex; justify-content:space-between; align-items:center; gap:14px; flex-wrap:wrap;">
-        <div style="font-size:13px; color:var(--ink-2);">
+    <div class="rr-body">
+        <div class="rr-info">
             Bu tamim sayfasını ziyaret ettiniz, okuma loguna otomatik kaydedildi.
         </div>
-        <span class="ack-status acked" aria-label="Okuma kaydedildi">
+        <span class="ack-status" aria-label="Okuma kaydedildi">
             <i class="fas fa-check-circle" aria-hidden="true"></i> Kayıt alındı
         </span>
     </div>

@@ -30,6 +30,21 @@ _Kullanıcı kararı 2026-05-10. Bu kural `.cshtml` view yazarken / düzenlerken
 2. Yoksa `Mosaik/wwwroot/assets/css/components.css`'e ekle (utility-first), tek tanım N view'da kullanılır.
 3. Pattern doğru utility yoksa: `code-architect` ile yeni utility tartış, sonra ekle.
 
+## CSS dosyası seçimi — ortak vs modül-özel (2026-05-13 kuralı)
+
+| Pattern türü | Hedef CSS | Örnek |
+|---|---|---|
+| Generic (her modülde reuse edilebilir) | `Mosaik/wwwroot/assets/css/components.css` | filter-bar, table-card, cell-muted, info-card, content-card, paper-card, btn-count, status-pill, dashed-card |
+| Sayfa-tipi pattern (admin dashboard, liste, form) | `components.css` | overview-*, kpi-tile, admin-* |
+| Modül-spesifik (sadece o modülün özel bileşeni) | `components-<modül>.css` | tamim-envelope, tamim-quill, tamim-upload-zone, oc-pub-* (orgchart) |
+
+**Kural:** Yeni utility eklerken kendine sor — "Başka bir modül de bu pattern'i kullanabilir mi?" Cevap **evet** → `components.css`. **Hayır, sadece bu modülün özel görsel öğesi** → modül CSS'i.
+
+**Anti-pattern:** `.tamim-filterbar`, `.tamim-content-card`, `.tcc-*` gibi modül-prefixli ama generic olan sınıflar. Bunlar `components.css`'te `filter-bar`, `content-card` olarak yaşamalı (zaten varlardır veya buraya gelmeliler).
+
+**Refactor agent prompt'una eklenecek satır:**
+> Yeni utility eklerken — generic (başka modülde reuse edilebilir) ise `components.css`'e, modül-spesifik ise `components-<modül>.css`'e ekle. Mevcut generic'i modül CSS'inde yaratma; varsa onu kullan.
+
 ## Tarama
 
 `Bash` ile `grep -rn 'style="' Mosaik/Views/` ile mevcut envanter görülür. Tam scan komutu için `general-purpose` agent çağır (envanter 2026-05-10: 70 dosya / 1369 oluşum). Inline style scan, oturum başı compliance scan'ın 4. agent'ı olarak otomatik çalışır (`session-protocol.md` Adım 5).

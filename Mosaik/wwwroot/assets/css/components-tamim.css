@@ -705,3 +705,379 @@
 .blok-section .bs-head i { color: var(--ink-3); }
 
 .blok-section .bs-body { padding: 20px; }
+
+/* ---- Tamim list/detail extras (Plan 25.1 Batch B) ---- */
+
+/* Details — meta extras */
+.tamim-envelope .te-no {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 6px;
+}
+
+.tamim-envelope .te-meta {
+    display: flex;
+    gap: 18px;
+    font-size: 12.5px;
+    color: var(--ink-3);
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.tamim-envelope .te-meta i { margin-right: 5px; }
+
+.te-no .te-no-sep {
+    margin-left: 6px;
+    color: var(--ink-3);
+}
+
+.te-no .te-no-urgent {
+    margin-left: 6px;
+    color: var(--accent);
+}
+
+/* ---- Block Form (Create/Edit) — Plan 25.1 Batch B ---- */
+/* Tür (160px) + Subject (1fr) iki kolon */
+.tamim-form-row-type-subject {
+    display: grid;
+    grid-template-columns: 160px 1fr;
+    gap: 14px;
+    margin-bottom: 14px;
+}
+.tamim-form-row-type-subject .field { margin-bottom: 0; }
+
+/* Quill editor sarmalayıcısı */
+.tamim-quill {
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    overflow: hidden;
+}
+.tamim-quill__editor {
+    min-height: 240px;
+    background: var(--paper);
+}
+
+/* IsUrgent toggle satırı */
+.tamim-urgent-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.tamim-urgent-toggle .lab {
+    margin: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    text-transform: none;
+    letter-spacing: 0;
+    font-weight: 400;
+}
+.tamim-urgent-toggle i { color: var(--accent); font-size: 11px; }
+.tamim-urgent-toggle .checkbox { accent-color: var(--accent); }
+
+/* Dosya yükleme drop zone */
+.tamim-upload-zone {
+    border: 2px dashed var(--line);
+    border-radius: 10px;
+    padding: 20px;
+    text-align: center;
+}
+.tamim-upload-zone.lg { padding: 24px; }
+.tamim-upload-zone .upload-icon {
+    font-size: 28px;
+    color: var(--ink-4);
+    margin-bottom: 6px;
+}
+.tamim-upload-zone.lg .upload-icon { font-size: 32px; margin-bottom: 8px; }
+.tamim-upload-zone .upload-input {
+    max-width: 420px;
+    padding: 6px;
+}
+
+/* Mevcut dosyalar listesi (Edit) */
+.tamim-file-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 14px;
+}
+.tamim-file-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px;
+    background: var(--canvas);
+    border-radius: 8px;
+}
+.tamim-file-row__main {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+}
+.tamim-file-row__ext {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 3px 6px;
+    border-radius: 3px;
+    background: var(--accent);
+    color: #fff;
+    text-transform: uppercase;
+}
+.tamim-file-row__name {
+    font-size: 13px;
+    color: var(--ink-1);
+    font-weight: 500;
+    text-decoration: none;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.tamim-file-row__size {
+    font-size: 11px;
+    color: var(--ink-3);
+}
+.tamim-empty-files {
+    font-size: 12.5px;
+    color: var(--ink-3);
+    padding: 16px 0;
+    text-align: center;
+}
+/* Section card varyantı — Tamim Block form için header sub satırı */
+.form-section-head__sub-tight {
+    font-size: 12px;
+    color: var(--ink-3);
+    margin-top: 2px;
+}
+.form-section-head__inline-note {
+    font-size: 11px;
+    font-weight: 400;
+    color: var(--ink-3);
+    margin-left: 6px;
+}
+
+/* ---- Plan 25.1 Batch B (Circular Index + Details) — inline style purge ---- */
+
+/* Index — filter bar (paper card, flex end-aligned) */
+.tamim-filter {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-bottom: 18px;
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    align-items: flex-end;
+}
+
+.tamim-filter__field { flex: 1; min-width: 240px; }
+.tamim-filter__search { position: relative; }
+
+.tamim-filter__icon {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--ink-4);
+    pointer-events: none;
+    font-size: 12px;
+}
+
+.tamim-filter__search .inp { padding-left: 32px; }
+.tamim-filter__actions { display: flex; gap: 6px; }
+
+/* Index — top-action inline form (Şimdi Derle) */
+.tamim-compile-form { display: inline; margin: 0; }
+
+/* Index — qcard small icons */
+.qcard__date-icon,
+.qcard__time-icon {
+    font-size: 9px;
+    color: var(--ink-4);
+    margin-right: 3px;
+}
+
+.qcard__ago-mono { font-family: 'JetBrains Mono', monospace; }
+.qcard.has-overlay { position: relative; }
+.qcard__num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10.5px;
+    color: var(--ink-4);
+    margin-left: auto;
+}
+
+/* Index — empty state (dashed paper card) */
+.tamim-empty {
+    background: var(--paper);
+    border: 1px dashed var(--line);
+    border-radius: 10px;
+    padding: 48px 24px;
+    text-align: center;
+    color: var(--ink-3);
+}
+
+.tamim-empty__icon { font-size: 48px; opacity: .4; margin-bottom: 12px; }
+.tamim-empty h3 { font-size: 14px; font-weight: 600; color: var(--ink-1); margin: 0 0 4px; }
+.tamim-empty p { margin: 0; font-size: 12.5px; }
+
+/* Details — envelope acil emphasis */
+.tamim-envelope .te-meta .te-acil { color: var(--accent); font-weight: 600; }
+
+/* Details — AI summary aliases (view kullanır: .ai-head, .ai-badge) */
+.ai-summary-card .ai-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: #1e40af;
+}
+
+.ai-summary-card .ai-badge {
+    background: rgba(59, 130, 246, .15);
+    color: #1e40af;
+    padding: 2px 7px;
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 700;
+}
+
+.ai-summary-card .ai-badge.ready {
+    background: rgba(16, 185, 129, .15);
+    color: var(--success-ink-soft);
+}
+
+.ai-summary-card .ai-time { font-size: 11px; color: var(--ink-3); margin-left: auto; }
+.ai-summary-card .ai-regen-form { display: inline; margin-left: 8px; }
+
+.ai-summary-card .ai-summary-list {
+    margin: 8px 0 0;
+    padding-left: 20px;
+    font-size: 13.5px;
+    color: var(--ink-1);
+    line-height: 1.7;
+}
+
+.ai-summary-card .ai-topics-row {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px dashed var(--line);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+}
+
+.ai-summary-card .ai-topics-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+}
+
+.ai-summary-card .ai-topic-chip { background: rgba(59, 130, 246, .10); color: #1e40af; }
+.ai-summary-card .ai-empty-text { margin: 0; font-size: 13px; color: var(--ink-3); }
+
+/* Details — section-title trailing count */
+.section-title .st-count { font-size: 12px; color: var(--ink-3); font-weight: 400; }
+
+/* Details — empty blocks (solid border) */
+.empty-blocks {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 30px;
+    text-align: center;
+    color: var(--ink-3);
+}
+
+/* Details — block head right cluster */
+.blok-item .bi-tip-row { display: flex; gap: 6px; align-items: center; }
+
+/* Details — block urgent class alias */
+.blok-item.acil { border-left-color: var(--accent); }
+
+/* Details — block urgent inline pill */
+.acil-pill {
+    background: var(--accent);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 4px;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* Details — block content body */
+.bi-icerik {
+    font-size: 13.5px;
+    color: var(--ink-1);
+    line-height: 1.65;
+}
+
+/* Details — files row */
+.bi-files { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 6px; }
+
+.bi-file-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 9px;
+    background: var(--canvas);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    text-decoration: none;
+    color: var(--ink-1);
+    font-size: 12px;
+}
+
+.bi-file-link:hover { border-color: var(--ink-4); }
+
+.bi-file-link .bf-ext {
+    font-size: 9.5px;
+    font-weight: 700;
+    padding: 2px 5px;
+    border-radius: 3px;
+    background: var(--accent);
+    color: #fff;
+    text-transform: uppercase;
+}
+
+.bi-file-link .bf-size { color: var(--ink-3); font-size: 10.5px; }
+
+/* Details — read receipt body + ack badge */
+.read-receipt .rr-body {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+}
+
+.read-receipt .rr-info { font-size: 13px; color: var(--ink-2); }
+
+.ack-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12.5px;
+    font-weight: 600;
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: rgba(16, 185, 129, .12);
+    color: var(--success-ink-soft, #065f46);
+}
+
+.ack-status i { font-size: 12px; }

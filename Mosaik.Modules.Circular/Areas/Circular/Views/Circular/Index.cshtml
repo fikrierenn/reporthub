@@ -19,7 +19,7 @@
 @section TopActions {
     @if (User.IsInRole("admin"))
     {
-        <form method="post" action="@Url.Action("CompileNow", "Admin")" style="display:inline; margin:0;"
+        <form method="post" action="@Url.Action("CompileNow", "Admin")" class="tamim-compile-form"
               onsubmit="return confirm('Bugünün pending bloklarını şimdi derleyip tamim olarak yayınla?');">
             @Html.AntiForgeryToken()
             <button type="submit" class="btn primary" title="Cron'u beklemeden manuel derleme">
@@ -45,19 +45,19 @@
 
 <div x-data="{ q: '' }">
 
-<form method="get" style="background:var(--paper); border:1px solid var(--line); border-radius:10px; padding:14px 16px; margin-bottom:18px; display:flex; gap:12px; flex-wrap:wrap; align-items:end;">
-    <div style="flex:1; min-width:240px;">
+<form method="get" class="tamim-filter">
+    <div class="tamim-filter__field">
         <label class="lab" for="tamimSearch">Arama</label>
-        <div style="position:relative;">
-            <span style="position:absolute; left:10px; top:50%; transform:translateY(-50%); color:var(--ink-4); pointer-events:none;">
-                <i class="fas fa-magnifying-glass" style="font-size:12px;"></i>
+        <div class="tamim-filter__search">
+            <span class="tamim-filter__icon">
+                <i class="fas fa-magnifying-glass"></i>
             </span>
             <input type="text" id="tamimSearch" name="q" x-model="q"
-                   class="inp" style="padding-left:32px;"
+                   class="inp"
                    placeholder="Tamim no, başlık veya tarih..." />
         </div>
     </div>
-    <div style="display:flex; gap:6px;">
+    <div class="tamim-filter__actions">
         <button type="submit" class="btn primary" title="URL'ye yansıt (paylaşılabilir link)">
             <i class="fas fa-filter text-[10px]"></i>
             Filtrele
@@ -71,10 +71,10 @@
 
 @if (!Model.Any())
 {
-    <div style="background:var(--paper); border:1px dashed var(--line); border-radius:10px; padding:48px 24px; text-align:center; color:var(--ink-3);">
-        <i class="fas fa-folder-open" style="font-size:48px; opacity:.4; margin-bottom:12px;"></i>
-        <h3 style="font-size:14px; font-weight:600; color:var(--ink-1); margin:0 0 4px;">Son 30 günde yayınlanmış tamim yok</h3>
-        <p style="margin:0; font-size:12.5px;">Sistem her gün <strong>17:00</strong>'de o güne ait blokları otomatik tamim olarak yayınlar.</p>
+    <div class="tamim-empty">
+        <i class="fas fa-folder-open tamim-empty__icon"></i>
+        <h3>Son 30 günde yayınlanmış tamim yok</h3>
+        <p>Sistem her gün <strong>17:00</strong>'de o güne ait blokları otomatik tamim olarak yayınlar.</p>
     </div>
 }
 else
@@ -85,23 +85,23 @@ else
             var dateStr = t.CircularDate.ToString("dd MMM yyyy", tr);
             var hour = t.PublishedAt.ToString("HH:mm");
             var searchHay = $"{t.CircularNumber} {t.Title} {dateStr}".ToLowerInvariant();
-            <div class="qcard" style="position:relative;"
+            <div class="qcard has-overlay"
                  data-search="@searchHay"
                  x-show="!q || $el.dataset.search.includes(q.toLowerCase())"
                  x-cloak>
                 <div class="row1">
                     <span class="type-chip type-dash">Tamim</span>
-                    <span class="mono" style="font-size:10.5px; color:var(--ink-4); margin-left:auto;">@t.CircularNumber</span>
+                    <span class="qcard__num">@t.CircularNumber</span>
                 </div>
-                <a href="@Url.Action("Details", new { id = t.Id })" style="text-decoration:none; color:inherit;">
+                <a href="@Url.Action("Details", new { id = t.Id })" class="qcard__link">
                     <h3>@t.Title</h3>
                     <div class="sub">
-                        <i class="fas fa-calendar" style="font-size:9px; color:var(--ink-4); margin-right:3px;"></i>
+                        <i class="fas fa-calendar qcard__date-icon"></i>
                         @dateStr
                     </div>
                     <div class="meta">
-                        <span class="ago" style="font-family:'JetBrains Mono',monospace;">
-                            <i class="fas fa-clock" style="font-size:9px; color:var(--ink-4); margin-right:3px;"></i>
+                        <span class="ago qcard__ago-mono">
+                            <i class="fas fa-clock qcard__time-icon"></i>
                             @hour
                         </span>
                         <span class="run">Aç <i class="fas fa-arrow-right text-[10px]"></i></span>

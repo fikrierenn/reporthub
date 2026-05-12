@@ -31,37 +31,31 @@
     <h1>Yeni Blok</h1>
     <div class="sub">
         <span>Bugünün tamimine eklenecek karar/uyarı/duyuru</span>
-        <span class="pill"><span class="dot" style="background:var(--accent);"></span>Bağlayıcı — kayıt yasal kanıt olur</span>
+        <span class="pill"><span class="dot err"></span>Bağlayıcı — kayıt yasal kanıt olur</span>
     </div>
 </div>
 
 @if (!string.IsNullOrEmpty(Model.Message))
 {
-    <div role="alert" style="margin-bottom:18px; padding:12px 16px; border-radius:10px; font-size:13px; max-width:880px;
-                background: @(Model.MessageType == "success" ? "var(--success-bg-soft)" : "var(--danger-bg-soft)");
-                border: 1px solid @(Model.MessageType == "success" ? "rgba(16,185,129,0.25)" : "rgba(220,38,38,0.25)");
-                color: @(Model.MessageType == "success" ? "var(--success-ink-soft)" : "var(--accent-ink)");">
-        <i class="fas @(Model.MessageType == "success" ? "fa-check-circle" : "fa-exclamation-circle")" style="margin-right:8px;"></i>
-        @Model.Message
-    </div>
+    @await Html.PartialAsync("_AlertMessage", (Model.MessageType == "success" ? "success" : "error", Model.Message))
 }
 
 <form method="post" action="@Url.Action("Create")" id="blok-form" enctype="multipart/form-data">
     @Html.AntiForgeryToken()
 
-    <div style="background:var(--paper); border:1px solid var(--line); border-radius:10px; overflow:hidden; max-width:880px; margin-bottom:18px;">
-        <div style="padding:14px 18px; border-bottom:1px solid var(--line);">
-            <h2 style="font-size:13px; font-weight:600; color:var(--ink-1); margin:0;">
-                <i class="fas fa-pen-to-square" style="margin-right:6px; color:var(--ink-3);"></i>
+    <div class="form-section-card wide">
+        <div class="form-section-head">
+            <h2 class="form-section-head__title">
+                <i class="fas fa-pen-to-square icon-mr"></i>
                 Blok Bilgileri
             </h2>
-            <div style="font-size:12px; color:var(--ink-3); margin-top:2px;">Gerekli alanları doldurun</div>
+            <p class="form-section-head__sub">Gerekli alanları doldurun</p>
         </div>
 
-        <div style="padding:20px;">
-            <div style="display:grid; grid-template-columns:160px 1fr; gap:14px; margin-bottom:14px;">
-                <div class="field" style="margin-bottom:0;">
-                    <label class="lab" for="BlockTypeId">Blok Türü <span style="color:var(--accent);">*</span></label>
+        <div class="form-section-body">
+            <div class="tamim-form-row-type-subject">
+                <div class="field">
+                    <label class="lab" for="BlockTypeId">Blok Türü <span class="req">*</span></label>
                     <select id="BlockTypeId" name="BlockTypeId" class="inp" required>
                         <option value="">— Seçin —</option>
                         @foreach (var opt in Model.BlockTypeOptions)
@@ -70,36 +64,36 @@
                         }
                     </select>
                 </div>
-                <div class="field" style="margin-bottom:0;">
-                    <label class="lab" for="Subject">Subject <span style="color:var(--accent);">*</span></label>
+                <div class="field">
+                    <label class="lab" for="Subject">Subject <span class="req">*</span></label>
                     <input type="text" id="Subject" name="Subject" value="@Model.Subject" class="inp" maxlength="200" required placeholder="örn: KVKK Eğitimi Hatırlatma" />
                 </div>
             </div>
 
             <div class="field">
-                <label class="lab" for="Department">Departman <span style="color:var(--accent);">*</span></label>
+                <label class="lab" for="Department">Departman <span class="req">*</span></label>
                 <input type="text" id="Department" name="Department" value="@Model.Department" class="inp" maxlength="100" required placeholder="örn: İnsan Kaynakları" />
             </div>
 
             <div class="field">
-                <label class="lab" for="editor-container">Detaylı içerik <span style="color:var(--accent);">*</span></label>
-                <div style="border:1px solid var(--line); border-radius:8px; overflow:hidden;">
+                <label class="lab" for="editor-container">Detaylı içerik <span class="req">*</span></label>
+                <div class="tamim-quill">
                     @* Content QuillContentSanitizer ile save-time sanitize edildi (BlockService) *@
-                    <div id="editor-container" style="min-height:240px; background:var(--paper);">@Html.Raw(Model.Content)</div>
+                    <div id="editor-container" class="tamim-quill__editor">@Html.Raw(Model.Content)</div>
                 </div>
                 <textarea id="Content" name="Content" hidden>@Model.Content</textarea>
-                <div style="font-size:11px; color:var(--ink-3); margin-top:6px;">
-                    <i class="fas fa-circle-info" style="font-size:10px;"></i>
+                <p class="help-text">
+                    <i class="fas fa-circle-info" aria-hidden="true"></i>
                     Yapay zekâ bu içerikten tamim özetini akşam üretecek (Plan 17 Faz F)
-                </div>
+                </p>
             </div>
 
-            <div class="field" style="margin-bottom:0;">
-                <div style="display:flex; align-items:center; gap:8px;">
+            <div class="field mb-0">
+                <div class="tamim-urgent-toggle">
                     <input type="checkbox" id="IsUrgent" name="IsUrgent" value="true" @(Model.IsUrgent ? "checked" : "")
-                           style="width:16px; height:16px; accent-color:var(--accent);" />
-                    <label for="IsUrgent" class="lab" style="margin:0; display:inline-flex; align-items:center; gap:6px; text-transform:none; letter-spacing:0; font-weight:400;">
-                        <i class="fas fa-bolt" style="color:var(--accent); font-size:11px;"></i>
+                           class="checkbox" />
+                    <label for="IsUrgent" class="lab">
+                        <i class="fas fa-bolt" aria-hidden="true"></i>
                         IsUrgent — kırmızı vurgu, AI özette başa al
                     </label>
                 </div>
@@ -108,28 +102,28 @@
     </div>
 
     @* Faz E — Dosya ekleme (blok kaydıyla birlikte) *@
-    <div style="background:var(--paper); border:1px solid var(--line); border-radius:10px; overflow:hidden; max-width:880px; margin-bottom:18px;">
-        <div style="padding:14px 18px; border-bottom:1px solid var(--line);">
-            <h2 style="font-size:13px; font-weight:600; color:var(--ink-1); margin:0;">
-                <i class="fas fa-paperclip" style="margin-right:6px; color:var(--ink-3);" aria-hidden="true"></i>
+    <div class="form-section-card wide">
+        <div class="form-section-head">
+            <h2 class="form-section-head__title">
+                <i class="fas fa-paperclip icon-mr" aria-hidden="true"></i>
                 Ekli Dosyalar
-                <span style="font-size:11px; font-weight:400; color:var(--ink-3); margin-left:6px;">(opsiyonel)</span>
+                <span class="form-section-head__inline-note">(opsiyonel)</span>
             </h2>
-            <div style="font-size:12px; color:var(--ink-3); margin-top:2px;">PDF, DOCX, XLSX, JPG, PNG, TXT — max 10 MB her dosya</div>
+            <p class="form-section-head__sub">PDF, DOCX, XLSX, JPG, PNG, TXT — max 10 MB her dosya</p>
         </div>
-        <div style="padding:20px;">
-            <div style="border:2px dashed var(--line); border-radius:10px; padding:24px; text-align:center;">
-                <i class="fas fa-cloud-arrow-up" style="font-size:32px; color:var(--ink-4); margin-bottom:8px;" aria-hidden="true"></i>
-                <div style="font-size:13px; font-weight:500; color:var(--ink-1); margin-bottom:10px;">Dosyaları seç</div>
+        <div class="form-section-body">
+            <div class="tamim-upload-zone lg">
+                <i class="fas fa-cloud-arrow-up upload-icon" aria-hidden="true"></i>
+                <div class="upload-title">Dosyaları seç</div>
                 <input type="file" name="files" multiple
                        accept=".pdf,.docx,.xlsx,.jpg,.jpeg,.png,.txt"
-                       class="inp" style="max-width:420px; padding:6px;" />
-                <div style="font-size:11px; color:var(--ink-3); margin-top:8px;">Birden fazla dosya seçebilirsin (Ctrl/Cmd + tık).</div>
+                       class="inp upload-input" />
+                <p class="help-text upload-sub">Birden fazla dosya seçebilirsin (Ctrl/Cmd + tık).</p>
             </div>
         </div>
     </div>
 
-    <div style="display:flex; align-items:center; justify-content:space-between; max-width:880px; padding:14px 20px; background:var(--paper); border:1px solid var(--line); border-radius:10px;">
+    <div class="form-action-row wide">
         <a href="@Url.Action("Index")" class="btn ghost">
             <i class="fas fa-arrow-left text-[10px]"></i>
             Geri Dön
