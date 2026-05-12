@@ -20,11 +20,11 @@
         return "İyi akşamlar";
     }
 
-    var statusDotColor = Model.SystemStatusKind switch
+    var statusDotClass = Model.SystemStatusKind switch
     {
-        "warn" => "var(--warn)",
-        "err"  => "var(--danger)",
-        _      => "var(--ok)"
+        "warn" => "warn",
+        "err"  => "err",
+        _      => "ok"
     };
 }
 
@@ -34,7 +34,7 @@
         <span class="mono">@todayStr</span>
         @if (Model.IsAdminView)
         {
-            <span class="pill"><span class="dot" style="background:@statusDotColor"></span>@Model.SystemStatus</span>
+            <span class="pill"><span class="dot @statusDotClass"></span>@Model.SystemStatus</span>
             <span class="pill mono">@Model.DataSourceStatus</span>
         }
         else if (Model.UserRoles.Any())

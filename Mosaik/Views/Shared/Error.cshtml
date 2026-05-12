@@ -4,25 +4,23 @@
     ViewData["Title"] = "Hata - BKM Rapor Paneli";
 }
 
-<div style="text-align:center; margin-bottom:14px;">
-    <div style="width:48px; height:48px; margin:0 auto 12px; border-radius:50%; background:var(--danger-bg-soft); display:flex; align-items:center; justify-content:center;">
-        <i class="fas fa-circle-exclamation" style="font-size:20px; color:var(--accent-ink);"></i>
+<div class="state-card">
+    <div class="state-card__icon danger">
+        <i class="fas fa-circle-exclamation" aria-hidden="true"></i>
     </div>
-    <h2 style="font-size:15px; font-weight:600; color:var(--ink-1); margin:0 0 4px;">Bir hata oluştu</h2>
-    <div style="font-size:12px; color:var(--ink-3);">İsteğiniz işlenirken beklenmedik bir sorun yaşandı.</div>
-</div>
+    <h1>Bir hata oluştu</h1>
+    <p>İsteğiniz işlenirken beklenmedik bir sorun yaşandı.</p>
 
-@if (Model.ShowRequestId)
-{
-    <div style="margin-top:14px; padding:10px 12px; background:var(--canvas); border:1px solid var(--line); border-radius:8px; font-size:12px; color:var(--ink-3);">
-        <strong style="color:var(--ink-2);">İstek ID:</strong>
-        <code class="mono" style="color:var(--ink-1);">@Model.RequestId</code>
-    </div>
-}
+    @if (Model.ShowRequestId)
+    {
+        <div class="state-meta">
+            <strong>İstek ID:</strong>
+            <code class="mono">@Model.RequestId</code>
+        </div>
+    }
 
-<div style="margin-top:18px; text-align:center;">
     <a href="/Dashboard" class="btn primary">
-        <i class="fas fa-house text-[10px]"></i>
+        <i class="fas fa-house text-[10px]" aria-hidden="true"></i>
         Genel Bakış
     </a>
 </div>
