@@ -54,18 +54,14 @@ window.__availableDataSources = @Html.Raw(System.Text.Json.JsonSerializer.Serial
     @Html.AntiForgeryToken()
     <input type="hidden" name="ReportId" value="@Model.Report.ReportId" />
     @* Description, IsActive, Roles, Groups → Alpine reactive hidden input'lar builder-v2 div'inde *@
-    <textarea name="DashboardConfigJson" id="DashboardConfigJson" style="display:none;">@Model.Report.DashboardConfigJson</textarea>
+    <textarea name="DashboardConfigJson" id="DashboardConfigJson" hidden>@Model.Report.DashboardConfigJson</textarea>
 </form>
 
 @if (!string.IsNullOrWhiteSpace(Model.Message))
 {
     var isError = Model.MessageType == "error";
-    <div role="alert" style="margin:12px 24px; padding:12px 16px; border-radius:10px; font-size:13px;
-                white-space:pre-line;
-                background: @(isError ? "var(--danger-bg-soft)" : "var(--success-bg-soft)");
-                border: 1px solid @(isError ? "rgba(220,38,38,0.25)" : "rgba(16,185,129,0.25)");
-                color: @(isError ? "var(--accent-ink)" : "var(--success-ink-soft)");">
-        <i class="fas @(isError ? "fa-circle-exclamation" : "fa-circle-check")" style="margin-right:8px;"></i>@Model.Message
+    <div role="alert" class="builder-page-alert alert @(isError ? "error" : "success")">
+        <i class="fas @(isError ? "fa-circle-exclamation" : "fa-circle-check") icon-mr"></i>@Model.Message
     </div>
 }
 
@@ -152,7 +148,7 @@ window.__availableDataSources = @Html.Raw(System.Text.Json.JsonSerializer.Serial
 
             @* Hiç param yoksa minik bir not *@
             <template x-if="paramFields().length === 0">
-                <span style="font-size:11px; color:var(--ink-4);">Bu raporda parametre tanımı yok</span>
+                <span class="builder-param-empty">Bu raporda parametre tanımı yok</span>
             </template>
 
             @* Her ParamSchema field için bir chip — tıklanır, inline edit *@
@@ -162,10 +158,9 @@ window.__availableDataSources = @Html.Raw(System.Text.Json.JsonSerializer.Serial
                     <span x-text="(f.label || f.name) + ':'"></span>
 
                     @* Görüntüleme modu (chip'in normal hali) *@
-                    <span class="v" x-show="paramEditing !== f.name"
+                    <span class="v builder-param-default-display" x-show="paramEditing !== f.name"
                           @@click="toggleParamEdit(f.name)"
                           x-text="paramDisplayValue(f)"
-                          style="cursor:pointer; text-decoration:underline dotted;"
                           title="Düzenlemek için tıkla"></span>
 
                     @* Inline edit modu — type'a göre input *@
@@ -177,14 +172,13 @@ window.__availableDataSources = @Html.Raw(System.Text.Json.JsonSerializer.Serial
                            @@keydown.escape="paramEditing = null"
                            @@blur="paramEditing = null"
                            x-init="$nextTick(() => $el.focus())"
-                           style="width:130px; height:22px; border:1px solid var(--accent); border-radius:4px; padding:0 6px; font-size:11px; font-family:'JetBrains Mono',monospace;" />
+                           class="builder-param-default-edit" />
                 </span>
             </template>
 
             @* Override varsa Sıfırla linki *@
-            <button type="button" x-show="paramDirty || (paramOverrides && Object.keys(paramOverrides).length > 0)"
+            <button type="button" class="builder-section-toggle-btn" x-show="paramDirty || (paramOverrides && Object.keys(paramOverrides).length > 0)"
                     @@click="resetParams()"
-                    style="background:transparent; border:none; color:var(--ink-3); font-size:10px; cursor:pointer; text-transform:uppercase; letter-spacing:.04em;"
                     title="Default'a dön">
                 <i class="fas fa-rotate-left text-[9px]"></i>
                 Sıfırla
@@ -267,13 +261,12 @@ window.__availableDataSources = @Html.Raw(System.Text.Json.JsonSerializer.Serial
                                placeholder="Örn: Toplam Kadro" />
                     </div>
                     <div class="field">
-                        <label class="lab" style="display:flex; align-items:center; justify-content:space-between;">
+                        <label class="lab builder-section-toggle">
                             <span>Veri Seti</span>
-                            <button type="button" x-show="selected && selected.result"
+                            <button type="button" class="builder-section-toggle-btn accent" x-show="selected && selected.result"
                                     @@click="toggleRsPanel()"
-                                    style="background:transparent; border:none; color:var(--accent-ink); font-size:10px; cursor:pointer; text-transform:none; letter-spacing:0; display:inline-flex; align-items:center; gap:4px;"
                                     :title="rsPanelOpen ? 'Önizleme panelini gizle' : 'Bağlı veri setinin ilk satırlarını göster'">
-                                <i class="fas" :class="rsPanelOpen ? 'fa-eye-slash' : 'fa-eye'" style="font-size:9px;"></i>
+                                <i class="fas icon-9" :class="rsPanelOpen ? 'fa-eye-slash' : 'fa-eye'"></i>
                                 <span x-text="rsPanelOpen ? 'Gizle' : 'Önizle'"></span>
                             </button>
                         </label>
@@ -289,27 +282,24 @@ window.__availableDataSources = @Html.Raw(System.Text.Json.JsonSerializer.Serial
                         </select>
 
                         @* Inline RS preview — Önizle toggle, max 10 satır × tüm kolonlar, kompakt scroll *@
-                        <div x-show="rsPanelOpen && selected && selected.result" x-cloak
-                             style="margin-top:8px; border:1px solid var(--line); border-radius:6px; background:#fafafa; max-height:240px; overflow:auto;">
-                            <div style="position:sticky; top:0; padding:6px 8px; background:#f1f5f9; border-bottom:1px solid var(--line); font-size:10px; color:var(--ink-3); display:flex; justify-content:space-between; z-index:1;">
+                        <div x-show="rsPanelOpen && selected && selected.result" x-cloak class="builder-rs-preview">
+                            <div class="builder-rs-preview-toolbar">
                                 <span x-text="rsPanelColumns().length + ' kolon · ' + rsPanelTotalRows() + ' toplam satır'"></span>
                                 <span x-show="rsPanelTotalRows() > 10" class="text-amber-600">ilk 10</span>
                             </div>
-                            <table style="width:100%; font-size:10px; border-collapse:collapse;">
+                            <table class="builder-rs-preview-table">
                                 <thead>
                                     <tr>
                                         <template x-for="col in rsPanelColumns()" :key="col">
-                                            <th style="white-space:nowrap; padding:3px 6px; background:#f8fafc; border-bottom:1px solid var(--line); text-align:left; font-weight:600; position:sticky; top:24px; font-size:10px;"
-                                                x-text="col"></th>
+                                            <th x-text="col"></th>
                                         </template>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <template x-for="(row, ri) in rsPanelRows()" :key="ri">
-                                        <tr style="border-bottom:1px solid var(--line-2);">
+                                        <tr>
                                             <template x-for="col in rsPanelColumns()" :key="col">
-                                                <td style="padding:2px 6px; white-space:nowrap;"
-                                                    :style="rsPanelCellAlign(row, col) === 'right' ? 'text-align:right; font-variant-numeric:tabular-nums;' : ''"
+                                                <td :class="rsPanelCellAlign(row, col) === 'right' ? 'numeric' : ''"
                                                     x-text="rsPanelCellValue(row, col)"></td>
                                             </template>
                                         </tr>
@@ -351,7 +341,7 @@ window.__availableDataSources = @Html.Raw(System.Text.Json.JsonSerializer.Serial
                         <div>
                             @* Capacity warning *@
                             <template x-if="kpiCapacityWarning()">
-                                <div style="background:var(--warn-bg-soft); border:1px solid #fde68a; color:var(--warn-ink-soft); padding:8px 10px; border-radius:6px; font-size:11px; margin-bottom:10px;">
+                                <div class="builder-warn-banner">
                                     <i class="fas fa-triangle-exclamation text-[10px]"></i>
                                     <span x-text="kpiCapacityWarning()"></span>
                                 </div>
@@ -370,7 +360,7 @@ window.__availableDataSources = @Html.Raw(System.Text.Json.JsonSerializer.Serial
                                                 <option :value="col" x-text="col"></option>
                                             </template>
                                         </select>
-                                        <p style="font-size:10px; color:var(--ink-4); margin-top:4px;">Değişim yüzdesi bu kolona göre hesaplanır.</p>
+                                        <p class="builder-help-xs">Değişim yüzdesi bu kolona göre hesaplanır.</p>
                                     </div>
                                     <div class="field">
                                         <label class="lab">Karşılaştırma Etiketi</label>
@@ -395,7 +385,7 @@ window.__availableDataSources = @Html.Raw(System.Text.Json.JsonSerializer.Serial
                                                 <option :value="col" x-text="col"></option>
                                             </template>
                                         </select>
-                                        <p style="font-size:10px; color:var(--ink-4); margin-top:4px;">Mini grafik bu kolonun satır-satır değerlerini çizer.</p>
+                                        <p class="builder-help-xs">Mini grafik bu kolonun satır-satır değerlerini çizer.</p>
                                     </div>
                                 </div>
                             </template>
@@ -417,7 +407,7 @@ window.__availableDataSources = @Html.Raw(System.Text.Json.JsonSerializer.Serial
                                                    :value="(selected.progress && selected.progress.targetValue != null) ? selected.progress.targetValue : ''"
                                                    @@input="setProgressField('targetValue', $event.target.value)"
                                                    placeholder="örn: 100" />
-                                            <p style="font-size:10px; color:var(--ink-4); margin-top:4px;">İlerleme yüzdesi (Değer / Hedef × 100) ile hesaplanır.</p>
+                                            <p class="builder-help-xs">İlerleme yüzdesi (Değer / Hedef × 100) ile hesaplanır.</p>
                                         </div>
                                     </template>
                                     <template x-if="progressTargetMode() === 'column'">
@@ -431,7 +421,7 @@ window.__availableDataSources = @Html.Raw(System.Text.Json.JsonSerializer.Serial
                                                     <option :value="col" x-text="col"></option>
                                                 </template>
                                             </select>
-                                            <p style="font-size:10px; color:var(--ink-4); margin-top:4px;">Hedef ilk satırın bu kolonu olarak alınır.</p>
+                                            <p class="builder-help-xs">Hedef ilk satırın bu kolonu olarak alınır.</p>
                                         </div>
                                     </template>
                                 </div>
@@ -443,13 +433,13 @@ window.__availableDataSources = @Html.Raw(System.Text.Json.JsonSerializer.Serial
                 @* M-11 chart binding: variant'a göre otomatik X/Y doldurur, manuel override edilebilir *@
                 <template x-if="selected && selected.type === 'chart' && selected.result">
                     <div class="col-picker-block">
-                        <div class="qb-header" style="margin-top:14px;">
+                        <div class="qb-header builder-section-gap">
                             <i class="fas fa-chart-column text-[10px]"></i> Eksen Bağlantıları
                         </div>
 
                         @* Capacity uyarısı — yetersiz kolon *@
                         <template x-if="chartCapacityWarning()">
-                            <div style="background:#fef3c7; border:1px solid #fde68a; color:#92400e; padding:8px 10px; border-radius:6px; font-size:11px; margin-bottom:10px;">
+                            <div class="builder-qb-warn">
                                 <i class="fas fa-triangle-exclamation text-[10px]"></i>
                                 <span x-text="chartCapacityWarning()"></span>
                             </div>
@@ -468,25 +458,25 @@ window.__availableDataSources = @Html.Raw(System.Text.Json.JsonSerializer.Serial
                                             x-text="col + ' · ' + columnKindFor(col)"></option>
                                 </template>
                             </select>
-                            <p style="font-size:10px; color:var(--ink-4); margin-top:4px;">Tarih veya metin kolonu — kategorileri ayırır.</p>
+                            <p class="builder-help-xs">Tarih veya metin kolonu — kategorileri ayırır.</p>
                         </div>
 
                         @* Y serileri — datasets[] *@
                         <div class="field">
-                            <label class="lab" style="display:flex; align-items:center; justify-content:space-between;">
+                            <label class="lab builder-section-toggle">
                                 <span>Y Ekseni (Seriler)</span>
-                                <button type="button" class="btn ghost" style="height:24px; font-size:10px; padding:0 8px;"
+                                <button type="button" class="btn ghost compact-sm"
                                         x-show="canAddChartDataset()"
                                         @@click="addChartDataset()" title="Yeni veri serisi ekle">
                                     <i class="fas fa-plus text-[9px]"></i> Seri Ekle
                                 </button>
                             </label>
                             <template x-if="!selected.datasets || selected.datasets.length === 0">
-                                <p style="font-size:11px; color:var(--ink-4); padding:6px 0;">Henüz seri yok — variant değiştirince otomatik dolar veya "Seri Ekle" ile manuel ekleyin.</p>
+                                <p class="builder-series-empty">Henüz seri yok — variant değiştirince otomatik dolar veya "Seri Ekle" ile manuel ekleyin.</p>
                             </template>
                             <template x-for="(ds, di) in (selected.datasets || [])" :key="di">
-                                <div style="display:flex; gap:6px; align-items:center; margin-bottom:6px; padding:6px; background:var(--paper); border:1px solid var(--line); border-radius:6px;">
-                                    <select class="inp" style="flex:2; font-size:11px; height:28px;"
+                                <div class="builder-series-row">
+                                    <select class="inp builder-series-select"
                                             :value="ds.column || ''"
                                             @@change="setChartDatasetField(di, 'column', $event.target.value); setChartDatasetField(di, 'label', $event.target.value)">
                                         <option value="">— kolon —</option>
@@ -494,11 +484,11 @@ window.__availableDataSources = @Html.Raw(System.Text.Json.JsonSerializer.Serial
                                             <option :value="col" :selected="ds.column === col" x-text="col"></option>
                                         </template>
                                     </select>
-                                    <input type="text" class="inp" style="flex:2; font-size:11px; height:28px;"
+                                    <input type="text" class="inp builder-series-select"
                                            :value="ds.label || ''"
                                            @@input="setChartDatasetField(di, 'label', $event.target.value)"
                                            placeholder="Etiket" />
-                                    <select class="inp" style="flex:1; font-size:11px; height:28px;"
+                                    <select class="inp builder-series-select compact"
                                             :value="ds.color || 'blue'"
                                             @@change="setChartDatasetField(di, 'color', $event.target.value)"
                                             title="Seri rengi">
@@ -506,14 +496,13 @@ window.__availableDataSources = @Html.Raw(System.Text.Json.JsonSerializer.Serial
                                             <option :value="c" :selected="ds.color === c" x-text="c"></option>
                                         </template>
                                     </select>
-                                    <button type="button"
-                                            style="background:transparent; border:none; color:var(--ink-3); cursor:pointer; padding:4px; height:28px;"
+                                    <button type="button" class="builder-series-remove"
                                             @@click="removeChartDataset(di)" title="Bu seriyi kaldır">
                                         <i class="fas fa-xmark text-[10px]"></i>
                                     </button>
                                 </div>
                             </template>
-                            <p style="font-size:10px; color:var(--ink-4); margin-top:4px;">
+                            <p class="builder-help-xs">
                                 <i class="fas fa-wand-magic-sparkles text-[9px]"></i>
                                 Grafik tipini seçince varsayılan kolonlar otomatik atanır.
                             </p>
@@ -524,11 +513,11 @@ window.__availableDataSources = @Html.Raw(System.Text.Json.JsonSerializer.Serial
                 @* Plan 05.A: Tablo widget — kolon checkbox + drag-drop sıralama + hizalama *@
                 <template x-if="selected && selected.type === 'table'">
                     <div class="col-picker-block">
-                        <div class="qb-header" style="margin-top:14px;">
+                        <div class="qb-header builder-section-gap">
                             <i class="fas fa-table-cells text-[10px]"></i> Kolonlar
                         </div>
                         <template x-if="!selected.result">
-                            <p style="font-size:11px; color:var(--ink-4); padding:8px 0;">Önce yukarıdan Veri Seti seçin.</p>
+                            <p class="builder-series-empty">Önce yukarıdan Veri Seti seçin.</p>
                         </template>
                         <template x-if="selected.result">
                             <div class="col-picker">
@@ -539,14 +528,14 @@ window.__availableDataSources = @Html.Raw(System.Text.Json.JsonSerializer.Serial
                                          x-on:dragstart="onColDragStart(col, $event)"
                                          x-on:dragover="onColDragOver($event)"
                                          x-on:drop="onColDrop(col, $event)">
-                                        <i class="fas fa-grip-vertical drag-handle" :style="!isTableColumnSelected(col) && 'visibility:hidden;'"></i>
+                                        <i class="fas fa-grip-vertical drag-handle" :class="!isTableColumnSelected(col) && 'invisible'"></i>
                                         <input type="checkbox"
                                                :checked="isTableColumnSelected(col)"
                                                x-on:change="toggleTableColumn(col)" />
                                         <span class="col-name" x-text="col"></span>
                                         <span class="col-kind" x-text="columnKindFor(col)"></span>
-                                        <button type="button" x-show="isComputedColumn(col)"
-                                                style="background:transparent; border:none; color:var(--accent-ink); cursor:pointer; padding:2px 4px;" title="Formül düzenle"
+                                        <button type="button" class="builder-section-toggle-btn accent" x-show="isComputedColumn(col)"
+                                                title="Formül düzenle"
                                                 x-on:click="editCalcColumn(col)">
                                             <i class="fas fa-pen text-[10px]"></i>
                                         </button>
@@ -566,7 +555,7 @@ window.__availableDataSources = @Html.Raw(System.Text.Json.JsonSerializer.Serial
                                         </div>
                                     </div>
                                 </template>
-                                <p x-show="(tableDisplayedColumns() || []).length === 0" style="font-size:11px; color:var(--ink-4); padding:8px 0;">
+                                <p x-show="(tableDisplayedColumns() || []).length === 0" class="builder-series-empty">
                                     Bu veri setinde kolon bulunmuyor.
                                 </p>
                             </div>
@@ -586,13 +575,13 @@ window.__availableDataSources = @Html.Raw(System.Text.Json.JsonSerializer.Serial
                                         <input type="text" class="inp"
                                                x-model="calcColForm.alias"
                                                :readonly="!!calcColForm.editingKey"
-                                               :style="calcColForm.editingKey ? 'opacity:0.6; cursor:not-allowed;' : ''"
+                                               :class="calcColForm.editingKey ? 'inp-readonly' : ''"
                                                placeholder="örn: marj, kategoriEtiket"
                                                maxlength="40" />
                                     </div>
                                     <div class="field">
                                         <label class="lab">Formül</label>
-                                        <textarea class="inp" rows="3" style="font-family:'JetBrains Mono',monospace; font-size:11.5px; line-height:1.4;"
+                                        <textarea class="inp builder-formula-textarea" rows="3"
                                                   x-model="calcColForm.formula"
                                                   x-on:blur="validateFormulaLive()"
                                                   placeholder="örn: IIF(satis &gt; 100, 'Yüksek', 'Düşük')"></textarea>
@@ -611,7 +600,7 @@ window.__availableDataSources = @Html.Raw(System.Text.Json.JsonSerializer.Serial
                                                 </template>
                                             </div>
                                         </div>
-                                        <p style="font-size:10px; color:var(--ink-4); margin-top:4px;">
+                                        <p class="builder-formula-hint">
                                             Aritmetik (+ − × ÷), karşılaştırma (= != &lt; &gt; &lt;= &gt;=), AND/OR/NOT, IF/IIF, CASE WHEN/THEN/ELSE/END. Türkçe kolon adı: <code>[Şube]</code>.
                                         </p>
                                     </div>
@@ -647,7 +636,7 @@ window.__availableDataSources = @Html.Raw(System.Text.Json.JsonSerializer.Serial
                             <i class="fas fa-chevron-right text-[9px]"></i>
                             İleri ayar (formül, alt yazı)
                         </button>
-                        <div x-show="showAdvanced" x-cloak style="border-top:1px solid var(--line-2); padding-top:10px; margin-top:8px;">
+                        <div x-show="showAdvanced" x-cloak class="builder-advanced-body">
                             <template x-if="selected.type === 'kpi'">
                                 <div>
                                     <div class="field">
@@ -656,9 +645,9 @@ window.__availableDataSources = @Html.Raw(System.Text.Json.JsonSerializer.Serial
                                     </div>
 
                                     @* 2-kolon formül — A (op) B → KPI *@
-                                    <div class="section-hd" style="margin-top:14px;">
+                                    <div class="section-hd builder-section-gap">
                                         Formül (2-kolon)
-                                        <span style="font-weight:400; text-transform:none; letter-spacing:0; font-size:10px; color:var(--ink-4); margin-left:6px;">opsiyonel — fark / yüzde / oran</span>
+                                        <span class="section-hd-hint">opsiyonel — fark / yüzde / oran</span>
                                     </div>
                                     <div class="field">
                                         <label class="lab">Kolon A</label>
@@ -690,9 +679,8 @@ window.__availableDataSources = @Html.Raw(System.Text.Json.JsonSerializer.Serial
                                                     </template>
                                                 </select>
                                             </div>
-                                            <button type="button" x-show="selected.formulaA || selected.formulaB || selected.formulaOp"
-                                                    @@click="setField('formulaA', null); setField('formulaB', null); setField('formulaOp', null)"
-                                                    style="background:transparent; border:none; color:var(--ink-3); font-size:10px; cursor:pointer; text-transform:uppercase; letter-spacing:.04em;">
+                                            <button type="button" class="builder-section-toggle-btn" x-show="selected.formulaA || selected.formulaB || selected.formulaOp"
+                                                    @@click="setField('formulaA', null); setField('formulaB', null); setField('formulaOp', null)">
                                                 <i class="fas fa-rotate-left text-[9px]"></i> Formülü temizle
                                             </button>
                                         </div>
@@ -707,9 +695,9 @@ window.__availableDataSources = @Html.Raw(System.Text.Json.JsonSerializer.Serial
             @* ===== STİL tab — renk swatch + icon grid (eski "Görünüm" tab) ===== *@
             <div x-show="selected && drawerTab === 'style'" x-cloak>
                 <template x-if="!selected">
-                    <div style="text-align:center; padding:40px 20px; color:var(--ink-4);">
-                        <i class="fas fa-arrow-pointer" style="font-size:24px; opacity:.4;"></i>
-                        <p style="margin-top:10px; font-size:12px;">Bir widget seçin.</p>
+                    <div class="builder-no-selection">
+                        <i class="fas fa-arrow-pointer"></i>
+                        <p>Bir widget seçin.</p>
                     </div>
                 </template>
                 <template x-if="selected">
@@ -731,7 +719,7 @@ window.__availableDataSources = @Html.Raw(System.Text.Json.JsonSerializer.Serial
                                         <button type="button" class="variant-card"
                                                 :class="(selected.variant || 'basic') === v.k && 'on'"
                                                 @@click="setKpiVariant(v.k)">
-                                            <i class="fas" :class="v.icon" style="font-size:16px; margin-bottom:4px;"></i>
+                                            <i class="fas variant-icon" :class="v.icon"></i>
                                             <span class="variant-label" x-text="v.label"></span>
                                             <span class="variant-desc" x-text="v.desc"></span>
                                         </button>
@@ -758,7 +746,7 @@ window.__availableDataSources = @Html.Raw(System.Text.Json.JsonSerializer.Serial
                                         <button type="button" class="variant-card variant-card--sm"
                                                 :class="(selected.variant || 'bar') === v.k && 'on'"
                                                 @@click="setChartVariant(v.k)">
-                                            <i class="fas" :class="v.icon" style="font-size:14px;"></i>
+                                            <i class="fas variant-icon" :class="v.icon"></i>
                                             <span class="variant-label" x-text="v.label"></span>
                                         </button>
                                     </template>
@@ -776,15 +764,14 @@ window.__availableDataSources = @Html.Raw(System.Text.Json.JsonSerializer.Serial
                                             x-text="s === 1 ? '¼' : s === 2 ? '½' : s === 3 ? '¾' : 'Tam'"></button>
                                 </template>
                             </div>
-                            <p style="font-size:10px; color:var(--ink-4); margin-top:6px;">1 = çeyrek satır · 4 = tam satır.</p>
+                            <p class="builder-span-hint">1 = çeyrek satır · 4 = tam satır.</p>
                         </div>
 
                         <div class="field">
-                            <label class="lab" style="display:flex; align-items:center; justify-content:space-between;">
+                            <label class="lab builder-section-toggle">
                                 <span>Renk Vurgusu</span>
-                                <button type="button" x-show="selected.color"
-                                        @@click="setField('color', null)"
-                                        style="background:transparent; border:none; color:var(--ink-3); font-size:10px; cursor:pointer; text-transform:none; letter-spacing:0;">
+                                <button type="button" class="builder-section-toggle-btn accent" x-show="selected.color"
+                                        @@click="setField('color', null)">
                                     Kaldır
                                 </button>
                             </label>
@@ -797,37 +784,36 @@ window.__availableDataSources = @Html.Raw(System.Text.Json.JsonSerializer.Serial
                         </div>
 
                         <div class="field">
-                            <label class="lab" style="display:flex; align-items:center; justify-content:space-between;">
+                            <label class="lab builder-section-toggle">
                                 <span>İkon</span>
-                                <button type="button" x-show="selected.icon"
-                                        @@click="setField('icon', null)"
-                                        style="background:transparent; border:none; color:var(--ink-3); font-size:10px; cursor:pointer; text-transform:none; letter-spacing:0;">
+                                <button type="button" class="builder-section-toggle-btn accent" x-show="selected.icon"
+                                        @@click="setField('icon', null)">
                                     Kaldır
                                 </button>
                             </label>
-                            <input type="search" class="col-search" placeholder="İkon ara (chart, user, calendar...)" x-model="iconSearchTerm" style="margin-bottom:8px;" />
+                            <input type="search" class="col-search builder-icon-search" placeholder="İkon ara (chart, user, calendar...)" x-model="iconSearchTerm" />
                             <div class="icon-grid">
                                 <template x-for="ic in filteredIcons()" :key="ic">
                                     <div class="icon-pick" :class="selected.icon === ic && 'on'"
                                          @@click="setField('icon', ic)" :title="ic">
-                                        <i class="fas" :class="ic" style="font-size:13px;"></i>
+                                        <i class="fas" :class="ic"></i>
                                     </div>
                                 </template>
                             </div>
-                            <div x-show="filteredIcons().length === 0" style="text-align:center; padding:12px; color:var(--ink-4); font-size:11px;">
-                                <i class="fas fa-magnifying-glass" style="opacity:.4; margin-bottom:4px;"></i>
+                            <div x-show="filteredIcons().length === 0" class="builder-icon-empty">
+                                <i class="fas fa-magnifying-glass"></i>
                                 <p>"<span x-text="iconSearchTerm"></span>" için sonuç yok</p>
-                                <p style="margin-top:6px; font-size:10px;">Manuel girmek için aşağıdaki kutuyu kullanın.</p>
+                                <p class="hint">Manuel girmek için aşağıdaki kutuyu kullanın.</p>
                             </div>
-                            <details style="margin-top:10px; font-size:11px;">
-                                <summary style="cursor:pointer; color:var(--ink-3); padding:4px 0;">Manuel ikon adı gir</summary>
-                                <div style="display:flex; gap:6px; margin-top:6px;">
-                                    <input type="text" class="inp" placeholder="fa-rocket veya rocket" x-model="iconCustom" @@keydown.enter="applyCustomIcon()" style="flex:1;" />
-                                    <button type="button" class="btn" @@click="applyCustomIcon()" style="height:30px;">Uygula</button>
+                            <details class="builder-icon-manual-details">
+                                <summary class="builder-icon-manual-summary">Manuel ikon adı gir</summary>
+                                <div class="builder-icon-manual-row">
+                                    <input type="text" class="inp" placeholder="fa-rocket veya rocket" x-model="iconCustom" @@keydown.enter="applyCustomIcon()" />
+                                    <button type="button" class="btn" @@click="applyCustomIcon()">Uygula</button>
                                 </div>
-                                <p style="font-size:10px; color:var(--ink-4); margin-top:4px;">Font Awesome 6 kütüphanesindeki herhangi bir <code>fa-*</code> sınıfı.</p>
+                                <p class="builder-help-xs">Font Awesome 6 kütüphanesindeki herhangi bir <code>fa-*</code> sınıfı.</p>
                             </details>
-                            <p style="font-size:10px; color:var(--ink-4); margin-top:6px;">İkon KPI başlığında görünür.</p>
+                            <p class="builder-span-hint">İkon KPI başlığında görünür.</p>
                         </div>
                     </div>
                 </template>
@@ -839,7 +825,7 @@ window.__availableDataSources = @Html.Raw(System.Text.Json.JsonSerializer.Serial
                     <span class="ico"><i class="fas fa-gear"></i></span>
                     <span class="name">Rapor Ayarları</span>
                 </div>
-                <p style="font-size:11px; color:var(--ink-3); margin-bottom:14px;">Tüm alanlar form POST'a dahil olur. Reaktif değişiklik dirty chip'i tetikler.</p>
+                <p class="builder-settings-intro">Tüm alanlar form POST'a dahil olur. Reaktif değişiklik dirty chip'i tetikler.</p>
 
                 <div class="field">
                     <label class="lab">Rapor Adı</label>
@@ -870,25 +856,23 @@ window.__availableDataSources = @Html.Raw(System.Text.Json.JsonSerializer.Serial
                 </div>
 
                 <div class="field">
-                    <label class="lab" style="display:flex; align-items:center; justify-content:space-between;">
+                    <label class="lab builder-section-toggle">
                         <span>Parametre Şeması (JSON)</span>
-                        <button type="button" x-show="dataSourceKey && procName"
-                                x-on:click="loadProcParams()"
-                                style="background:transparent; border:none; color:var(--accent-ink); font-size:10px; font-weight:600; cursor:pointer; text-transform:uppercase; letter-spacing:.04em;">
+                        <button type="button" class="builder-section-toggle-btn" x-show="dataSourceKey && procName"
+                                x-on:click="loadProcParams()">
                             <i class="fas fa-rotate text-[9px]"></i> SP'den yeniden çek
                         </button>
                     </label>
-                    <textarea class="inp" rows="7" x-model="paramSchemaJson"
-                              style="font-family:'JetBrains Mono',monospace; font-size:11px; line-height:1.45; white-space:pre;"
+                    <textarea class="inp builder-schema-textarea" rows="7" x-model="paramSchemaJson"
                               placeholder='{ "fields": [ { "name": "Tarih", "type": "date", "required": false, "default": "today" } ] }'></textarea>
-                    <p style="font-size:10px; color:var(--ink-4); margin-top:4px; line-height:1.4;">
+                    <p class="builder-schema-help">
                         Sadece kullanıcının doldurması gereken parametreleri bırakın. Kaldırılan SP parametreleri için SP default değerleri kullanılır.
                     </p>
-                    <details x-show="procParams.length > 0" x-cloak style="margin-top:6px;">
-                        <summary style="cursor:pointer; font-size:10.5px; color:var(--ink-3); padding:4px 0;">SP'nin tüm parametreleri (referans)</summary>
-                        <div class="inp" style="background:var(--canvas); font-family:'JetBrains Mono',monospace; font-size:11px; line-height:1.5; margin-top:4px;">
+                    <details x-show="procParams.length > 0" x-cloak class="builder-sp-details">
+                        <summary class="builder-sp-summary">SP'nin tüm parametreleri (referans)</summary>
+                        <div class="inp builder-sp-params-box">
                             <template x-for="p in procParams" :key="p.name">
-                                <div>· <span x-text="p.name"></span> <span style="color:var(--ink-3);" x-text="'(' + p.type + ')'"></span></div>
+                                <div class="builder-sp-row">· <span x-text="p.name"></span> <span class="type-mute" x-text="'(' + p.type + ')'"></span></div>
                             </template>
                         </div>
                     </details>
@@ -901,13 +885,12 @@ window.__availableDataSources = @Html.Raw(System.Text.Json.JsonSerializer.Serial
                 </div>
 
                 <div class="field">
-                    <label class="lab" style="display:flex; align-items:center; gap:8px;">
+                    <label class="lab builder-active-label">
                         Aktif
-                        <label style="position:relative; display:inline-block; width:36px; height:20px; cursor:pointer; margin:0;">
-                            <input type="checkbox" :checked="isActive" x-on:change="isActive = $el.checked"
-                                   style="opacity:0; width:0; height:0;" />
-                            <span :style="'position:absolute; inset:0; border-radius:10px; transition:.2s; background:' + (isActive ? 'var(--accent-ink)' : 'var(--line)')"></span>
-                            <span :style="'position:absolute; top:2px; width:16px; height:16px; border-radius:50%; transition:.2s; background:#fff; left:' + (isActive ? '18px' : '2px')"></span>
+                        <label class="builder-toggle-shell">
+                            <input type="checkbox" :checked="isActive" x-on:change="isActive = $el.checked" />
+                            <span class="builder-toggle-track" :class="isActive && 'on'"></span>
+                            <span class="builder-toggle-knob" :class="isActive && 'on'"></span>
                         </label>
                     </label>
                 </div>
@@ -915,9 +898,9 @@ window.__availableDataSources = @Html.Raw(System.Text.Json.JsonSerializer.Serial
                 <template x-if="availableRoles.length > 0">
                     <div class="field">
                         <label class="lab">İzinli Roller</label>
-                        <div style="display:flex; flex-direction:column; gap:4px; max-height:140px; overflow-y:auto; padding:6px 8px; border:1px solid var(--line); border-radius:6px; background:var(--paper);">
+                        <div class="builder-checklist">
                             <template x-for="role in availableRoles" :key="role.id">
-                                <label style="display:flex; align-items:center; gap:6px; font-size:12px; cursor:pointer;">
+                                <label class="builder-checklist-row">
                                     <input type="checkbox" :checked="selectedRoleIds.includes(role.id)"
                                            x-on:change="toggleRole(role.id)" />
                                     <span x-text="role.name"></span>
@@ -930,9 +913,9 @@ window.__availableDataSources = @Html.Raw(System.Text.Json.JsonSerializer.Serial
                 <template x-if="availableGroups.length > 0">
                     <div class="field">
                         <label class="lab">Gruplar</label>
-                        <div style="display:flex; flex-direction:column; gap:4px; max-height:140px; overflow-y:auto; padding:6px 8px; border:1px solid var(--line); border-radius:6px; background:var(--paper);">
+                        <div class="builder-checklist">
                             <template x-for="grp in availableGroups" :key="grp.id">
-                                <label style="display:flex; align-items:center; gap:6px; font-size:12px; cursor:pointer;">
+                                <label class="builder-checklist-row">
                                     <input type="checkbox" :checked="selectedGroupIds.includes(grp.id)"
                                            x-on:change="toggleGroup(grp.id)" />
                                     <span x-text="grp.name"></span>
@@ -958,17 +941,16 @@ window.__availableDataSources = @Html.Raw(System.Text.Json.JsonSerializer.Serial
                 <button type="button" class="m-close" @@click="closePreview()" title="Kapat (Esc)">×</button>
             </div>
             <div class="m-body">
-                <div x-show="previewModal.loading" style="padding:20px; text-align:center; color:var(--ink-3);">
+                <div x-show="previewModal.loading" class="builder-preview-loading">
                     <i class="fas fa-spinner fa-spin"></i> Önizleme oluşturuluyor…
                 </div>
-                <div x-show="previewModal.error" x-cloak
-                     style="padding:20px; color:var(--accent-ink); white-space:pre-line;"
+                <div x-show="previewModal.error" x-cloak class="builder-preview-error"
                      x-text="previewModal.error"></div>
                 <template x-if="!previewModal.loading && !previewModal.error && previewModal.html">
                     @* XSS izolasyonu: allow-same-origin yok — iframe ile parent farklı origin gibi davranır. *@
                     <iframe :srcdoc="previewModal.html"
                             sandbox="allow-scripts allow-downloads"
-                            style="width:100%; height:100%; border:0;"></iframe>
+                            class="builder-preview-iframe"></iframe>
                 </template>
             </div>
         </div>
@@ -985,11 +967,11 @@ window.__availableDataSources = @Html.Raw(System.Text.Json.JsonSerializer.Serial
                 <span class="m-title" x-text="modalRsTitle()"></span>
                 <span class="m-tags">
                     <template x-if="dataModal.comp && dataModal.comp.column">
-                        <span class="m-meta" style="background:var(--accent-soft); color:var(--accent-ink);"
+                        <span class="m-meta builder-data-bound-pill"
                               x-text="'Bağlı kolon: ' + dataModal.comp.column"></span>
                     </template>
                     <template x-if="modalRs()">
-                        <span style="font-size:11px; color:var(--ink-3);" x-text="modalRs().rowCount + ' satır · ' + (modalRs().columns || []).length + ' kolon · ilk ' + (modalRs().rows || []).length + ' gösteriliyor'"></span>
+                        <span class="builder-data-meta-info" x-text="modalRs().rowCount + ' satır · ' + (modalRs().columns || []).length + ' kolon · ilk ' + (modalRs().rows || []).length + ' gösteriliyor'"></span>
                     </template>
                 </span>
                 <button type="button" class="m-close" @@click="closeDataModal()" title="Kapat (Esc)">
@@ -1019,9 +1001,9 @@ window.__availableDataSources = @Html.Raw(System.Text.Json.JsonSerializer.Serial
                     </table>
                 </template>
                 <template x-if="!modalRs() || (modalRs().rows || []).length === 0">
-                    <div style="text-align:center; padding:60px 20px; color:var(--ink-4);">
-                        <i class="fas fa-table" style="font-size:32px; opacity:.4;"></i>
-                        <p style="margin-top:12px;">Bu veri setinde satır yok.</p>
+                    <div class="builder-data-empty">
+                        <i class="fas fa-table"></i>
+                        <p>Bu veri setinde satır yok.</p>
                     </div>
                 </template>
             </div>
@@ -1030,8 +1012,8 @@ window.__availableDataSources = @Html.Raw(System.Text.Json.JsonSerializer.Serial
                 <template x-if="dataModal.comp">
                     <span>Widget: <strong x-text="dataModal.comp.title || dataModal.comp.type"></strong></span>
                 </template>
-                <span style="margin-left:auto;">
-                    <i class="fas fa-circle-info text-[10px]" style="margin-right:4px;"></i>
+                <span class="builder-modal-foot-hint">
+                    <i class="fas fa-circle-info text-[10px] icon-mr"></i>
                     Bağlı kolon kırmızı vurgulu
                 </span>
             </div>
@@ -1044,7 +1026,7 @@ window.__availableDataSources = @Html.Raw(System.Text.Json.JsonSerializer.Serial
     <span><span class="kbd">⌘P</span> önizle</span>
     <span><span class="kbd">Çift-tık</span> widget verisi</span>
     <span><span class="kbd">Del</span> seçili sil</span>
-    <span style="margin-left:auto;" x-data="{}" x-text="'12 sütun grid'"></span>
+    <span class="right" x-data="{}" x-text="'12 sütun grid'"></span>
 </div>
 
 <script src="~/assets/js/builder-v2/builder-utils.js" asp-append-version="true"></script>

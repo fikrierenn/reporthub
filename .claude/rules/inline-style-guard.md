@@ -11,6 +11,7 @@ _Kullanıcı kararı 2026-05-10. Bu kural `.cshtml` view yazarken / düzenlerken
 - `style="display:contents"` form-as-grid pattern (max 3 yerde, hâlihazırda standart)
 - `style="--w: @pct%"` veri-driven CSS variable (örn. dinamik bar grafik genişliği — `_DashMiniCharts.cshtml`)
 - `Print.cshtml` view-local `<style>` block (Layout=null A4 print template)
+- **Runtime/dynamic style** — GridStack drag-drop pozisyon/boyut attribute'ları, Chart.js canvas `width`/`height` runtime hesaplaması, Alpine `:style="cond ? 'right' : ''"` runtime evaluasyonu **istisna kapsamındadır** (Plan 33.2 kararı 2026-05-13). Sadece widget library/JS tarafından runtime yazılan stiller — manuel inline yazma yasak.
 
 ## Razor expression style de yasak
 
