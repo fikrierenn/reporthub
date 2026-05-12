@@ -1,14 +1,14 @@
 @model Mosaik.ViewModels.AdminDataSourceFormViewModel
 @{
     Layout = "_AppLayout";
-    ViewData["Title"] = $"Düzenle: {Model.DataSource.DataSourceKey} - BKM Rapor Paneli";
+    ViewData["Title"] = $"Düzenle: {Model.DataSource.DataSourceKey} - Mosaik";
     ViewData["PageTitle"] = "Veri Kaynağı Düzenle";
     var ds = Model.DataSource;
 }
 
 @section Breadcrumb {
     <nav class="crumbs" aria-label="Sayfa konumu">
-        <a href="/Dashboard">BKM Kitap</a>
+        <a href="/Dashboard">Mosaik</a>
         <span class="sep" aria-hidden="true">/</span>
         <a href="/Admin">Yönetim</a>
         <span class="sep" aria-hidden="true">/</span>
@@ -20,8 +20,7 @@
 
 @section TopActions {
     <a href="/Admin?tab=datasources" class="btn">
-        <i class="fas fa-xmark text-[10px]"></i>
-        İptal
+        <i class="fas fa-xmark icon-xs"></i> İptal
     </a>
 }
 
@@ -30,57 +29,55 @@
     <div class="sub">
         <span class="pill"><span class="mono">@ds.DataSourceKey</span></span>
         <span>@ds.Title</span>
-        <span class="pill" style="@(ds.IsActive ? "" : "background:rgba(220,38,38,0.06); border-color:rgba(220,38,38,0.2);")">
-            <span class="dot" style="background:@(ds.IsActive ? "var(--ok)" : "var(--danger)");"></span>
+        <span class="pill @(ds.IsActive ? "ok-tone" : "danger")">
+            <span class="dot"></span>
             @(ds.IsActive ? "Aktif" : "Pasif")
         </span>
     </div>
 </div>
 
-<form method="post">
+<form method="post" novalidate>
     @Html.AntiForgeryToken()
     <input type="hidden" id="initialConnString" value="@ds.ConnString" />
 
-    <div style="background:var(--paper); border:1px solid var(--line); border-radius:10px; overflow:hidden; max-width:880px; margin-bottom:18px;">
-        <div style="padding:14px 18px; border-bottom:1px solid var(--line);">
-            <h2 style="font-size:13px; font-weight:600; color:var(--ink-1); margin:0;">
-                <i class="fas fa-tag" style="margin-right:6px; color:var(--ink-3);"></i>
-                Genel Bilgiler
+    <div class="form-section-card wide">
+        <div class="form-section-head">
+            <h2 class="form-section-head__title">
+                <i class="fas fa-tag icon-mr"></i> Genel Bilgiler
             </h2>
         </div>
-        <div style="padding:20px;">
-            <div style="display:grid; grid-template-columns:1fr 2fr; gap:14px;">
-                <div class="field" style="margin-bottom:0;">
-                    <label class="lab">Anahtar</label>
-                    <input type="text" value="@ds.DataSourceKey" disabled class="inp" style="background:var(--canvas); color:var(--ink-3); cursor:not-allowed; font-family:'JetBrains Mono', monospace;" />
+        <div class="form-section-body">
+            <div class="grid-2-1">
+                <div class="field">
+                    <label class="lab" for="DataSourceKeyDisplay">Anahtar</label>
+                    <input type="text" id="DataSourceKeyDisplay" value="@ds.DataSourceKey" disabled class="inp disabled-mono" />
                     <input type="hidden" name="DataSourceKey" value="@ds.DataSourceKey" />
-                    <p style="margin:6px 0 0; font-size:11px; color:var(--ink-3);">Anahtar değiştirilemez</p>
+                    <p class="help-text">Anahtar değiştirilemez</p>
                 </div>
-                <div class="field" style="margin-bottom:0;">
-                    <label class="lab">Başlık <span style="color:var(--accent);">*</span></label>
-                    <input type="text" name="Title" value="@ds.Title" required class="inp" placeholder="örn: Ana Veritabanı" />
+                <div class="field">
+                    <label class="lab" for="Title">Başlık <span class="text-danger">*</span></label>
+                    <input type="text" id="Title" name="Title" value="@ds.Title" required class="inp" placeholder="örn: Ana Veritabanı" />
                 </div>
             </div>
         </div>
     </div>
 
-    <div style="background:var(--paper); border:1px solid var(--line); border-radius:10px; overflow:hidden; max-width:880px; margin-bottom:18px;">
-        <div style="padding:14px 18px; border-bottom:1px solid var(--line);">
-            <h2 style="font-size:13px; font-weight:600; color:var(--ink-1); margin:0;">
-                <i class="fas fa-server" style="margin-right:6px; color:var(--ink-3);"></i>
-                Veritabanı Bağlantı Ayarları
+    <div class="form-section-card wide">
+        <div class="form-section-head">
+            <h2 class="form-section-head__title">
+                <i class="fas fa-server icon-mr"></i> Veritabanı Bağlantı Ayarları
             </h2>
         </div>
-        <div style="padding:20px;">
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:14px;">
-                <div class="field" style="margin-bottom:0;">
-                    <label class="lab">Sunucu Adı <span style="color:var(--accent);">*</span></label>
+        <div class="form-section-body stack">
+            <div class="grid-2col">
+                <div class="field">
+                    <label class="lab" for="serverName">Sunucu Adı <span class="text-danger">*</span></label>
                     <input type="text" id="serverName" class="inp" placeholder="örn: BT-FIKRI\SQLEXPRESS" />
                 </div>
-                <div class="field" style="margin-bottom:0;">
-                    <label class="lab">Veritabanı Adı <span style="color:var(--accent);">*</span></label>
+                <div class="field">
+                    <label class="lab" for="databaseName">Veritabanı Adı <span class="text-danger">*</span></label>
                     <input type="text" id="databaseName" class="inp" placeholder="örn: Mosaik" />
-                    <div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;">
+                    <div class="btn-group mt-8">
                         <button type="button" onclick="setDatabase('Mosaik')" class="btn ghost sm">Mosaik</button>
                         <button type="button" onclick="setDatabase('BKM_GENEL')" class="btn ghost sm">BKM_GENEL</button>
                         <button type="button" onclick="setDatabase('MainDB')" class="btn ghost sm">MainDB</button>
@@ -89,9 +86,9 @@
                 </div>
             </div>
 
-            <div class="field" style="margin-bottom:14px;">
+            <div class="field">
                 <label class="lab">Kimlik Doğrulama</label>
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                <div class="grid-2col">
                     <label class="opt-card" onclick="selectAuth('windows')">
                         <input type="radio" name="authType" value="windows" id="authWindows" />
                         <div>
@@ -109,50 +106,49 @@
                 </div>
             </div>
 
-            <div id="sqlAuthFields" style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:14px;">
-                <div class="field" style="margin-bottom:0;">
-                    <label class="lab">Kullanıcı Adı</label>
+            <div id="sqlAuthFields" class="grid-2col">
+                <div class="field">
+                    <label class="lab" for="username">Kullanıcı Adı</label>
                     <input type="text" id="username" value="sa" class="inp" />
                 </div>
-                <div class="field" style="margin-bottom:0;">
-                    <label class="lab">Şifre</label>
+                <div class="field">
+                    <label class="lab" for="password">Şifre</label>
                     <input type="password" id="password" class="inp" autocomplete="off" />
                 </div>
             </div>
 
-            <div class="field" style="margin-bottom:0;">
-                <label class="lab">Oluşturulan Bağlantı String <i class="fas fa-circle-info" style="font-size:10px; color:var(--ink-4); margin-left:4px;" title="Bu alan otomatik oluşturulur"></i></label>
-                <textarea name="ConnString" id="connString" required rows="3" readonly class="inp" style="height:auto; padding:10px 12px; font-family:'JetBrains Mono', monospace; font-size:12px; background:var(--canvas); color:var(--ink-2); resize:vertical;">@ds.ConnString</textarea>
+            <div class="field">
+                <label class="lab" for="connString">
+                    Oluşturulan Bağlantı String
+                    <i class="fas fa-circle-info icon-xs text-muted ml-4" title="Bu alan otomatik oluşturulur"></i>
+                </label>
+                <textarea id="connString" name="ConnString" required rows="3" readonly class="inp json disabled-mono">@ds.ConnString</textarea>
             </div>
         </div>
     </div>
 
-    <div style="background:var(--paper); border:1px solid var(--line); border-radius:10px; padding:14px 20px; max-width:880px; margin-bottom:18px; display:flex; align-items:center; gap:10px;">
+    <div class="toggle-row">
         <input type="hidden" name="IsActive" value="false" />
-        <input type="checkbox" name="IsActive" value="true" id="dsActive" @(ds.IsActive ? "checked" : "")
-               style="width:16px; height:16px; accent-color:var(--accent);" />
-        <label for="dsActive" class="lab" style="margin:0;">Veri kaynağını aktif yap</label>
+        <input type="checkbox" name="IsActive" value="true" id="dsActive" @(ds.IsActive ? "checked" : "") class="checkbox checkbox-lg" />
+        <label for="dsActive" class="lab inline">Veri kaynağını aktif yap</label>
     </div>
 
-    <div style="display:flex; align-items:center; justify-content:space-between; max-width:880px; padding:14px 20px; background:var(--paper); border:1px solid var(--line); border-radius:10px;">
+    <div class="action-row wide">
         <a href="/Admin?tab=datasources" class="btn ghost">
-            <i class="fas fa-arrow-left text-[10px]"></i>
-            Geri Dön
+            <i class="fas fa-arrow-left icon-xs"></i> Geri Dön
         </a>
         <button type="submit" class="btn primary">
-            <i class="fas fa-check text-[10px]"></i>
-            Değişiklikleri Kaydet
+            <i class="fas fa-check icon-xs"></i> Değişiklikleri Kaydet
         </button>
     </div>
 </form>
 
-<form method="post" action="/Admin" style="margin-top:14px; max-width:880px;">
+<form method="post" action="/Admin" class="test-form-row">
     @Html.AntiForgeryToken()
     <input type="hidden" name="action" value="test_datasource" />
     <input type="hidden" name="key" value="@ds.DataSourceKey" />
     <button type="submit" class="btn">
-        <i class="fas fa-plug text-[10px]"></i>
-        Bağlantıyı Test Et
+        <i class="fas fa-plug icon-xs"></i> Bağlantıyı Test Et
     </button>
 </form>
 

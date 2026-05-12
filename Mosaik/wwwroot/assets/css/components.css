@@ -575,8 +575,13 @@ select.inp {
 .action-row .hint-text { font-size: 11px; color: var(--ink-3); }
 
 /* Spacing micro utilities (admin form'larda gerekli) */
+.mt-8 { margin-top: 8px; }
 .mt-14 { margin-top: 14px; }
 .mb-8 { margin-bottom: 8px; }
+.ml-4 { margin-left: 4px; }
+
+/* Form altında bağlantı testi gibi tek butonlu yan form */
+.test-form-row { max-width: 880px; margin-top: 14px; }
 
 /* Parametre listesi yığını (dinamik render) */
 .param-list-stack { display: flex; flex-direction: column; gap: 6px; }
