@@ -523,6 +523,7 @@ select.inp {
 .pill.ok-tone .dot { background: var(--ok, #10b981); }
 .pill.warn .dot { background: var(--warn, #f59e0b); }
 .pill.info-tone { background: #e0f2fe; color: #0369a1; border-color: rgba(2,132,199,0.2); }
+.pill.urgent { background: var(--accent); color: #fff; border-color: var(--accent); font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 4px; }
 
 /* Compact small button (24px — chart series remove, qb compact) */
 .btn.compact-sm { height: 24px; font-size: 10px; padding: 0 8px; }
