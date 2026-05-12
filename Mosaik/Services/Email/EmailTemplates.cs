@@ -1,16 +1,32 @@
+using System.Net;
+
 namespace Mosaik.Services.Email
 {
     // Plan 31 — HTML email şablonları. Mosaik brand (kırmızı + koyu gri).
     // $$ prefix: CSS içindeki tek { } literal, çift {{ }} interpolation.
+    //
+    // GÜVENLİK (security-principles.md §2):
+    // Kullanıcı kontrollü her metin parametresi E() ile HtmlEncode edilir.
+    // C# raw string ($$"""...""") Razor'ın @ auto-encode'unu yapmaz — elle encode zorunlu.
+    // appUrl Configuration'dan gelir ama yine de Uri whitelist + encode (defansif).
     internal static class EmailTemplates
     {
+        private static string E(string? s) => WebUtility.HtmlEncode(s ?? string.Empty);
+
+        private static string SafeUrl(string? url) =>
+            !string.IsNullOrEmpty(url)
+            && Uri.TryCreate(url, UriKind.Absolute, out var uri)
+            && (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps)
+                ? E(url)
+                : "#";
+
         private static string Wrap(string title, string bodyContent) => $$"""
             <!DOCTYPE html>
             <html lang="tr">
             <head>
               <meta charset="UTF-8" />
               <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-              <title>{{title}}</title>
+              <title>{{E(title)}}</title>
               <style>
                 body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; background: #f3f4f6; margin: 0; padding: 0; }
                 .wrapper { max-width: 600px; margin: 32px auto; background: #fff; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,.08); }
@@ -45,61 +61,61 @@ namespace Mosaik.Services.Email
         public static string OverdueObligation(string obligationTitle, string dueDate, string firmaName, string appUrl) =>
             Wrap("Geciken Yükümlülük", $$"""
                 <p>Merhaba,</p>
-                <p><strong>{{firmaName}}</strong> hesabınızda bir yükümlülük son ödeme tarihini geçti:</p>
+                <p><strong>{{E(firmaName)}}</strong> hesabınızda bir yükümlülük son ödeme tarihini geçti:</p>
                 <table>
                   <tr><th>Yükümlülük</th><th>Son Tarih</th><th>Durum</th></tr>
-                  <tr><td>{{obligationTitle}}</td><td>{{dueDate}}</td><td><span class="badge-red">Gecikmiş</span></td></tr>
+                  <tr><td>{{E(obligationTitle)}}</td><td>{{E(dueDate)}}</td><td><span class="badge-red">Gecikmiş</span></td></tr>
                 </table>
-                <a class="btn" href="{{appUrl}}/Contracts">Sözleşmeleri Görüntüle</a>
+                <a class="btn" href="{{SafeUrl(appUrl)}}/Contracts">Sözleşmeleri Görüntüle</a>
                 """);
 
         // Yaklaşan yükümlülük hatırlatması.
         public static string ObligationReminder(string obligationTitle, string dueDate, int daysLeft, string firmaName, string appUrl) =>
             Wrap("Yükümlülük Hatırlatması", $$"""
                 <p>Merhaba,</p>
-                <p><strong>{{firmaName}}</strong> hesabınızda bir yükümlülüğün son tarihi yaklaşıyor:</p>
+                <p><strong>{{E(firmaName)}}</strong> hesabınızda bir yükümlülüğün son tarihi yaklaşıyor:</p>
                 <table>
                   <tr><th>Yükümlülük</th><th>Son Tarih</th><th>Kalan</th></tr>
-                  <tr><td>{{obligationTitle}}</td><td>{{dueDate}}</td><td><span class="badge-yellow">{{daysLeft}} gün</span></td></tr>
+                  <tr><td>{{E(obligationTitle)}}</td><td>{{E(dueDate)}}</td><td><span class="badge-yellow">{{daysLeft}} gün</span></td></tr>
                 </table>
-                <a class="btn" href="{{appUrl}}/Contracts">Sözleşmeleri Görüntüle</a>
+                <a class="btn" href="{{SafeUrl(appUrl)}}/Contracts">Sözleşmeleri Görüntüle</a>
                 """);
 
         // AI extraction tamamlandı.
         public static string AiExtractionComplete(string documentName, int suggestionCount, int extractionId, string appUrl) =>
             Wrap("AI Analizi Tamamlandı", $$"""
                 <p>Merhaba,</p>
-                <p><strong>{{documentName}}</strong> dokümanının AI analizi tamamlandı.</p>
+                <p><strong>{{E(documentName)}}</strong> dokümanının AI analizi tamamlandı.</p>
                 <table>
                   <tr><th>Doküman</th><th>Öneriler</th><th>Durum</th></tr>
-                  <tr><td>{{documentName}}</td><td>{{suggestionCount}} öneri</td><td><span class="badge-yellow">İnceleme Bekliyor</span></td></tr>
+                  <tr><td>{{E(documentName)}}</td><td>{{suggestionCount}} öneri</td><td><span class="badge-yellow">İnceleme Bekliyor</span></td></tr>
                 </table>
                 <p>Yükümlülük ve risk uyarısı önerilerini incelemek için aşağıdaki bağlantıya tıklayın.</p>
-                <a class="btn" href="{{appUrl}}/Contracts/AiReview/{{extractionId}}">İncelemeye Git</a>
+                <a class="btn" href="{{SafeUrl(appUrl)}}/Contracts/AiReview/{{extractionId}}">İncelemeye Git</a>
                 """);
 
         // Tamim/duyuru yayınlandı.
         public static string CircularPublished(string subject, string firmaName, int circularId, string appUrl) =>
             Wrap("Yeni Tamim", $$"""
                 <p>Merhaba,</p>
-                <p><strong>{{firmaName}}</strong> için yeni bir tamim yayınlandı:</p>
+                <p><strong>{{E(firmaName)}}</strong> için yeni bir tamim yayınlandı:</p>
                 <table>
                   <tr><th>Konu</th><th>Durum</th></tr>
-                  <tr><td>{{subject}}</td><td><span class="badge-green">Yayında</span></td></tr>
+                  <tr><td>{{E(subject)}}</td><td><span class="badge-green">Yayında</span></td></tr>
                 </table>
-                <a class="btn" href="{{appUrl}}/Tamim/Circulars/Details/{{circularId}}">Tamimi Aç</a>
+                <a class="btn" href="{{SafeUrl(appUrl)}}/Tamim/Circulars/Details/{{circularId}}">Tamimi Aç</a>
                 """);
 
         // Onay bekleyen talep.
         public static string ApprovalPending(string requestTitle, string firmaName, int approvalId, string appUrl) =>
             Wrap("Onayınız Bekleniyor", $$"""
                 <p>Merhaba,</p>
-                <p><strong>{{firmaName}}</strong> hesabında onayınızı bekleyen bir talep var:</p>
+                <p><strong>{{E(firmaName)}}</strong> hesabında onayınızı bekleyen bir talep var:</p>
                 <table>
                   <tr><th>Talep</th><th>Durum</th></tr>
-                  <tr><td>{{requestTitle}}</td><td><span class="badge-yellow">Onay Bekliyor</span></td></tr>
+                  <tr><td>{{E(requestTitle)}}</td><td><span class="badge-yellow">Onay Bekliyor</span></td></tr>
                 </table>
-                <a class="btn" href="{{appUrl}}/Approvals/Details/{{approvalId}}">Talebi İncele</a>
+                <a class="btn" href="{{SafeUrl(appUrl)}}/Approvals/Details/{{approvalId}}">Talebi İncele</a>
                 """);
     }
 }
