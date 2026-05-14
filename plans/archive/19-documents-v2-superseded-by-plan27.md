@@ -1,8 +1,8 @@
 # Plan 19 — Documents v2 (Versiyonlama + Güvenli Serve + UploadedBy)
 
-**Tarih:** 2026-05-09
+**Tarih:** 2026-05-09 (orijinal taslak)
 **Yazan:** Claude
-**Durum:** `Taslak`
+**Durum:** ⛔ **SUPERSEDED 2026-05-14** — [Plan 27 Faz C](27-documents-ai-roadmap.md) "DMS Foundation" bu planı absorbe etti (satır 39: "Versiyonlama + check-in/check-out (Plan 19 absorbe edilir)"). Bu plan dosyası referans için kalır; **implementasyon Plan 27 Faz C üzerinden yürütülür**. [VISION.md](../docs/VISION.md) §3 — Documents çakışması bu kararla çözüldü.
 
 ---
 

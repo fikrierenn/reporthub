@@ -1,6 +1,8 @@
 # Planlar (Plan-First Sistemi)
 
-Tier 3 işler için zorunlu plan dokümanları. Detay: `docs/ADR/010-plan-first-tier-system.md`.
+Tier 3 işler için zorunlu plan dokümanları. Detay: [`docs/ADR/010-plan-first-tier-system.md`](../docs/ADR/010-plan-first-tier-system.md).
+
+**Yön belgesi:** [`docs/VISION.md`](../docs/VISION.md) — Mosaik ürün özellik vizyonu ve **vNext kalbi öncelik sırası**. Yeni plan açmadan önce VISION'a bak: yapılacaklar listesinde mi, yapılmayacaklar listesinde mi? vNext kalbi (SOP+Comment+Workflow Designer) bir sonraki 3 Tier 3 plan adayı.
 
 ## Tier sistemi
 
@@ -75,8 +77,25 @@ Plan-first bypass edilebilir ama:
 - Tier 3 sinyali varsa uyarı: "Bu 3+ dosyayı etkiliyor, mini-plan yazayım mı (5 dk)?"
 - "Direkt" derse: TODO'ya `[plan-skipped: <gerekçe>]` notu
 
+## Stale plan disiplini (2026-05-14)
+
+**Plan ölüm tarihi:** 14 gün dokunulmamış aktif plan ya **yeniden ısıt** ya **arşive taşı**. `session-start.sh` hook her oturum başında uyarır. Detay: [`.claude/rules/plan-first.md`](../.claude/rules/plan-first.md) §6.
+
+## VISION-yapılmayacaklar listesi
+
+[`docs/VISION.md`](../docs/VISION.md) §4 + §6 reddedilen modüller — bunlar için **plan açma**:
+
+- **KPI / OKR ayrı modülü** — Reports yeterli
+- **Mesajlaşma (SignalR real-time)** — Slack/Teams varken marjinal
+- **Duyuru ayrı modülü** — Tamim'e `Type` enum yeterli
+- **Form Builder kendi üretim** — open-source integrate (LimeSurvey/Formbricks)
+
+Bu kategorilerde plan teklifi gelirse → VISION referansı ile reddedilir veya VISION revize edilir.
+
 ## İlişkili
 
-- `.claude/rules/plan-first.md` — kural detayı
+- `docs/VISION.md` — yön belgesi, modül öncelik sıralaması
+- `.claude/rules/plan-first.md` — kural detayı + stale plan disiplini
 - `.claude/rules/commit-discipline.md` — Tier 3 commit referansı
 - `docs/ADR/010-plan-first-tier-system.md` — kararın gerekçesi
+- `.claude/hooks/session-start.sh` — stale plan uyarısı (otomatik)

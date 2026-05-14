@@ -1,9 +1,54 @@
 # Plan 16 — vNext Modül Yol Haritası (D:/Dev keşif sonrası)
 
-**Durum:** Taslak — kullanıcı onayı bekliyor
+**Durum:** Aktif — **2026-05-14 [VISION.md](../docs/VISION.md) ile revize edildi.** Bu plan **port stratejisi** (D:/Dev kaynak haritası), VISION ise **değer önceliği**. İkisi birlikte okunur.
 **Tier:** 3 (kullanıcı-görünür, 6+ modül, schema/UI/auth değişiklikleri)
-**Tarih:** 2026-05-07
-**Bağlam:** D:/Dev altında 8 paralel subagent keşfi tamamlandı. Bu plan, Mosaik vNext modüllerinin **port stratejisini ve sırasını** kayıt altına alır. Her bir modül kendi alt-planına (Plan 17, 18, ...) sahip olacak; bu plan **roadmap + tier sıralaması**.
+**Tarih:** 2026-05-07 (orijinal taslak), 2026-05-14 (VISION uyumu)
+**Bağlam:** D:/Dev altında 8 paralel subagent keşfi tamamlandı. Bu plan, Mosaik vNext modüllerinin **port stratejisini ve sırasını** kayıt altına alır. Her bir modül kendi alt-planına (Plan 17, 18, ...) sahip olacak; bu plan **roadmap + kaynak haritası**.
+
+---
+
+## ⚠️ VISION uyum notu (2026-05-14)
+
+[`docs/VISION.md`](../docs/VISION.md) **vNext kalbi** olarak **3 modüllük üçlü** belirledi (~6-9 hafta):
+
+| Yeni Tier 3 plan adayı | Effort | VISION sıra |
+|---|---|---|
+| Plan 34 — SOP / Prosedür Yönetimi | 2-3 hafta | #1 (en hızlı kazanım) |
+| Plan 35 — Comment / Mention | 1-2 hafta + entegrasyon | #2 |
+| Plan 36 — Workflow Designer | 3-4 hafta + entegrasyon | #4 (en yüksek leverage) |
+
+Plan 16'daki **D:/Dev keşif çıktıları** (YonetIQ ApprovalService, DikkatIQ AI core, Tower KPI entity vs.) bu üçlüye **port kaynağı** olarak hizmet eder. Örneğin Workflow Designer için YonetIQ `ApprovalRequest+ApprovalStep` pattern + Plan 17 Faz H notification altyapısı + IWorkflow Core abstraction = referans implementation.
+
+### VISION'da "yapılmayacak" olarak işaretlenenler
+
+Plan 16'da geçen ama [VISION §4](../docs/VISION.md#4-yok-olan-vnext-modülleri--değer-sıralı) iptal eden modüller:
+
+- **KPI / OKR ayrı modülü** — Reports modülü zaten dashboard üretiyor, Mosaik ölçeğinde (200-300 kişi) OKR culture fit yok. Onun yerine 2-3 KPI dashboard template'i Reports altında üret.
+- **Mesajlaşma (real-time SignalR)** — Slack/Teams varken marjinal. Comment/Mention (Plan 35) yeterli.
+- **Duyuru ayrı modülü** — Tamim'e `Type` enum (Formal vs Informal) eklemek 2-3 gün, ayrı modül 2-3 hafta. Yeni modül yapma.
+- **Form/Anket Builder kendi üretim** — open-source integrate (LimeSurvey / Formbricks self-hosted) önerildi.
+
+Bu maddeleri Plan 16'da görürsen → **VISION kararıyla iptal**, port stratejisi geçersiz.
+
+### Plan 16 alt-planlarında durum
+
+| Alt-plan | Durum | VISION uyum |
+|---|---|---|
+| Plan 17 (Tamim) | ✅ Tamamlandı | Uyumlu (Tamim altyapısı SOP'a reuse) |
+| Plan 18 (HR Sync) | ⏸ Bekliyor (Plan 18B) | "Paralel ikincil" — vNext kalbi sonrası |
+| Plan 19 (Documents v2) | ⚠ Plan 27 ile çakışıyor | VISION §3 — birleştir veya birini reddet |
+| Plan 20 (OrgChart) | ✅ Tamamlandı | Uyumlu |
+| Plan 21 (Lookup table) | Bekliyor | OK (cross-cutting altyapı) |
+| Plan 22 (Holidays/dates) | Bekliyor | Calendar entegrasyonu açıklığı, VISION §3 işaretli |
+| Plan 23 (Sidebar layout) | ✅ Tamamlandı | Uyumlu |
+| Plan 24 (sqlcli web UI) | Bekliyor | Düşük öncelik |
+| Plan 25 (Sözleşme) | ✅ Faz A+B+C kısmen | VISION'da olgun ürün (LegalTech kalbi) |
+| Plan 25.1 (Contract security) | Bekliyor | OK |
+| Plan 26 (OCR fallback) | Bekliyor | OK (AI altyapı) |
+| Plan 27 (Documents AI) | ⚠ Plan 19 ile çakışıyor | VISION §3 — birleştir veya birini reddet |
+| Plan 32 (Scheduled Reports + Email) | ⏸ 6 açık soru | "Paralel ikincil + Comment/Mention'dan ÖNCE" |
+
+---
 
 ---
 

@@ -119,17 +119,22 @@ Ayrıntılı kurallar `.claude/rules/` altında — burada sadece değişmez pre
 
 12. **TODO doğrulama disiplini.** `TODO.md` / journal / memory'deki "HIGH X açık" listesi kanıt değil **hipotez**. Action almadan önce her madde için file:line ile `Read`+`Grep` doğrulama zorunlu (paralel, tek mesajda). "Post-review hardening" commit'i son 7 günde varsa backlog muhtemelen stale. Detay: [`.claude/rules/todo-verification.md`](.claude/rules/todo-verification.md).
 
+13. **Test disiplini — testleri kapatmadan yap (2026-05-14 kullanıcı kararı).** Yeni feature/bug fix/refactor `dotnet test` yeşil olmadan kapatılmaz. **Build yeşil ≠ test yeşil.** Yeni test eklendiğinde en az 1 koşum yapılır, failure varsa fix et veya scaffolding'i geri al — yarım test commit'leme. Detay: [`.claude/rules/test-discipline.md`](.claude/rules/test-discipline.md).
+
 ---
 
 ## 3. Mimari Durumu
 
-**Olgunluk:** ~%75. Core auth + reports + user CRUD + audit log çalışıyor. 32 dosyalık uncommitted dev block var.
+**Olgunluk (iki ölçü — karıştırma):**
+- **Mevcut özellik seti:** ~%75. Reports + Dashboard + Contracts/Obligations + AI extraction + Tamim + OrgChart canlı kullanıma hazır.
+- **vNext "iç portal" vaadi:** ~%40-50. 10 modülden 3 tam (Reports, Dashboard, Tamim), 1 yarım (Documents), 6 yok (SOP, Comment/Mention, Form/Anket, Workflow Designer, Duyuru, KPI/OKR).
+- **Yön belgesi:** [`docs/VISION.md`](docs/VISION.md) — vNext kalbi **SOP+Comment+Workflow Designer üçlüsü** (~6-9 hafta).
 
 Detaylı mimari notlar ve bilinen tutarsızlıklar: [`.claude/rules/architecture.md`](.claude/rules/architecture.md).
 
-Aktif mimari tartışmalar ve yol haritası: [`TODO.md`](TODO.md) — "BIRLESIK ONCELIK SIRASI" bölümü.
+Aktif mimari tartışmalar ve yol haritası: [`TODO.md`](TODO.md) — "EN ÜST ÖNCELİK" bölümü + [`docs/VISION.md`](docs/VISION.md).
 
-Karar kayıtları: [`docs/ADR/`](docs/ADR/) — ADR-001 (data-access), ADR-002 (modular-monolith), ADR-003 (role-model), ADR-004 (skill-design-principles), ADR-005 (dashboard-architecture), ADR-006 (datetime-utc), ADR-007 (named-result-contract), ADR-008 (dashboard-builder-v2), ADR-009 (report-type-consolidation), ADR-010 (plan-first-tier), ADR-011 (sidebar-shell-layout), ADR-012 (pk-scheduler-firma-filter), ADR-013 (multi-db-topology).
+Karar kayıtları: [`docs/ADR/`](docs/ADR/) — ADR-001 (data-access), ADR-002 (modular-monolith), ADR-003 (role-model), ADR-004 (skill-design-principles), ADR-005 (dashboard-architecture), ADR-006 (datetime-utc), ADR-007 (named-result-contract), ADR-008 (dashboard-builder-v2), ADR-009 (report-type-consolidation), ADR-010 (plan-first-tier), ADR-011 (sidebar-shell-layout), ADR-012 (pk-scheduler-firma-filter), ADR-013 (multi-db-topology), ADR-014 (frontend-stack-layering), ADR-015 (new-modules-separate-assembly).
 
 ---
 

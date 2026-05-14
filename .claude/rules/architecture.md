@@ -103,15 +103,36 @@ POST /Reports/Run
 
 **Tam mimari harita:** `memory/project_architecture_map.md`
 
-## Proje Durumu (snapshot)
+## Proje Durumu (snapshot — 2026-05-14 VISION.md uyumu)
 
-- **Olgunluk:** ~%80 (Brand+Modules eklendi — Plan 12).
+- **Mevcut özellik olgunluğu:** ~%75. Reports + Dashboard + Contracts/Obligations + AI extraction + Tamim + OrgChart canlı kullanıma hazır.
+- **vNext "iç portal" vaadi:** ~%40-50. 10 vNext modülünden 3 tam (Reports, Dashboard, Tamim), 1 yarım (Documents), 6 yok (SOP, Comment/Mention, Form/Anket, Workflow Designer, Duyuru, KPI/OKR).
+- **İki olgunluğu karıştırma** — "%75 hazır" mevcut iddiası için doğru, vNext için yanıltıcı. Detay: [`docs/VISION.md`](../../docs/VISION.md).
 - **Uncommitted:** tipik olarak 0.
-- **Aktif modüller:** rapor, dashboard, rol, favori, AD user, user data filter, dashboard builder V2, Brand+Modules sistemi.
+- **Aktif controller (16):** Admin, Ai, Auth, Calendar, Compliance, Contracts, Dashboard, Documents, Home, Logs, Notifications, Obligations, OrgChart, Profile, Reports, Test.
+- **Modül ayrımı:** Sadece `Mosaik.Modules.Circular` ayrı csproj. Diğer 4 modül (Documents, Contracts, OrgChart, Calendar) ana projede — [ADR-015](../../docs/ADR/015-new-modules-separate-assembly.md) ile 1/ay tempoda çıkarılacak.
+
+## Module ayrımı disiplini (ADR-002 + ADR-015)
+
+- **Yeni modüller:** `Mosaik.Modules.<X>` ayrı csproj **zorunlu** (istisna yok). [ADR-015](../../docs/ADR/015-new-modules-separate-assembly.md).
+- **Mevcut 4 modül çıkarma sırası:** OrgChart (Haz 2026) → Calendar (Tem) → Contracts (Ağu) → Documents (Eyl).
+- **Core kalır:** Reports + Dashboard cross-modül kullanım merkezi, ana proje.
+- **Cross-modül iletişim:** Doğrudan API çağrısı **yasak**. Sadece `Mosaik.Core` abstraction'ları üzerinden (`IUserDataScope`, `IApprovalService`, `ILookupService`, `INotificationService`, `IEmailService`).
+- **Şablon:** [`Mosaik.Modules.Circular`](../../Mosaik.Modules.Circular/) (Plan 17 referans implementation).
+- **Skill:** [`vnext-entity-port`](../../.claude/skills/vnext-entity-port/SKILL.md).
+
+## Frontend stack disiplini (ADR-014)
+
+- **Vanilla IIFE** — birincil, karmaşık client logic (drag-drop, canvas, 250+ satır)
+- **Alpine.js** — UI state default (`x-data` ≤20 satır inline; toggle/modal/drawer/filter)
+- **htmx** — **ertelenmiş** (canlı kullanım 0). Yeni view'da kullanma. 3 spesifik use case (server partial swap, multi-stage form, sidebar live update) için **ADR ek + plan onayı** ile geri açılır.
+
+Detay: [ADR-014](../../docs/ADR/014-frontend-stack-layering.md).
 
 ## Referanslar
 
-- ADR'ler: [003-role-model](../../docs/ADR/003-role-model.md) ✅, [004-skill-design-principles](../../docs/ADR/004-skill-design-principles.md) ✅. Yazılacak: `001-data-access.md`, `002-dashboard-architecture.md`, `005-sp-modularization.md`, `006-allowed-roles-csv-deprecate.md`.
+- **Yön belgesi:** [`docs/VISION.md`](../../docs/VISION.md) (vNext kalbi SOP+Comment+Workflow Designer ~6-9 hafta).
+- **ADR'ler (13 toplam):** ADR-001 (data-access), ADR-002 (modular-monolith), ADR-003 (role-model), ADR-004 (skill-design), ADR-005 (dashboard-architecture), ADR-006 (datetime-utc), ADR-007 (named-result-contract), ADR-008 (dashboard-builder-v2), ADR-009 (report-type), ADR-010 (plan-first-tier), ADR-011 (sidebar-shell), ADR-012 (pk-scheduler-firma-filter), ADR-013 (multi-db-topology), ADR-014 (frontend-stack), ADR-015 (new-modules-separate-assembly).
 - Bağlam yönetimi: `docs/CONTEXT_MANAGEMENT.md`.
 - Kapsamlı TODO: `TODO.md` → "BIRLESIK ONCELIK SIRASI".
 - Real-world pattern'ler: `claude-context-template/docs/PATTERNS.md` (P-1..P-10).
