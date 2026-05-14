@@ -13,11 +13,13 @@ namespace Mosaik.Controllers
     {
         private readonly MosaikContext _context;
         private readonly IConfiguration _configuration;
+        private readonly ILogger<TestController> _logger;
 
-        public TestController(MosaikContext context, IConfiguration configuration)
+        public TestController(MosaikContext context, IConfiguration configuration, ILogger<TestController> logger)
         {
             _context = context;
             _configuration = configuration;
+            _logger = logger;
         }
 
         public async Task<IActionResult> Index()
@@ -38,8 +40,7 @@ namespace Mosaik.Controllers
             }
             catch (Exception ex)
             {
-                // M-02: DEBUG-only controller olsa bile disiplin icin generic mesaj.
-                _ = ex;
+                _logger.LogError(ex, "TestController.Index: veritabanı erişim hatası");
                 model.Error = "Veritabanı bağlantısı kurulamadı.";
                 model.CanConnect = false;
                 return View(model);
@@ -71,8 +72,7 @@ namespace Mosaik.Controllers
             }
             catch (Exception ex)
             {
-                // M-02: generic mesaj.
-                _ = ex;
+                _logger.LogError(ex, "TestController.AddSampleData: ekleme hatası");
                 return Json(new { success = false, message = "Örnek veri eklenirken hata oluştu." });
             }
         }

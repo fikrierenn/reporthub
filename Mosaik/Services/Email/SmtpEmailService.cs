@@ -81,6 +81,9 @@ namespace Mosaik.Services.Email
 
             if (!IsEnabled)
             {
+                _logger.LogWarning(
+                    "SMTP devre dışı — bulk gönderim atlandı. Skipped={Count}, Konu: {Subject}",
+                    list.Count, subject);
                 return new EmailBulkResult(Sent: 0, Skipped: list.Count, Failures: Array.Empty<EmailBulkFailure>());
             }
 

@@ -17,19 +17,25 @@ Sıra: Plan 14 + Plan 16.5 + IK quick wins birleşik.
 
 ### Code review backlog (oturum 2026-05-13 güvenlik denetimi)
 
-3 paralel agent (code-reviewer + silent-failure-hunter + general-purpose security) son 35 commit'i (e2da9b6 → 0841080) taradı. 0 CRITICAL exploitable. HIGH bulgular fix bekliyor:
+3 paralel agent (code-reviewer + silent-failure-hunter + general-purpose security) son 35 commit'i (e2da9b6 → 0841080) taradı. 0 CRITICAL exploitable.
 
-- [ ] **HIGH-1 · Route ambiguity** — `AdminController.Reports.cs:16,121,126,132` `CreateReport()`/`EditReport()` + `*LegacyRedirect()` aynı GET route. Fix: V1 GET method'ları `private` yap. ~10dk.
-- [ ] **HIGH-2 · SmtpEmailService exception swallow** — `Services/Email/SmtpEmailService.cs:40-43` Task döner, caller başarısızlık göremez. Fix: `Task<EmailSendResult>` + audit `email_send_failed`. Plan 31 caller eklenmeden önce. ~30dk.
-- [ ] **HIGH-3 · EmailTemplates HtmlEncode** — `Services/Email/EmailTemplates.cs:45-103` raw `$$"""...{{title}}..."""` interpolation, HtmlEncode yok. Fix: `private static string E(s) => WebUtility.HtmlEncode(s)`. ~15dk.
-- [ ] **HIGH-4 · AntiForgery cache null-poison** — `wwwroot/assets/js/app-shell.js:97-106` empty string cache'lenir → sonsuza dek 400. Fix: `if (__aftCache) return __aftCache` truthy check + `_AppLayout.cshtml`'a `@Html.AntiForgeryToken()` global. ~15dk.
-- [ ] **HIGH-5 · `_AdminOverview` query try/catch yok** — `AdminController.cs:117-137` 5 EF query unhandled. Fix: ortak try/catch + `OverviewError` flag. ~20dk.
-- [ ] **HIGH-6 · OrgChart export `try`/`finally` (catch yok)** — `wwwroot/assets/js/org-chart-render.js:74-88`. Fix: `catch (e) { console.error + alert/toast }`. ~10dk.
-- [ ] **HIGH-7 · EditReportLegacyRedirect id validation yok** — `AdminController.Reports.cs:128-130` geçersiz id → 500. Fix: `AnyAsync(r => r.ReportId == id)` + warning redirect. ~15dk.
+**2026-05-14 doğrulama sweep'i:** 11 HIGH listesi canlı koddan kontrol edildi. **7 HIGH ZATEN KAPALI** (a68378c "post-review hardening" commit'inde fix edilmiş), 2 HIGH gerçekten açıktı (`_ = ex;` log yok + bulk SMTP disabled warning yok), 2026-05-14 commit'iyle kapatıldı. TODO listesi güncellendi — tespit-fix asimetrisi giderildi.
+
+- [x] **HIGH-1 · Route ambiguity** ✅ KAPALI — `CreateReport()`/`EditReport()` `private`, `*LegacyRedirect()` ayrı route attribute.
+- [x] **HIGH-2 · SmtpEmailService exception swallow** ✅ KAPALI — `Task<EmailSendResult>` döner, 4 ayrı catch (SmtpException/SocketException/OperationCanceled/Exception) log + Failed result.
+- [x] **HIGH-3 · EmailTemplates HtmlEncode** ✅ KAPALI — `E()` + `SafeUrl()` her interpolation'da, raw string güvenli.
+- [x] **HIGH-4 · AntiForgery cache null-poison** ✅ KAPALI — `if (__aftCache) return __aftCache` truthy check, `_AppLayout.cshtml` global token.
+- [x] **HIGH-5 · `_AdminOverview` query try/catch** ✅ KAPALI — `AdminController.cs:122-156` try/catch + OperationCanceled rethrow + SqlException + Exception ayrı log.
+- [x] **HIGH-6 · OrgChart export catch** ✅ KAPALI — `catch (e) reportFailure` + Promise rejection handler + finally.
+- [x] **HIGH-7 · EditReportLegacyRedirect id validation** ✅ KAPALI — `AnyAsync(r => r.ReportId == id)` check + SqlException + warning redirect.
+- [x] **HIGH-a · `_ = ex;` log yok** ✅ KAPALI 2026-05-14 — `AdminController.Reports.cs:66`, `AdminController.cs:253`, `TestController.cs:39+72` → `_logger.LogError` + SqlException ayrımı.
+- [x] **HIGH-d · Bulk SMTP disabled warning yok** ✅ KAPALI 2026-05-14 — `SmtpEmailService.cs:82` `_logger.LogWarning` Skipped count + Subject.
+- [ ] **MEDIUM-b · SmtpEmailService `ex.Message` ErrorDetail'e** — Caller henüz yok (Plan 31 altyapı, Plan 32 caller bekliyor). `EmailSendResult` record yorumunda "UI'a YASAK" sözleşmesi var. Plan 32 caller eklerken bu sözleşme korunmalı (audit log + structured log → UI'a TempData generic mesaj). ~15dk Plan 32 ile.
+- [ ] **MEDIUM-c · POST action try/catch yok** — `AdminController.Reports.cs:88,214` (POST CreateReport/EditReport). Service Result pattern dönüyor, async exception (deadlock/connection drop) production'da `app.UseExceptionHandler("/Home/Error")` ile karşılanıyor — connection string sızıntı yok. Defensive depth iyileştirme: per-action user-friendly mesaj. ~10dk her biri.
 - [ ] **MEDIUM · SMTP password User Secrets uyarısı** — README/INSTALL.md notu + pre-commit hook'a non-empty `SmtpSettings.Password` tespit. ~30dk.
 - [ ] **MEDIUM · `Database/56_AppModulesGroupKey.sql` CHECK constraint** — whitelist DB-level enforce. Yeni migration. ~10dk.
 
-Toplam ~2-3h, hepsi bağımsız. Birkaç ayrı commit veya tek "post-review hardening" bundle.
+7+2 HIGH kapandı. Kalan 4 MEDIUM bağımsız + opsiyonel.
 
 ### IK / HR — Zirve `vw_PersonelDepartman` ile
 

@@ -250,10 +250,19 @@ namespace Mosaik.Controllers
 
                 }
             }
+            catch (OperationCanceledException) when (HttpContext.RequestAborted.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch (Microsoft.Data.SqlClient.SqlException sex)
+            {
+                _logger.LogError(sex, "AdminController.HandlePostAction: SQL hatası");
+                TempData["Message"] = "Veritabanı işleminde hata oluştu.";
+                TempData["MessageType"] = "error";
+            }
             catch (Exception ex)
             {
-                // M-02: ex.Message user'a gosterilmez. HandlePostAction'in generic hata yolu.
-                _ = ex;
+                _logger.LogError(ex, "AdminController.HandlePostAction: beklenmedik hata");
                 TempData["Message"] = "Beklenmedik bir hata oluştu. Lütfen sistem yöneticisine bildirin.";
                 TempData["MessageType"] = "error";
             }

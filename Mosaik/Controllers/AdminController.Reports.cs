@@ -63,10 +63,28 @@ namespace Mosaik.Controllers
 
                 return View(model);
             }
+            catch (OperationCanceledException) when (HttpContext.RequestAborted.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch (Microsoft.Data.SqlClient.SqlException sex)
+            {
+                _logger.LogError(sex, "AdminController.CreateReport: SQL hatası");
+                TempData["Message"] = "Veritabanı işleminde hata oluştu.";
+                TempData["MessageType"] = "error";
+                return View(new AdminReportFormViewModel
+                {
+                    Report = new ReportCatalog { IsActive = true, AllowedRoles = "admin" },
+                    DataSources = new List<DataSource>(),
+                    AvailableRoles = new List<Role>(),
+                    SelectedRoleIds = new HashSet<int>(),
+                    AvailableGroups = new List<ReportGroup>(),
+                    SelectedGroupIds = new HashSet<int>()
+                });
+            }
             catch (Exception ex)
             {
-                // M-02: generic mesaj, detay log'a.
-                _ = ex;
+                _logger.LogError(ex, "AdminController.CreateReport: beklenmedik hata");
                 TempData["Message"] = "Veri kaynakları yüklenirken hata oluştu.";
                 TempData["MessageType"] = "error";
                 return View(new AdminReportFormViewModel
