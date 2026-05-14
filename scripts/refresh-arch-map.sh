@@ -120,6 +120,45 @@ update_refresh_date() {
     rm -f "${MAP}.bak"
 }
 
+# 6. CLAUDE.md inline marker'larını güncelle (test count + migration range + controllers)
+update_claude_md() {
+    local CLAUDE="CLAUDE.md"
+    [ ! -f "$CLAUDE" ] && return 0
+
+    # Test count: Mosaik.Tests altındaki [Fact] + [Theory] sayısı
+    local test_count
+    test_count=$(grep -rE '^\s*\[Fact|^\s*\[Theory' Mosaik.Tests/ 2>/dev/null | wc -l | tr -d ' ')
+    [ -z "$test_count" ] || [ "$test_count" = "0" ] && test_count="?"
+
+    # Migration range: en küçük + en büyük NN_ prefix
+    local first_mig last_mig mig_count
+    first_mig=$(ls Mosaik/Database/*.sql 2>/dev/null | xargs -n1 basename | grep -oE '^[0-9]+' | sort -n | head -1)
+    last_mig=$(ls Mosaik/Database/*.sql 2>/dev/null | xargs -n1 basename | grep -oE '^[0-9]+' | sort -n | tail -1)
+    mig_count=$(ls Mosaik/Database/*.sql 2>/dev/null | xargs -n1 basename | grep -cE '^[0-9]+_')
+    [ -z "$first_mig" ] && first_mig="?"
+    [ -z "$last_mig" ] && last_mig="?"
+    [ -z "$mig_count" ] && mig_count="?"
+    local mig_range="${first_mig}_ → ${last_mig}_"
+
+    # Controllers: Mosaik/Controllers/*.cs (partial olmayanlar) — sadece base isim
+    local controllers
+    controllers=$(ls Mosaik/Controllers/*Controller.cs 2>/dev/null | xargs -n1 basename | \
+        sed 's/Controller\.cs$//' | grep -v '\.' | sort -u | \
+        awk 'BEGIN{ORS=""} {if(NR>1) printf ", "; printf "`%s`", $0}')
+    [ -z "$controllers" ] && controllers="?"
+
+    # sed ile marker arası değiştir (basit string replace, regex değil — '/' içermez)
+    sed -i.bak \
+        -e "s|<!-- AUTO:TEST_COUNT -->[^<]*<!-- /AUTO:TEST_COUNT -->|<!-- AUTO:TEST_COUNT -->${test_count}<!-- /AUTO:TEST_COUNT -->|g" \
+        -e "s|<!-- AUTO:MIGRATION_RANGE -->[^<]*<!-- /AUTO:MIGRATION_RANGE -->|<!-- AUTO:MIGRATION_RANGE -->${mig_range}<!-- /AUTO:MIGRATION_RANGE -->|g" \
+        -e "s|<!-- AUTO:MIGRATION_COUNT -->[^<]*<!-- /AUTO:MIGRATION_COUNT -->|<!-- AUTO:MIGRATION_COUNT -->${mig_count}<!-- /AUTO:MIGRATION_COUNT -->|g" \
+        -e "s|<!-- AUTO:CONTROLLERS -->[^<]*<!-- /AUTO:CONTROLLERS -->|<!-- AUTO:CONTROLLERS -->${controllers}<!-- /AUTO:CONTROLLERS -->|g" \
+        "$CLAUDE"
+    rm -f "${CLAUDE}.bak"
+
+    echo "  CLAUDE.md: test=$test_count, migration=$mig_range ($mig_count), controllers=$controllers"
+}
+
 # Çalıştır
 echo "→ ARCHITECTURE_MAP.md yenileniyor..."
 replace_block "APPMODULES" appmodules_block
@@ -127,5 +166,8 @@ replace_block "ADMIN_VIEWS" admin_views_block
 replace_block "CONTROLLER_ROUTES" controller_routes_block
 update_refresh_date
 
+echo "→ CLAUDE.md inline marker'lari yenileniyor..."
+update_claude_md
+
 echo "✓ Bitti. Diff:"
-git diff --stat "$MAP" 2>/dev/null || echo "(diff yok / git dışı)"
+git diff --stat "$MAP" CLAUDE.md 2>/dev/null || echo "(diff yok / git dışı)"

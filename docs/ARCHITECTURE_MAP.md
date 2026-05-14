@@ -6,7 +6,7 @@
 > Tahmin etme. **Önce buraya bak.**
 
 Son elle güncelleme: **2026-05-12**
-Son otomatik refresh: <!-- AUTO:LAST_REFRESH --> 2026-05-12 <!-- /AUTO:LAST_REFRESH -->
+Son otomatik refresh: <!-- AUTO:LAST_REFRESH --> 2026-05-14 <!-- /AUTO:LAST_REFRESH -->
 
 > **Otomatik tazelenir.** `bash scripts/refresh-arch-map.sh` çalıştırılınca aşağıdaki marker'lı bölümler regenerate edilir:
 > AppModules live state (§ 7), Admin views listesi (§ 12), Controller routes (§ 13).
@@ -318,18 +318,18 @@ _Otomatik üretildi. AdminController partial'larından çıkarılır._
 129:        public async Task<IActionResult> DeletePosition(int id, [FromServices] IOrgChartService orgChart)
 153:        public async Task<IActionResult> OrgChartReorder([FromBody] OrgChartReorderRequest req,
 179:        public async Task<IActionResult> ImportZirvePosition(string code, [FromServices] IOrgChartService orgChart)
-87:        [Route("Admin/CreateReport")]
-88:        public async Task<IActionResult> CreateReport(ReportCatalog report)
-104:        [Route("Admin/CreateReportV2")]
-105:        public async Task<IActionResult> CreateReportV2()
-112:        [Route("Admin/EditReportV2/{id}")]
-113:        public async Task<IActionResult> EditReportV2(int id)
-121:        [Route("Admin/CreateReport")]
-123:        public IActionResult CreateReportLegacyRedirect() =>
-126:        [Route("Admin/EditReport/{id:int}")]
-128:        public async Task<IActionResult> EditReportLegacyRedirect(int id)
-213:        [Route("Admin/EditReport/{id}")]
-214:        public async Task<IActionResult> EditReport(int id, ReportCatalog report)
+105:        [Route("Admin/CreateReport")]
+106:        public async Task<IActionResult> CreateReport(ReportCatalog report)
+122:        [Route("Admin/CreateReportV2")]
+123:        public async Task<IActionResult> CreateReportV2()
+130:        [Route("Admin/EditReportV2/{id}")]
+131:        public async Task<IActionResult> EditReportV2(int id)
+139:        [Route("Admin/CreateReport")]
+141:        public IActionResult CreateReportLegacyRedirect() =>
+144:        [Route("Admin/EditReport/{id:int}")]
+146:        public async Task<IActionResult> EditReportLegacyRedirect(int id)
+231:        [Route("Admin/EditReport/{id}")]
+232:        public async Task<IActionResult> EditReport(int id, ReportCatalog report)
 13:        [Route("Admin/EditRole/{id}")]
 14:        public async Task<IActionResult> EditRole(int id)
 32:        [Route("Admin/EditRole/{id}")]
