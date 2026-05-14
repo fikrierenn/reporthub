@@ -12,7 +12,14 @@ Bu dosya AKTIF işleri ve backlog'u takip eder. Tamamlanmış işler arşiv böl
 
 **vNext'in kalbi — Üçlü kombinasyon (~6-9 hafta):**
 
-- [ ] **SOP / Prosedür Yönetimi** (2-3 hafta) — Tamim altyapısı (Block-based content + dosya ek + notification) %80 reuse. BKM'nin 27 İK prosedürü + 44 form Word'den taşınır. Version control + onay akışı + okundu disiplini. **Bağımlılık:** Workflow Designer (#3 ile zincirleme). Plan yazılacak (Plan 34 adayı).
+- [ ] **[Plan 34 · SOP / Prosedür Yönetimi](plans/34-sop-prosedur-yonetimi.md)** ✅ **ONAYLANDI 2026-05-14 (varsayılan kabul)** — Tamim altyapısı (block content + Quill + notification) %80 reuse + AI Danışman MVP (single-SOP chat, Faz F). 38-60 saat (2.5-3 hafta). Bağımlılık yok — bağımsız başlayabilir.
+  - **Faz A** (4-6h, S-01..S-04) — Mosaik.Modules.SOP csproj + IMosaikModule iskelet + sidebar entry
+  - **Faz B** (4-6h, S-05..S-08) — 5 entity (`SopDocument`, `SopVersion`, `SopReadReceipt`, `SopApprovalSubmission`, `SopAiConversation`) + migration 01-05
+  - **Faz C** (12-16h, S-09..S-14) — Admin CRUD + Quill editor + 3-step onay flow (`ApprovalRequest` reuse) + departman ataması
+  - **Faz D** (8-12h, S-15..S-19) — User-facing "Prosedürlerim" + SOP detay + okundu işaretleme + deadline countdown
+  - **Faz E** (4-6h, S-20..S-22) — Bildirim push + Hangfire reminder job
+  - **Faz F** (10-14h, S-23..S-30) — **AI Danışman MVP** — `SopAiAdvisorService` + drawer + KVKK banner + rate limit + thumbs-up/down + retention job
+  - **Faz G** (4-8h, S-31, OPSİYONEL) — 27 BKM SOP migrate
 - [ ] **Comment / Mention sistemi** (1-2 hafta + modül başına 1 gün) — Cross-cutting. Polymorphic `Comments` tablo + `EntityType`/`EntityId` + `@user` mention + `INotificationService` callback. Tamim/Doküman/Sözleşme/OrgChart entegrasyonu. **Bağımlılık:** Plan 31 SMTP caller (Plan 32 bekliyor). Plan yazılacak (Plan 35 adayı).
 - [ ] **Workflow Designer + Onay Akışları** (3-4 hafta + 1 hafta entegrasyon) — `IWorkflow` Core abstraction üzerine designer UI + chain config + assignment + reminder. SOP onayı + sözleşme onayı + satın alma onayı + izin talebi onayı **hepsi aynı engine**. **En yüksek leverage iş** — kalan modüllerin bağımlılığı. Plan yazılacak (Plan 36 adayı).
 

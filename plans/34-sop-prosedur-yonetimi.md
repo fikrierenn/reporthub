@@ -35,11 +35,16 @@ Mosaik'te 3 olgun altyapı var: **Tamim** (block-based content + dosya ek + noti
 - AppModules tablosuna SOP kaydı (sidebar enable/disable Plan 12)
 
 **Domain entity'leri (5 yeni):**
-- `SopDocument` — Title, Description, Department(FK), Category, OwnerUserId, IsActive
+- `SopDocument` — Title, Description, **DepartmentIds** (CSV veya many-to-many, "Şirket Geneli" pseudo-departman desteği), Category, OwnerUserId, IsActive, **ReadDeadlineDays** (default 30, override edilebilir), **RequiresIKApproval** (default true; IT/operasyonel SOP'larda false), **AiAdvisorEnabled** (default true; gizli/hassas SOP'larda admin false yapabilir)
 - `SopVersion` — SopDocumentId(FK), VersionNumber, ContentJson (block-based, Tamim quill reuse), AttachmentFiles, EffectiveDate, SupersededDate, Status (Draft/Pending/Approved/Archived), **PlainTextContent** (AI context için cached, ContentJson'dan derive)
 - `SopReadReceipt` — SopVersionId(FK), UserId(FK), ReadAt, ConfirmedAt, ReminderSentCount
 - `SopApprovalSubmission` — SopVersionId(FK), ApprovalRequestId(FK to `Mosaik.Core.Workflow.ApprovalRequest`) — Workflow Designer (Plan 36) hazır olduğunda upgrade noktası
-- `SopAiConversation` — SopVersionId(FK), UserId(FK), Question, Answer, TokensUsed, CreatedAt — chat history persist (audit + öğrenme sinyali için)
+- `SopAiConversation` — SopVersionId(FK), UserId(FK), Question, Answer, TokensUsed, CreatedAt, **UserFeedback** (enum: None/ThumbsUp/ThumbsDown), **FeedbackNote** (opsiyonel kısa metin) — chat history persist (audit + öğrenme sinyali için, 1 yıl retention)
+
+**Roller (migration 03 seed):**
+- `sop-editor` — yeni SOP yazabilir, version ekler, departmana atar (admin'in alt-rolü)
+- `sop-reader` — tüm authenticated user'lar default (atanmış SOP'u okur, AI danışman kullanır, feedback verir)
+- `admin` — her şeyi yapar (mevcut), AI rate limit bypass
 
 **Admin CRUD:**
 - SopController.cs (admin endpoints): Create, Edit, NewVersion, Submit-for-approval, Approve, Archive
@@ -48,11 +53,17 @@ Mosaik'te 3 olgun altyapı var: **Tamim** (block-based content + dosya ek + noti
 - Departman ataması: manuel multi-select (Plan 18B HR sync sonrası otomatik öneri eklenir)
 
 **Onay akışı (basic 3-adımlı, Plan 36 öncesi):**
-- Sıralı 3 adım: Yazan → Departman Yöneticisi → İK Yetkilisi
+- Varsayılan sıralı 3 adım: Yazan → Departman Yöneticisi → İK Yetkilisi
+- **`SopDocument.RequiresIKApproval=false` ise** 2-adım: Yazan → Departman Yöneticisi (IT, operasyon, finans SOP'ları için kullanım)
 - `ApprovalRequest` entity'si kullan (Mosaik.Core'da hazır), `StepOrder` ile
 - Bildirim: her adım için sıradaki onaylayıcıya `INotificationService` (Plan 17 Faz H altyapısı)
 - Email: Plan 31 SMTP caller (Plan 32 hazır olduğunda — şimdilik in-app notification yeterli)
 - **Plan 36 Workflow Designer hazır olduğunda:** SOP `ApprovalRequest`'i okumaya devam eder, sadece designer UI ile akış değiştirilebilir hale gelir (refactor değil, **interface uyumlu upgrade**)
+
+**Departman ataması:**
+- Yayınlanırken **en az 1 departman seçimi zorunlu** (boş gönderilemez)
+- "**Şirket Geneli**" pseudo-departman seçeneği var (`Department.IsCompanyWide=true` virtual kayıt veya `DepartmentId=NULL` + flag). Bu seçilirse SOP tüm authenticated user'lara atanır.
+- Multi-select (bir SOP birden fazla departmana atanabilir). Plan 18B HR sync sonrası "departmandaki herkes" otomatik genişletilir.
 
 **Okundu disiplini:**
 - Yeni onaylanan SOP atandığı departman üyelerine zorunlu okuma görevi
@@ -71,14 +82,17 @@ Mosaik'te 3 olgun altyapı var: **Tamim** (block-based content + dosya ek + noti
 
 **AI Danışman (MVP — Single-SOP chat, Faz F):**
 - Kullanıcı SOP detay sayfasında **AI'ya danış** butonu → sağdan drawer açılır
-- Soru kutusu + AI cevap akışı + son 10 soru-cevap geçmişi (sadece o user'a ait)
+- **Erişim:** Tüm `sop-reader` rolündeki user'lar (default tüm authenticated). Admin `SopDocument.AiAdvisorEnabled=false` ile spesifik SOP'larda kapatabilir (gizli/hassas içerik için).
+- Soru kutusu + AI cevap akışı + son 10 soru-cevap geçmişi (sadece o user'a ait, KVKK)
 - Backend: `SopAiAdvisorService` (`Mosaik.Modules.SOP/Services/`) — `Mosaik.Services.Ai.DocumentChatService` pattern reuse:
   - System prompt: "Sen bir kurumsal prosedür danışmanısın. Sadece verilen PROSEDÜR metnine dayanarak soruları yanıtla. Prosedürdeki bilgilere bağlı kal — uydurma yapma, hukuki/operasyonel tavsiye verme, belirsizlik varsa söyle. Yanıt Türkçe, 1-3 paragraf."
   - Context: `SopVersion.PlainTextContent` (ContentJson'dan extract, max 30K char → ~7.5K token)
-  - Provider: `ILlmService` (FallbackLlmService — Ollama → Gemini → z.ai chain Mosaik.Core.AI'da kurulu)
-  - Rate limit: kullanıcı başına 20 soru/saat (audit'ten saydır, basit guard)
-- **Persist:** her soru-cevap `SopAiConversation` tablosuna (KVKK uyumu için audit log + ileride RAG fine-tune sinyali)
-- **KVKK uyarısı:** drawer üst kısımda "Sorduğunuz sorular AI hizmet sağlayıcısına gönderilir, kişisel veri yazmayın" uyarı banner'ı
+  - Provider: `ILlmService` (FallbackLlmService chain — Ollama → Gemini → z.ai, Mosaik.Core.AI'da kurulu, Plan 16.5 + Plan 25 ile aynı zincir). Lokal Ollama öncelik (KVKK + maliyet), fallback şart (Ollama down olabilir).
+  - **Rate limit:** kullanıcı başına 20 soru/saat (`SopAiConversation` count'tan saydır). **Admin bypass** (`SopRateLimitGuard.IsAdmin` check).
+- **Persist:** her soru-cevap `SopAiConversation` tablosuna (audit log + ileride RAG fine-tune sinyali)
+- **Retention:** 1 yıl (KVKK gereği). Hangfire RecurringJob günlük temizler (`CreatedAt < NOW() - 1 year`). Audit log ana kayıt 5 yıl kalır (ana `IAuditLog` tablosu).
+- **Feedback (MVP):** Her cevap altında thumbs-up / thumbs-down butonu → `SopAiConversation.UserFeedback`. Admin dashboard'da thumbs-down'ları görür, SOP içeriği iyileştirme sinyali (RLHF fine-tune ayrı iş, sadece sinyal toplanır).
+- **KVKK uyarısı:** drawer üst kısımda "Sorduğunuz sorular AI hizmet sağlayıcısına gönderilir, kişisel veri (TC, isim, telefon) yazmayın" uyarı banner'ı
 - **Hallucination koruması:** system prompt + "bilgi yoksa 'Bu prosedür bunu içermiyor' de" kuralı + cevap altında "AI önerisi — kesin karar için yöneticinize danışın" disclaimer
 
 ### Kapsam dışı
@@ -201,9 +215,13 @@ Mosaik'te 3 olgun altyapı var: **Tamim** (block-based content + dosya ek + noti
 - [ ] "Okudum + onayladım" işaretleme → `SopReadReceipt` + audit log
 - [ ] Notification: yeni SOP yayınlanınca departman üyelerine push (`INotificationService`)
 - [ ] **AI Danışman:** SOP detayda drawer açılıyor, soru sorulup cevap alınıyor, KVKK banner görünür, disclaimer cevap altında
-- [ ] **AI Rate limit:** 21. soru "saat içinde limit doldu" mesajı veriyor
+- [ ] **AI Rate limit:** 21. soru "saat içinde limit doldu" mesajı veriyor; admin için sınırsız
 - [ ] **AI Audit:** her soru-cevap `SopAiConversation` tablosuna yazılıyor + `sop_ai_question_asked` event
-- [ ] **AI Fallback:** provider down olduğunda graceful degradation (drawer'da hata mesajı, SOP okuma etkilenmez)
+- [ ] **AI Fallback:** Ollama down olunca Gemini/z.ai'ye geçiyor; hepsi down olunca drawer'da hata mesajı (SOP okuma etkilenmez)
+- [ ] **AI Feedback:** thumbs-up/down butonu çalışıyor → `SopAiConversation.UserFeedback` set, admin dashboard'dan thumbs-down listesi görünür
+- [ ] **AI Retention:** 1 yıllık Hangfire job kayıtlı (`circular-compile-daily` yanında `sop-ai-history-cleanup`), eski kayıtlar silinir
+- [ ] **AI Toggle:** `SopDocument.AiAdvisorEnabled=false` set edilince drawer butonu görünmüyor (gizli SOP)
+- [ ] **Roller:** `sop-editor` + `sop-reader` migration 03'te seed edildi, role-based access çalışıyor
 - [ ] **Test:** en az 13 unit test (`SopServiceTests`, `SopReadReceiptServiceTests`, `SopApprovalServiceTests`, `SopAiAdvisorServiceTests`)
 - [ ] **Test çalıştırıldı:** `dotnet test --filter "FullyQualifiedName~Sop"` → 0 başarısız ([test-discipline.md](../.claude/rules/test-discipline.md) zorunlu)
 - [ ] `vnext-entity-port` skill pattern'ine uygun ([SKILL.md](../.claude/skills/vnext-entity-port/SKILL.md))
@@ -273,20 +291,22 @@ git revert <plan-34-merge-commit>
 21. [ ] **S-21** Reminder background job (7 gün kala + 1 gün kala) — Hangfire RecurringJob
 22. [ ] **S-22** Email caller (Plan 31 SMTP — Plan 32 caller hazır olursa entegre, değilse skip)
 
-### Faz F — AI Danışman (8-12 saat) — S-23..S-28
-23. [ ] **S-23** `SopAiConversation` entity + `Database/05_CreateSopAiConversation.sql`
+### Faz F — AI Danışman (10-14 saat) — S-23..S-30
+23. [ ] **S-23** `SopAiConversation` entity (UserFeedback enum + FeedbackNote dahil) + `Database/05_CreateSopAiConversation.sql`
 24. [ ] **S-24** `SopVersion.PlainTextContent` derive logic (ContentJson → plain text, save sırasında cache)
-25. [ ] **S-25** `SopAiAdvisorService` (`ILlmService` + system prompt + 30K char context guard + audit)
-26. [ ] **S-26** `SopRateLimitGuard` (kullanıcı başına 20 soru/saat, `SopAiConversation` count'tan)
+25. [ ] **S-25** `SopAiAdvisorService` (`ILlmService` FallbackLlmService chain + system prompt + 30K char context guard + audit `sop_ai_question_asked`)
+26. [ ] **S-26** `SopRateLimitGuard` (kullanıcı başına 20 soru/saat, admin bypass, `SopAiConversation` count'tan)
 27. [ ] **S-27** `_SopAiAdvisorDrawer.cshtml` (Alpine drawer + KVKK uyarı banner + disclaimer + son 10 soru-cevap history)
-28. [ ] **S-28** Unit test: `SopAiAdvisorServiceTests` (rate limit, prompt build, context truncation) — **çalıştır + 0 başarısız** (test-discipline.md)
+28. [ ] **S-28** Feedback UI (thumbs-up/down butonu cevap altında) + endpoint `POST /Sop/Ai/Feedback/{conversationId}`
+29. [ ] **S-29** History retention Hangfire RecurringJob (günlük, `CreatedAt < NOW() - 1 year` sil)
+30. [ ] **S-30** Unit test: `SopAiAdvisorServiceTests` (rate limit, prompt build, context truncation, feedback save, retention job) — **çalıştır + 0 başarısız** (test-discipline.md)
 
-### Faz G — BKM SOP migrate (4-8 saat, OPSİYONEL) — S-29
-29. [ ] **S-29** 27 Word dokümanını ilk versiyon olarak import (manuel veya basit Pandoc script)
+### Faz G — BKM SOP migrate (4-8 saat, OPSİYONEL) — S-31
+31. [ ] **S-31** 27 Word dokümanını ilk versiyon olarak import (manuel veya basit Pandoc script)
 
-**Toplam:** ~36-58 saat (Faz G hariç 32-50 saat). **2.5-3 hafta** paralel iş. AI Danışman MVP yaklaşık +1 gün.
+**Toplam:** ~38-60 saat (Faz G hariç 34-52 saat). **2.5-3 hafta** paralel iş.
 
-> TODO.md'ye Faz A-F adımları S-01..S-28 olarak eklenecek.
+> TODO.md'ye Faz A-F adımları S-01..S-30 olarak eklenecek.
 
 ---
 
@@ -304,30 +324,41 @@ git revert <plan-34-merge-commit>
 
 ---
 
-## 10. Onay
+## 10. Kararlar (varsayilan kabul - 2026-05-14)
 
-> [Plan-first kuralı](../.claude/rules/plan-first.md): kullanıcı onay verene kadar implement edilmez.
+> Kullanici karari 2026-05-14: "sorulari yazmaya baslayinca konusuruz, ya da sen bir kabul ile yaz gerekiyorsa degistiririz." Tum 12 madde varsayilan degerlerle kabul edildi; implementation sirasinda veya oncesi kullanici degistirebilir.
 
-- [ ] Plan kullanıcıya gösterildi: 2026-05-14
-- [ ] Geri bildirim alındı (varsa düzeltildi)
-- [ ] Onay alındı: `<tarih, kullanıcı>`
+**SOP core (6 karar):**
 
-**Onay öncesi açık sorular (kullanıcı kararı bekliyor):**
+| # | Karar | Detay |
+|---|---|---|
+| 1 | **Read deadline 30 gun varsayilan** | `SopDocument.ReadDeadlineDays` kolonu, SOP bazinda override edilebilir. Plan kapsaminda: configurable. |
+| 2 | **Onay flow esnek 2-3 adim** | Varsayilan 3 adim (Yazan -> Departman Yon. -> IK). `SopDocument.RequiresIKApproval=false` ise 2 adim (IT/operasyonel SOP). Plan 36 Workflow Designer ile tamamen configurable. |
+| 3 | **Departman atamasi zorunlu** | En az 1 secim zorunlu (bos gonderilmez). "**Sirket Geneli**" pseudo-departman secenegi var (`Department.IsCompanyWide=true` virtual kayit). |
+| 4 | **Faz G opsiyonel, bu planda kalir** | 27 BKM SOP migration manuel import - format kaybi kabul, kullanici block content'i sonradan duzeltir. Pandoc otomasyon ayri is. |
+| 5 | **`sop-editor` + `sop-reader` rolleri eklenir** | Granular access. `sop-reader` = tum authenticated user (default), `sop-editor` = yazma yetkisi, `admin` = her sey + AI rate limit bypass. Migration 03'te seed. |
+| 6 | **Quill editor kopyalanir** | Tamim setup'i SOP moduline kopya (modul izolasyonu icin kabul edilen tekrar). Mosaik.Core.Editor base library ileride ayri is, bu plani yavaslatmaz. |
 
-**SOP core:**
+**AI Danisman (6 karar):**
 
-1. **Read deadline varsayılan değer** — 30 gün önerildi. BKM'de farklı politika var mı?
-2. **3-adımlı onay flow** — Yazan → Departman Yöneticisi → İK Yetkilisi. Doğru mu? Bazı SOP tipleri için (örn. IT prosedürleri) farklı zincir gerekli mi?
-3. **Departman ataması zorunluluğu** — Bir SOP yayınlanırken **en az 1 departman seçilmesi zorunlu** mu, yoksa "tüm şirket"e bırakılabilir mi?
-4. **Faz G (BKM SOP migration)** — Bu plan kapsamında yapılsın mı, ayrı plan mı? 27 SOP migrate eforu 4-8 saat ama Word→block dönüşümü format kaybı yaratabilir.
-5. **SOP reader/editor role'leri** — `sop-editor` (yeni SOP yazabilir) + `sop-reader` (sadece okur) ayrımı yapılsın mı, yoksa `admin` + `<user>` yeterli mi?
-6. **Quill editor tekrar** — Tamim'deki Quill setup'ı SOP modülüne **kopyalanacak** (modül izolasyonu için kabul edilen tekrar). Alternatif: Plan 16.5'a "Mosaik.Core.Editor" base library eklemek (ayrı iş). Kabul ediyor musunuz?
+| # | Karar | Detay |
+|---|---|---|
+| 7 | **FallbackLlmService chain (Ollama -> Gemini -> z.ai)** | Lokal Ollama oncelik (KVKK + maliyet), fallback sart (Ollama down olabilir). Plan 16.5 + Plan 25 ile ayni zincir, tutarlilik. |
+| 8 | **Rate limit 20 soru/saat/kullanici** | `SopAiConversation` count'tan saydir. **Admin bypass** (`SopRateLimitGuard.IsAdmin` check). 200-300 kisilik BKM icin yeterli. |
+| 9 | **History retention 1 yil** | `SopAiConversation` kayitlari 1 yil sonra Hangfire RecurringJob ile silinir. KVKK uyumlu, audit log ana kaydi (`AuditLogs`) 5 yil kalir. |
+| 10 | **Tum `sop-reader` rolu icin acik + per-SOP toggle** | Default tum authenticated user'lar erisebilir. Admin `SopDocument.AiAdvisorEnabled=false` ile spesifik SOP'larda kapatabilir (gizli icerik). |
+| 11 | **Cross-SOP advisor scope disi (Plan 34.1)** | RAG + vector store, Plan 27 Faz E ile zincirleme. 3-6 ay sonra ayri plan. Bu MVP single-SOP chat ile sinirli. |
+| 12 | **Feedback MVP'de var (thumbs-up/down)** | `SopAiConversation.UserFeedback` enum + opsiyonel `FeedbackNote`. Admin dashboard'da thumbs-down listesi gorur -> SOP icerigi iyilestirme sinyali. RLHF fine-tune ayri is, sadece sinyal toplanir. |
 
-**AI Danışman (Faz F):**
+**Degisiklik proseduru:**
+- Bu kararlar implementation sirasinda veya oncesi kullanici tarafindan revize edilebilir.
+- Revize gerekirse: plan dosyasini Edit ile guncelle + commit mesajinda `(plan: 34 revize)` not + Done criteria + Faz adimlari senkron.
+- Onemli degisiklik (kapsam genisleme/daralma) -> mini-ek `plans/34.x-<konu>.md`.
 
-7. **AI provider önceliği** — `FallbackLlmService` Ollama (lokal) → Gemini → z.ai chain mevcut. SOP için aynı chain mi, yoksa SOP'a özel "sadece lokal Ollama" (KVKK + maliyet) tercih edilir mi? Lokal Ollama tek başına yeterli mi yoksa fallback şart mı?
-8. **Rate limit** — 20 soru/saat/kullanıcı önerildi. Bu sayı tutar mı? Admin için sınırsız mı?
-9. **Chat history retention** — `SopAiConversation` ne kadar saklansın? Süresiz mi (audit + öğrenme), 90 gün mü, 1 yıl mı? KVKK gereği belirli bir süre sonra silmek gerekebilir.
-10. **AI Danışman kim için açık** — Tüm SOP okuyucular mı, yoksa belirli bir rol (`sop-ai-user`) mu? Bazı SOP'lar için AI kapatılabilir mi (`SopDocument.AiAdvisorEnabled` bool)?
-11. **Cross-SOP advisor** (scope dışı, Plan 34.1 adayı) — RAG + vector store ile birden fazla SOP'u birlikte tarayan danışman ne zaman gelmeli? Plan 27 Faz E ile zincirleme (3-6 ay sonra) mı, daha erken mi?
-12. **AI hatalı/eksik cevap bildirimi** — Kullanıcı "bu cevap yanlış" işaretleyebilsin mi (thumbs-down sinyali, `SopAiConversation` flag)? Admin admin görür ve SOP içeriği iyileştirir. Bu MVP'de olmalı mı yoksa Plan 34.1'e ertelensin mi?
+## 11. Onay
+
+- [x] Plan kullaniciya gosterildi: 2026-05-14
+- [x] Geri bildirim alindi: AI Danisman ekleme (commit 909c1b3) + varsayilan kabul disiplini (2026-05-14)
+- [x] **Varsayilan kabul ile onaylandi:** 2026-05-14, kullanici. Implementation Faz A ile baslayabilir.
+
+> [Plan-first kurali](../.claude/rules/plan-first.md): Karar degisirse plan dosyasi once guncellenir, sonra implementation devam eder.
