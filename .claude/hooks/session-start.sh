@@ -27,6 +27,19 @@ echo "### Aktif TODO basliklari (ilk 15)"
 grep -E '^### |^- \[ \]' TODO.md 2>/dev/null | head -15
 echo ""
 
+# Stale-claim detector: post-review hardening commit'i son 7 gunde varsa, TODO
+# Code review backlog'unun HIGH'lari muhtemelen kapanmistir. Action almadan once
+# canli koddan dogrulama zorunlu. Detay: .claude/rules/todo-verification.md.
+hardening_commits=$(git log --since='7 days ago' --grep='hardening\|fix(security)\|post-review' --oneline 2>/dev/null | wc -l)
+open_high_count=$(grep -cE '^- \[ \] \*\*HIGH-' TODO.md 2>/dev/null || echo 0)
+if [ "$hardening_commits" -gt 0 ] && [ "$open_high_count" -gt 0 ]; then
+    echo "### ⚠️ TODO Stale-Claim Uyarisi"
+    echo "Son 7 gunde $hardening_commits 'hardening' / 'fix(security)' commit'i var."
+    echo "TODO.md'de hala $open_high_count 'HIGH' open isareti — muhtemelen STALE."
+    echo "Action almadan once .claude/rules/todo-verification.md Adim 2 (paralel Read/Grep dogrulama) yap."
+    echo ""
+fi
+
 echo "### En son journal girdisi"
 last_journal=$(ls -t docs/journal/*.md 2>/dev/null | head -1)
 if [ -n "$last_journal" ]; then

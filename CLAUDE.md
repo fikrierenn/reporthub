@@ -116,6 +116,8 @@ Ayrıntılı kurallar `.claude/rules/` altında — burada sadece değişmez pre
 
 11. **Büyük değişiklik öncesi çek-liste.** Silme / rename / refactor / route kaldırma öncesi `docs/ARCHITECTURE_MAP.md` oku + referans tara + V1/V2 deprecated tablosu kontrol et. Tahmin etme — doğrula. Detay: [`.claude/rules/before-major-change.md`](.claude/rules/before-major-change.md).
 
+12. **TODO doğrulama disiplini.** `TODO.md` / journal / memory'deki "HIGH X açık" listesi kanıt değil **hipotez**. Action almadan önce her madde için file:line ile `Read`+`Grep` doğrulama zorunlu (paralel, tek mesajda). "Post-review hardening" commit'i son 7 günde varsa backlog muhtemelen stale. Detay: [`.claude/rules/todo-verification.md`](.claude/rules/todo-verification.md).
+
 ---
 
 ## 3. Mimari Durumu
