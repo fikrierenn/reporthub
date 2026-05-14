@@ -112,13 +112,29 @@ namespace Mosaik.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
+            // Plan 33 BUGFIX-3 (2026-05-15): wwwroot/uploads/contracts → ContentRoot/App_Data/contracts.
+            // wwwroot path UseStaticFiles ile auth'suz erişim açıyordu (firma sınırı bypass).
+            // App_Data altında private storage, dosya erişimi sadece Download endpoint'ten
+            // (auth + firma check + path traversal guard). ContractsController.UploadFile ile
+            // aynı path konvansiyonu — tutarlı.
             var ext      = Path.GetExtension(file.FileName).ToLowerInvariant();
             var safeName = $"{Guid.NewGuid():N}{ext}";
-            var rel      = Path.Combine("uploads", "contracts", firmaId.ToString(), safeName);
-            var abs      = Path.Combine(_env.WebRootPath, rel);
+            var uploadDir = Path.Combine(_env.ContentRootPath, "App_Data", "contracts",
+                firmaId.ToString());
+            Directory.CreateDirectory(uploadDir);
 
-            Directory.CreateDirectory(Path.GetDirectoryName(abs)!);
-            using (var fs = System.IO.File.Create(abs))
+            var diskPath = Path.Combine(uploadDir, safeName);
+            // Defense-in-depth: path traversal guard
+            var resolvedPath = Path.GetFullPath(diskPath);
+            var rootPrefix = Path.GetFullPath(uploadDir);
+            if (!resolvedPath.StartsWith(rootPrefix, StringComparison.OrdinalIgnoreCase))
+            {
+                _logger.LogWarning("Document upload path traversal attempt blocked: {Resolved}", resolvedPath);
+                TempData["Error"] = "Dosya adı geçersiz.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            using (var fs = System.IO.File.Create(diskPath))
                 await file.CopyToAsync(fs);
 
             var cf = new ContractFile
@@ -127,7 +143,8 @@ namespace Mosaik.Controllers
                 ContractId  = contractId,
                 ObligationId= obligationId,
                 FileName    = file.FileName,
-                FilePath    = rel.Replace('\\', '/'),
+                // ContractFile.FilePath ContentRoot'a göre relative — ContractsController ile aynı.
+                FilePath    = Path.GetRelativePath(_env.ContentRootPath, diskPath).Replace('\\', '/'),
                 FileSize    = file.Length,
                 MimeType    = file.ContentType,
                 Version     = 1
@@ -185,7 +202,8 @@ namespace Mosaik.Controllers
                 _db.ContractAiExtractions.RemoveRange(extractions);
             }
 
-            var abs = Path.Combine(_env.WebRootPath, file.FilePath.Replace('/', Path.DirectorySeparatorChar));
+            // Plan 33 BUGFIX-3 (2026-05-15): WebRoot → ContentRoot (App_Data altı).
+            var abs = Path.Combine(_env.ContentRootPath, file.FilePath.Replace('/', Path.DirectorySeparatorChar));
             if (System.IO.File.Exists(abs))
             {
                 try { System.IO.File.Delete(abs); }
@@ -196,6 +214,41 @@ namespace Mosaik.Controllers
             await _db.SaveChangesAsync();
             TempData["Success"] = "Dosya silindi.";
             return RedirectToAction(nameof(Index));
+        }
+
+        // Plan 33 BUGFIX-3 (2026-05-15): App_Data altındaki private storage için
+        // yetkili download endpoint. ContractsController.Download pattern reuse —
+        // auth + firma check + path traversal guard. wwwroot statik servisi
+        // dosyaları açığa çıkarmaz.
+        public async Task<IActionResult> Download(int id)
+        {
+            var firmas = FirmaIds;
+            if (firmas.Count == 0) return Forbid();
+
+            var contractFile = await _db.ContractFiles
+                .AsNoTracking()
+                .FirstOrDefaultAsync(f => f.Id == id && firmas.Contains(f.FirmaId));
+
+            if (contractFile is null) return NotFound();
+
+            var fullPath = Path.GetFullPath(Path.Combine(_env.ContentRootPath,
+                contractFile.FilePath.Replace('/', Path.DirectorySeparatorChar)));
+            var allowedRoot = Path.GetFullPath(Path.Combine(_env.ContentRootPath, "App_Data", "contracts"));
+
+            // Defense-in-depth: path App_Data/contracts altında olmak zorunda.
+            if (!fullPath.StartsWith(allowedRoot, StringComparison.OrdinalIgnoreCase))
+            {
+                _logger.LogError("Document FilePath outside allowed root: {FilePath}", contractFile.FilePath);
+                return NotFound();
+            }
+
+            if (!System.IO.File.Exists(fullPath))
+            {
+                _logger.LogWarning("Document {Id} disk path missing: {Path}", id, fullPath);
+                return NotFound();
+            }
+
+            return PhysicalFile(fullPath, contractFile.MimeType, contractFile.FileName);
         }
 
         // Plan 27 Faz B-02 — fire-and-forget background AI insight.

@@ -1,6 +1,6 @@
 # Plan 25 — Sözleşme Modülü (DikkatIQ Port)
 
-**Durum:** Taslak  
+**Durum:** ⚠️ **KISMI IMPLEMENT** — Faz A (Entity + Migration 42/43) ✅, Faz B (Servis Katmanı: ICurrentUserService + AiPipelineQueue + AiExtractionWorker startup recovery) ✅, Faz C (UI: ContractsController + ObligationsController + AiController review/approve/createContract + Status polling) ✅, ancak **AI Wizard Faz 1 yarım** (WizardExtractionService kayıtlı ama hiçbir controller endpoint çağırmıyor) ve 2 KRİTİK bug açık: `AiController.cs:446` data integrity (CreatedObligationId=-1 placeholder) + `Review.cshtml:126` iframe security. 2026-05-14 Plan 33 R-06 ile durum güncellendi; eksikler Plan 33 Faz 1 (bugfix) + Faz 2 C4 (Wizard tamamla) + C5 (Controller split) + C6 (Obligations.Edit) altında ele alınıyor. Plan 25.1 hardening ayrı plan.
 **Tier:** 3 (yeni schema + 3+ klasör + kullanıcı-görünür)  
 **Referans:** ADR-012 (PK=int, Scheduler=IHostedService, FirmaFilter=session claim)  
 **Kaynak:** DikkatIQ.Core.Entities (Contract, Obligation, RecurrenceRule, Document, AiExtraction)

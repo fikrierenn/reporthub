@@ -6,13 +6,59 @@ Bu dosya AKTIF işleri ve backlog'u takip eder. Tamamlanmış işler arşiv böl
 
 ## AKTIF (öncelik sırası)
 
-### EN ÜST ÖNCELİK (2026-05-14 vNext yön kararı)
+### EN ÜST ÖNCELİK (2026-05-15 modül tamamlama + vNext yön kararı)
 
 **Yön belgesi:** [`docs/VISION.md`](docs/VISION.md) — Mosaik özellik vizyonu + 6-9 haftalık vNext kalbi.
+**Aktif meta-plan:** [`plans/33-modul-tamamlama-roadmap.md`](plans/33-modul-tamamlama-roadmap.md) — SOP öncesi zemini temizleme (4 faz, ~85-120 saat).
 
-**vNext'in kalbi — Üçlü kombinasyon (~6-9 hafta):**
+---
 
-- [ ] **[Plan 34 · SOP / Prosedür Yönetimi](plans/34-sop-prosedur-yonetimi.md)** ✅ **ONAYLANDI 2026-05-14 (varsayılan kabul)** — Tamim altyapısı (block content + Quill + notification) %80 reuse + AI Danışman MVP (single-SOP chat, Faz F). 38-60 saat (2.5-3 hafta). Bağımlılık yok — bağımsız başlayabilir.
+#### Plan 33 Faz 1 — Plan stale + Kritik bugfix (~7-10 saat) ✅ **BAŞLADI 2026-05-15**
+
+- [x] **R-01..R-07** — 7 plan stale temizlik (4 archive: 16.6, 17, 23, 26 + 4 durum güncel: 21, 25, 25.1, 27) ✅ 2026-05-15
+- [x] **B-01** AiController.cs:446 CreatedObligationId data integrity bug ✅ 2026-05-15 — pair list pattern, ikinci SaveChanges ile cross-link
+- [x] **B-02** Review.cshtml iframe src güvenlik fix ✅ 2026-05-15 — Url.Action Download endpoint
+- [x] **B-03** DocumentsController App_Data + Download endpoint ✅ 2026-05-15 — wwwroot bypass kapatıldı, path traversal guard eklendi
+- [x] **B-04** WizardExtractionService Tesseract OCR fallback ✅ 2026-05-15 — taranmış PDF artık crash etmez, OCR pipeline çalışır
+
+Build: 0 hata 0 uyarı. Test: **337/337 geçti** (test-discipline.md kanıtlandı).
+
+---
+
+#### Plan 33 Faz 2 — Modül tamamlama (~37-50 saat) ⏳ SIRADA
+
+- [ ] **C-01** DailyReminderJob (3-4h) — Calendar + Compliance + Notification + Plan 31 caller
+- [ ] **C-02** Plan 22 Holidays (10-14h) — Holiday/HolidayOccurrence/ImportantDate entity + vw_CalendarUnified view + EventSource enum + filter chip (ADR-016 önce)
+- [ ] **C-03** Notification cross-modül caller'lar (4-6h) — Obligation due-date + Tamim Faz H hatırlatma cron 09:00 + Plan 32
+- [ ] **C-04** AI Wizard Faz 1 tamamla (8-10h) — WizardStart/Status endpoint + UI + BUGFIX-4 üzerine
+- [ ] **C-05** ContractsController partial split (1h) — Files.cs + Ai.cs
+- [ ] **C-06** ObligationsController.Edit (2h)
+- [ ] **C-07** Plan 27 Faz A eksikleri (4-6h) — ContractExtractionValidator + Stage 3 + 10 field prompt
+- [ ] **C-08** Plan 25.1 Faz 5+6 (5-7h) — Queue migration + admin inline style + smoke + hook enable
+
+---
+
+#### Plan 33 Faz 3 — Mimari kararlar (~4-6 saat) ⏳
+
+- [ ] **ADR-016** Calendar Unified Event Source (Plan 22'den önce)
+- [ ] **ADR-017** Compliance Scope Sınırı
+- [ ] **VISION update** — AI Generation karar notu (scope tut, modüllerde çıkar)
+
+---
+
+#### Plan 33 Faz 4 — Büyük borç (opsiyonel, ~38-52 saat)
+
+- [ ] **D-01** Documents Plan 27 Faz C (20-28h) — versioning + FTS + metadata + permission + audit
+- [ ] **D-02** AI altyapı iyileştirme (8-10h) — audit log + token bütçe + rate limiting + FallbackLlmService cleanup **(SOP öncesi önerilir)**
+- [ ] **D-03** Vision çoklaştırma (4-6h) — Gemini + OpenAI vision fallback
+- [ ] **D-04** Test coverage (6-8h) — Documents/Wizard/multi-firma integration
+- [ ] **D-05** Plan 16.7 Tag Sistemi Faz A (8-10h) — bağımsız (AI önerici 16.5 Faz C bekliyor)
+
+---
+
+**vNext'in kalbi — Plan 33 sonrası (~6-9 hafta):**
+
+- [ ] **[Plan 34 · SOP / Prosedür Yönetimi](plans/34-sop-prosedur-yonetimi.md)** ✅ **ONAYLANDI 2026-05-14 (varsayılan kabul)** — Plan 33 Faz 1+2 (+ önerilen D2) bittikten sonra Faz A başlar. Tamim altyapısı %80 reuse + AI Danışman MVP. 38-60 saat (2.5-3 hafta). Bağımlılık yok — bağımsız başlayabilir.
   - **Faz A** (4-6h, S-01..S-04) — Mosaik.Modules.SOP csproj + IMosaikModule iskelet + sidebar entry
   - **Faz B** (4-6h, S-05..S-08) — 5 entity (`SopDocument`, `SopVersion`, `SopReadReceipt`, `SopApprovalSubmission`, `SopAiConversation`) + migration 01-05
   - **Faz C** (12-16h, S-09..S-14) — Admin CRUD + Quill editor + 3-step onay flow (`ApprovalRequest` reuse) + departman ataması

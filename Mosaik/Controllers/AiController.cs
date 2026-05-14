@@ -404,6 +404,10 @@ namespace Mosaik.Controllers
                 .ToListAsync();
 
             var fallback = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(30));
+            // Suggestion ↔ Obligation pair list — SaveChanges sonra cross-link kurulur.
+            // Plan 33 BUGFIX-1 (2026-05-14): önceki kod `s.CreatedObligationId = -1` placeholder
+            // bırakıyordu, gerçek Id asla yazılmıyordu — data integrity bug.
+            var pairs = new List<(AiSuggestion Suggestion, ContractObligation Obligation)>(approvedObligations.Count);
             foreach (var s in approvedObligations)
             {
                 // Suggestion DataJson'dan amount/dueDate/recurrence parse et
@@ -441,9 +445,15 @@ namespace Mosaik.Controllers
                     UpdatedBy = _currentUser.Username
                 };
                 _db.ContractObligations.Add(ob);
+                pairs.Add((s, ob));
+            }
+            // İlk SaveChanges: Obligation kayıtları yazılır, EF identity ile Id atanır.
+            await _db.SaveChangesAsync();
 
-                // Suggestion ↔ Obligation cross-link
-                s.CreatedObligationId = -1; // placeholder; SaveChanges sonrası gerçek Id ile güncelle
+            // İkinci SaveChanges: gerçek Obligation.Id'leri Suggestion'a cross-link et.
+            foreach (var (suggestion, obligation) in pairs)
+            {
+                suggestion.CreatedObligationId = obligation.Id;
             }
             await _db.SaveChangesAsync();
 

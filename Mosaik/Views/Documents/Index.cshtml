@@ -178,7 +178,8 @@ else
                     }
                     <tr>
                         <td>
-                            <a href="/@f.FilePath" target="_blank" class="row-link" title="@(f.AiSummary ?? "")">
+                            @* Plan 33 BUGFIX-3 (2026-05-15): doğrudan FilePath URL'i yerine yetkili Download endpoint. *@
+                            <a href="@Url.Action("Download", "Documents", new { id = f.Id })" target="_blank" class="row-link" title="@(f.AiSummary ?? "")">
                                 <i class="@icon" aria-hidden="true"></i>
                                 <span>@f.FileName</span>
                             </a>

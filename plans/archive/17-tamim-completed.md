@@ -1,9 +1,9 @@
 # Plan 17 — Tamim & Sirküler Modülü (v2 minimal — sadeleştirilmiş)
 
-**Durum:** Faz A iskelet ✅, v1 yanlış pattern revert ✅, Faz B v2 minimal implement ✅ 2026-05-08
+**Durum:** ✅ **TAMAMLANDI (Faz A-G + Faz I dashboard + Faz F AI özet)** — 2026-05-14 keşif tablosu (5 paralel agent) ile doğrulandı. **Faz H Notification kısmen** (NotifyAllActiveUsersAsync cron'da çağrılıyor, ama hatırlatma cron 09:00 + email caller eksik) → Plan 17.1 mini plan adayı (Plan 33 Faz 2 C3 ile birleştirilebilir). Plan 33 stale temizliğinde işaretlendi (2026-05-14), bir sonraki commit'te `plans/archive/`'a taşınır.
 **Tier:** 3 (yeni modül + DB + UI + cron job + iş akışı)
 **Tarih:** 2026-05-08 (revize 2: minimal pattern)
-**Tahmini süre kalan:** ~5 saat (Faz C+D)
+**Tahmini süre kalan:** Faz H hatırlatma cron 09:00 + email caller — Plan 33 C3'te
 **Önkoşul:** Plan 16.5 ✅ + Plan 16.6 ✅, Hangfire ✅ kuruldu
 
 **KAVRAM NETLEŞMESİ (2026-05-08, kullanıcı: "iç iletişim ile tamimi karıştırıyorsun"):**

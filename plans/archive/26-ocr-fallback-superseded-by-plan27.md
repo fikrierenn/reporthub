@@ -2,7 +2,7 @@
 
 **Tarih:** 2026-05-10
 **Yazan:** Fikri / Claude
-**Durum:** `Taslak`
+**Durum:** ⛔ **SUPERSEDED 2026-05-14** — [Plan 27 Faz A](27-documents-ai-roadmap.md) "Akıllı Sözleşme Extraction" bu planı absorbe etti. `TesseractOcrExtractor` + `PageImportanceScorer` + per-page confidence gate + vision rescue tüm `AiExtractionWorker` pipeline'ında implement edildi (2026-05-10..2026-05-12 commits). Kalan eksik **`WizardExtractionService` Tesseract chain entegrasyonu** — Plan 33 BUGFIX-4 altında ele alınıyor. Plan 33 R-07 ile `plans/archive/`'a taşınır.
 
 ---
 

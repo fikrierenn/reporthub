@@ -2,7 +2,7 @@
 
 **Tarih:** 2026-05-09
 **Yazan:** Claude
-**Durum:** `Taslak`
+**Durum:** ⚠️ **KISMI IMPLEMENT** — `LookupService` canlı (`Mosaik/Services/LookupService.cs` + `Mosaik.Core.Lookup.ILookupService` adapter). 2026-05-14 Plan 33 keşfinde tespit edildi. Plan dosyasının "Taslak" durumu stale. Implement detayı + done criteria audit ayrı oturuma bırakıldı (Plan 33 R-04). Migration ve kullanılan enum'ların listesi doğrulanmadıkça archive'a alınmaz.
 
 ---
 

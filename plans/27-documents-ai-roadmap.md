@@ -2,7 +2,16 @@
 
 **Tarih:** 2026-05-10
 **Yazan:** Fikri / Claude
-**Durum:** `Taslak`
+**Durum:** ⚠️ **KISMI IMPLEMENT** — 2026-05-14 Plan 33 keşfinde doğrulandı:
+- **Faz A (Akıllı Extraction) %80** — PageImportanceScorer ✅, Tesseract preprocessing ✅, DPI 300 + tur+eng ✅, per-page confidence gate ✅, smart page seçim + vision rescue ✅. **Eksik:** A-06 field-specific 10 prompt registry, A-07 ContractExtractionValidator, A-08 Stage 3 doğrulama → Plan 33 Faz 2 C7
+- **Faz B (Quick AI Wins) %70** — DocumentInsightService (B-01+B-03 merge) ✅, upload entegrasyon ✅, AskDocument + DocumentChatService MVP ✅. **Eksik:** B-01/B-03 ayrı servis, map-reduce uzun dokümanlar
+- **Faz C (DMS Foundation) %0** — versioning, App_Data taşıma, FTS, metadata, permission, audit → Plan 33 Faz 4 D1 (büyük borç, 20-28sa)
+- **Faz D (Compliance) %0** — retention, legal hold, e-imza, KEP — uzun vadeli backlog
+- **Faz E (RAG) %0** — vector store, cross-doc chat — uzun vadeli
+
+**Kritik güvenlik açığı:** DocumentsController.Upload wwwroot'a yazıyor, firma sınırı aşılabilir → Plan 33 BUGFIX-3 ile fix edilecek.
+
+Plan 19 (Documents v2) bu plana absorbe edildi (Faz C). Plan 26 (OCR fallback) bu plana absorbe edildi (Faz A).
 **Tier:** 3 (meta plan — kapsam 5+ klasör, schema değişiklikleri, harici dep, kullanıcı-görünür)
 
 ---

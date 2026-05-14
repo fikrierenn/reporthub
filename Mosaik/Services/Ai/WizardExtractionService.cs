@@ -18,6 +18,7 @@ namespace Mosaik.Services.Ai
 
         private readonly IMemoryCache _cache;
         private readonly IPdfTextExtractor _pdfExtractor;
+        private readonly TesseractOcrExtractor _tesseract;
         private readonly IAiSummaryProvider _ai;
         private readonly IAiVisionProvider _aiVision;
         private readonly ILogger<WizardExtractionService> _logger;
@@ -26,6 +27,7 @@ namespace Mosaik.Services.Ai
         public WizardExtractionService(
             IMemoryCache cache,
             IPdfTextExtractor pdfExtractor,
+            TesseractOcrExtractor tesseract,
             IAiSummaryProvider ai,
             IAiVisionProvider aiVision,
             ILogger<WizardExtractionService> logger,
@@ -33,6 +35,7 @@ namespace Mosaik.Services.Ai
         {
             _cache = cache;
             _pdfExtractor = pdfExtractor;
+            _tesseract = tesseract;
             _ai = ai;
             _aiVision = aiVision;
             _logger = logger;
@@ -108,10 +111,45 @@ namespace Mosaik.Services.Ai
                 rawText = await _pdfExtractor.ExtractAsync(filePath, ct);
                 if (rawText.Length < 100)
                 {
-                    // Taranmış PDF olabilir — şu an vision desteklemiyor (PDF→image dönüşümü yok)
-                    throw new InvalidOperationException(
-                        "Bu PDF'ten metin çıkarılamadı (taranmış görüntü olabilir). " +
-                        "Lütfen sözleşmeyi JPEG/PNG olarak tarayıp tekrar yükleyin.");
+                    // Plan 33 BUGFIX-4 (2026-05-15): Taranmış PDF — Tesseract OCR fallback.
+                    // Önceki kod exception fırlatıyordu ("JPEG/PNG olarak tarayın"). Mevcut
+                    // TesseractOcrExtractor + Türkçe/İngilizce dil + per-page confidence
+                    // pattern AiExtractionWorker'da zaten kullanılıyor; Wizard da aynı chain'i
+                    // kullansın. PDF→image vision fallback şimdilik scope dışı (AiExtractionWorker
+                    // Ocr.cs pattern uzun vadede port edilir, Plan 33 Faz 4 D2 altında).
+                    _logger.LogInformation(
+                        "WizardExtraction PDF text yetersiz ({Len} char), Tesseract OCR fallback deneniyor: {Path}",
+                        rawText.Length, filePath);
+
+                    try
+                    {
+                        var ocrText = _tesseract.ExtractFromPdf(filePath);
+                        if (!string.IsNullOrWhiteSpace(ocrText) && ocrText.Length >= 100)
+                        {
+                            rawText = ocrText;
+                            _logger.LogInformation(
+                                "WizardExtraction OCR başarılı: {Len} char extract edildi", rawText.Length);
+                        }
+                        else
+                        {
+                            _logger.LogWarning(
+                                "WizardExtraction OCR sonucu yetersiz ({Len} char)", ocrText?.Length ?? 0);
+                            throw new InvalidOperationException(
+                                "Bu PDF'ten metin çıkarılamadı (taranmış görüntü ve OCR yetersiz). " +
+                                "Lütfen sözleşmeyi daha yüksek çözünürlükte tarayıp tekrar yükleyin.");
+                        }
+                    }
+                    catch (InvalidOperationException)
+                    {
+                        throw; // user-facing mesajı koru
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "WizardExtraction Tesseract OCR hata: {Path}", filePath);
+                        throw new InvalidOperationException(
+                            "PDF metin çıkarımı sırasında beklenmedik bir hata oluştu. " +
+                            "Sistem yöneticinize bildirin.");
+                    }
                 }
             }
             // 2) Image → vision pipeline

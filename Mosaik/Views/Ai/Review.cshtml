@@ -123,7 +123,10 @@
                     <i class="fas fa-file-pdf icon-err"></i>
                     Belge Önizleme
                 </div>
-                <iframe src="/@Model.ContractFile.FilePath" class="pdf-iframe" title="PDF önizleme">
+                @* Plan 33 BUGFIX-2 (2026-05-14): wwwroot olmayan App_Data path'i src'e direkt
+                   verilemez (404 + path traversal riski). Auth + firma + path guard içeren
+                   Download endpoint kullanılır. *@
+                <iframe src="@Url.Action("Download", "Contracts", new { id = Model.ContractFile.Id })" class="pdf-iframe" title="PDF önizleme">
                     PDF görüntülenemiyor.
                 </iframe>
             </div>

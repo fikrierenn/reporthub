@@ -2,7 +2,7 @@
 
 **Tarih:** 2026-05-10
 **Yazan:** Claude
-**Durum:** `Taslak`
+**Durum:** ✅ **TAMAMLANDI** — Sidebar collapsible groups (`_AppLayout.cshtml`), Alpine `sidebarGroup` factory (`app-shell.js`), 5 grup (workspace/contracts/structure/system) DB-driven (`AppModules.GroupKey`), modern admin layout canlı. 2026-05-14 Plan 33 stale temizliğinde işaretlendi, bir sonraki commit'te `plans/archive/`'a taşınır.
 
 ---
 
