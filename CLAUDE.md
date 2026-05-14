@@ -128,7 +128,7 @@ Detaylı mimari notlar ve bilinen tutarsızlıklar: [`.claude/rules/architecture
 
 Aktif mimari tartışmalar ve yol haritası: [`TODO.md`](TODO.md) — "BIRLESIK ONCELIK SIRASI" bölümü.
 
-Karar kayıtları: [`docs/ADR/`](docs/ADR/) (yazılması bekleniyor — ADR-001 data-access, ADR-002 dashboard-architecture, ADR-003 role-model, ADR-004 sp-modularization).
+Karar kayıtları: [`docs/ADR/`](docs/ADR/) — ADR-001 (data-access), ADR-002 (modular-monolith), ADR-003 (role-model), ADR-004 (skill-design-principles), ADR-005 (dashboard-architecture), ADR-006 (datetime-utc), ADR-007 (named-result-contract), ADR-008 (dashboard-builder-v2), ADR-009 (report-type-consolidation), ADR-010 (plan-first-tier), ADR-011 (sidebar-shell-layout), ADR-012 (pk-scheduler-firma-filter).
 
 ---
 
