@@ -9,6 +9,7 @@ Bu dosya her Claude oturumunun başında okunur. **Değişmez kurallar + kimlik.
 - `docs/ADR/*.md` — mimari karar kayıtları
 - `docs/journal/YYYY-MM-DD.md` — oturum günlükleri
 - `docs/PATTERNS.md` — gerçek-dünya pattern'leri (P-1..P-10)
+- `docs/VISION.md` — ürün özellik vizyonu + vNext değer sıralı modül listesi (yön belgesi)
 - `TODO.md` — aktif sprint + backlog
 - `plans/NN-<slug>.md` — Tier 3 iş planları (zorunlu, ADR-010)
 - `docs/CONTEXT_MANAGEMENT.md` — bağlam yönetimi anayasası (ilkeler)

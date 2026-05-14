@@ -6,11 +6,26 @@ Bu dosya AKTIF işleri ve backlog'u takip eder. Tamamlanmış işler arşiv böl
 
 ## AKTIF (öncelik sırası)
 
-### EN ÜST ÖNCELİK (2026-05-08 sonrası)
+### EN ÜST ÖNCELİK (2026-05-14 vNext yön kararı)
 
-Sıra: Plan 14 + Plan 16.5 + IK quick wins birleşik.
+**Yön belgesi:** [`docs/VISION.md`](docs/VISION.md) — Mosaik özellik vizyonu + 6-9 haftalık vNext kalbi.
 
-- [ ] **Plan 18B · HR Sync** (büyük, ~16-24h) — Hangfire + Mosaik.User ek kolonlar + UserSyncService + Email/TC kararları + UserDataFilter otomatik atama. 18A bittikten sonra.
+**vNext'in kalbi — Üçlü kombinasyon (~6-9 hafta):**
+
+- [ ] **SOP / Prosedür Yönetimi** (2-3 hafta) — Tamim altyapısı (Block-based content + dosya ek + notification) %80 reuse. BKM'nin 27 İK prosedürü + 44 form Word'den taşınır. Version control + onay akışı + okundu disiplini. **Bağımlılık:** Workflow Designer (#3 ile zincirleme). Plan yazılacak (Plan 34 adayı).
+- [ ] **Comment / Mention sistemi** (1-2 hafta + modül başına 1 gün) — Cross-cutting. Polymorphic `Comments` tablo + `EntityType`/`EntityId` + `@user` mention + `INotificationService` callback. Tamim/Doküman/Sözleşme/OrgChart entegrasyonu. **Bağımlılık:** Plan 31 SMTP caller (Plan 32 bekliyor). Plan yazılacak (Plan 35 adayı).
+- [ ] **Workflow Designer + Onay Akışları** (3-4 hafta + 1 hafta entegrasyon) — `IWorkflow` Core abstraction üzerine designer UI + chain config + assignment + reminder. SOP onayı + sözleşme onayı + satın alma onayı + izin talebi onayı **hepsi aynı engine**. **En yüksek leverage iş** — kalan modüllerin bağımlılığı. Plan yazılacak (Plan 36 adayı).
+
+**Paralel ikincil iş:**
+
+- [ ] **Plan 18B · HR Sync** (büyük, ~16-24h) — Hangfire + Mosaik.User ek kolonlar + UserSyncService + Email/TC kararları + UserDataFilter otomatik atama. Haftada 1-2 gün, blok değil. (Kullanıcı 8 May "şimdilik durdur" demişti, vNext sıralaması sonrası yeniden değerlendir.)
+- [ ] **Plan 32 · Scheduled Reports + Email Distribution** — 6 açık soru cevap bekliyor. **Comment/Mention'dan ÖNCE bitirilmesi gerek** — Plan 31 SMTP caller'ın ilk somut kullanımı bu. Comment/Mention'ın email bildirim path'i Plan 32 ile aynı SMTP altyapısını kullanır.
+
+**Yapılmayacak (vNext kapsamı dışı, [VISION §6](docs/VISION.md#6)):**
+- KPI / OKR modülü — Reports zaten karşılar
+- Mesajlaşma — Slack/Teams varken marjinal
+- Duyuru ayrı modül — Tamim'e `Type` enum yeterli (2-3 gün)
+- Form Builder kendi üretim — open-source integrate (LimeSurvey / Formbricks)
 - [x] **Plan 16.5 Faz C+D** ✅ — ILlmService + FallbackLlmService + IAiExtractionService + IAiSuggestionService + PromptBase. 337 test. commit d2fd745 + 1b195d4.
 - [x] **Plan 17 (Tamim)** ✅ — Tüm fazlar tamamlandı. Faz H Bildirim: NotificationService + NotificationsController + sidebar badge + migration 41 + Circular wiring mevcut.
 - [x] **Security altyapısı (3 katman)** ✅ 2026-05-13 — `.claude/agents/security-reviewer.md` + `.claude/skills/mosaik-security/SKILL.md` + `.claude/commands/security-check.md`. CLAUDE.md §2 + security-principles.md güncel. Tetik: yeni POST/SQL/email/JS fetch yazılırken proaktif, `/security-check` ile denetim.
