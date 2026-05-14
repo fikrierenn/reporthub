@@ -66,6 +66,17 @@ Kullanıcıya göster, geri bildirim al, düzeltme yap. **Onay olmadan implement
 - Done criteria'yı check'le
 - Journal'da özet
 
+### 6. Stale plan disiplini
+
+**Plan ölüm tarihi (2026-05-14 kararı):** 14 gün dokunulmamış aktif plan ya **yeniden ısıt** ya **arşive taşı**.
+
+- `session-start.sh` hook her oturum başında `find plans -mtime +14` ile uyarı verir.
+- Karar 3 yoldan biri:
+  - Plan hâlâ geçerli + iş başlayacak → bu oturumda Faz 1 adımına başla (touch ile mtime yenilemek yetmez — iş yapılmadan plan dosyası "ölü" sayılır).
+  - Plan geçerli ama zamanlama uzak → `plans/archive/` (notla: "Faz 0 başlamadı, ileride yeniden açılacak").
+  - Plan artık geçersiz (proje yönü değişti) → `plans/archive/` (notla: "Reddedildi: <gerekçe>").
+- Soğukta tutulan plan = soğutulan iş. Aktif klasörü "yapılacak iş" listesi olarak temiz tut.
+
 ## İstisnalar
 
 ### Acil bug fix (production down)

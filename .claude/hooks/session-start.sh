@@ -102,6 +102,16 @@ active_plans=$(find plans -maxdepth 1 -name '[0-9]*.md' -type f 2>/dev/null | wc
 archived_plans=$(find plans/archive -name '*.md' -type f 2>/dev/null | wc -l)
 echo "- Plan aktif: $active_plans · arsivlenmis: $archived_plans"
 
+# Plan stale-check (14+ gun dokunulmamis aktif plan). "Plan olum tarihi"
+# kurali (analiz onerisi 2026-05-14): 14 gun dokunulmamis plan ya yeniden
+# isitilir ya arsive tasinir. Sogutulan plan = sogutulmus is.
+stale_plans=$(find plans -maxdepth 1 -name '[0-9]*.md' -type f -mtime +14 2>/dev/null)
+if [ -n "$stale_plans" ]; then
+    stale_count=$(echo "$stale_plans" | wc -l | tr -d ' ')
+    echo "- Plan 14+ gun stale: $stale_count dosya — yeniden isit veya arsive tasi"
+    printf '%s\n' "$stale_plans" | head -3 | sed 's/^/  /'
+fi
+
 # TODO MEDIUM open
 medium_count=$(grep -cE '^- \[ \] \*\*MEDIUM' TODO.md 2>/dev/null | head -1 || true)
 [ -z "$medium_count" ] && medium_count=0
