@@ -166,7 +166,7 @@
                     if (!this.grid) return;
                     var self = this;
                     this.components.forEach(function (c) {
-                        var w = c.w || (c.type === 'kpi' ? 3 : c.type === 'chart' ? 8 : 4);
+                        var w = c.span || (c.type === 'kpi' ? 3 : c.type === 'chart' ? 8 : 4);
                         var h = c.h || (c.type === 'kpi' ? 2 : 4);
                         var hasPos = typeof c.x === 'number' && typeof c.y === 'number';
                         var opts = hasPos
@@ -235,7 +235,7 @@
                     delete copy.x; delete copy.y;
                     this.components.push(copy);
                     if (this.grid) {
-                        var el = this.grid.addWidget({ w: c.w || 3, h: c.h || 2, autoPosition: true, content: '' });
+                        var el = this.grid.addWidget({ w: c.span || 3, h: c.h || 2, autoPosition: true, content: '' });
                         el.setAttribute('data-widget-id', copy.id);
                         el.classList.add('widget');
                         var cc = el.querySelector('.grid-stack-item-content') || el;
