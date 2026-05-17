@@ -125,6 +125,17 @@ document.querySelectorAll('[data-tbl]').forEach(function(tableEl) {
       tbody.appendChild(tr);
     });
 
+    // Empty state: 0 satir → bilgilendirici satir
+    if (showRows.length === 0) {
+      var emptyTr = document.createElement('tr');
+      var emptyTd = document.createElement('td');
+      emptyTd.colSpan = cfg.cols.length || 1;
+      emptyTd.className = 'px-4 py-8 text-sm text-gray-400 text-center';
+      emptyTd.textContent = data.length === 0 ? 'Bu filtre için kayıt bulunamadı.' : 'Arama sonucu bulunamadı.';
+      emptyTr.appendChild(emptyTd);
+      tbody.appendChild(emptyTr);
+    }
+
     // Total row (opts.totalRow)
     if (opts.totalRow && rows.length > 0) {
       var totalTr = document.createElement('tr');

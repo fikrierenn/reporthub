@@ -220,6 +220,55 @@ public class ReportParamValidatorTests
         Assert.Equal(DBNull.Value, result.Parameters[0].Value);
     }
 
+    // Checkbox: hidden input "false" + checked checkbox "true" → ASP.NET Core form "false,true" → true
+    [Fact]
+    public void ValidateAndBuild_checkbox_hidden_plus_checked_resolves_true()
+    {
+        var fields = new List<ReportParamField>
+        {
+            new() { Name = "Active", Label = "Aktif", Type = "checkbox" }
+        };
+        var dict = new Dictionary<string, StringValues> { ["Active"] = new StringValues(new[] { "false", "true" }) };
+        var form = new FormCollection(dict);
+
+        var result = ReportParamValidator.ValidateAndBuild(fields, form);
+
+        Assert.True(result.Success);
+        Assert.Equal(true, result.Parameters[0].Value);
+    }
+
+    // Checkbox: hidden "false" only (unchecked) → false
+    [Fact]
+    public void ValidateAndBuild_checkbox_hidden_only_resolves_false()
+    {
+        var fields = new List<ReportParamField>
+        {
+            new() { Name = "Active", Label = "Aktif", Type = "checkbox" }
+        };
+        var form = MakeForm(new Dictionary<string, string> { ["Active"] = "false" });
+
+        var result = ReportParamValidator.ValidateAndBuild(fields, form);
+
+        Assert.True(result.Success);
+        Assert.Equal(false, result.Parameters[0].Value);
+    }
+
+    // Decimal: "1.5" must parse with InvariantCulture (Turkish locale uses comma)
+    [Fact]
+    public void ValidateAndBuild_decimal_parses_dot_separator_invariant_culture()
+    {
+        var fields = new List<ReportParamField>
+        {
+            new() { Name = "Amount", Label = "Tutar", Type = "decimal" }
+        };
+        var form = MakeForm(new Dictionary<string, string> { ["Amount"] = "1.5" });
+
+        var result = ReportParamValidator.ValidateAndBuild(fields, form);
+
+        Assert.True(result.Success);
+        Assert.Equal(1.5m, result.Parameters[0].Value);
+    }
+
     private static IFormCollection MakeForm(Dictionary<string, string> data)
     {
         var dict = new Dictionary<string, StringValues>();

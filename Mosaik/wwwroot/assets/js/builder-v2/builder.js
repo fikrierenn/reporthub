@@ -18,6 +18,7 @@
                 selectedId: null,
                 drawerTab: 'setup', // 'setup' | 'style' (Plan 04 redesign — no-selection iken tab gizli, rapor ayarları gösterilir)
                 spPreview: null,
+                spPreviewError: null,
                 grid: null,
                 mode: 'edit', // 'edit' | 'preview' — topbar mode-seg ile $store.builderV2Mode senkron
                 showAdvanced: false, // İleri ayar collapsible (Aggregation override)

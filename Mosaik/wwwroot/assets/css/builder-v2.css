@@ -809,6 +809,10 @@ body.builder-v2-page .builder-v2:not(.preview-mode) .w-content {
 .builder-v2 .cv-rs-chip.muted {
     cursor: default; color: var(--ink-4);
 }
+.builder-v2 .cv-rs-chip.error {
+    cursor: default; color: var(--danger); border-color: var(--danger);
+    background: var(--danger-bg-soft);
+}
 .builder-v2 .cv-rs-chip .dot { color: var(--ink-4); }
 
 /* Empty canvas — yeni rapor / boş sekme onboarding */

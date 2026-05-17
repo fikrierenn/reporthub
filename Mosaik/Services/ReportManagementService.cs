@@ -245,24 +245,39 @@ namespace Mosaik.Services
         // Admin sonradan builder'da kolonlari/tip ayarlarini duzenleyebilir.
         private static string BuildDefaultDashboardConfig(string? title)
         {
-            var escapedTitle = JsonSerializer.Serialize(string.IsNullOrWhiteSpace(title) ? "Rapor" : title.Trim());
-            var widgetId = "w_table_" + Guid.NewGuid().ToString("N").Substring(0, 8);
-            return "{" +
-                "\"schemaVersion\":2," +
-                "\"tabs\":[{" +
-                    "\"title\":\"Genel\"," +
-                    "\"components\":[{" +
-                        "\"id\":\"" + widgetId + "\"," +
-                        "\"type\":\"table\"," +
-                        "\"title\":" + escapedTitle + "," +
-                        "\"span\":4," +
-                        "\"result\":\"rs0\"," +
-                        "\"columns\":[]," +
-                        "\"tableOptions\":{\"totalRow\":false,\"stripe\":true,\"stickyHeader\":true,\"clientSearch\":false,\"pageSize\":0}" +
-                    "}]" +
-                "}]," +
-                "\"calculatedFields\":[]" +
-                "}";
+            var config = new DashboardConfig
+            {
+                SchemaVersion = 2,
+                CalculatedFields = new(),
+                Tabs = new()
+                {
+                    new DashboardTab
+                    {
+                        Title = "Genel",
+                        Components = new()
+                        {
+                            new DashboardComponent
+                            {
+                                Id = "w_table_" + Guid.NewGuid().ToString("N")[..8],
+                                Type = "table",
+                                Title = string.IsNullOrWhiteSpace(title) ? "Rapor" : title.Trim(),
+                                Span = 4,
+                                Result = "rs0",
+                                Columns = new(),
+                                TableOptions = new TableOptions
+                                {
+                                    TotalRow = false,
+                                    Stripe = true,
+                                    StickyHeader = true,
+                                    ClientSearch = false,
+                                    PageSize = 0
+                                }
+                            }
+                        }
+                    }
+                }
+            };
+            return JsonSerializer.Serialize(config);
         }
     }
 }

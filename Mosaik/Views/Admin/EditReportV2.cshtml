@@ -137,7 +137,12 @@ window.__availableDataSources = @Html.Raw(System.Text.Json.JsonSerializer.Serial
                 <span class="dot">·</span>
                 <span x-text="resultSets().reduce((a, rs) => a + (rs.rowCount || (rs.rows||[]).length), 0) + ' satır'"></span>
             </button>
-            <span class="cv-rs-chip muted" x-show="resultSets().length === 0" x-cloak>
+            <span class="cv-rs-chip error" x-show="spPreviewError" x-cloak
+                  :title="spPreviewError">
+                <i class="fas fa-exclamation-circle text-[10px]"></i>
+                <span x-text="spPreviewError"></span>
+            </span>
+            <span class="cv-rs-chip muted" x-show="!spPreviewError && resultSets().length === 0" x-cloak>
                 <i class="fas fa-circle-notch fa-spin text-[10px]"></i>
                 Veri yükleniyor…
             </span>

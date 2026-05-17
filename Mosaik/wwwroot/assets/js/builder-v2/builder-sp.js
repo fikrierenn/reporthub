@@ -119,8 +119,12 @@
                     }
                 }
                 var self = this;
+                self.spPreviewError = null;
                 fetch(url, { credentials: 'same-origin' })
-                    .then(function (r) { return r.json(); })
+                    .then(function (r) {
+                        if (!r.ok) throw new Error('HTTP ' + r.status);
+                        return r.json();
+                    })
                     .then(function (data) {
                         if (data && data.success) {
                             // Kolonlar object {name, type} formatından string array'e normalize et
@@ -132,12 +136,17 @@
                                 });
                             });
                             self.spPreview = data;
-                            // Mevcut widget'ları yeni veri ile yenile (preview mode'daysa değerler değişir)
                             self.refreshAllWidgets();
                             document.dispatchEvent(new CustomEvent('spPreviewReady', { detail: data }));
+                        } else {
+                            self.spPreview = null;
+                            self.spPreviewError = (data && data.error) || 'Veri alınamadı.';
                         }
                     })
-                    .catch(function () { /* sessizce */ });
+                    .catch(function (err) {
+                        self.spPreview = null;
+                        self.spPreviewError = err && err.message ? err.message : 'Bağlantı hatası.';
+                    });
             },
 
             resultSets() { return (this.spPreview && this.spPreview.resultSets) || []; }
