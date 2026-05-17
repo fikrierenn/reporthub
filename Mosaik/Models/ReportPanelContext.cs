@@ -54,6 +54,11 @@ namespace Mosaik.Models
         public DbSet<AiSuggestion> AiSuggestions { get; set; }
         public DbSet<ComplianceTemplate> ComplianceTemplates { get; set; }
 
+        // Plan 22 — Resmi tatiller + önemli günler (ADR-016)
+        public DbSet<Holiday> Holidays { get; set; }
+        public DbSet<HolidayOccurrence> HolidayOccurrences { get; set; }
+        public DbSet<ImportantDate> ImportantDates { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             // DataSource configuration
@@ -467,6 +472,33 @@ namespace Mosaik.Models
                 e.Property(t => t.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
                 e.HasIndex(t => t.PackageName);
                 e.HasIndex(t => t.IsActive);
+            });
+
+            // Plan 22 — Holidays (ADR-016)
+            modelBuilder.Entity<Holiday>(e =>
+            {
+                e.HasKey(h => h.Id);
+                e.Property(h => h.Name).HasMaxLength(100).IsRequired();
+                e.Property(h => h.Code).HasMaxLength(50);
+                e.HasIndex(h => h.Code).IsUnique();
+                e.Property(h => h.Type).HasConversion<string>().HasMaxLength(20);
+                e.HasMany(h => h.Occurrences).WithOne(o => o.Holiday).HasForeignKey(o => o.HolidayId).OnDelete(DeleteBehavior.Cascade);
+            });
+
+            modelBuilder.Entity<HolidayOccurrence>(e =>
+            {
+                e.HasKey(o => o.Id);
+                e.HasIndex(o => new { o.HolidayId, o.Year }).IsUnique();
+            });
+
+            modelBuilder.Entity<ImportantDate>(e =>
+            {
+                e.HasKey(d => d.Id);
+                e.Property(d => d.Title).HasMaxLength(200).IsRequired();
+                e.Property(d => d.Notes).HasMaxLength(500);
+                e.Property(d => d.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+                e.HasOne(d => d.Firma).WithMany().HasForeignKey(d => d.FirmaId).OnDelete(DeleteBehavior.Restrict);
+                e.HasIndex(d => new { d.FirmaId, d.EventDate });
             });
 
             // Plan 16.6 — Her vNext modül kendi entity'lerini ConfigureModelBuilder

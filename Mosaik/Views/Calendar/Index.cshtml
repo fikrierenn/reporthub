@@ -33,13 +33,22 @@
     </div>
 </div>
 
-@* Renk açıklamaları *@
-<div class="cal-legend">
-    <span class="pill"><span class="legend-dot payment"></span>Ödeme / Son Tarih</span>
-    <span class="pill"><span class="legend-dot tax"></span>Vergi / Uyumluluk</span>
-    <span class="pill"><span class="legend-dot renewal"></span>Yenileme</span>
-    <span class="pill"><span class="legend-dot operational"></span>Operasyon</span>
-    <span class="pill"><span class="legend-dot done"></span>Tamamlandı</span>
+@* Kaynak filtre chip'leri (ADR-016) *@
+<div class="filter-bar" x-data="calSourceFilter()" x-cloak>
+    <div class="filter-chips" role="group" aria-label="Kaynak filtresi">
+        <button type="button" class="chip" :class="{ active: isActive('ContractEvent') }" @@click="toggle('ContractEvent')">
+            <span class="legend-dot contract"></span>Sözleşme Olayları
+        </button>
+        <button type="button" class="chip" :class="{ active: isActive('Obligation') }" @@click="toggle('Obligation')">
+            <span class="legend-dot obligation"></span>Yükümlülükler
+        </button>
+        <button type="button" class="chip" :class="{ active: isActive('Holiday') }" @@click="toggle('Holiday')">
+            <span class="legend-dot holiday"></span>Resmi Tatiller
+        </button>
+        <button type="button" class="chip" :class="{ active: isActive('ImportantDate') }" @@click="toggle('ImportantDate')">
+            <span class="legend-dot important"></span>Önemli Günler
+        </button>
+    </div>
 </div>
 
 <div class="form-section-card padded">
@@ -134,18 +143,46 @@
     <script>
     (function () {
         var calendar;
+        var activeSources = new Set(['ContractEvent', 'Obligation', 'Holiday', 'ImportantDate']);
+
+        // Alpine component — ADR-016 kaynak filtresi
+        window.calSourceFilter = function () {
+            return {
+                isActive: function (src) { return activeSources.has(src); },
+                toggle: function (src) {
+                    if (activeSources.has(src)) { activeSources.delete(src); }
+                    else { activeSources.add(src); }
+                    if (calendar) calendar.refetchEvents();
+                }
+            };
+        };
+
+        function buildEventsUrl(info) {
+            var params = 'year=' + info.start.getFullYear() + '&month=' + (info.start.getMonth() + 1);
+            if (activeSources.size > 0 && activeSources.size < 4) {
+                params += '&sources=' + Array.from(activeSources).join(',');
+            }
+            return '/Calendar/Events?' + params;
+        }
+
+        function sourceLabel(sourceType) {
+            var map = { ContractEvent: 'Sözleşme Olayı', Obligation: 'Yükümlülük',
+                        Holiday: 'Resmi Tatil', ImportantDate: 'Önemli Gün' };
+            return map[sourceType] || sourceType;
+        }
 
         function openEventModal(info) {
             var p = info.event.extendedProps;
-            document.getElementById('modalTitle').textContent   = info.event.title;
-            document.getElementById('modalDate').textContent    = info.event.startStr;
-            document.getElementById('modalType').textContent    = p.typeLabel;
-            document.getElementById('modalStatus').textContent  = p.statusLabel;
-            document.getElementById('modalEventId').value       = info.event.id;
-            document.getElementById('modalEventId2').value      = info.event.id;
+            document.getElementById('modalTitle').textContent  = info.event.title;
+            document.getElementById('modalDate').textContent   = info.event.startStr;
+            document.getElementById('modalType').textContent   = sourceLabel(p.sourceType);
+            document.getElementById('modalStatus').textContent = '';
+            document.getElementById('modalEventId').value      = info.event.id;
+            document.getElementById('modalEventId2').value     = info.event.id;
 
+            // Sözleşme bağlantısı sadece ContractEvent için
             var contractRow = document.getElementById('modalContractRow');
-            if (p.contractTitle && p.contractId) {
+            if (p.sourceType === 'ContractEvent' && p.contractTitle && p.contractId) {
                 document.getElementById('modalContractLink').textContent = p.contractTitle;
                 document.getElementById('modalContractLink').href = '/Contracts/Details/' + p.contractId;
                 contractRow.classList.remove('is-hidden');
@@ -160,6 +197,11 @@
             } else {
                 notesRow.classList.add('is-hidden');
             }
+
+            // Sistem tatilleri ve yükümlülükler silinemez/tamamlanamaz
+            var isSystemEvent = p.sourceType === 'Holiday';
+            document.getElementById('frmComplete').style.display = isSystemEvent ? 'none' : '';
+            document.getElementById('frmDelete').style.display   = isSystemEvent ? 'none' : '';
 
             document.getElementById('eventModal').classList.add('is-open');
         }
@@ -189,14 +231,9 @@
                     center: 'title',
                     right: 'dayGridMonth,timeGridWeek,listMonth'
                 },
-                buttonText: {
-                    today: 'Bugün',
-                    month: 'Ay',
-                    week: 'Hafta',
-                    list: 'Liste'
-                },
+                buttonText: { today: 'Bugün', month: 'Ay', week: 'Hafta', list: 'Liste' },
                 events: function (info, success, failure) {
-                    fetch('/Calendar/Events?year=' + info.start.getFullYear() + '&month=' + (info.start.getMonth() + 1))
+                    fetch(buildEventsUrl(info))
                         .then(function (r) { return r.json(); })
                         .then(success)
                         .catch(failure);

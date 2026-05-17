@@ -2092,5 +2092,22 @@ select.inp {
 .tag-grid__meta { font-size: 10.5px; color: var(--ink-mute, var(--ink-3)); }
 .tag-grid__more { font-size: 11px; color: var(--ink-mute, var(--ink-3)); margin-top: 8px; }
 
+/* ---- Toggleable source filter chips (Calendar ADR-016) ---- */
+.filter-bar .filter-chips { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-bottom: 16px; }
+.filter-bar .chip {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 500;
+    border: 1px solid var(--line); background: var(--paper); color: var(--ink-2);
+    cursor: pointer; transition: background .15s, color .15s, border-color .15s;
+}
+.filter-bar .chip:hover { border-color: var(--accent); color: var(--accent); }
+.filter-bar .chip.active { background: var(--accent-soft); color: var(--accent); border-color: var(--accent); }
+
+/* Calendar source legend dots (ADR-016) */
+.legend-dot.contract   { background: #5b6bff; }
+.legend-dot.obligation { background: #e63946; }
+.legend-dot.holiday    { background: #2d9e4a; }
+.legend-dot.important  { background: #e07b00; }
+
 /* Render hata fallback (chart/canvas render fail mesajı) */
 .render-error { padding: 20px; color: #b91c1c; }
