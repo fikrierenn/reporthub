@@ -102,6 +102,7 @@
                             <th>Vade</th>
                             <th>Tutar</th>
                             <th>Durum</th>
+                            <th></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -125,6 +126,9 @@
                                     else { <text>—</text> }
                                 </td>
                                 <td>@ObligationStatusBadge(o.Status)</td>
+                                <td class="ta-right">
+                                    <a href="/Obligations/Edit/@o.Id" class="btn sm ghost">Düzenle</a>
+                                </td>
                             </tr>
                         }
                     </tbody>

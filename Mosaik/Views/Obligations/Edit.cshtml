@@ -1,0 +1,136 @@
+@model Mosaik.ViewModels.ObligationEditViewModel
+@using Mosaik.Models
+
+@{
+    Layout = "_AppLayout";
+    ViewData["Title"] = "Yükümlülük Düzenle";
+    var contractId    = Model.ContractId;
+    var contractTitle = Model.ContractTitle;
+}
+
+@section Breadcrumb {
+    <nav class="crumbs" aria-label="Sayfa konumu">
+        <a href="/">Ana Sayfa</a>
+        @if (contractId.HasValue && contractTitle is not null)
+        {
+            <a href="/Contracts">Sözleşmeler</a>
+            <a href="/Contracts/Details/@contractId">@contractTitle</a>
+        }
+        else
+        {
+            <a href="/Obligations">Yükümlülükler</a>
+        }
+        <span aria-current="page">Yükümlülük Düzenle</span>
+    </nav>
+}
+
+@section TopActions {
+    @if (contractId.HasValue)
+    {
+        <a href="/Contracts/Details/@contractId" class="btn ghost">İptal</a>
+    }
+    else
+    {
+        <a href="/Obligations" class="btn ghost">İptal</a>
+    }
+}
+
+<div class="hero">
+    <h1>Yükümlülük Düzenle</h1>
+    @if (contractTitle is not null)
+    {
+        <div class="sub"><span class="mono">@contractTitle</span></div>
+    }
+</div>
+
+<form method="post" action="/Obligations/Edit/@Model.Id">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="FirmaId" value="@Model.FirmaId" />
+    @if (contractId.HasValue)
+    {
+        <input type="hidden" name="ContractId" value="@contractId" />
+    }
+
+    <div class="form-section-card narrow">
+        <div class="form-section-head">Yükümlülük Bilgileri</div>
+        <div class="form-section-body stack">
+            <div class="field">
+                <label class="lab" for="Title">Başlık <span class="req">*</span></label>
+                <input class="inp" id="Title" name="Title" value="@Model.Title" required maxlength="200" />
+            </div>
+
+            <div class="grid-2col">
+                <div class="field">
+                    <label class="lab" for="Category">Kategori</label>
+                    <select class="inp" id="Category" name="Category">
+                        <option value="0" selected="@(Model.Category == ObligationCategory.Finance)">Finans</option>
+                        <option value="1" selected="@(Model.Category == ObligationCategory.Tax)">Vergi</option>
+                        <option value="2" selected="@(Model.Category == ObligationCategory.Hr)">İK</option>
+                        <option value="3" selected="@(Model.Category == ObligationCategory.Operation)">Operasyon</option>
+                        <option value="4" selected="@(Model.Category == ObligationCategory.It)">BT</option>
+                        <option value="5" selected="@(Model.Category == ObligationCategory.Legal)">Hukuk</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label class="lab" for="Type">Tür</label>
+                    <select class="inp" id="Type" name="Type">
+                        <option value="0" selected="@(Model.Type == ObligationType.Payment)">Ödeme</option>
+                        <option value="1" selected="@(Model.Type == ObligationType.Tax)">Vergi</option>
+                        <option value="2" selected="@(Model.Type == ObligationType.Compliance)">Uyum</option>
+                        <option value="3" selected="@(Model.Type == ObligationType.Renewal)">Yenileme</option>
+                        <option value="4" selected="@(Model.Type == ObligationType.Deadline)">Son Tarih</option>
+                        <option value="5" selected="@(Model.Type == ObligationType.Audit)">Denetim</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="grid-2col">
+                <div class="field">
+                    <label class="lab" for="DueDate">Vade Tarihi <span class="req">*</span></label>
+                    <input class="inp" type="date" id="DueDate" name="DueDate"
+                           value="@Model.DueDate.ToString("yyyy-MM-dd")" required />
+                </div>
+                <div class="field">
+                    <label class="lab" for="ReminderDays">Hatırlatma (gün önce)</label>
+                    <input class="inp" type="number" id="ReminderDays" name="ReminderDays"
+                           value="@Model.ReminderDays" min="0" max="365" />
+                </div>
+            </div>
+
+            <div class="grid-2-1">
+                <div class="field">
+                    <label class="lab" for="Amount">Tutar</label>
+                    <input class="inp" type="number" id="Amount" name="Amount"
+                           value="@Model.Amount" step="0.01" min="0" />
+                </div>
+                <div class="field">
+                    <label class="lab" for="Currency">Para Birimi</label>
+                    <select class="inp" id="Currency" name="Currency">
+                        <option value="TRY" selected="@(Model.Currency == "TRY")">TRY</option>
+                        <option value="USD" selected="@(Model.Currency == "USD")">USD</option>
+                        <option value="EUR" selected="@(Model.Currency == "EUR")">EUR</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="field">
+                <label class="lab" for="Notes">Notlar</label>
+                <textarea class="inp" id="Notes" name="Notes" rows="3" maxlength="1000">@Model.Notes</textarea>
+            </div>
+        </div>
+    </div>
+
+    <div class="action-row narrow">
+        @if (contractId.HasValue)
+        {
+            <a href="/Contracts/Details/@contractId" class="btn ghost">Geri Dön</a>
+        }
+        else
+        {
+            <a href="/Obligations" class="btn ghost">Geri Dön</a>
+        }
+        <button type="submit" class="btn primary">
+            <i class="fa fa-check text-[10px]"></i> Kaydet
+        </button>
+    </div>
+</form>

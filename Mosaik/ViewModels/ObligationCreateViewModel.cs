@@ -8,6 +8,7 @@ namespace Mosaik.ViewModels
     {
         public int FirmaId { get; set; }
         public int? ContractId { get; set; }
+        public string? ContractTitle { get; set; }
 
         [Required]
         [MaxLength(200)]
@@ -29,5 +30,14 @@ namespace Mosaik.ViewModels
 
         [MaxLength(1000)]
         public string? Notes { get; set; }
+    }
+
+    public class ObligationEditViewModel : ObligationCreateViewModel
+    {
+        [BindNever]
+        public int Id { get; set; }
+
+        [BindNever]
+        public ObligationStatus CurrentStatus { get; set; }
     }
 }

@@ -147,6 +147,94 @@ namespace Mosaik.Controllers
                 : RedirectToAction(nameof(Index));
         }
 
+        // GET /Obligations/Edit/5
+        public async Task<IActionResult> Edit(int id)
+        {
+            var firmas = AccessibleFirmaIds;
+            if (firmas.Count == 0) return Forbid();
+
+            var obligation = await _db.ContractObligations
+                .AsNoTracking()
+                .Include(o => o.Contract)
+                .FirstOrDefaultAsync(o => o.Id == id && firmas.Contains(o.FirmaId));
+
+            if (obligation is null) return NotFound();
+
+            var model = new ObligationEditViewModel
+            {
+                Id              = obligation.Id,
+                FirmaId         = obligation.FirmaId,
+                ContractId      = obligation.ContractId,
+                ContractTitle   = obligation.Contract?.Title,
+                CurrentStatus   = obligation.Status,
+                Title           = obligation.Title,
+                Category        = obligation.Category,
+                Type            = obligation.Type,
+                DueDate         = obligation.DueDate,
+                ReminderDays    = obligation.ReminderDays ?? 0,
+                Amount          = obligation.Amount,
+                Currency        = obligation.Currency ?? "TRY",
+                Notes           = obligation.Notes
+            };
+
+            ViewBag.AccessibleFirmas = await GetAccessibleFirmasAsync();
+            return View(model);
+        }
+
+        // POST /Obligations/Edit/5
+        [HttpPost]
+        [Route("Obligations/Edit/{id:int}")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(int id, ObligationEditViewModel model)
+        {
+            var firmas = AccessibleFirmaIds;
+            if (firmas.Count == 0) return Forbid();
+
+            var obligation = await _db.ContractObligations
+                .FirstOrDefaultAsync(o => o.Id == id && firmas.Contains(o.FirmaId));
+
+            if (obligation is null) return NotFound();
+
+            if (!ModelState.IsValid)
+            {
+                model.Id = id;
+                model.CurrentStatus = obligation.Status;
+                model.ContractTitle = obligation.Contract?.Title;
+                ViewBag.AccessibleFirmas = await GetAccessibleFirmasAsync();
+                return View(model);
+            }
+
+            obligation.Title        = model.Title;
+            obligation.Category     = model.Category;
+            obligation.Type         = model.Type;
+            obligation.DueDate      = model.DueDate;
+            obligation.ReminderDays = model.ReminderDays;
+            obligation.Amount       = model.Amount;
+            obligation.Currency     = model.Currency;
+            obligation.Notes        = model.Notes;
+            obligation.UpdatedAt    = DateTime.UtcNow;
+            // ReminderSentAt sıfırla — tarih değiştiyse yeniden bildirim gönderilebilsin.
+            if (obligation.DueDate != model.DueDate)
+                obligation.ReminderSentAt = null;
+
+            await _db.SaveChangesAsync();
+
+            await _auditLog.LogAsync(new AuditLogEntry
+            {
+                EventType = "obligation_edit",
+                TargetType = "contract_obligation",
+                TargetKey = obligation.Id.ToString(),
+                Description = $"Yükümlülük düzenlendi: {obligation.Title}",
+                IsSuccess = true,
+                NewValuesJson = AuditLogService.ToJson(new { obligation.Id, obligation.Title, obligation.DueDate, obligation.Amount, obligation.Currency })
+            });
+
+            TempData["Message"] = "Yükümlülük güncellendi.";
+            return obligation.ContractId.HasValue
+                ? RedirectToAction("Details", "Contracts", new { id = obligation.ContractId })
+                : RedirectToAction(nameof(Index));
+        }
+
         // POST /Obligations/Complete/5
         [HttpPost]
         [ValidateAntiForgeryToken]
