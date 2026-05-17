@@ -241,6 +241,14 @@ body.builder-v2-page .builder-v2:not(.preview-mode) .w-content {
     border-color: var(--accent);
     box-shadow: 0 0 0 1px var(--accent), 0 4px 14px -8px rgba(220, 38, 38, .25);
 }
+.builder-v2 .widget.unbound-widget > .grid-stack-item-content {
+    border-color: var(--line);
+    border-style: dashed;
+}
+.builder-v2 .widget.unbound-widget.selected > .grid-stack-item-content {
+    border-color: var(--accent);
+    border-style: solid;
+}
 
 .builder-v2 .w-head {
     display: flex;
@@ -275,6 +283,10 @@ body.builder-v2-page .builder-v2:not(.preview-mode) .w-content {
     gap: 3px;
 }
 .builder-v2 .result-pill::before { content: "result:"; color: var(--ink-4); }
+.builder-v2 .result-pill.unbound {
+    background: var(--canvas); color: var(--ink-4); border-style: dashed;
+}
+.builder-v2 .result-pill.unbound::before { content: ""; }
 
 .builder-v2 .w-actions { display: flex; gap: 1px; opacity: 0; transition: opacity .12s; }
 .builder-v2 .widget:hover .w-actions,
@@ -519,6 +531,12 @@ body.builder-v2-page .builder-v2:not(.preview-mode) .w-content {
     font-family: 'JetBrains Mono', monospace;
     font-size: 10px;
     align-self: flex-start;
+}
+.builder-v2 .bound-chip i { font-size: 9px; }
+
+.builder-v2 .bound-chip.unbound {
+    background: var(--canvas); color: var(--ink-4);
+    border-color: var(--line); border-style: dashed;
 }
 
 /* Drawer'da bağlı kolon banner'ı (alt yazı) */

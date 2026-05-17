@@ -196,7 +196,7 @@
                 }
                 var resultPill = resultPillContent
                     ? '<span class="result-pill" title="Bağlı veri kaynağı">' + resultPillContent + '</span>'
-                    : '<span class="result-pill" style="background:var(--canvas); color:var(--ink-4); border-style:dashed;" title="Henüz bağlı değil">bağlanmadı</span>';
+                    : '<span class="result-pill unbound" title="Henüz bağlı değil">bağlanmadı</span>';
 
                 return '<div class="w-edit-overlay"><div class="w-head">' +
                     '<span class="type-chip ' + typeChipClass + '">' + typeLabel + '</span>' +
@@ -215,8 +215,8 @@
                 var isPreview = this.mode === 'preview';
                 var html = this.renderEditOverlay(comp);
                 var boundChip = comp.column
-                    ? '<div class="bound-chip" title="Bağlı veri kaynağı"><i class="fas fa-link" style="font-size:9px;"></i> ' + this.esc(comp.column) + '</div>'
-                    : (isPreview ? '' : '<div class="bound-chip" style="background:var(--canvas); color:var(--ink-4); border-color:var(--line); border-style:dashed;" title="Henüz bağlı değil"><i class="fas fa-link-slash" style="font-size:9px;"></i> bağlanmadı</div>');
+                    ? '<div class="bound-chip" title="Bağlı veri kaynağı"><i class="fas fa-link"></i> ' + this.esc(comp.column) + '</div>'
+                    : (isPreview ? '' : '<div class="bound-chip unbound" title="Henüz bağlı değil"><i class="fas fa-link-slash"></i> bağlanmadı</div>');
 
                 if (comp.type === 'kpi') {
                     html += '<div class="w-content">' + this.renderKpiCard(comp, rs, isPreview) + '</div>';
@@ -261,8 +261,12 @@
 
             refreshSelection() {
                 var id = this.selectedId;
+                var self = this;
                 this.$el.querySelectorAll('.grid-stack-item').forEach(function (n) {
-                    n.classList.toggle('selected', n.getAttribute('data-widget-id') === id);
+                    var wid = n.getAttribute('data-widget-id');
+                    n.classList.toggle('selected', wid === id);
+                    var comp = self.components.find(function (c) { return c.id === wid; });
+                    n.classList.toggle('unbound-widget', !!(comp && !comp.result));
                 });
             },
 
@@ -273,6 +277,8 @@
                 this.components.forEach(function (c) {
                     var el = self.$el.querySelector('[data-widget-id="' + c.id + '"] .grid-stack-item-content');
                     if (el) el.innerHTML = self.widgetInnerHtml(c);
+                    var gsItem = self.$el.querySelector('[data-widget-id="' + c.id + '"]');
+                    if (gsItem) gsItem.classList.toggle('unbound-widget', !c.result);
                 });
                 // innerHTML basıldıktan sonra Chart.js mount (canvas DOM'a girince)
                 if (this.mountAllCharts) {

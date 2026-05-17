@@ -176,6 +176,7 @@
                         var el = self.grid.addWidget(opts);
                         el.setAttribute('data-widget-id', c.id);
                         el.classList.add('widget');
+                        if (!c.result) el.classList.add('unbound-widget');
                         var cc = el.querySelector('.grid-stack-item-content') || el;
                         cc.innerHTML = self.widgetInnerHtml(c);
                         self.attachWidgetEvents(el);
@@ -211,6 +212,7 @@
                     var el = this.grid.addWidget({ w: w, h: h, autoPosition: true, content: '' });
                     el.setAttribute('data-widget-id', comp.id);
                     el.classList.add('widget');
+                    el.classList.add('unbound-widget'); // yeni widget başlangıçta bağlantısız
                     var cc = el.querySelector('.grid-stack-item-content') || el;
                     cc.innerHTML = this.widgetInnerHtml(comp);
                     this.attachWidgetEvents(el);
