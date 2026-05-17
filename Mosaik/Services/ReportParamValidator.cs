@@ -1,5 +1,6 @@
 using System.Data;
 using System.Diagnostics;
+using System.Globalization;
 using System.Text.Json;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Data.SqlClient;
@@ -149,7 +150,7 @@ public static class ReportParamValidator
                         }
                         break;
                     case "decimal":
-                        if (decimal.TryParse(raw, out var decimalValue))
+                        if (decimal.TryParse(raw, NumberStyles.Number, CultureInfo.InvariantCulture, out var decimalValue))
                         {
                             value = decimalValue;
                         }
@@ -160,7 +161,7 @@ public static class ReportParamValidator
                         }
                         break;
                     case "checkbox":
-                        value = true;
+                        value = raw.Split(',').Any(v => v.Trim() is "true" or "1" or "on");
                         break;
                     case "date":
                         if (DateTime.TryParse(raw, out var dateValue))

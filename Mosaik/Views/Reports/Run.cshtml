@@ -119,6 +119,7 @@ else
                         {
                             var checkedValue = Model.ParamValues.TryGetValue(field.Name, out var cv) && (cv == "true" || cv == "1" || cv == "on");
                             <div class="field param-checkbox-field">
+                                <input type="hidden" name="@field.Name" value="false" />
                                 <input type="checkbox" name="@field.Name" id="@field.Name" value="true"
                                        @(checkedValue ? "checked" : "")
                                        class="param-checkbox" />
@@ -190,7 +191,7 @@ else
         <div class="dashboard-frame-card" id="dashboardContainer">
             <iframe id="dashboardFrame"
                     class="dashboard-iframe"
-                    sandbox="allow-scripts allow-downloads"
+                    sandbox="allow-scripts"
                     srcdoc="@Model.DashboardRenderedHtml">
             </iframe>
         </div>

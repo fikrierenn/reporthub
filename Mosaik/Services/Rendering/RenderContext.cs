@@ -14,6 +14,10 @@ namespace Mosaik.Services.Rendering
             ["gray"]   = ("bg-gray-600",    "text-gray-600",    "border-gray-200",   "bg-gray-50"),
             ["indigo"] = ("bg-indigo-600",  "text-indigo-600",  "border-indigo-200", "bg-indigo-50"),
             ["purple"] = ("bg-purple-600",  "text-purple-600",  "border-purple-200", "bg-purple-50"),
+            ["amber"]  = ("bg-amber-500",   "text-amber-600",   "border-amber-200",  "bg-amber-50"),
+            ["violet"] = ("bg-violet-600",  "text-violet-600",  "border-violet-200", "bg-violet-50"),
+            ["rose"]   = ("bg-rose-600",    "text-rose-600",    "border-rose-200",   "bg-rose-50"),
+            ["slate"]  = ("bg-slate-600",   "text-slate-600",   "border-slate-200",  "bg-slate-50"),
         };
 
         public static readonly Dictionary<string, string> ChartColorHex = new()
@@ -25,6 +29,10 @@ namespace Mosaik.Services.Rendering
             ["gray"]   = "#6b7280",
             ["indigo"] = "#6366f1",
             ["purple"] = "#a855f7",
+            ["amber"]  = "#f59e0b",
+            ["violet"] = "#7c3aed",
+            ["rose"]   = "#e11d48",
+            ["slate"]  = "#475569",
         };
 
         public static (string Bg, string Text, string Border, string Light) GetColor(string color)

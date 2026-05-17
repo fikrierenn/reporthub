@@ -115,7 +115,7 @@
                     if (!sel || sel.type !== 'table') return [];
                     var sp = this.spPreview;
                     if (!sp || !sp.resultSets) return [];
-                    var rsIdx = sel.resultSet;
+                    var rsIdx = sel.result;
                     if (rsIdx == null) return [];
                     var rs = sp.resultSets.find(function (r) { return r.index === rsIdx; });
                     return rs ? (rs.columns || []) : [];
@@ -190,7 +190,7 @@
                         var id = n.el && n.el.getAttribute('data-widget-id');
                         if (!id) return;
                         var comp = self.components.find(function (c) { return c.id === id; });
-                        if (comp) { comp.x = n.x; comp.y = n.y; comp.w = n.w; comp.h = n.h; }
+                        if (comp) { comp.x = n.x; comp.y = n.y; comp.span = n.w; comp.h = n.h; }
                     });
                     this.syncConfig();
                 },

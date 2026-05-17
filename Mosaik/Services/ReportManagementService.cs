@@ -256,7 +256,7 @@ namespace Mosaik.Services
                         "\"type\":\"table\"," +
                         "\"title\":" + escapedTitle + "," +
                         "\"span\":4," +
-                        "\"resultSet\":0," +
+                        "\"result\":\"rs0\"," +
                         "\"columns\":[]," +
                         "\"tableOptions\":{\"totalRow\":false,\"stripe\":true,\"stickyHeader\":true,\"clientSearch\":false,\"pageSize\":0}" +
                     "}]" +

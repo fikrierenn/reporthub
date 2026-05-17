@@ -39,7 +39,7 @@ document.querySelectorAll('[data-chart]').forEach(function(el) {
   var palette = ['#3b82f6','#10b981','#ef4444','#f59e0b','#6b7280','#6366f1','#a855f7','#ec4899','#14b8a6','#f97316'];
   if (variant === 'scatter') {
     // scatter -> {x, y} formatı
-    datasets = cfg.datasets.map(function(ds) {
+    datasets = (cfg.datasets || []).map(function(ds) {
       return {
         label: ds.label,
         data: data.map(function(r) { return { x: parseFloat(r[cfg.labelCol]) || 0, y: parseFloat(r[ds.col]) || 0 }; }),

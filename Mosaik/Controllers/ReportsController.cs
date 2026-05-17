@@ -189,6 +189,7 @@ namespace Mosaik.Controllers
             var userRoleIds = await GetCurrentUserRoleIds();
 
             var accessibleReportsQuery = _context.ReportCatalog
+                .AsNoTracking()
                 .Include(r => r.DataSource)
                 .Include(r => r.ReportAllowedRoles)
                     .ThenInclude(ar => ar.Role)
@@ -289,6 +290,7 @@ namespace Mosaik.Controllers
             if (CurrentUserId.HasValue)
             {
                 var ids = await _context.ReportFavorites
+                    .AsNoTracking()
                     .Where(f => f.UserId == CurrentUserId.Value)
                     .Select(f => f.ReportId)
                     .ToListAsync();
