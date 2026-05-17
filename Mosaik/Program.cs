@@ -218,6 +218,18 @@ RecurringJob.AddOrUpdate<Mosaik.Services.DailyReminderJob>(
             OperatingSystem.IsWindows() ? "Turkey Standard Time" : "Europe/Istanbul")
     });
 
+// C-03 (Plan 33 Faz 2) — Günlük tamim hatırlatma cron (her gün 09:00 Europe/Istanbul).
+// Dün yayınlanan tamimler için henüz okumamış kullanıcılara in-app bildirim.
+RecurringJob.AddOrUpdate<Mosaik.Modules.Circular.Services.TamimReminderJob>(
+    recurringJobId: "daily-tamim-reminder",
+    methodCall: job => job.ExecuteAsync(CancellationToken.None),
+    cronExpression: "0 9 * * *",
+    options: new RecurringJobOptions
+    {
+        TimeZone = TimeZoneInfo.FindSystemTimeZoneById(
+            OperatingSystem.IsWindows() ? "Turkey Standard Time" : "Europe/Istanbul")
+    });
+
 // Plan 17 Faz D — Günlük tamim derleme cron (her gün 17:00 Europe/Istanbul).
 // Bugünün pending bloklarını topla → tek Circular zarfı altında yayınla.
 RecurringJob.AddOrUpdate<Mosaik.Modules.Circular.Services.CompileCircularJob>(

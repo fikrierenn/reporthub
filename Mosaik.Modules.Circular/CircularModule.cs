@@ -21,8 +21,9 @@ namespace Mosaik.Modules.Circular
             services.AddScoped<Services.CircularService>();
             services.AddScoped<Services.BlockFileService>();
             services.AddScoped<Services.CompileCircularJob>();
+            services.AddScoped<Services.TamimReminderJob>();
             services.AddScoped<Services.CircularSummaryService>();
-            // Plan 17 Faz D — RecurringJob register Mosaik/Program.cs'de
+            // Plan 17 Faz D + C-03 — RecurringJob register Mosaik/Program.cs'de
         }
 
         public void ConfigureModelBuilder(ModelBuilder mb)
