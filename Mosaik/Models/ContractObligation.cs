@@ -50,6 +50,10 @@ namespace Mosaik.Models
         [BindNever]
         public string? CompletedBy { get; set; }
 
+        // Günlük hatırlatma cron'u bu alanı null gördüğünde bildirim gönderir.
+        [BindNever]
+        public DateTime? ReminderSentAt { get; set; }
+
         // Nav properties — form'dan bind/validate edilmez (EF Include yükler).
         [BindNever, ValidateNever]
         public Firma Firma { get; set; } = null!;

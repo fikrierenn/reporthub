@@ -397,6 +397,7 @@ namespace Mosaik.Models
                     .HasForeignKey(o => o.ParentObligationId).OnDelete(DeleteBehavior.Restrict);
                 e.HasIndex(o => new { o.FirmaId, o.Status });
                 e.HasIndex(o => o.DueDate);
+                e.HasIndex(o => o.ReminderSentAt);
             });
 
             modelBuilder.Entity<ContractRecurrence>(e =>

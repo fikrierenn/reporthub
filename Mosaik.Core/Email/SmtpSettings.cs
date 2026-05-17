@@ -11,5 +11,6 @@ namespace Mosaik.Core.Email
         public string FromAddress { get; set; } = string.Empty;
         public string FromName { get; set; } = "Mosaik";
         public bool Enabled { get; set; } = false;
+        public string AppUrl { get; set; } = string.Empty;  // email link'leri için (ör. https://mosaik.bkm.com.tr)
     }
 }

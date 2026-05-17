@@ -140,6 +140,7 @@ builder.Services.AddHangfire(cfg => cfg
             DisableGlobalLocks = true
         }));
 builder.Services.AddHangfireServer();
+builder.Services.AddScoped<Mosaik.Services.DailyReminderJob>();
 
 builder.Services.AddAuthentication(options =>
     {
@@ -203,6 +204,18 @@ Mosaik.Core.Module.ModuleLoader.MapAll(app);
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Dashboard}/{action=Index}/{id?}");
+
+// C-01 (Plan 33 Faz 2) — Günlük yükümlülük hatırlatma cron (her gün 09:00 Europe/Istanbul).
+// Pending ContractObligations: vade yaklaşan veya geçmiş → bildirim + SMTP email.
+RecurringJob.AddOrUpdate<Mosaik.Services.DailyReminderJob>(
+    recurringJobId: "daily-obligation-reminder",
+    methodCall: job => job.ExecuteAsync(CancellationToken.None),
+    cronExpression: "0 9 * * *",
+    options: new RecurringJobOptions
+    {
+        TimeZone = TimeZoneInfo.FindSystemTimeZoneById(
+            OperatingSystem.IsWindows() ? "Turkey Standard Time" : "Europe/Istanbul")
+    });
 
 // Plan 17 Faz D — Günlük tamim derleme cron (her gün 17:00 Europe/Istanbul).
 // Bugünün pending bloklarını topla → tek Circular zarfı altında yayınla.
