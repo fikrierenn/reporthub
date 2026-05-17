@@ -354,7 +354,7 @@ namespace Mosaik.Controllers
                 }
                 if (dashConfig == null) return BadRequest("Pano yapılandırması boş.");
 
-                var html = Mosaik.Services.DashboardRenderer.Render(dashConfig, resultSets);
+                var html = _renderer.Render(dashConfig, resultSets);
 
                 await _auditLog.LogAsync(new AuditLogEntry
                 {

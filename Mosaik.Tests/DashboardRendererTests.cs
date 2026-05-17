@@ -13,6 +13,8 @@ namespace Mosaik.Tests;
 /// </summary>
 public class DashboardRendererTests
 {
+    private readonly IDashboardRenderer _renderer = new DashboardRenderer();
+
     private static DashboardConfig ConfigWithTab(string tabTitle, DashboardComponent? comp = null)
     {
         var tab = new DashboardTab { Title = tabTitle };
@@ -28,7 +30,7 @@ public class DashboardRendererTests
     public void Render_tab_title_is_html_encoded()
     {
         var cfg = ConfigWithTab("<script>alert('xss')</script>");
-        var html = DashboardRenderer.Render(cfg, EmptyRs());
+        var html = _renderer.Render(cfg, EmptyRs());
 
         Assert.DoesNotContain("<script>alert('xss')</script>", html);
         Assert.Contains("&lt;script&gt;", html);
@@ -39,7 +41,7 @@ public class DashboardRendererTests
     {
         var comp = new DashboardComponent { Type = "kpi", Title = "<img src=x onerror=alert(1)>", Result = "rs0" };
         var cfg = ConfigWithTab("Genel", comp);
-        var html = DashboardRenderer.Render(cfg, EmptyRs());
+        var html = _renderer.Render(cfg, EmptyRs());
 
         // Raw HTML ogesi cikmasin (HtmlEncode `<` -> `&lt;` donusturur; substring `onerror=alert(1)`
         // encoded context icinde hala kalir ama anlamli DOM olusturamaz).
@@ -52,7 +54,7 @@ public class DashboardRendererTests
     {
         var comp = new DashboardComponent { Type = "kpi", Title = "t", Subtitle = "<script>x</script>", Result = "rs0" };
         var cfg = ConfigWithTab("Genel", comp);
-        var html = DashboardRenderer.Render(cfg, EmptyRs());
+        var html = _renderer.Render(cfg, EmptyRs());
 
         Assert.DoesNotContain("<script>x</script>", html);
         Assert.Contains("&lt;script&gt;", html);
@@ -64,7 +66,7 @@ public class DashboardRendererTests
         // Icon is used inside a class attribute — breaking out via `'` must not succeed.
         var comp = new DashboardComponent { Type = "kpi", Title = "t", Icon = "' onclick='alert(1)", Result = "rs0" };
         var cfg = ConfigWithTab("Genel", comp);
-        var html = DashboardRenderer.Render(cfg, EmptyRs());
+        var html = _renderer.Render(cfg, EmptyRs());
 
         Assert.DoesNotContain("onclick='alert(1)", html);
     }
@@ -82,7 +84,7 @@ public class DashboardRendererTests
         {
             new() { new Dictionary<string, object> { ["name"] = "</script><script>alert(1)</script>" } }
         };
-        var html = DashboardRenderer.Render(ConfigWithTab("Genel"), rs);
+        var html = _renderer.Render(ConfigWithTab("Genel"), rs);
 
         Assert.DoesNotContain("</script><script>alert(1)", html);
         Assert.DoesNotContain("</script>alert(1)", html);
@@ -95,7 +97,7 @@ public class DashboardRendererTests
         {
             new() { new Dictionary<string, object> { ["name"] = "abc</SCRIPT>def" } }
         };
-        var html = DashboardRenderer.Render(ConfigWithTab("Genel"), rs);
+        var html = _renderer.Render(ConfigWithTab("Genel"), rs);
 
         Assert.DoesNotContain("abc</SCRIPT>def", html);
     }
@@ -107,7 +109,7 @@ public class DashboardRendererTests
         {
             new() { new Dictionary<string, object> { ["name"] = "abc</ScRiPt>def" } }
         };
-        var html = DashboardRenderer.Render(ConfigWithTab("Genel"), rs);
+        var html = _renderer.Render(ConfigWithTab("Genel"), rs);
 
         Assert.DoesNotContain("abc</ScRiPt>def", html);
     }
@@ -119,7 +121,7 @@ public class DashboardRendererTests
         {
             new() { new Dictionary<string, object> { ["name"] = "abc<!-- injected xyz" } }
         };
-        var html = DashboardRenderer.Render(ConfigWithTab("Genel"), rs);
+        var html = _renderer.Render(ConfigWithTab("Genel"), rs);
 
         Assert.DoesNotContain("abc<!-- injected xyz", html);
     }
@@ -129,14 +131,14 @@ public class DashboardRendererTests
     [Fact]
     public void Render_does_not_emit_eval()
     {
-        var html = DashboardRenderer.Render(ConfigWithTab("x"), EmptyRs());
+        var html = _renderer.Render(ConfigWithTab("x"), EmptyRs());
         Assert.DoesNotContain("eval(", html);
     }
 
     [Fact]
     public void Render_sets_window_dunder_rs_data_island()
     {
-        var html = DashboardRenderer.Render(ConfigWithTab("x"), EmptyRs());
+        var html = _renderer.Render(ConfigWithTab("x"), EmptyRs());
         Assert.Contains("window.__RS = [", html);
     }
 
@@ -212,7 +214,7 @@ public class DashboardRendererTests
             ResultContract = new(),
             Tabs = new() { new DashboardTab { Title = "T", Components = { comp } } }
         };
-        var html = DashboardRenderer.Render(cfg, EmptyRs());
+        var html = _renderer.Render(cfg, EmptyRs());
 
         Assert.Contains("Veri bağlantısı çözümlenemedi", html);
         Assert.Contains("nonexistent", html); // debug: binding info visible
@@ -226,7 +228,7 @@ public class DashboardRendererTests
         {
             Tabs = new() { new DashboardTab { Title = "T", Components = { comp } } }
         };
-        var html = DashboardRenderer.Render(cfg, EmptyRs());
+        var html = _renderer.Render(cfg, EmptyRs());
 
         Assert.Contains("Bilinmeyen bileşen tipi", html);
         Assert.Contains("futureWidget", html);
@@ -244,7 +246,7 @@ public class DashboardRendererTests
             },
             Tabs = new() { new DashboardTab { Title = "T" } }
         };
-        var html = DashboardRenderer.Render(cfg, EmptyRs()); // EmptyRs: rs[0] = 0 rows
+        var html = _renderer.Render(cfg, EmptyRs()); // EmptyRs: rs[0] = 0 rows
 
         Assert.Contains("Eksik zorunlu veri", html);
         Assert.Contains("summary", html);
@@ -276,7 +278,7 @@ public class DashboardRendererTests
             }
         };
 
-        DashboardRenderer.Render(cfg, rs);
+        _renderer.Render(cfg, rs);
 
         Assert.Equal(50m, rs[0][0]["kar"]);
         Assert.Equal(50m, rs[0][1]["kar"]);
@@ -301,7 +303,7 @@ public class DashboardRendererTests
             }
         };
 
-        DashboardRenderer.Render(cfg, rs);
+        _renderer.Render(cfg, rs);
 
         Assert.Equal("Buyuk", rs[0][0]["kategori"]);
         Assert.Equal("Kucuk", rs[0][1]["kategori"]);
@@ -321,7 +323,7 @@ public class DashboardRendererTests
             new() { new Dictionary<string, object> { ["adet"] = 5m } }
         };
 
-        var ex = Record.Exception(() => DashboardRenderer.Render(cfg, rs));
+        var ex = Record.Exception(() => _renderer.Render(cfg, rs));
 
         Assert.Null(ex);
         Assert.Equal(System.DBNull.Value, rs[0][0]["x"]);
@@ -342,7 +344,7 @@ public class DashboardRendererTests
             new() { new Dictionary<string, object> { ["a"] = 2m } }
         };
 
-        DashboardRenderer.Render(cfg, rs);
+        _renderer.Render(cfg, rs);
 
         Assert.Equal("X", rs[0][0]["etiket"]);
         Assert.False(rs[1][0].ContainsKey("etiket"));

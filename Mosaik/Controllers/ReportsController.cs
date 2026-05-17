@@ -23,19 +23,22 @@ namespace Mosaik.Controllers
         private readonly ExcelExportService _excelExport;
         private readonly UserDataFilterInjector _filterInjector;
         private readonly StoredProcedureExecutor _spExecutor;
+        private readonly IDashboardRenderer _renderer;
 
         public ReportsController(
             MosaikContext context,
             AuditLogService auditLog,
             ExcelExportService excelExport,
             UserDataFilterInjector filterInjector,
-            StoredProcedureExecutor spExecutor)
+            StoredProcedureExecutor spExecutor,
+            IDashboardRenderer renderer)
         {
             _context = context;
             _auditLog = auditLog;
             _excelExport = excelExport;
             _filterInjector = filterInjector;
             _spExecutor = spExecutor;
+            _renderer = renderer;
         }
 
         private string CurrentUserName => User.Identity?.Name ?? "user";

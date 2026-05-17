@@ -141,6 +141,7 @@ builder.Services.AddHangfire(cfg => cfg
         }));
 builder.Services.AddHangfireServer();
 builder.Services.AddScoped<Mosaik.Services.DailyReminderJob>();
+builder.Services.AddScoped<Mosaik.Services.IDashboardRenderer, Mosaik.Services.DashboardRenderer>();
 
 builder.Services.AddAuthentication(options =>
     {

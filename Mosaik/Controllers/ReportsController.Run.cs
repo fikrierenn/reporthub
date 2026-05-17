@@ -190,7 +190,7 @@ namespace Mosaik.Controllers
                     }
                 }
 
-                model.DashboardRenderedHtml = DashboardRenderer.Render(
+                model.DashboardRenderedHtml = _renderer.Render(
                     dashConfig ?? new DashboardConfig(), resultSets);
 
                 await LogRun(

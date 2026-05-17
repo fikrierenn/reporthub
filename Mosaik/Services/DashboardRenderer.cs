@@ -10,11 +10,10 @@ namespace Mosaik.Services
     // TableRenderer + PlaceholderRenderer + DashboardShellRenderer). Bu dosya sadece
     // orchestration: shell → widgets → scripts → end.
     //
-    // Public API static — mevcut 9 XSS testi ve ReportsController call-site
-    // bozulmaz. DI refactor F-7'de (live preview endpoint) yapılacak.
-    public static class DashboardRenderer
+    // F-7: DI instance class (IDashboardRenderer). ReportsController inject eder.
+    public class DashboardRenderer : IDashboardRenderer
     {
-        public static string Render(DashboardConfig config, List<List<Dictionary<string, object>>> resultSets)
+        public string Render(DashboardConfig config, List<List<Dictionary<string, object>>> resultSets)
         {
             var sb = new StringBuilder();
 
