@@ -6,7 +6,7 @@
 > Tahmin etme. **Önce buraya bak.**
 
 Son elle güncelleme: **2026-05-12**
-Son otomatik refresh: <!-- AUTO:LAST_REFRESH --> 2026-05-15 <!-- /AUTO:LAST_REFRESH -->
+Son otomatik refresh: <!-- AUTO:LAST_REFRESH --> 2026-05-18 <!-- /AUTO:LAST_REFRESH -->
 
 > **Otomatik tazelenir.** `bash scripts/refresh-arch-map.sh` çalıştırılınca aşağıdaki marker'lı bölümler regenerate edilir:
 > AppModules live state (§ 7), Admin views listesi (§ 12), Controller routes (§ 13).
@@ -250,7 +250,7 @@ _Otomatik üretildi. Mosaik/Views/Admin/*.cshtml (partial hariç)._
 - `EditFilter.cshtml` (lines=57, inline-style=0)
 - `EditGroup.cshtml` (lines=85, inline-style=0)
 - `EditPosition.cshtml` (lines=144, inline-style=0)
-- `EditReportV2.cshtml` (lines=1049, inline-style=0)
+- `EditReportV2.cshtml` (lines=1054, inline-style=0)
 - `EditRole.cshtml` (lines=88, inline-style=0)
 - `EditUser.cshtml` (lines=177, inline-style=0)
 - `Index.cshtml` (lines=30, inline-style=0)
