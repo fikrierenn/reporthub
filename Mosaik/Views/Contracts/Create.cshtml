@@ -316,16 +316,23 @@
 
                 toggle() { this.open = !this.open; },
 
-                onFile(e) {
-                    this.file = e.target.files[0] || null;
+                _resetJobState() {
+                    if (this.pollTimer) { clearInterval(this.pollTimer); this.pollTimer = null; }
+                    this.jobId = null;
+                    this.uploading = false;
                     this.result = null;
                     this.errMsg = null;
                     this.riskFlags = [];
                 },
 
+                onFile(e) {
+                    this._resetJobState();
+                    this.file = e.target.files[0] || null;
+                },
+
                 onDrop(e) {
                     const f = e.dataTransfer.files[0];
-                    if (f) { this.file = f; this.result = null; this.errMsg = null; this.riskFlags = []; }
+                    if (f) { this._resetJobState(); this.file = f; }
                 },
 
                 async upload() {
@@ -358,10 +365,20 @@
                 async _poll() {
                     try {
                         const r = await fetch('/Ai/WizardStatus?jobId=' + encodeURIComponent(this.jobId));
-                        if (!r.ok) return;
+                        if (!r.ok) {
+                            // 4xx (job TTL doldu) veya 5xx — polling sonsuz devam etmesin.
+                            clearInterval(this.pollTimer);
+                            this.pollTimer = null;
+                            this.uploading = false;
+                            this.errMsg = r.status === 404
+                                ? 'İş süresi doldu (10 dk TTL).'
+                                : 'Sunucu hatası oluştu, lütfen tekrar deneyin.';
+                            return;
+                        }
                         const data = await r.json();
                         if (data.done) {
                             clearInterval(this.pollTimer);
+                            this.pollTimer = null;
                             this.uploading = false;
                             if (data.error) { this.errMsg = data.error; return; }
                             this.result = data.result;

@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Mosaik.Core.Domain;
 using Mosaik.Models;
 using Mosaik.Services;
 using static Mosaik.Services.AuditLogService;
@@ -82,7 +83,9 @@ namespace Mosaik.Controllers
 
             if (!templates.Any()) return BadRequest();
 
-            var today = DateOnly.FromDateTime(DateTime.UtcNow);
+            // İlk vade hesabı Türkiye yerel takvimine göre — UTC kullanırsak
+            // gece geç saatlerde "bugün" yanlış güne kayardı.
+            var today = BusinessClock.Today;
             var obligations = templates.Select(t =>
             {
                 // İlk vadeyi şablona göre hesapla

@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+using Mosaik.Core.Domain;
 using Mosaik.Core.Email;
 using Mosaik.Core.Notification;
 using Mosaik.Models;
@@ -38,7 +39,10 @@ namespace Mosaik.Services
 
         public async Task ExecuteAsync(CancellationToken ct = default)
         {
-            var today = DateOnly.FromDateTime(DateTime.UtcNow);
+            // Vade kıyası Türkiye yerel takvimine göre — 22:00 UTC sonrası UTC
+            // "today" Turkey'de ertesi gün, vade kıyası yanlış olurdu.
+            var today = BusinessClock.Today;
+            _logger.LogDebug("DailyReminderJob: today (Turkey local) = {Today}", today);
 
             // Pending + henüz bildirim gönderilmemiş yükümlülükler.
             // ExecuteUpdateAsync ile direkt update yapılıyor — tracker gereksiz.
