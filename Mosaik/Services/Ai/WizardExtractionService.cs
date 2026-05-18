@@ -88,6 +88,20 @@ namespace Mosaik.Services.Ai
                         "Sözleşme analiz edilirken beklenmedik bir hata oluştu. Lütfen tekrar deneyin."),
                         TimeSpan.FromMinutes(CacheTtlMinutes));
                 }
+                finally
+                {
+                    // KVKK + disk-fill koruması: PII içeren sözleşme PDF'i artık gerekli değil.
+                    // ExecuteAsync sonucu zaten cache'te, ham dosya tutmaya gerek yok.
+                    try
+                    {
+                        if (File.Exists(absoluteFilePath))
+                            File.Delete(absoluteFilePath);
+                    }
+                    catch (Exception delEx)
+                    {
+                        _logger.LogWarning(delEx, "WizardExtraction temp dosya silinemedi: {Path}", absoluteFilePath);
+                    }
+                }
             });
 
             return jobId;

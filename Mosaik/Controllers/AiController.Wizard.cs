@@ -22,10 +22,17 @@ namespace Mosaik.Controllers
             if (ext != ".pdf")
                 return BadRequest(new { error = "Sadece PDF dosyaları desteklenir." });
 
-            // Magic byte kontrolü — %PDF
+            // Magic byte kontrolü — %PDF (kısa okuma silent fail riskine karşı ReadExactlyAsync)
             var header = new byte[4];
-            using (var peek = file.OpenReadStream())
-                await peek.ReadAsync(header);
+            try
+            {
+                using var peek = file.OpenReadStream();
+                await peek.ReadExactlyAsync(header);
+            }
+            catch (EndOfStreamException)
+            {
+                return BadRequest(new { error = "Geçersiz veya bozuk PDF dosyası." });
+            }
 
             if (!header.SequenceEqual(PdfMagic))
                 return BadRequest(new { error = "Geçersiz PDF dosyası." });
@@ -45,6 +52,8 @@ namespace Mosaik.Controllers
             }
             catch (InvalidOperationException ioex)
             {
+                // Start path-traversal vs. fırlatırsa temp dosya orphan kalmasın.
+                try { if (System.IO.File.Exists(tempFile)) System.IO.File.Delete(tempFile); } catch { }
                 return BadRequest(new { error = ioex.Message });
             }
 

@@ -2,24 +2,36 @@
 -- (vergi paketi migration 49'da var; burası yeni paketler + eksik satırlar)
 
 -- Damga Vergisi (vergi paketine ekle)
-IF NOT EXISTS (SELECT 1 FROM dbo.ComplianceTemplate WHERE Title = 'Damga Vergisi Beyannamesi')
+-- Idempotency: PackageName + Title composite key (Title aynı ama farklı paketler için seperate insert garantili)
+IF NOT EXISTS (SELECT 1 FROM dbo.ComplianceTemplate WHERE PackageName = 'vergi' AND Title = 'Damga Vergisi Beyannamesi')
+BEGIN
     INSERT INTO dbo.ComplianceTemplate (PackageName, Title, Category, Type, Recurrence, DayOfMonth, MonthOfYear, ReminderDays, Description)
     VALUES ('vergi', 'Damga Vergisi Beyannamesi', 1, 1, 0, 26, NULL, 3, 'Aylık damga vergisi beyannamesi — takip eden ayın 26''sı');
+END
+GO
 
 -- KDV Tevkifat 2 No'lu
-IF NOT EXISTS (SELECT 1 FROM dbo.ComplianceTemplate WHERE Title = 'KDV Tevkifat Beyannamesi (2 No''lu)')
+IF NOT EXISTS (SELECT 1 FROM dbo.ComplianceTemplate WHERE PackageName = 'vergi' AND Title = 'KDV Tevkifat Beyannamesi (2 No''lu)')
+BEGIN
     INSERT INTO dbo.ComplianceTemplate (PackageName, Title, Category, Type, Recurrence, DayOfMonth, MonthOfYear, ReminderDays, Description)
     VALUES ('vergi', 'KDV Tevkifat Beyannamesi (2 No''lu)', 1, 1, 0, 26, NULL, 3, 'Aylık KDV tevkifat beyannamesi — takip eden ayın 26''sı');
+END
+GO
 
 -- Gelir Vergisi 2. Taksit (yıllık — beyan Mart'ta, 2. ödeme Temmuz)
-IF NOT EXISTS (SELECT 1 FROM dbo.ComplianceTemplate WHERE Title = 'Gelir Vergisi 2. Taksit Ödemesi')
+IF NOT EXISTS (SELECT 1 FROM dbo.ComplianceTemplate WHERE PackageName = 'vergi' AND Title = 'Gelir Vergisi 2. Taksit Ödemesi')
+BEGIN
     INSERT INTO dbo.ComplianceTemplate (PackageName, Title, Category, Type, Recurrence, DayOfMonth, MonthOfYear, ReminderDays, Description)
     VALUES ('vergi', 'Gelir Vergisi 2. Taksit Ödemesi', 1, 0, 2, 31, 7, 5, 'Yıllık gelir vergisi 2. taksit ödemesi — 31 Temmuz');
+END
+GO
 
 -- SGK Prim Ödemesi (ik paketine ekle — bildirge 23, ödeme 26 farklı)
-IF NOT EXISTS (SELECT 1 FROM dbo.ComplianceTemplate WHERE Title = 'SGK Prim Ödemesi')
+IF NOT EXISTS (SELECT 1 FROM dbo.ComplianceTemplate WHERE PackageName = 'ik' AND Title = 'SGK Prim Ödemesi')
+BEGIN
     INSERT INTO dbo.ComplianceTemplate (PackageName, Title, Category, Type, Recurrence, DayOfMonth, MonthOfYear, ReminderDays, Description)
     VALUES ('ik', 'SGK Prim Ödemesi', 2, 0, 0, 26, NULL, 3, 'Aylık SGK prim ödemesi — takip eden ayın 26''sı (bildirgeden ayrı)');
+END
 GO
 
 -- Motorlu Taşıtlar Vergisi paketi

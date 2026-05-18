@@ -41,7 +41,9 @@ namespace Mosaik.Services
             var today = DateOnly.FromDateTime(DateTime.UtcNow);
 
             // Pending + henüz bildirim gönderilmemiş yükümlülükler.
+            // ExecuteUpdateAsync ile direkt update yapılıyor — tracker gereksiz.
             var candidates = await _db.ContractObligations
+                .AsNoTracking()
                 .Where(o => o.Status == ObligationStatus.Pending && o.ReminderSentAt == null)
                 .ToListAsync(ct);
 
@@ -57,10 +59,21 @@ namespace Mosaik.Services
             }
 
             // Aktif kullanıcıları tek sorguda çek — FirmaIds CSV parse için in-memory filter.
-            var users = await _db.Users.AsNoTracking()
+            // Optimization: FirmaIds parse'i foreach DIŞINDA bir kez (N obligation × M user N+1 önlenir).
+            var usersRaw = await _db.Users.AsNoTracking()
                 .Where(u => u.IsActive && u.FirmaIds != null)
                 .Select(u => new { u.UserId, u.FirmaIds, u.Email, u.Username })
                 .ToListAsync(ct);
+
+            var users = usersRaw
+                .Select(u => new
+                {
+                    u.UserId,
+                    u.Email,
+                    u.Username,
+                    FirmaIds = ParseFirmaIds(u.FirmaIds!)
+                })
+                .ToList();
 
             var firmas = await _db.Firmas.AsNoTracking()
                 .Select(f => new { f.FirmaId, f.Name })
@@ -68,83 +81,93 @@ namespace Mosaik.Services
 
             int notifCount = 0;
             int emailCount = 0;
-            var processedIds = new List<int>();
+            int failedCount = 0;
 
             foreach (var obl in toNotify)
             {
-                var isOverdue = obl.DueDate < today;
-                var daysLeft = obl.DueDate.DayNumber - today.DayNumber; // negatif = gecikmiş
-                var firmaName = firmas.GetValueOrDefault(obl.FirmaId, "—");
-                var dueDateStr = obl.DueDate.ToString("dd.MM.yyyy");
-
-                // Bu firma'ya erişimi olan kullanıcılar.
-                var targetUsers = users
-                    .Where(u => ParseFirmaIds(u.FirmaIds!).Contains(obl.FirmaId))
-                    .ToList();
-
-                if (targetUsers.Count == 0)
+                // Per-obligation izolasyon: tek bir yükümlülük patladığında diğerleri devam etsin
+                // + ReminderSentAt o yükümlülüğe işlensin (batch'te tutarsak crash sonrası duplicate gönderim olur).
+                try
                 {
-                    _logger.LogDebug("DailyReminderJob: ObligationId={Id} için hedef kullanıcı yok (FirmaId={FirmaId})",
-                        obl.Id, obl.FirmaId);
-                    processedIds.Add(obl.Id);
-                    continue;
-                }
+                    var isOverdue = obl.DueDate < today;
+                    var daysLeft = obl.DueDate.DayNumber - today.DayNumber; // negatif = gecikmiş
+                    var firmaName = firmas.GetValueOrDefault(obl.FirmaId, "—");
+                    var dueDateStr = obl.DueDate.ToString("dd.MM.yyyy");
 
-                var title = isOverdue
-                    ? $"Gecikmiş yükümlülük: {obl.Title}"
-                    : $"Hatırlatma: {obl.Title} ({daysLeft} gün kaldı)";
+                    var targetUsers = users
+                        .Where(u => u.FirmaIds.Contains(obl.FirmaId))
+                        .ToList();
 
-                // In-app bildirim.
-                await _notifications.CreateBulkAsync(
-                    targetUsers.Select(u => u.UserId),
-                    entityType: "contract_obligation",
-                    entityId: obl.Id,
-                    title: title,
-                    message: $"Son tarih: {dueDateStr} · Firma: {firmaName}",
-                    targetUrl: "/Obligations",
-                    notificationType: isOverdue ? "overdue" : "reminder",
-                    createdBy: "system");
-
-                notifCount += targetUsers.Count;
-
-                // SMTP email — email adresi olan kullanıcılara.
-                if (_email.IsEnabled)
-                {
-                    foreach (var u in targetUsers.Where(u => !string.IsNullOrWhiteSpace(u.Email)))
+                    if (targetUsers.Count == 0)
                     {
-                        var body = isOverdue
-                            ? EmailTemplates.OverdueObligation(obl.Title, dueDateStr, firmaName, _smtpSettings.AppUrl)
-                            : EmailTemplates.ObligationReminder(obl.Title, dueDateStr, daysLeft, firmaName, _smtpSettings.AppUrl);
-
-                        var subject = isOverdue
-                            ? $"[Mosaik] Gecikmiş Yükümlülük: {obl.Title}"
-                            : $"[Mosaik] Yükümlülük Hatırlatması: {obl.Title}";
-
-                        var result = await _email.SendAsync(u.Email!, subject, body, ct);
-                        if (result.IsSuccess)
-                            emailCount++;
-                        else if (!result.WasSkipped)
-                            _logger.LogWarning(
-                                "DailyReminderJob: email gönderilemedi. User={User}, ObligationId={Id}, Reason={Reason}",
-                                u.Username, obl.Id, result.ErrorDetail);
+                        _logger.LogDebug("DailyReminderJob: ObligationId={Id} için hedef kullanıcı yok (FirmaId={FirmaId})",
+                            obl.Id, obl.FirmaId);
+                        await MarkReminderSentAsync(obl.Id, ct);
+                        continue;
                     }
+
+                    var title = isOverdue
+                        ? $"Gecikmiş yükümlülük: {obl.Title}"
+                        : $"Hatırlatma: {obl.Title} ({daysLeft} gün kaldı)";
+
+                    await _notifications.CreateBulkAsync(
+                        targetUsers.Select(u => u.UserId),
+                        entityType: "contract_obligation",
+                        entityId: obl.Id,
+                        title: title,
+                        message: $"Son tarih: {dueDateStr} · Firma: {firmaName}",
+                        targetUrl: "/Obligations",
+                        notificationType: isOverdue ? "overdue" : "reminder",
+                        createdBy: "system");
+
+                    notifCount += targetUsers.Count;
+
+                    if (_email.IsEnabled)
+                    {
+                        foreach (var u in targetUsers.Where(u => !string.IsNullOrWhiteSpace(u.Email)))
+                        {
+                            var body = isOverdue
+                                ? EmailTemplates.OverdueObligation(obl.Title, dueDateStr, firmaName, _smtpSettings.AppUrl)
+                                : EmailTemplates.ObligationReminder(obl.Title, dueDateStr, daysLeft, firmaName, _smtpSettings.AppUrl);
+
+                            var subject = isOverdue
+                                ? $"[Mosaik] Gecikmiş Yükümlülük: {obl.Title}"
+                                : $"[Mosaik] Yükümlülük Hatırlatması: {obl.Title}";
+
+                            var result = await _email.SendAsync(u.Email!, subject, body, ct);
+                            if (result.IsSuccess)
+                                emailCount++;
+                            else if (!result.WasSkipped)
+                                _logger.LogWarning(
+                                    "DailyReminderJob: email gönderilemedi. User={User}, ObligationId={Id}, Reason={Reason}",
+                                    u.Username, obl.Id, result.ErrorDetail);
+                        }
+                    }
+
+                    await MarkReminderSentAsync(obl.Id, ct);
                 }
-
-                processedIds.Add(obl.Id);
-            }
-
-            // ReminderSentAt toplu güncelle.
-            if (processedIds.Count > 0)
-            {
-                var now = DateTime.UtcNow;
-                await _db.ContractObligations
-                    .Where(o => processedIds.Contains(o.Id))
-                    .ExecuteUpdateAsync(s => s.SetProperty(o => o.ReminderSentAt, now), ct);
+                catch (Exception ex)
+                {
+                    failedCount++;
+                    _logger.LogError(ex,
+                        "DailyReminderJob: ObligationId={Id} işlenirken hata; sonraki yükümlülükle devam ediliyor.",
+                        obl.Id);
+                    // ReminderSentAt set ETMİYORUZ — bir sonraki çalışmada tekrar denenecek.
+                }
             }
 
             _logger.LogInformation(
-                "DailyReminderJob tamamlandı. İşlenen: {Total}, Bildirim: {Notif}, Email: {Email}",
-                processedIds.Count, notifCount, emailCount);
+                "DailyReminderJob tamamlandı. Toplam: {Total}, Bildirim: {Notif}, Email: {Email}, Hata: {Failed}",
+                toNotify.Count, notifCount, emailCount, failedCount);
+        }
+
+        // Per-obligation ReminderSentAt update — partial failure durumunda batch ezilmesin.
+        private async Task MarkReminderSentAsync(int obligationId, CancellationToken ct)
+        {
+            var now = DateTime.UtcNow;
+            await _db.ContractObligations
+                .Where(o => o.Id == obligationId)
+                .ExecuteUpdateAsync(s => s.SetProperty(o => o.ReminderSentAt, now), ct);
         }
 
         private static IReadOnlySet<int> ParseFirmaIds(string csv)
