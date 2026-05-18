@@ -138,6 +138,11 @@ namespace Mosaik.Controllers
                     StartDate = model.StartDate,
                     EndDate = model.EndDate,
                     Notes = model.Notes,
+                    ContractValue = model.ContractValue,
+                    Currency = string.IsNullOrWhiteSpace(model.Currency) ? "TRY" : model.Currency,
+                    GoverningLaw = model.GoverningLaw,
+                    AutoRenewal = model.AutoRenewal,
+                    KvkkInvolved = model.KvkkInvolved,
                     CreatedAt = now,
                     CreatedBy = username
                 };

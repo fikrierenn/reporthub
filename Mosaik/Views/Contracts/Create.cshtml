@@ -170,6 +170,41 @@
                 <textarea class="inp" id="Notes" name="Notes" rows="3" maxlength="2000"
                           placeholder="İsteğe bağlı notlar...">@Model.Notes</textarea>
             </div>
+
+            @* === AI wizard'ın çıkardığı opsiyonel alanlar === *@
+            <div class="form-grid-2">
+                <div class="field">
+                    <label class="lab" for="ContractValue">Sözleşme Bedeli</label>
+                    <input class="inp" type="number" step="0.01" id="ContractValue" name="ContractValue"
+                           value="@(Model.ContractValue?.ToString(System.Globalization.CultureInfo.InvariantCulture))"
+                           placeholder="0,00" />
+                </div>
+                <div class="field">
+                    <label class="lab" for="Currency">Para Birimi</label>
+                    <input class="inp" id="Currency" name="Currency" maxlength="8"
+                           value="@(Model.Currency ?? "TRY")" />
+                </div>
+            </div>
+
+            <div class="field">
+                <label class="lab" for="GoverningLaw">Geçerli Hukuk / Tahkim</label>
+                <input class="inp" id="GoverningLaw" name="GoverningLaw" maxlength="200"
+                       value="@Model.GoverningLaw"
+                       placeholder="Türk Hukuku / İstanbul Tahkim" />
+            </div>
+
+            <div class="form-grid-2">
+                <label class="field-check">
+                    <input type="checkbox" id="AutoRenewal" name="AutoRenewal" value="true"
+                           @(Model.AutoRenewal == true ? "checked" : "") />
+                    Otomatik yenileme maddesi var
+                </label>
+                <label class="field-check">
+                    <input type="checkbox" id="KvkkInvolved" name="KvkkInvolved" value="true"
+                           @(Model.KvkkInvolved == true ? "checked" : "") />
+                    KVKK / kişisel veri işleme içerir
+                </label>
+            </div>
         </div>
     </div>
 
@@ -337,9 +372,13 @@
 
                 async upload() {
                     if (!this.file) return;
-                    this.uploading = true;
-                    this.errMsg = null;
+                    // Önceki iş açıksa temizle (dosyayı koru — kullanıcı tekrar göndermek istiyor).
+                    if (this.pollTimer) { clearInterval(this.pollTimer); this.pollTimer = null; }
                     this.jobId = null;
+                    this.result = null;
+                    this.errMsg = null;
+                    this.riskFlags = [];
+                    this.uploading = true;
 
                     const fd = new FormData();
                     fd.append('file', this.file);
@@ -391,6 +430,7 @@
                     if (!this.result) return;
                     const r = this.result;
                     const set = (id, val) => { if (val != null) { const el = document.getElementById(id); if (el) el.value = val; } };
+                    const check = (id, val) => { if (val != null) { const el = document.getElementById(id); if (el) el.checked = !!val; } };
                     set('Title', r.title);
                     set('Counterparty', r.counterparty);
                     set('Category', r.category);
@@ -399,6 +439,8 @@
                     set('Notes', r.notes);
                     set('ContractValue', r.contractValue);
                     set('GoverningLaw', r.governingLaw);
+                    check('AutoRenewal', r.autoRenewal);
+                    check('KvkkInvolved', r.kvkkInvolved);
                     this.riskFlags = Array.isArray(r.riskFlags) ? r.riskFlags : [];
                 }
             };

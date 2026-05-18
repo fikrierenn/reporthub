@@ -26,6 +26,19 @@ namespace Mosaik.ViewModels
         [MaxLength(2000)]
         public string? Notes { get; set; }
 
+        // AI wizard çıkardığı alanlar — opsiyonel.
+        public decimal? ContractValue { get; set; }
+
+        [MaxLength(8)]
+        public string? Currency { get; set; } = "TRY";
+
+        [MaxLength(200)]
+        public string? GoverningLaw { get; set; }
+
+        public bool? AutoRenewal { get; set; }
+
+        public bool? KvkkInvolved { get; set; }
+
         // Boş liste → recurring üretim yok. Liste varsa generator devreye girer.
         public List<RecurringObligationInput> Recurrences { get; set; } = new();
     }

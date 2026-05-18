@@ -30,6 +30,19 @@ namespace Mosaik.Models
         [MaxLength(2000)]
         public string? Notes { get; set; }
 
+        // Plan 33 — AI wizard çıkardığı alanlar (migration 61).
+        public decimal? ContractValue { get; set; }
+
+        [MaxLength(8)]
+        public string? Currency { get; set; }
+
+        [MaxLength(200)]
+        public string? GoverningLaw { get; set; }
+
+        public bool? AutoRenewal { get; set; }
+
+        public bool? KvkkInvolved { get; set; }
+
         // Nav properties — [ValidateNever] + [BindNever]: form bind etmez, validator non-nullable
         // reference type için implicit required üretmez.
         [BindNever, ValidateNever]
