@@ -119,6 +119,23 @@ echo "- TODO MEDIUM open: $medium_count"
 
 echo ""
 
+# Son tur ozetleri (cavemem-inspired turn-log)
+TURN_LOG="$HOME/.claude/projects/D--Dev-reporthub/turn-log.jsonl"
+if [ -f "$TURN_LOG" ] && [ -s "$TURN_LOG" ]; then
+    echo "### Son tur ozetleri"
+    tail -5 "$TURN_LOG" | node -e "
+const lines = require('fs').readFileSync('/dev/stdin','utf8').trim().split('\n');
+for (const l of lines) {
+  try {
+    const d = JSON.parse(l);
+    const ts = (d.ts||'').slice(0,16).replace('T',' ');
+    console.log('- [' + ts + '] ' + (d.summary||''));
+  } catch(_) {}
+}
+" 2>/dev/null
+    echo ""
+fi
+
 echo "### En son journal girdisi"
 last_journal=$(ls -t docs/journal/*.md 2>/dev/null | head -1)
 if [ -n "$last_journal" ]; then
