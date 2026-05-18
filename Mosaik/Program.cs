@@ -68,6 +68,12 @@ builder.Services.AddScoped<Mosaik.Core.Ai.ILlmService, Mosaik.Services.Ai.Fallba
 
 // Plan 16.5 Faz A+B — Mosaik.Core
 builder.Services.AddMemoryCache();
+
+// Türkiye yerel saat dilimi — startup'ta fail-fast (UTC silent fallback yapma).
+// IBusinessClock üzerinden tüm vade/iş günü kıyaslamaları çalışır.
+var turkeyTz = Mosaik.Core.Domain.SystemBusinessClock.ResolveTurkeyTimeZone();
+builder.Services.AddSingleton<Mosaik.Core.Domain.IBusinessClock>(
+    new Mosaik.Core.Domain.SystemBusinessClock(turkeyTz));
 builder.Services.AddScoped<Mosaik.Services.ApprovalService>();
 builder.Services.AddScoped<Mosaik.Services.LookupService>();
 builder.Services.AddScoped<Mosaik.Core.Lookup.ILookupService>(

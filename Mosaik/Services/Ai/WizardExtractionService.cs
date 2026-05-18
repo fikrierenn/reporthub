@@ -51,7 +51,10 @@ namespace Mosaik.Services.Ai
             // Wizard endpoint (Faz 2) bu service'e contractFile'ın disk path'ini geçer.
             // Arbitrary path geçilirse exfil riski (AI provider'a base64 dosya yüklenir).
             var fullPath = Path.GetFullPath(absoluteFilePath);
-            var allowedRoot = Path.GetFullPath(Path.Combine(_env.ContentRootPath, "App_Data"));
+            // Trailing separator zorunlu — aksi halde "App_Data" prefix'i "App_DataX/" gibi
+            // sibling dizini de kabul ederdi (defense-in-depth).
+            var allowedRoot = Path.GetFullPath(Path.Combine(_env.ContentRootPath, "App_Data"))
+                + Path.DirectorySeparatorChar;
             if (!fullPath.StartsWith(allowedRoot, StringComparison.OrdinalIgnoreCase))
             {
                 _logger.LogWarning("WizardExtraction.Start path traversal blocked: {Path}", fullPath);

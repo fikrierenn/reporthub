@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Mosaik.Core.Domain;
 using Mosaik.Models;
 using Mosaik.Services;
+using Mosaik.Services.Compliance;
 using static Mosaik.Services.AuditLogService;
 
 namespace Mosaik.Controllers
@@ -14,11 +15,13 @@ namespace Mosaik.Controllers
         private readonly MosaikContext _db;
         private readonly ICurrentUserService _currentUser;
         private readonly AuditLogService _auditLog;
+        private readonly IBusinessClock _clock;
 
-        public ComplianceController(MosaikContext db, ICurrentUserService currentUser, AuditLogService auditLog)
+        public ComplianceController(MosaikContext db, ICurrentUserService currentUser, AuditLogService auditLog, IBusinessClock clock)
         {
             _db = db;
             _currentUser = currentUser;
+            _clock = clock;
             _auditLog = auditLog;
         }
 
@@ -85,45 +88,18 @@ namespace Mosaik.Controllers
 
             // İlk vade hesabı Türkiye yerel takvimine göre — UTC kullanırsak
             // gece geç saatlerde "bugün" yanlış güne kayardı.
-            var today = BusinessClock.Today;
-            var obligations = templates.Select(t =>
+            var today = _clock.Today;
+            var obligations = templates.Select(t => new ContractObligation
             {
-                // İlk vadeyi şablona göre hesapla
-                var due = t.Recurrence switch
-                {
-                    RecurrenceType.Monthly or RecurrenceType.Quarterly or RecurrenceType.Custom
-                        => t.DayOfMonth.HasValue
-                            ? new DateOnly(today.Year, today.Month, Math.Min(t.DayOfMonth.Value, DateTime.DaysInMonth(today.Year, today.Month)))
-                            : today.AddMonths(1),
-                    RecurrenceType.Yearly => (t.DayOfMonth.HasValue && t.MonthOfYear.HasValue)
-                        ? new DateOnly(today.Year, t.MonthOfYear.Value, Math.Min(t.DayOfMonth.Value, DateTime.DaysInMonth(today.Year, t.MonthOfYear.Value)))
-                        : today.AddYears(1),
-                    _ => today.AddMonths(1)
-                };
-                if (due <= today) due = due.AddMonths(
-                    t.Recurrence == RecurrenceType.Quarterly ? 3 :
-                    t.Recurrence == RecurrenceType.Yearly    ? 12 : 1);
-
-                // Hafta sonu → Pazartesi
-                due = due.DayOfWeek switch
-                {
-                    DayOfWeek.Saturday => due.AddDays(2),
-                    DayOfWeek.Sunday   => due.AddDays(1),
-                    _                  => due
-                };
-
-                return new ContractObligation
-                {
-                    FirmaId      = firmaId,
-                    Title        = t.Title,
-                    Category     = t.Category,
-                    Type         = t.Type,
-                    DueDate      = due,
-                    Status       = ObligationStatus.Pending,
-                    Source       = ObligationSource.Manual,
-                    ReminderDays = t.ReminderDays,
-                    Notes        = t.Description
-                };
+                FirmaId      = firmaId,
+                Title        = t.Title,
+                Category     = t.Category,
+                Type         = t.Type,
+                DueDate      = ComplianceDueCalculator.ComputeFirstDue(t, today),
+                Status       = ObligationStatus.Pending,
+                Source       = ObligationSource.Manual,
+                ReminderDays = t.ReminderDays,
+                Notes        = t.Description
             }).ToList();
 
             _db.ContractObligations.AddRange(obligations);

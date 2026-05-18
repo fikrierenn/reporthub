@@ -3,28 +3,45 @@ using System;
 namespace Mosaik.Core.Domain
 {
     // Türkiye yerel takvimine göre "bugün" hesabı. Sunucu UTC çalıştığında
-    // 22:00 UTC sonrasında "Today" Turkey'de zaten yarın olur — vade/iş günü
+    // 22:00 UTC sonrasında "Today" Turkey'de ertesi gün olur — vade/iş günü
     // karşılaştırmaları bunu yanlış yapar. Tüm reminder/compliance/calendar
-    // karşılaştırmaları bu helper üzerinden geçer.
+    // karşılaştırmaları IBusinessClock üzerinden geçer.
     //
     // Not: timestamp alanları (CreatedAt, ReminderSentAt vb.) UTC olarak
     // saklanmaya devam eder — bu helper sadece tarih kıyaslamaları için.
-    public static class BusinessClock
+    public interface IBusinessClock
     {
-        // Windows/Linux farkı: Windows "Turkey Standard Time", IANA "Europe/Istanbul".
-        private static readonly TimeZoneInfo TurkeyTz = ResolveTurkeyTz();
+        DateTime NowLocal { get; }
+        DateOnly Today { get; }
+        TimeZoneInfo TimeZone { get; }
+    }
 
-        private static TimeZoneInfo ResolveTurkeyTz()
+    public sealed class SystemBusinessClock : IBusinessClock
+    {
+        private readonly TimeZoneInfo _tz;
+
+        public SystemBusinessClock(TimeZoneInfo timeZone)
         {
-            try { return TimeZoneInfo.FindSystemTimeZoneById("Turkey Standard Time"); }
-            catch (TimeZoneNotFoundException) { }
-            try { return TimeZoneInfo.FindSystemTimeZoneById("Europe/Istanbul"); }
-            catch (TimeZoneNotFoundException) { }
-            return TimeZoneInfo.Utc; // son çare — log eden yer geçici sapma görür
+            _tz = timeZone ?? throw new ArgumentNullException(nameof(timeZone));
         }
 
-        public static DateTime NowLocal => TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, TurkeyTz);
+        public DateTime NowLocal => TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, _tz);
+        public DateOnly Today => DateOnly.FromDateTime(NowLocal);
+        public TimeZoneInfo TimeZone => _tz;
 
-        public static DateOnly Today => DateOnly.FromDateTime(NowLocal);
+        // Resolver — Program.cs startup'ta çağrılır. Windows/Linux farkı:
+        // Windows "Turkey Standard Time", IANA "Europe/Istanbul". İkisi de bulunamazsa
+        // exception fırlatır — silent UTC fallback yapma (configuration hatasını gizler).
+        public static TimeZoneInfo ResolveTurkeyTimeZone()
+        {
+            foreach (var id in new[] { "Turkey Standard Time", "Europe/Istanbul" })
+            {
+                try { return TimeZoneInfo.FindSystemTimeZoneById(id); }
+                catch (TimeZoneNotFoundException) { /* try next */ }
+            }
+            throw new InvalidOperationException(
+                "Türkiye saat dilimi bulunamadı (denenen: 'Turkey Standard Time', 'Europe/Istanbul'). " +
+                "Sunucuda tzdata eksik olabilir — yapılandırmayı kontrol edin.");
+        }
     }
 }

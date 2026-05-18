@@ -21,6 +21,7 @@ namespace Mosaik.Services
         private readonly INotificationService _notifications;
         private readonly IEmailService _email;
         private readonly SmtpSettings _smtpSettings;
+        private readonly IBusinessClock _clock;
         private readonly ILogger<DailyReminderJob> _logger;
 
         public DailyReminderJob(
@@ -28,12 +29,14 @@ namespace Mosaik.Services
             INotificationService notifications,
             IEmailService email,
             IOptions<SmtpSettings> smtpOptions,
+            IBusinessClock clock,
             ILogger<DailyReminderJob> logger)
         {
             _db = db;
             _notifications = notifications;
             _email = email;
             _smtpSettings = smtpOptions.Value;
+            _clock = clock;
             _logger = logger;
         }
 
@@ -41,7 +44,7 @@ namespace Mosaik.Services
         {
             // Vade kıyası Türkiye yerel takvimine göre — 22:00 UTC sonrası UTC
             // "today" Turkey'de ertesi gün, vade kıyası yanlış olurdu.
-            var today = BusinessClock.Today;
+            var today = _clock.Today;
             _logger.LogDebug("DailyReminderJob: today (Turkey local) = {Today}", today);
 
             // Pending + henüz bildirim gönderilmemiş yükümlülükler.
