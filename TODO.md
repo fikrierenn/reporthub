@@ -27,12 +27,13 @@ Build: 0 hata 0 uyarı. Test: **337/337 geçti** (test-discipline.md kanıtland�
 
 #### Plan 33 Faz 2 — Modül tamamlama (~37-50 saat) ⏳ SIRADA
 
-- [ ] **C-01** DailyReminderJob (3-4h) — Calendar + Compliance + Notification + Plan 31 caller
-- [ ] **C-02** Plan 22 Holidays (10-14h) — Holiday/HolidayOccurrence/ImportantDate entity + vw_CalendarUnified view + EventSource enum + filter chip (ADR-016 önce)
-- [ ] **C-03** Notification cross-modül caller'lar (4-6h) — Obligation due-date + Tamim Faz H hatırlatma cron 09:00 + Plan 32
+- [x] **C-01** DailyReminderJob ✅ 2026-05-15 — `Services/DailyReminderJob.cs` + Program.cs cron 09:00, daysLeft sign fix 2026-05-18
+- [x] **C-02** Plan 22 Holidays ✅ 2026-05-17 — entity + migration 58/59 + vw_CalendarUnified (SQL fix 2026-05-18) + CalendarController + filter chip
+- [x] **C-03** TamimReminderJob ✅ 2026-05-17 — commit 37b6de0, Circular module 09:00 cron, AuditLog-based read tracking
 - [ ] **C-04** AI Wizard Faz 1 tamamla (8-10h) — WizardStart/Status endpoint + UI + BUGFIX-4 üzerine
-- [ ] **C-05** ContractsController partial split (1h) — Files.cs + Ai.cs
-- [ ] **C-06** ObligationsController.Edit (2h)
+- [x] **C-05** ContractsController partial split ✅ (önceden yapılmıştı) — Files.cs + Ai.cs + partial keyword mevcut
+- [x] **C-06** ObligationsController.Edit ✅ 2026-05-17 — commit 3a28fa0
+- [x] **ADR-016** Calendar Unified Event Source ✅ 2026-05-17 — commit d32ffd3, `docs/ADR/016-calendar-unified-event-source.md`
 - [ ] **C-07** Plan 27 Faz A eksikleri (4-6h) — ContractExtractionValidator + Stage 3 + 10 field prompt
 - [ ] **C-08** Plan 25.1 Faz 5+6 (5-7h) — Queue migration + admin inline style + smoke + hook enable
 
