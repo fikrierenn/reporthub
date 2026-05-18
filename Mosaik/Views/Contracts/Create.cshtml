@@ -47,6 +47,60 @@
         <input type="hidden" name="FirmaId" value="@Model.FirmaId" />
     }
 
+    @* === AI Destekli Doldur === *@
+    <div class="form-section-card split" x-data="wizardPanel()">
+        <div class="form-section-head" role="button" tabindex="0"
+             @@click="toggle()" @@keydown.enter="toggle()" @@keydown.space.prevent="toggle()"
+             :aria-expanded="open.toString()">
+            <span><i class="fas fa-robot text-[11px]"></i> AI Destekli Doldur</span>
+            <span class="text-xs text-muted" x-show="!open">PDF yükle, alanları otomatik doldur</span>
+            <i class="fas fa-chevron-down text-[10px] ml-auto" :class="open ? 'fa-rotate-180' : ''"></i>
+        </div>
+        <div class="form-section-body" x-show="open" x-cloak>
+            <p class="help-text">PDF sözleşmeyi yükleyin — AI başlık, taraf, tarih ve kategoriyi otomatik çıkarsın. İstediğiniz alanları düzenleyebilirsiniz.</p>
+
+            <div class="upload-zone" @@dragover.prevent @@drop.prevent="onDrop($event)">
+                <div class="upload-icon"><i class="fas fa-file-pdf"></i></div>
+                <div class="upload-title" x-text="file ? file.name : 'PDF seçin veya buraya sürükleyin'"></div>
+                <div class="upload-sub" x-show="!file">Maks. 30 MB</div>
+                <input type="file" id="wizardFile" accept=".pdf" class="upload-input"
+                       @@change="onFile($event)" :disabled="uploading" />
+            </div>
+
+            <div class="action-row" x-show="file && !uploading && !result">
+                <button type="button" class="btn primary" @@click="upload()">
+                    <i class="fas fa-magic text-[10px]"></i> AI ile Doldur
+                </button>
+            </div>
+
+            <div class="alert warn" role="status" x-show="uploading" x-cloak>
+                <i class="fas fa-spinner fa-spin text-[11px]"></i>
+                <span x-text="jobId ? 'Analiz ediliyor...' : 'Yükleniyor...'"></span>
+            </div>
+
+            <div class="alert success" role="status" x-show="result && !errMsg" x-cloak>
+                <i class="fas fa-check-circle text-[11px]"></i> Alanlar dolduruldu. İnceleyip düzenleyebilirsiniz.
+                <button type="button" class="btn sm" @@click="populate()">Tekrar Uygula</button>
+            </div>
+
+            <template x-if="riskFlags.length > 0">
+                <div class="alert warn" role="alert">
+                    <strong><i class="fas fa-triangle-exclamation text-[11px]"></i> Hukuki Risk Uyarıları</strong>
+                    <ul class="risk-flag-list">
+                        <template x-for="flag in riskFlags" :key="flag">
+                            <li x-text="flag"></li>
+                        </template>
+                    </ul>
+                </div>
+            </template>
+
+            <div class="alert error" role="alert" x-show="errMsg" x-cloak>
+                <i class="fas fa-exclamation-circle text-[11px]"></i>
+                <span x-text="errMsg"></span>
+            </div>
+        </div>
+    </div>
+
     @* === Temel Bilgiler === *@
     <div class="form-section-card split">
         <div class="form-section-head">Temel Bilgiler</div>
@@ -249,6 +303,90 @@
 
 @section Scripts {
     <script>
+        function wizardPanel() {
+            return {
+                open: false,
+                file: null,
+                uploading: false,
+                jobId: null,
+                pollTimer: null,
+                result: null,
+                errMsg: null,
+                riskFlags: [],
+
+                toggle() { this.open = !this.open; },
+
+                onFile(e) {
+                    this.file = e.target.files[0] || null;
+                    this.result = null;
+                    this.errMsg = null;
+                    this.riskFlags = [];
+                },
+
+                onDrop(e) {
+                    const f = e.dataTransfer.files[0];
+                    if (f) { this.file = f; this.result = null; this.errMsg = null; this.riskFlags = []; }
+                },
+
+                async upload() {
+                    if (!this.file) return;
+                    this.uploading = true;
+                    this.errMsg = null;
+                    this.jobId = null;
+
+                    const fd = new FormData();
+                    fd.append('file', this.file);
+                    const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+                    fd.append('__RequestVerificationToken', token);
+
+                    try {
+                        const r = await fetch('/Ai/WizardStart', { method: 'POST', body: fd });
+                        const data = await r.json();
+                        if (!r.ok) {
+                            this.errMsg = data.error || 'Yükleme başarısız.';
+                            this.uploading = false;
+                            return;
+                        }
+                        this.jobId = data.jobId;
+                        this.pollTimer = setInterval(() => this._poll(), 2000);
+                    } catch {
+                        this.errMsg = 'Ağ hatası oluştu.';
+                        this.uploading = false;
+                    }
+                },
+
+                async _poll() {
+                    try {
+                        const r = await fetch('/Ai/WizardStatus?jobId=' + encodeURIComponent(this.jobId));
+                        if (!r.ok) return;
+                        const data = await r.json();
+                        if (data.done) {
+                            clearInterval(this.pollTimer);
+                            this.uploading = false;
+                            if (data.error) { this.errMsg = data.error; return; }
+                            this.result = data.result;
+                            this.populate();
+                        }
+                    } catch { /* network transient, retry next tick */ }
+                },
+
+                populate() {
+                    if (!this.result) return;
+                    const r = this.result;
+                    const set = (id, val) => { if (val != null) { const el = document.getElementById(id); if (el) el.value = val; } };
+                    set('Title', r.title);
+                    set('Counterparty', r.counterparty);
+                    set('Category', r.category);
+                    set('StartDate', r.startDate);
+                    set('EndDate', r.endDate);
+                    set('Notes', r.notes);
+                    set('ContractValue', r.contractValue);
+                    set('GoverningLaw', r.governingLaw);
+                    this.riskFlags = Array.isArray(r.riskFlags) ? r.riskFlags : [];
+                }
+            };
+        }
+
         function recurringPanel() {
             return {
                 items: [],

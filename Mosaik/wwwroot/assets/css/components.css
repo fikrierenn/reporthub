@@ -666,6 +666,7 @@ select.inp {
 .alert.error, .alert.danger { background: rgba(220, 38, 38, 0.08); border: 1px solid rgba(220, 38, 38, 0.25); color: #991b1b; }
 .alert .alert-link { color: inherit; text-decoration: underline; font-weight: 600; }
 .alert .alert-link:hover { text-decoration: none; }
+.risk-flag-list { margin: 6px 0 0 16px; padding: 0; list-style: disc; font-size: 12.5px; }
 
 /* Button modifier (AI buton — Contracts/Details.cshtml) */
 .btn.tertiary { background: var(--violet-soft, #f3e8ff); color: var(--violet, #7c3aed); border-color: var(--violet-border, #ddd6fe); }

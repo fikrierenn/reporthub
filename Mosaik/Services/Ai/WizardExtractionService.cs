@@ -205,29 +205,52 @@ namespace Mosaik.Services.Ai
         }
 
         private const string WizardJsonShape = @"
-**ÇIKTI ŞEMASI (zorunlu):**
+**ÇIKTI ŞEMASI (zorunlu — geçersiz JSON üretme):**
 {
   ""title"": ""string|null"",
   ""counterparty"": ""string|null"",
-  ""category"": 0,                  // 0=Lease, 1=Service, 2=Supply, 3=Employment, 4=License, 5=Insurance, 6=Other
+  ""category"": 0,
   ""startDate"": ""YYYY-MM-DD|null"",
   ""endDate"": ""YYYY-MM-DD|null"",
   ""notes"": ""string|null"",
+  ""contractValue"": 0.00,
+  ""governingLaw"": ""string|null"",
+  ""autoRenewal"": false,
+  ""kvkkInvolved"": false,
+  ""riskFlags"": [],
   ""obligations"": [
     {
       ""title"": ""Aylık Kira"",
       ""amount"": 5000.00,
       ""currency"": ""TRY"",
       ""isRecurring"": true,
-      ""recurrenceType"": 0,         // 0=Monthly, 1=Quarterly, 2=Yearly, 3=Custom
+      ""recurrenceType"": 0,
       ""dayOfMonth"": 5,
       ""monthOfYear"": null,
-      ""dueDate"": null,             // tek seferlikse ""YYYY-MM-DD""
+      ""dueDate"": null,
       ""notes"": null
     }
   ]
 }
-Tüm alanlar opsiyonel; emin olmadıklarını null bırak. Halüsinasyon yapma.
+
+Alan açıklamaları:
+- category: 0=Kira, 1=Hizmet, 2=Tedarik, 3=İş, 4=Lisans, 5=Sigorta, 6=Diğer
+- recurrenceType: 0=Aylık, 1=Çeyreklik, 2=Yıllık, 3=Özel
+- contractValue: TL bedel (bulunursa); bulunamazsa null
+- governingLaw: 'Türk Hukuku / İstanbul Tahkim' gibi; null bırakılabilir
+- autoRenewal: sözleşmede otomatik uzama/yenileme maddesi var mı
+- kvkkInvolved: kişisel veri işleme, aktarım veya KVKK uyum maddesi var mı
+- riskFlags: aşağıdaki durumları tespit edersen Türkçe uyarı metni ekle:
+    * Tek taraflı fesih hakkı sadece karşı tarafta ise: 'Tek taraflı fesih hakkı karşı tarafa tanınmış'
+    * Cezai şart veya tazminat üst sınırı yoksa: 'Cezai şart üst sınırı belirsiz (TBK m.182)'
+    * Sınırsız sorumluluk / hasar üst limiti yoksa: 'Sorumluluk sınırı tanımlanmamış'
+    * Otomatik yenileme fark edilirse ve kısa ihbar süresi varsa: 'Otomatik yenileme — ihbar süresi kısa'
+    * Fikri mülkiyet devri tek taraflı ve geniş kapsamlıysa: 'Fikri mülkiyet hakkı geniş devir maddesi'
+    * Gizlilik süresi belirsiz veya süresizse: 'Gizlilik yükümlülüğü süresi belirsiz'
+    * Tahkim yeri yurt dışı ise: 'Yurt dışı tahkim şartı'
+    * Kişisel veri işleme ama DPA/imzalı veri işleme sözleşmesi yoksa: 'KVKK veri işleme eki eksik olabilir'
+
+Emin olmadıklarını null bırak. Halüsinasyon yapma. Sadece JSON döndür — başka metin ekleme.
 ";
 
         private WizardExtractionResult ParseResult(string rawJson)
@@ -278,6 +301,12 @@ Tüm alanlar opsiyonel; emin olmadıklarını null bırak. Halüsinasyon yapma.
                     }
                 }
 
+                var riskFlags = new List<string>();
+                if (root.TryGetProperty("riskFlags", out var flagArr) && flagArr.ValueKind == JsonValueKind.Array)
+                    foreach (var f in flagArr.EnumerateArray())
+                        if (f.ValueKind == JsonValueKind.String && !string.IsNullOrWhiteSpace(f.GetString()))
+                            riskFlags.Add(f.GetString()!);
+
                 return new WizardExtractionResult(
                     Title: GetStr(root, "title"),
                     Counterparty: GetStr(root, "counterparty"),
@@ -285,7 +314,12 @@ Tüm alanlar opsiyonel; emin olmadıklarını null bırak. Halüsinasyon yapma.
                     StartDate: GetStr(root, "startDate"),
                     EndDate: GetStr(root, "endDate"),
                     Notes: GetStr(root, "notes"),
-                    Obligations: obligations);
+                    Obligations: obligations,
+                    ContractValue: GetDec(root, "contractValue"),
+                    GoverningLaw: GetStr(root, "governingLaw"),
+                    AutoRenewal: GetBool(root, "autoRenewal"),
+                    KvkkInvolved: GetBool(root, "kvkkInvolved"),
+                    RiskFlags: riskFlags.Count > 0 ? riskFlags : null);
             }
         }
 

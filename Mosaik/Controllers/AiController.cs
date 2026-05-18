@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Mosaik.Models;
@@ -10,12 +11,14 @@ using static Mosaik.Services.AuditLogService;
 namespace Mosaik.Controllers
 {
     [Authorize]
-    public class AiController : Controller
+    public partial class AiController : Controller
     {
         private readonly MosaikContext _db;
         private readonly ICurrentUserService _currentUser;
         private readonly AiPipelineQueue _queue;
         private readonly AuditLogService _auditLog;
+        private readonly WizardExtractionService _wizard;
+        private readonly IWebHostEnvironment _env;
         private readonly ILogger<AiController> _logger;
 
         public AiController(
@@ -23,12 +26,16 @@ namespace Mosaik.Controllers
             ICurrentUserService currentUser,
             AiPipelineQueue queue,
             AuditLogService auditLog,
+            WizardExtractionService wizard,
+            IWebHostEnvironment env,
             ILogger<AiController> logger)
         {
             _db = db;
             _currentUser = currentUser;
             _queue = queue;
             _auditLog = auditLog;
+            _wizard = wizard;
+            _env = env;
             _logger = logger;
         }
 

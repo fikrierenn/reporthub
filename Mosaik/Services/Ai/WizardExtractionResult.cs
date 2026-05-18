@@ -10,7 +10,12 @@ namespace Mosaik.Services.Ai
         string? StartDate,     // ISO yyyy-MM-dd veya null
         string? EndDate,
         string? Notes,
-        IReadOnlyList<WizardObligationSuggestion>? Obligations
+        IReadOnlyList<WizardObligationSuggestion>? Obligations,
+        decimal? ContractValue,                    // sözleşme bedeli (TL)
+        string? GoverningLaw,                      // yargı yeri / uygulanacak hukuk
+        bool? AutoRenewal,                         // otomatik yenileme maddesi var mı
+        bool? KvkkInvolved,                        // kişisel veri işleme içeriyor mu
+        IReadOnlyList<string>? RiskFlags           // tespit edilen hukuki risk uyarıları
     );
 
     public sealed record WizardObligationSuggestion(
