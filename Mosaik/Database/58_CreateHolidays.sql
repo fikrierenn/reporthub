@@ -28,7 +28,7 @@ CREATE INDEX IX_HolidayOccurrences_Date ON HolidayOccurrences(Date);
 -- 3. ImportantDates (firma-level custom events)
 CREATE TABLE ImportantDates (
     Id           INT IDENTITY(1,1) PRIMARY KEY,
-    FirmaId      INT NOT NULL REFERENCES Firmas(Id) ON DELETE RESTRICT,
+    FirmaId      INT NOT NULL REFERENCES Firmas(FirmaId) ON DELETE NO ACTION,
     Title        NVARCHAR(200) NOT NULL,
     EventDate    DATE NOT NULL,
     Notes        NVARCHAR(500) NULL,
@@ -65,7 +65,7 @@ SELECT
     co.ReminderDays,
     NULL
 FROM ContractObligations co
-WHERE co.Status IN ('Pending','InProgress') AND co.DueDate >= DATEADD(year, -1, GETDATE())
+WHERE co.Status IN (0, 2) AND co.DueDate >= DATEADD(year, -1, GETDATE())  -- 0=Pending, 2=Overdue
 UNION ALL
 -- Resmi tatiller (FirmaId = 0 = sistem geneli, tüm firmalar görür)
 SELECT
