@@ -38,6 +38,7 @@ namespace Mosaik.Controllers
         }
 
         // GET /Compliance/Preview/{package}
+        [HttpGet("Compliance/Preview/{package}")]
         public async Task<IActionResult> Preview(string package)
         {
             if (string.IsNullOrWhiteSpace(package)) return BadRequest();
@@ -87,15 +88,26 @@ namespace Mosaik.Controllers
                 // İlk vadeyi şablona göre hesapla
                 var due = t.Recurrence switch
                 {
-                    RecurrenceType.Monthly => t.DayOfMonth.HasValue
-                        ? new DateOnly(today.Year, today.Month, Math.Min(t.DayOfMonth.Value, DateTime.DaysInMonth(today.Year, today.Month)))
-                        : today.AddMonths(1),
+                    RecurrenceType.Monthly or RecurrenceType.Quarterly or RecurrenceType.Custom
+                        => t.DayOfMonth.HasValue
+                            ? new DateOnly(today.Year, today.Month, Math.Min(t.DayOfMonth.Value, DateTime.DaysInMonth(today.Year, today.Month)))
+                            : today.AddMonths(1),
                     RecurrenceType.Yearly => (t.DayOfMonth.HasValue && t.MonthOfYear.HasValue)
                         ? new DateOnly(today.Year, t.MonthOfYear.Value, Math.Min(t.DayOfMonth.Value, DateTime.DaysInMonth(today.Year, t.MonthOfYear.Value)))
                         : today.AddYears(1),
                     _ => today.AddMonths(1)
                 };
-                if (due <= today) due = due.AddMonths(1);
+                if (due <= today) due = due.AddMonths(
+                    t.Recurrence == RecurrenceType.Quarterly ? 3 :
+                    t.Recurrence == RecurrenceType.Yearly    ? 12 : 1);
+
+                // Hafta sonu → Pazartesi
+                due = due.DayOfWeek switch
+                {
+                    DayOfWeek.Saturday => due.AddDays(2),
+                    DayOfWeek.Sunday   => due.AddDays(1),
+                    _                  => due
+                };
 
                 return new ContractObligation
                 {

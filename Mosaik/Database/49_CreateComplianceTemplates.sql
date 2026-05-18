@@ -29,10 +29,16 @@ IF NOT EXISTS (SELECT 1 FROM dbo.ComplianceTemplate WHERE PackageName = 'vergi')
 BEGIN
     INSERT INTO dbo.ComplianceTemplate (PackageName, Title, Category, Type, Recurrence, DayOfMonth, MonthOfYear, ReminderDays, Description)
     VALUES
-    ('vergi', 'KDV Beyannamesi',            1, 1, 0, 26, NULL, 5,  'Aylık KDV beyannamesi gönderimi'),
-    ('vergi', 'Muhtasar Beyannamesi',       1, 1, 0, 26, NULL, 5,  'Aylık muhtasar ve prim hizmetleri beyannamesi'),
-    ('vergi', 'Kurumlar Vergisi Beyanı',    1, 1, 2, 25, 4,    14, 'Yıllık kurumlar vergisi beyannamesi (Nisan)'),
-    ('vergi', 'Geçici Vergi Beyannamesi',   1, 1, 1, 17, NULL, 7,  'Çeyreklik geçici vergi beyannamesi'),
+    -- KDV: takip eden ayın 28'i (VUK Md.41)
+    ('vergi', 'KDV Beyannamesi',            1, 1, 0, 28, NULL, 5,  'Aylık KDV beyannamesi — takip eden ayın 28''i'),
+    -- Muhtasar: takip eden ayın 26'sı
+    ('vergi', 'Muhtasar Beyannamesi',       1, 1, 0, 26, NULL, 5,  'Aylık muhtasar ve prim hizmetleri beyannamesi — takip eden ayın 26''sı'),
+    -- Kurumlar Vergisi: 30 Nisan (yıllık)
+    ('vergi', 'Kurumlar Vergisi Beyanı',    1, 1, 2, 30, 4,    14, 'Yıllık kurumlar vergisi beyannamesi — 30 Nisan'),
+    -- Gelir Vergisi: 31 Mart (yıllık, gerçek kişi)
+    ('vergi', 'Gelir Vergisi Beyannamesi',  1, 1, 2, 31, 3,    14, 'Yıllık gelir vergisi beyannamesi — 31 Mart'),
+    -- Geçici Vergi: dönem+2. ayın 17'si (Q1→17 Mayıs, Q2→17 Ağustos, Q3→17 Kasım); hafta sonu → ertesi iş günü
+    ('vergi', 'Geçici Vergi Beyannamesi',   1, 1, 1, 17, NULL, 7,  'Çeyreklik geçici vergi beyannamesi — dönem+2. ayın 17''si'),
     ('ik',    'SGK Aylık Bildirgesi',       2, 2, 0, 23, NULL, 5,  'Aylık SGK prim bildirgesi gönderimi'),
     ('ik',    'İşe Giriş / Çıkış Bildirimi',2,2, 0, NULL,NULL, 1,  'Personel değişikliklerinde SGK bildirimi'),
     ('ik',    'Yıllık İzin Takibi',         2, 2, 2, 1,  1,    30, 'Yıllık izin hakları güncellenmesi'),
