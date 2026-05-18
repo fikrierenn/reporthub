@@ -26,8 +26,9 @@ public class ContractObligationGeneratorTests
             input, input.StartDate!.Value, input.EndDate!.Value);
 
         Assert.Equal(12, dueDates.Count);
+        // 5 Ocak 2026 = Pazartesi (kayma yok), 5 Aralık 2026 = Cumartesi → 7 Aralık (Pazartesi)
         Assert.Equal(new DateOnly(2026, 1, 5), dueDates[0]);
-        Assert.Equal(new DateOnly(2026, 12, 5), dueDates[11]);
+        Assert.Equal(new DateOnly(2026, 12, 7), dueDates[11]);
     }
 
     [Fact]
@@ -46,9 +47,10 @@ public class ContractObligationGeneratorTests
             input, input.StartDate!.Value, input.EndDate!.Value);
 
         Assert.Equal(4, dueDates.Count);
+        // 26 Oca/Nis/Tem/Eki 2026 hafta sonu kontrolü: 26 Nisan = Pazar → 27 Nisan (Pazartesi)
         Assert.Equal(new DateOnly(2026, 1, 26), dueDates[0]);
-        Assert.Equal(new DateOnly(2026, 4, 26), dueDates[1]);
-        Assert.Equal(new DateOnly(2026, 7, 26), dueDates[2]);
+        Assert.Equal(new DateOnly(2026, 4, 27), dueDates[1]);
+        Assert.Equal(new DateOnly(2026, 7, 27), dueDates[2]);
         Assert.Equal(new DateOnly(2026, 10, 26), dueDates[3]);
     }
 
@@ -90,8 +92,9 @@ public class ContractObligationGeneratorTests
             input, input.StartDate!.Value, input.EndDate!.Value);
 
         Assert.Equal(3, dueDates.Count);
+        // 5 Şubat 2026 = Perşembe; 5 Nisan 2026 = Pazar → 6 Nisan (Pazartesi)
         Assert.Equal(new DateOnly(2026, 2, 5), dueDates[0]);
-        Assert.Equal(new DateOnly(2026, 4, 5), dueDates[2]);
+        Assert.Equal(new DateOnly(2026, 4, 6), dueDates[2]);
     }
 
     [Fact]

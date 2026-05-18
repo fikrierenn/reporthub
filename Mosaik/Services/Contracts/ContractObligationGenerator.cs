@@ -157,11 +157,17 @@ namespace Mosaik.Services.Contracts
             return SafeDate(next.Year, next.Month, dayOfMonth);
         }
 
-        // Şubat 31 → Şubat 28/29 cap.
+        // Şubat 31 → Şubat 28/29 cap + hafta sonu → Pazartesi.
         private static DateOnly SafeDate(int year, int month, int day)
         {
             var maxDay = DateTime.DaysInMonth(year, month);
-            return new DateOnly(year, month, Math.Min(day, maxDay));
+            var date = new DateOnly(year, month, Math.Min(day, maxDay));
+            return date.DayOfWeek switch
+            {
+                DayOfWeek.Saturday => date.AddDays(2),
+                DayOfWeek.Sunday   => date.AddDays(1),
+                _                  => date
+            };
         }
 
         private static int NormalizeInterval(RecurrenceType type, int requested) =>
