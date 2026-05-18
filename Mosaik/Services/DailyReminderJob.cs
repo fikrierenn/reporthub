@@ -92,7 +92,7 @@ namespace Mosaik.Services
 
                 var title = isOverdue
                     ? $"Gecikmiş yükümlülük: {obl.Title}"
-                    : $"Hatırlatma: {obl.Title} ({-daysLeft} gün kaldı)";
+                    : $"Hatırlatma: {obl.Title} ({daysLeft} gün kaldı)";
 
                 // In-app bildirim.
                 await _notifications.CreateBulkAsync(
@@ -114,7 +114,7 @@ namespace Mosaik.Services
                     {
                         var body = isOverdue
                             ? EmailTemplates.OverdueObligation(obl.Title, dueDateStr, firmaName, _smtpSettings.AppUrl)
-                            : EmailTemplates.ObligationReminder(obl.Title, dueDateStr, -daysLeft, firmaName, _smtpSettings.AppUrl);
+                            : EmailTemplates.ObligationReminder(obl.Title, dueDateStr, daysLeft, firmaName, _smtpSettings.AppUrl);
 
                         var subject = isOverdue
                             ? $"[Mosaik] Gecikmiş Yükümlülük: {obl.Title}"
