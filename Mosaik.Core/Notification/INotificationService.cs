@@ -27,5 +27,10 @@ namespace Mosaik.Core.Notification
 
         // Kullanıcının tüm bildirimlerini okundu işaretle.
         Task<int> MarkAllAsReadAsync(int userId);
+
+        // N-1 Hibrit: ExternalKey bazlı dedup ile toplu bildirim. Var olanları atlar.
+        Task<int> CreateBulkIfNotExistsAsync(string externalKeyPrefix, IEnumerable<int> userIds,
+            string entityType, int? entityId, string title, string? message,
+            string? targetUrl, string? notificationType, string? createdBy);
     }
 }

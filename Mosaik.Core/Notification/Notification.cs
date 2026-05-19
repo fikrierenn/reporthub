@@ -40,5 +40,10 @@ namespace Mosaik.Core.Notification
         public bool IsRead { get; set; } = false;
 
         public DateTime? ReadAt { get; set; }
+
+        // N-1 Hibrit idempotency — caller-defined dedup key (örn. "obligation_reminder:42:20260519").
+        // Filtered unique index: NULL ise eşsizlik kontrolü dışında tutulur.
+        [MaxLength(256)]
+        public string? ExternalKey { get; set; }
     }
 }

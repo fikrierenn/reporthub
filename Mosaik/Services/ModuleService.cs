@@ -10,6 +10,8 @@ namespace Mosaik.Services
         private readonly IServiceScopeFactory _scopeFactory;
         private readonly ILogger<ModuleService> _logger;
         private List<AppModule>? _cache;
+        // N-2: moduleKey → izinli roller. Boş set yoksa (key yok) = herkese açık.
+        private Dictionary<string, HashSet<string>>? _roleCache;
         private DateTime _cacheExpiry = DateTime.MinValue;
         private static readonly TimeSpan CacheTtl = TimeSpan.FromMinutes(5);
 
@@ -43,6 +45,17 @@ namespace Mosaik.Services
                 var db = scope.ServiceProvider.GetRequiredService<MosaikContext>();
                 var modules = await db.AppModules.AsNoTracking().OrderBy(m => m.SortOrder).ToListAsync();
                 _cache = modules.Count > 0 ? modules : DefaultModules;
+
+                // N-2: ModuleRoleAccess cache — moduleKey → izinli roller kümesi
+                var roleRows = await db.ModuleRoleAccess.AsNoTracking()
+                    .Select(r => new { r.ModuleId, r.RoleName })
+                    .ToListAsync();
+                var keyById = _cache.ToDictionary(m => m.ModuleId, m => m.ModuleKey);
+                _roleCache = roleRows
+                    .Where(r => keyById.ContainsKey(r.ModuleId))
+                    .GroupBy(r => keyById[r.ModuleId])
+                    .ToDictionary(g => g.Key, g => g.Select(r => r.RoleName).ToHashSet(StringComparer.OrdinalIgnoreCase));
+
                 _cacheExpiry = DateTime.UtcNow.Add(CacheTtl);
                 return _cache;
             }
@@ -59,6 +72,18 @@ namespace Mosaik.Services
             return _cache.Any(m => m.ModuleKey == moduleKey && m.IsEnabled);
         }
 
-        public void Invalidate() => _cache = null;
+        // N-2: Kayıt yoksa (herkese açık modül) → true. Kayıt varsa → role listede mi?
+        public bool IsAccessibleForRole(string moduleKey, string roleName)
+        {
+            if (_roleCache == null) return true; // cache yüklenmemiş → deny-safe olmaması için açık bırak
+            if (!_roleCache.TryGetValue(moduleKey, out var roles)) return true; // kısıtlama yok
+            return roles.Contains(roleName);
+        }
+
+        public void Invalidate()
+        {
+            _cache = null;
+            _roleCache = null;
+        }
     }
 }

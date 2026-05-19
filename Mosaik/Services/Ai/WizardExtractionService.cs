@@ -15,6 +15,9 @@ namespace Mosaik.Services.Ai
     {
         private const int CacheTtlMinutes = 10;
         private const int MaxRawTextChars = 12000;
+        // N-3: Per-user concurrent job sınırı. userId=0 → anonim/sistem (kısıtlanmaz).
+        private const int MaxConcurrentJobsPerUser = 2;
+        private readonly System.Collections.Concurrent.ConcurrentDictionary<int, int> _activeJobs = new();
 
         private readonly IMemoryCache _cache;
         private readonly IPdfTextExtractor _pdfExtractor;
@@ -45,7 +48,8 @@ namespace Mosaik.Services.Ai
         public sealed record JobStatus(bool Done, WizardExtractionResult? Result, string? Error);
 
         // Yeni iş kuyruğa atar, jobId döner. Frontend GetStatus ile polling yapar.
-        public string Start(string absoluteFilePath, string mimeType)
+        // userId > 0 ise per-user concurrent limit uygulanır (MaxConcurrentJobsPerUser).
+        public string Start(string absoluteFilePath, string mimeType, int userId = 0)
         {
             // H-5 hardening — defense-in-depth path validation.
             // Wizard endpoint (Faz 2) bu service'e contractFile'ın disk path'ini geçer.
@@ -59,6 +63,16 @@ namespace Mosaik.Services.Ai
             {
                 _logger.LogWarning("WizardExtraction.Start path traversal blocked: {Path}", fullPath);
                 throw new InvalidOperationException("Geçersiz dosya yolu.");
+            }
+
+            // N-3: Per-user rate limit
+            if (userId > 0)
+            {
+                var current = _activeJobs.GetOrAdd(userId, 0);
+                if (current >= MaxConcurrentJobsPerUser)
+                    throw new InvalidOperationException(
+                        $"Aynı anda en fazla {MaxConcurrentJobsPerUser} analiz başlatılabilir. Lütfen mevcut işlemin tamamlanmasını bekleyin.");
+                _activeJobs.AddOrUpdate(userId, 1, (_, c) => c + 1);
             }
 
             var jobId = Guid.NewGuid().ToString("N");
@@ -93,6 +107,10 @@ namespace Mosaik.Services.Ai
                 }
                 finally
                 {
+                    // N-3: Rate limit counter'ı serbest bırak
+                    if (userId > 0)
+                        _activeJobs.AddOrUpdate(userId, 0, (_, c) => Math.Max(0, c - 1));
+
                     // KVKK + disk-fill koruması: PII içeren sözleşme PDF'i artık gerekli değil.
                     // ExecuteAsync sonucu zaten cache'te, ham dosya tutmaya gerek yok.
                     try

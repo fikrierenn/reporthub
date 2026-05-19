@@ -130,5 +130,48 @@ namespace Mosaik.Services
             if (unread.Count > 0) await _context.SaveChangesAsync();
             return unread.Count;
         }
+
+        public async Task<int> CreateBulkIfNotExistsAsync(string externalKeyPrefix, IEnumerable<int> userIds,
+            string entityType, int? entityId, string title, string? message,
+            string? targetUrl, string? notificationType, string? createdBy)
+        {
+            var safeUrl = SanitizeTargetUrl(targetUrl, entityType);
+            var now = DateTime.UtcNow;
+            var distinctIds = userIds.Distinct().ToList();
+            if (distinctIds.Count == 0) return 0;
+
+            // Var olan ExternalKey'leri tek sorguda bul — N+1 önlemi.
+            var keys = distinctIds.Select(uid => $"{externalKeyPrefix}:{uid}").ToList();
+            var existing = await _context.Notifications.AsNoTracking()
+                .Where(n => n.ExternalKey != null && keys.Contains(n.ExternalKey))
+                .Select(n => n.ExternalKey!)
+                .ToHashSetAsync();
+
+            var toInsert = distinctIds
+                .Select(uid => new { uid, key = $"{externalKeyPrefix}:{uid}" })
+                .Where(x => !existing.Contains(x.key))
+                .Select(x => new Mosaik.Core.Notification.Notification
+                {
+                    UserId = x.uid,
+                    EntityType = entityType,
+                    EntityId = entityId,
+                    Title = title,
+                    Message = message,
+                    TargetUrl = safeUrl,
+                    NotificationType = notificationType,
+                    CreatedAt = now,
+                    CreatedBy = createdBy,
+                    ExternalKey = x.key
+                }).ToList();
+
+            if (toInsert.Count == 0) return 0;
+
+            _context.Notifications.AddRange(toInsert);
+            await _context.SaveChangesAsync();
+            _logger.LogInformation(
+                "NotificationService bulk-if-not-exists: {Insert} eklendi, {Skip} atlandı. Prefix={Prefix}",
+                toInsert.Count, distinctIds.Count - toInsert.Count, externalKeyPrefix);
+            return toInsert.Count;
+        }
     }
 }

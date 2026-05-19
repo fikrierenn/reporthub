@@ -45,10 +45,11 @@ namespace Mosaik.Controllers
             using (var fs = System.IO.File.Create(tempFile))
                 await file.CopyToAsync(fs);
 
+            var userId = int.TryParse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var uid) ? uid : 0;
             string jobId;
             try
             {
-                jobId = _wizard.Start(tempFile, "application/pdf");
+                jobId = _wizard.Start(tempFile, "application/pdf", userId);
             }
             catch (InvalidOperationException ioex)
             {

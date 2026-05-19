@@ -1,5 +1,6 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.EntityFrameworkCore;
 using Mosaik.Models;
 using Mosaik.Services;
@@ -13,12 +14,27 @@ namespace Mosaik.Controllers
         private readonly MosaikContext _db;
         private readonly ICurrentUserService _currentUser;
         private readonly AuditLogService _auditLog;
+        private readonly IModuleService _modules;
 
-        public ObligationsController(MosaikContext db, ICurrentUserService currentUser, AuditLogService auditLog)
+        public ObligationsController(MosaikContext db, ICurrentUserService currentUser, AuditLogService auditLog, IModuleService modules)
         {
             _db = db;
             _currentUser = currentUser;
             _auditLog = auditLog;
+            _modules = modules;
+        }
+
+        // N-2: DB-driven modül yetki kontrolü
+        public override async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
+        {
+            await _modules.GetAllAsync();
+            var role = User.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.Role)?.Value ?? "";
+            if (!_modules.IsAccessibleForRole("obligations", role))
+            {
+                context.Result = Forbid();
+                return;
+            }
+            await next();
         }
 
         private IReadOnlyList<int> AccessibleFirmaIds => _currentUser.FirmaIds;
@@ -324,3 +340,4 @@ namespace Mosaik.Controllers
         }
     }
 }
+

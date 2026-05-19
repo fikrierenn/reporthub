@@ -117,7 +117,11 @@ namespace Mosaik.Services
                         ? $"Gecikmiş yükümlülük: {obl.Title}"
                         : $"Hatırlatma: {obl.Title} ({daysLeft} gün kaldı)";
 
-                    await _notifications.CreateBulkAsync(
+                    // N-1 Hibrit: ExternalKey ile dedup — aynı yükümlülük + gün kombinasyonu
+                    // için tekrar bildirim oluşturulmaz (job iki kez çalışsa bile).
+                    var externalKeyPrefix = $"obligation_{(isOverdue ? "overdue" : "reminder")}:{obl.Id}:{today:yyyyMMdd}";
+                    await _notifications.CreateBulkIfNotExistsAsync(
+                        externalKeyPrefix,
                         targetUsers.Select(u => u.UserId),
                         entityType: "contract_obligation",
                         entityId: obl.Id,

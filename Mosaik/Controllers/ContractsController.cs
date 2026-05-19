@@ -1,5 +1,6 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.EntityFrameworkCore;
 using Mosaik.Models;
 using Mosaik.Services;
@@ -18,6 +19,7 @@ namespace Mosaik.Controllers
         private readonly IWebHostEnvironment _env;
         private readonly AuditLogService _auditLog;
         private readonly ILogger<ContractsController> _logger;
+        private readonly IModuleService _modules;
 
         public ContractsController(
             MosaikContext db,
@@ -25,7 +27,8 @@ namespace Mosaik.Controllers
             AiPipelineQueue queue,
             IWebHostEnvironment env,
             AuditLogService auditLog,
-            ILogger<ContractsController> logger)
+            ILogger<ContractsController> logger,
+            IModuleService modules)
         {
             _db = db;
             _currentUser = currentUser;
@@ -33,6 +36,20 @@ namespace Mosaik.Controllers
             _env = env;
             _auditLog = auditLog;
             _logger = logger;
+            _modules = modules;
+        }
+
+        // N-2: DB-driven modül yetki kontrolü
+        public override async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
+        {
+            await _modules.GetAllAsync();
+            var role = User.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.Role)?.Value ?? "";
+            if (!_modules.IsAccessibleForRole("contracts", role))
+            {
+                context.Result = Forbid();
+                return;
+            }
+            await next();
         }
 
         // Erişilebilir firma ID'leri. 0 öğe = modül kapalı.
@@ -308,3 +325,4 @@ namespace Mosaik.Controllers
         }
     }
 }
+

@@ -108,6 +108,7 @@ builder.Services.AddScoped<Mosaik.Services.Ai.DocumentInsightService>();
 // Plan 27 Faz B-05 — single-doc chat (RAG'siz, token <30K direkt z.ai context).
 builder.Services.AddScoped<Mosaik.Services.Ai.DocumentChatService>();
 builder.Services.AddHostedService<Mosaik.Services.Ai.AiExtractionWorker>();
+builder.Services.AddHostedService<Mosaik.Services.WizardTempCleanupService>(); // N-3
 
 // Plan 25 AI Wizard — vision provider + extraction service (Faz 1).
 // Plan 25.1 hardening (file serving + queue migration) bekliyor.

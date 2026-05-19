@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.EntityFrameworkCore;
 using Mosaik.Core.Domain;
 using Mosaik.Models;
@@ -16,13 +17,28 @@ namespace Mosaik.Controllers
         private readonly ICurrentUserService _currentUser;
         private readonly AuditLogService _auditLog;
         private readonly IBusinessClock _clock;
+        private readonly IModuleService _modules;
 
-        public ComplianceController(MosaikContext db, ICurrentUserService currentUser, AuditLogService auditLog, IBusinessClock clock)
+        public ComplianceController(MosaikContext db, ICurrentUserService currentUser, AuditLogService auditLog, IBusinessClock clock, IModuleService modules)
         {
             _db = db;
             _currentUser = currentUser;
             _clock = clock;
             _auditLog = auditLog;
+            _modules = modules;
+        }
+
+        // N-2: DB-driven modül yetki kontrolü — ModuleRoleAccess tablosundan.
+        public override async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
+        {
+            await _modules.GetAllAsync();
+            var role = User.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.Role)?.Value ?? "";
+            if (!_modules.IsAccessibleForRole("compliance", role))
+            {
+                context.Result = Forbid();
+                return;
+            }
+            await next();
         }
 
         private IReadOnlyList<int> FirmaIds => _currentUser.FirmaIds;

@@ -26,6 +26,7 @@ namespace Mosaik.Models
         public DbSet<FilterDefinition> FilterDefinitions { get; set; }
         public DbSet<BrandSettings> BrandSettings { get; set; }
         public DbSet<AppModule> AppModules { get; set; }
+        public DbSet<ModuleRoleAccess> ModuleRoleAccess { get; set; }
         public DbSet<AiSettings> AiSettings { get; set; }
 
         // Plan 16.5 Faz A — Workflow primitives
