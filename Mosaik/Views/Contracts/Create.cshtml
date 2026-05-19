@@ -79,7 +79,10 @@
             </div>
 
             <div class="alert success" role="status" x-show="result && !errMsg" x-cloak>
-                <i class="fas fa-check-circle text-[11px]"></i> Alanlar dolduruldu. İnceleyip düzenleyebilirsiniz.
+                <i class="fas fa-check-circle text-[11px]"></i>
+                <span x-text="result && result.obligations && result.obligations.length > 0
+                    ? 'Alanlar dolduruldu — ' + result.obligations.length + ' yükümlülük önerisi eklendi.'
+                    : 'Alanlar dolduruldu. İnceleyip düzenleyebilirsiniz.'"></span>
                 <button type="button" class="btn sm" @@click="populate()">Tekrar Uygula</button>
             </div>
 
@@ -210,7 +213,8 @@
 
     @* === Periyodik Yükümlülükler (kira, stopaj, KDV vb.) === *@
     <div class="form-section-card split"
-         x-data="recurringPanel()">
+         x-data="recurringPanel()"
+         @@wizard-obligations.window="applyObligations($event.detail.obligations)">
         <div class="form-section-head form-section-head--with-action">
             <span>Periyodik Yükümlülükler</span>
             <button type="button" class="btn sm" @@click="addItem()">
@@ -442,6 +446,8 @@
                     check('AutoRenewal', r.autoRenewal);
                     check('KvkkInvolved', r.kvkkInvolved);
                     this.riskFlags = Array.isArray(r.riskFlags) ? r.riskFlags : [];
+                    if (Array.isArray(r.obligations) && r.obligations.length > 0)
+                        this.$dispatch('wizard-obligations', { obligations: r.obligations });
                 }
             };
         }
@@ -451,22 +457,33 @@
                 items: [],
                 addItem() {
                     this.items.push({
-                        title: '',
-                        type: '0',
-                        category: '0',
-                        amount: '',
-                        currency: 'TRY',
-                        recurrenceType: '0',
-                        intervalValue: 1,
-                        dayOfMonth: 1,
-                        monthOfYear: 1,
-                        startDate: '',
-                        endDate: '',
-                        notes: ''
+                        title: '', type: '0', category: '0', amount: '', currency: 'TRY',
+                        recurrenceType: '0', intervalValue: 1, dayOfMonth: 1, monthOfYear: 1,
+                        startDate: '', endDate: '', notes: '', fromAi: false
                     });
                 },
-                removeItem(i) {
-                    this.items.splice(i, 1);
+                removeItem(i) { this.items.splice(i, 1); },
+                // AI wizard'dan gelen öneri listesini uygular.
+                // fromAi:true olanları değiştirir, manuel eklenenleri korur.
+                applyObligations(obligations) {
+                    this.items = this.items.filter(x => !x.fromAi);
+                    for (const o of obligations) {
+                        this.items.push({
+                            title: o.title || '',
+                            type: o.isRecurring ? '0' : '4',
+                            category: '0',
+                            amount: o.amount != null ? String(o.amount) : '',
+                            currency: o.currency || 'TRY',
+                            recurrenceType: o.isRecurring ? String(o.recurrenceType ?? 0) : '0',
+                            intervalValue: 1,
+                            dayOfMonth: o.dayOfMonth ?? 1,
+                            monthOfYear: o.monthOfYear ?? 1,
+                            startDate: o.dueDate || '',
+                            endDate: '',
+                            notes: o.notes || '',
+                            fromAi: true
+                        });
+                    }
                 }
             };
         }
