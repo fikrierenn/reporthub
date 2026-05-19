@@ -2,7 +2,7 @@
 
 **Statü:** Canlı belge. Yön kararları burada yaşar — implementasyon detayı `plans/NN-*.md`'de, kararın gerekçesi `docs/ADR/`'da. Bu dosya **ne** ve **neden** sorularını cevaplar; **nasıl** sorusu plana havale edilir.
 
-**Son güncelleme:** 2026-05-14 (analiz oturumu).
+**Son güncelleme:** 2026-05-20 (7 platform araştırması + stratejik vizyon genişlemesi).
 
 ---
 
@@ -210,7 +210,293 @@ Hafta 10+:  Form/Anket (integrate karar), Documents iki-plan çakışmasını ç
 
 ---
 
-## 7. Cross-reference
+## 7. Büyük Vizyon — Operational Intelligence Platform
+
+### 7.0 Asıl Problem Nedir?
+
+Şirketlerde **bilgi eksikliği** yok. Problem şu:
+
+> **Şirketler düşünemiyor.**
+
+Çünkü:
+- Bilgi parçalı (ERP'de, Slack'te, Excel'de, kafada)
+- Kararlar görünmez (kim, ne zaman, neden, sonucu ne?)
+- Operasyon reaktif (sorun çıkınca fark ediliyor)
+- **İnsan süreç taşıyor, sistem taşımıyor**
+
+ERP kayıt tutar. Ticket sistemi iş takip eder. Slack konuşma depolar. Ama hiçbiri şirketin **çalışma modelini** göremez, ölçemez, iyileştiremez.
+
+### 7.0.1 Mosaik'in Büyük Oyunu
+
+```
+"Operational Intelligence Layer"
+
+ERP'nin üstüne oturan:
+→ düşünen
+→ ilişki kuran
+→ öneren
+→ orchestration yapan
+katman.
+```
+
+**Slogan:** *"See how your company actually works."*
+
+Şirketlerin çoğu süreçlerini bilmiyor. Darboğazlarını bilmiyor. Karar maliyetlerini bilmiyor. Operasyonel sürtünmeyi ölçemiyor. Burada gerçek ürün fırsatı var — portal değil, **Operational Intelligence Platform**.
+
+Celonis bu sorunu $5-10M lisans bedeline çözüyor. Mosaik bunu 200-300 kişilik şirket için affordable ve self-hosted yapabilir.
+
+---
+
+### 7.1 Living Organization Map
+
+Sadece org chart değil — şirketin **canlı haritası**:
+
+```
+İnsan → Süreç → Karar → KPI → Workflow → Risk → Maliyet → Doküman
+```
+
+Hepsi bağlı. Örnek görünüm:
+> Bir satın alma talebi gecikti.
+> Mosaik: "Ahmet üzerinde 17 approval var. Bu süreçte SLA aşımı %42. Finans overload. Aynı vendor son 3 süreçte de gecikmiş."
+
+Bu **organizational observability**. ERP bunu yapamaz.
+
+**Teknik temel:**
+- `EntityRelations { SourceType, SourceId, RelationType, TargetType, TargetId, Weight, ValidFrom, ValidTo }`
+- SQL Server recursive CTE ile N-hop traversal (3-hop yeterli 200 kişilik şirkette)
+- **Visualization:** Cytoscape.js (MIT, vanilla JS, ADR-014 uyumlu) — Linkurious/Neo4j Bloom $50K+ lisans, Mosaik'e uygunsuz
+- "Overloaded kişi" → kırmızı node (`task_count > threshold`), "geciken süreç" → kalın kenar (`weight`)
+- Timeline slider: `ValidFrom/ValidTo` ile herhangi bir tarihe snapshot
+
+### 7.2 Decision Memory Engine
+
+Şirketler aynı kararları tekrar tekrar alır. Mosaik her kararı saklar:
+
+```
+Karar
+→ neden alındı (Rationale)
+→ kim aldı (UserId)
+→ reddedilen alternatifler (JSON)
+→ beklenen sonuç
+→ gerçekleşen sonuç (sonradan girilir)
+→ KPI etkisi: { metric: "approval_time", before: 8, after: 3, unit: "days" }
+```
+
+AI şunu söyleyebilir: *"Bu karar modeli geçen yıl maliyet artışına yol açmıştı."*
+
+İşte burada **kurumsal hafıza** oluşur. RAG: geçmiş kararlar embedding'lenir, yeni karar bağlamında semantik arama.
+
+```sql
+DecisionLog { Id, FirmaId, Title, Rationale, MadeBy, MadeAt,
+              AlternativesConsidered (JSON), ExpectedOutcome, ActualOutcome,
+              KpiImpact (JSON), RelatedEntityType, RelatedEntityId,
+              Status (Active | Superseded | Reversed) }
+```
+
+### 7.3 Organizational Digital Twin
+
+*"Bu approval katmanını kaldırırsak ne olur?"*
+
+Gerçek simülasyon değil — **deterministik what-if**:
+```sql
+-- Mevcut: tüm adımların ortalama süresi
+AVG(DATEDIFF(HOUR, EnteredAt, ExitedAt)) FROM WorkflowInstanceLogs
+
+-- What-if: LegalApproval adımını çıkar, kalan adımların toplamı
+-- → Kullanıcıya: "Bu adımı kaldırırsanız cycle time 8.2 gün → 5.1 güne iner"
+```
+
+MVP bu kadar yeterli. Monte carlo simülasyonu ileride.
+
+### 7.4 Friction Heatmap
+
+Şirket içi sürtünme haritası — ERP bunu yapamaz:
+
+- En yavaş süreçler (adım bazlı `AVG bekleme`)
+- En çok bekleten kişiler (overload detection)
+- Approval bottleneck'leri (step SLA aşımı)
+- **Ping-pong detection:** aynı item 2+ kez aynı kişiye döner
+- Ticket bounce: aynı varlık 3+ kez farklı departmana geçer
+
+```sql
+-- Ping-pong: aynı InstanceId'de aynı AssignedToId 2+ kez gelir
+SELECT InstanceId, AssignedToId, COUNT(*) AS Appearances
+FROM WorkflowInstanceLogs
+GROUP BY InstanceId, AssignedToId
+HAVING COUNT(*) > 1
+```
+
+Anomali tespiti: `PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY DurationHours)` — medyanın 2x üzeri outlier.
+
+### 7.5 AI COO (Operasyon Copilotu)
+
+Doğal dil ile operasyonel sorular:
+- *"Son 30 gündeki darboğazları özetle."*
+- *"Hangi süreçleri otomasyona almalıyız?"*
+- *"En çok yönetici bağımlılığı olan süreçler?"*
+- *"Bu ay hangi sözleşmeler bitiyor?"*
+- *"Ali Bey bu ay kaç onay görevi aldı?"*
+
+Mimari: **NL-to-Tool** (NL-to-SQL değil — güvenlik sınırı korunur):
+```
+Soru → IntentClassifier (LLM) → ToolRouter
+     → getOverdueObligations | getBottlenecks | getDepartmentLoad | summarizeDecisions
+     → FallbackLlmService → Yanıt + kaynak citation
+```
+
+UserDataFilter her tool çağrısında enjekte edilir — AI firma sınırını asla geçemez.
+
+### 7.6 Work Graph
+
+Şirket departman değil, **iş ağıdır**:
+
+```
+people ↔ work ↔ decisions ↔ systems
+```
+
+LinkedIn Economic Graph'ın şirket içi versiyonu. Her düğüm: Person, Task, Contract, Document, SOP, Decision. Her kenar: manages, owns, signed, blocked_by, derived_from, applies_to.
+
+Atlassian Teamwork Graph 150 milyar bağlantıyı (node, edge, weight, timestamp) dörtlüsü ile yönetiyor. Mosaik'te aynı mantık 200 kişilik şirkette `EntityRelations` tablosuyla çalışır.
+
+### 7.7 Autonomous Operations
+
+Fatura senaryosu:
+```
+Fatura geldi
+→ AI sınıflandırdı (AiExtractionWorker — MEVCUT)
+→ Risk analizi (VendorHistory tablosu — YOK, eklenmeli)
+→ Vendor geçmişi kontrolü (aynı vendor geçmişte gecikmiş mi?)
+→ Onay akışını optimize etti (Plan 36 WorkflowEngine — GELECEK)
+→ Anormallik yoksa: otomatik işle
+→ Anormallik varsa: escalation (EscalationRule — §7 Oturum 2)
+```
+
+İnsan sadece exception handling yapar. Mosaik'in mevcut altyapısı (AiExtractionWorker + Plan 36) bu pipeline'ın %60'ını zaten karşılıyor.
+
+Eksik: `VendorRiskProfile { VendorId, DelayCount, AvgDelayDays, LastAnomalyAt }` + basit `DecisionRule { Condition, Action }` kural tablosu.
+
+### 7.8 Invisible ERP Layer
+
+Kimse ERP kullanmak istemiyor. Mosaik SAP/Logo/Netsis/Mikro/Excel/Mail **üstünde** çalışan görünmez katman:
+
+- Kullanıcı ERP'ye girmez — Mosaik'e girer
+- ERP'den veri çeken connectorlar (webhook veya DB polling)
+- n8n pattern: Logo Tiger webhook trigger → Mosaik Hangfire job
+- Türk ERP: Logo GO/Tiger REST API var; Netsis web service tabanlı
+
+Bu katman kurulduğunda Mosaik artık "portal" değil, **operasyonel merkez** olur.
+
+---
+
+### 7.9 Stratejik Faz Planı
+
+**Faz 1 — "Visible" (Mevcut çalışmalar):** İnsanların gördüklerini görünür yapma. Reports, Dashboard, Contracts, SOP, Workflow. *"Neye sahibiz?"* sorusunu cevaplar.
+
+**Faz 2 — "Measurable" (~2026 Q3-Q4):** Süreçleri ölçme. Friction Heatmap, WorkflowInstanceLogs, Org Intelligence dashboard. *"Nasıl çalışıyoruz?"* sorusunu cevaplar.
+
+**Faz 3 — "Intelligent" (~2027):** AI COO, Decision Memory, Work Graph, what-if simülasyonu. *"Nasıl daha iyi çalışabiliriz?"* sorusunu cevaplar.
+
+**Faz 4 — "Autonomous" (uzun vade):** Autonomous Operations, Invisible ERP connectorları. *"Sistem kendisi optimize edebilir mi?"* sorusunu cevaplar.
+
+---
+
+## 8. Yeni Vizyon Katmanları — 2026-05-20 Genişlemesi
+
+7 platform araştırması (Backstage, Appsmith, NocoBase, n8n, Twenty CRM, Plane, FlowiseAI) + stratejik konsept analizi (Unified Inbox, AI Danışman, Company Memory, Org Intelligence, Dynamic Dashboard, No-excuse Platform) sonucunda aşağıdaki katmanlar Mosaik vizyonuna eklendi.
+
+### 7.1 Unified Action Inbox — Plan 37 (yeni)
+
+Tek `/Inbox` sayfasında tüm aksiyon gerektiren öğeler. **Aksiyon ≠ Bildirim** ayrımı kritik — pasif log sidebar'da, Inbox sadece "senin yapman gereken".
+
+```
+InboxItem { UserId, Type, EntityType, EntityId, Priority, DueAt, IsRead, IsDone, Reason }
+Type: Approval | Task | Alert | AIRecommendation | KPIAlert | Mention | Deadline
+Reason: "assigned" | "mentioned" | "approval_required" | "deadline_approaching"
+```
+
+**IInboxProvider** interface — her modül kendi item'larını Inbox'a bildirir (ContractApprovalInboxProvider, ObligationDeadlineInboxProvider, AIRecommendationInboxProvider). Plan 36 Faz A tamamlanmadan Plan 37 başlamaz (ApprovalRequest entity bağımlılığı).
+
+UX: keyboard-first (`j/k/Space`), "neden buradasın" chip, optimistic done + undo, boş state motivasyon.
+
+### 7.2 AI Process Assistant — NL-to-Tool (Plan 34 genişlemesi)
+
+"Bu ay hangi sözleşmem bitiyor?", "En çok geciktiren departman hangisi?" soruları doğal dille yanıtlanır. **NL-to-SQL değil NL-to-Tool** — güvenlik sınırı korunur.
+
+```
+Soru → IntentClassifier (LLM) → ToolRouter → ToolResult → FallbackLlmService → Yanıt + kaynak
+```
+
+5 MVP aracı: `getExpiringContracts`, `getOverdueObligations`, `getDepartmentLoad`, `searchDocuments`, `runReport`. Her araç UserDataFilterInjector'dan geçer — AI izole firma verisini asla göremez.
+
+### 7.3 Company Memory — EntityRelation (migration ~65)
+
+```sql
+EntityRelations { FirmaId, SourceType, SourceId, RelationType, TargetType, TargetId, CreatedAt }
+```
+
+Önce eklenmesi gereken 5 ilişki: Contract→Obligation (HasObligation), Document→Contract (AttachedTo), Obligation→User (AssignedTo), SOP→Department (AppliesTo), Task→Contract (DerivedFrom). Neo4j overkill — SQL pivot table yeterli. UI: her detay sayfasında collapsible "Bağlı Öğeler" section.
+
+### 7.4 Org Intelligence — Bottleneck Detection
+
+```sql
+WorkflowInstanceLogs { FirmaId, InstanceId, EntityType, EntityId, StepName, StepOrder,
+                       Status, AssignedToId, EnteredAt, ExitedAt }
+```
+
+5 temel metrik SQL aggregation ile hesaplanır: adım bekleme süresi, kişi bazlı yük, overdue rate, lead time, sözleşme bitiş uyarısı. 200 kişilik şirkette ML gereksiz — `PERCENTILE_CONT` anomali tespiti yeterli. **Faz 0:** `ContractObligationsController` SaveChanges noktasına log kaydı (5 satır). **Faz 1:** Admin "Yük Raporu" sayfası.
+
+### 7.5 Dynamic Dashboard Engine — Per-Role Widget
+
+```csharp
+interface IWidgetProvider {
+    string WidgetType { get; }
+    string DisplayName { get; }
+    Task<object> GetDataAsync(int userId, int reportId, CancellationToken ct);
+    string RenderConfigSchema();  // builder form otomatik üretimi
+}
+```
+
+Rol template'leri: `ceo` (4 KPI + trend), `hr` (personel + dağılım), `operations` (PDKS + sözleşme expiry), `default` (son 3 rapor). Öncelik: user layout > rol template > sistem default. `IWidgetProvider` interface ~3 saatlik iş, mevcut DashboardRenderer'ı kırmaz.
+
+### 7.6 No-Excuse Platform — EscalationRule + Multi-Channel
+
+Kullanıcıya "Görmedim/atladım" mazaretini kapatacak kanal zinciri:
+
+| T | Tetik | Kanal | Hedef |
+|---|-------|-------|-------|
+| DueDate − 7 gün | Hangfire | InApp + Email | Atanan |
+| DueDate − 1 gün | Hangfire | InApp + Email | Atanan |
+| T+24h | Hangfire kontrol | InApp + Email | Atanan |
+| T+72h | EscalationRule #1 | Email | Yönetici |
+| T+120h | EscalationRule #2 | Email | Departman Başkanı |
+| T+168h | EscalationRule #3 | Email | Admin |
+
+```csharp
+class EscalationRule { TriggerAfterHours, EscalateTo (enum), Channel (flags enum) }
+enum NotificationChannel { InApp, Email, Push, Sms }  // Sms = stub şimdilik
+```
+
+ICS feed: `GET /Obligations/Calendar.ics?token={hmacToken}` — Outlook/Google Calendar aboneliği ile yükümlülükler kişisel takvime düşer. RRULE ile periyodik yükümlülük tekrarı (Q-due → `FREQ=YEARLY;BYMONTH=2,5,8,11`).
+
+### 7.7 IMosaikModule Evrim — Backstage + Appsmith Dersleri
+
+Mevcut `IMosaikModule.RegisterServices(IServiceCollection)` yeterli değil. Eklenecek:
+
+```csharp
+interface IMosaikModule {
+    void RegisterServices(IServiceCollection services);
+    IEnumerable<SearchDocument> ProvideSearchDocuments();    // cross-modül unified search
+    IEnumerable<CatalogEntity> ProvideCatalogEntities();     // varlık kataloğu
+    IEnumerable<WidgetDefinition> GetWidgetDefinitions();    // dashboard widget tipleri
+    IEnumerable<InboxItemType> GetInboxItemTypes();          // Inbox provider bildirimi
+}
+```
+
+ADR yazılacak (ADR-016 adayı). Tüm yeni modüller bu interface'i dolduracak.
+
+---
+
+## 8. Cross-reference
 
 - **Implementasyon planları:** [`plans/`](../plans/) (Tier 3 işler için zorunlu, [ADR-010](ADR/010-plan-first-tier-system.md))
   - Plan 16 — vNext modül roadmap (modül listesi + port stratejisi, bu vizyonun **implementasyon havalandırması**)
@@ -242,3 +528,4 @@ Hafta 10+:  Form/Anket (integrate karar), Documents iki-plan çakışmasını ç
 ### Sürüm geçmişi
 
 - **2026-05-14:** İlk sürüm. Mevcut özellik olgunluğu + vNext değer sıralı modül listesi + 6-9 haftalık SOP+Comment+Workflow Designer üçlüsü önerisi.
+- **2026-05-20:** §7 eklendi — 7 platform araştırması (Backstage, Appsmith, NocoBase, n8n, Twenty CRM, Plane, FlowiseAI) + 6 stratejik vizyon katmanı (Unified Inbox, AI Danışman, Company Memory, Org Intelligence, Dynamic Dashboard, No-excuse). IMosaikModule evrim önerisi. Plan 37 (Unified Inbox) adayı tanımlandı.
