@@ -190,6 +190,59 @@ namespace Mosaik.Services.Ai
                 """
         };
 
+        public static string? GetStage3Prompt(string fieldName) => fieldName switch
+        {
+            "counterparty" => """
+                Sözleşme metninde karşı tarafın (hizmet veren, kiracı, tedarikçi, işveren — kendi şirketin dışındaki taraf) GERÇEK adını bul.
+                SADECE şu JSON'u döndür, fazlası yok: {"counterparty": "Şirket Adı A.Ş."}
+                Bulamazsan: {"counterparty": null}
+                """,
+
+            "startDate" => """
+                Sözleşmenin yürürlük BAŞLANGIÇ tarihini bul. İmza tarihi değil, sözleşmenin yürürlüğe girdiği tarih.
+                "Tarih: ...", "yürürlük tarihi", "başlangıç tarihi", "... tarihinden itibaren" ifadelerine bak.
+                SADECE şu JSON'u döndür: {"startDate": "YYYY-MM-DD"}
+                Bulamazsan: {"startDate": null}
+                """,
+
+            "endDate" => """
+                Sözleşmenin BİTİŞ / SONA ERME tarihini bul. "Süre", "taahhüt", "bitiş", "sona erer" ifadelerine bak.
+                Süre verilmişse (örn. "1 yıl") ve başlangıç tarihi biliniyorsa hesapla.
+                SADECE şu JSON'u döndür: {"endDate": "YYYY-MM-DD"}
+                Bulamazsan: {"endDate": null}
+                """,
+
+            "contractValue" => """
+                Sözleşmedeki toplam tutarı/bedeli bul. Kira bedeli, hizmet bedeli, toplam sözleşme değeri.
+                SADECE şu JSON'u döndür: {"totalAmount": 60000, "currency": "TRY"}
+                Bulamazsan: {"totalAmount": null, "currency": null}
+                """,
+
+            "jurisdiction" => """
+                Uyuşmazlık çözümü, yetkili mahkeme veya tahkim bilgisini bul. "Yetkili mahkeme", "uyuşmazlık",
+                "tahkim", "İstanbul Mahkemeleri" gibi ifadelere bak, genellikle son maddelerde.
+                SADECE şu JSON'u döndür: {"jurisdiction": "İstanbul Mahkemeleri ve İcra Daireleri"}
+                Bulamazsan: {"jurisdiction": null}
+                """,
+
+            "parties" => """
+                Sözleşmedeki TÜM tarafları (en az 2) bul. İmza bölümlerine, başlığa, taraf tanımlamalarına bak.
+                SADECE şu JSON'u döndür:
+                {"parties": [{"name": "Tam Ad A.Ş.", "role": "Hizmet Veren", "taxId": null, "address": null}]}
+                Taraf bulunamazsa boş dizi: {"parties": []}
+                """,
+
+            "obligations" => """
+                Sözleşmedeki somut yükümlülükleri bul: ödemeler, vergiler, bildirimler, teslimler, yenilemeler.
+                SADECE şu JSON'u döndür:
+                {"obligations": [{"title": "Aylık Kira", "type": "Payment", "isRecurring": true,
+                "recurrenceType": "Monthly", "amount": 5000, "currency": "TRY", "dueDate": null}]}
+                Yükümlülük bulunamazsa boş dizi: {"obligations": []}
+                """,
+
+            _ => null
+        };
+
         public static string BuildUserPrompt(string contractText, string? contractTitle = null)
         {
             var header = contractTitle is not null

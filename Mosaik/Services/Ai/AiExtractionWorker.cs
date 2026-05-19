@@ -272,6 +272,50 @@ namespace Mosaik.Services.Ai
                 _logger.LogInformation("Stage1 atlandı (retry — önceki denemeden JSON mevcut). ExtractionId={Id}", extractionId);
             }
 
+            // A-07/A-08: Validation + Stage 3 hedefli alan retry (maks 3 alan)
+            var validator = new ContractExtractionValidator();
+            var validation = validator.Validate(stage1Json);
+
+            if (validation.Warnings.Count > 0)
+                _logger.LogWarning(
+                    "Stage1 validation uyarıları: [{Warnings}] ExtractionId={Id}",
+                    string.Join(" | ", validation.Warnings), extractionId);
+
+            if (validation.NullFields.Count > 0 && !string.IsNullOrWhiteSpace(rawText))
+            {
+                UpdateProgress(db, extraction, "ai_stage3");
+                await db.SaveChangesAsync(ct);
+
+                _logger.LogInformation(
+                    "Stage3 başlıyor. NullFields=[{Fields}] ExtractionId={Id}",
+                    string.Join(",", validation.NullFields), extractionId);
+
+                var stage3 = await RunStage3RetryAsync(
+                    ai, rawText, stage1Json!, validation.NullFields, extractionId, ct);
+
+                stage1Json = stage3.Json;
+                extraction.ExtractionResultJson = stage1Json;
+                db.Entry(extraction).Property(x => x.ExtractionResultJson).IsModified = true;
+                await db.SaveChangesAsync(ct);
+
+                if (stage3.FailedFields.Count > 0 || stage3.SkippedFields.Count > 0)
+                {
+                    var msg = new List<string>();
+                    if (stage3.FailedFields.Count > 0)
+                        msg.Add("AI şu alanları tamamlayamadı: " + string.Join(", ", stage3.FailedFields));
+                    if (stage3.SkippedFields.Count > 0)
+                        msg.Add("Limit nedeniyle atlanan alanlar: " + string.Join(", ", stage3.SkippedFields));
+                    var combined = string.Join(" | ", msg);
+                    extraction.ErrorMessage = (extraction.ErrorMessage is null
+                        ? combined
+                        : extraction.ErrorMessage + " | " + combined);
+                    if (extraction.ErrorMessage.Length > 1000)
+                        extraction.ErrorMessage = extraction.ErrorMessage[..1000];
+                    db.Entry(extraction).Property(x => x.ErrorMessage).IsModified = true;
+                    await db.SaveChangesAsync(ct);
+                }
+            }
+
             // Aşama 1 sonucundan kategori belirle → Aşama 2 prompt seç
             string? detectedCategory = null;
             try
