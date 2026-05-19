@@ -26,6 +26,7 @@ namespace Mosaik.Services.Ai
         private readonly IAiVisionProvider _aiVision;
         private readonly ILogger<WizardExtractionService> _logger;
         private readonly IWebHostEnvironment _env;
+        private readonly IHostApplicationLifetime _lifetime;
 
         public WizardExtractionService(
             IMemoryCache cache,
@@ -34,7 +35,8 @@ namespace Mosaik.Services.Ai
             IAiSummaryProvider ai,
             IAiVisionProvider aiVision,
             ILogger<WizardExtractionService> logger,
-            IWebHostEnvironment env)
+            IWebHostEnvironment env,
+            IHostApplicationLifetime lifetime)
         {
             _cache = cache;
             _pdfExtractor = pdfExtractor;
@@ -43,6 +45,7 @@ namespace Mosaik.Services.Ai
             _aiVision = aiVision;
             _logger = logger;
             _env = env;
+            _lifetime = lifetime;
         }
 
         public sealed record JobStatus(bool Done, WizardExtractionResult? Result, string? Error);
@@ -79,9 +82,7 @@ namespace Mosaik.Services.Ai
             _cache.Set("wizjob:" + jobId, new JobStatus(false, null, null),
                 TimeSpan.FromMinutes(CacheTtlMinutes));
 
-            // Fire-and-forget. Hata loglanır + cache'e generic mesaj yazılır.
-            // NOT: AppDomain shutdown sırasında pending task abort olur — Plan 25.1 hardening
-            // queue pattern'ine geçişi planlar (HIGH risk, ayrı plan).
+            // ApplicationStopping CT ile Task.Run — app shutdown'da graceful iptal.
             _ = Task.Run(async () =>
             {
                 try
@@ -123,7 +124,7 @@ namespace Mosaik.Services.Ai
                         _logger.LogWarning(delEx, "WizardExtraction temp dosya silinemedi: {Path}", absoluteFilePath);
                     }
                 }
-            });
+            }, _lifetime.ApplicationStopping);
 
             return jobId;
         }

@@ -30,12 +30,12 @@ Build: 0 hata 0 uyarı. Test: **337/337 geçti** (test-discipline.md kanıtland�
 - [x] **C-01** DailyReminderJob ✅ 2026-05-15 — `Services/DailyReminderJob.cs` + Program.cs cron 09:00, daysLeft sign fix 2026-05-18
 - [x] **C-02** Plan 22 Holidays ✅ 2026-05-17 — entity + migration 58/59 + vw_CalendarUnified (SQL fix 2026-05-18) + CalendarController + filter chip
 - [x] **C-03** TamimReminderJob ✅ 2026-05-17 — commit 37b6de0, Circular module 09:00 cron, AuditLog-based read tracking
-- [ ] **C-04** AI Wizard Faz 1 tamamla (8-10h) — WizardStart/Status endpoint + UI + BUGFIX-4 üzerine
+- [x] **C-04** AI Wizard Faz 1 ✅ — WizardStart/Status endpoint + UI + hukuki risk bayrakları (commit 5a73fa3)
 - [x] **C-05** ContractsController partial split ✅ (önceden yapılmıştı) — Files.cs + Ai.cs + partial keyword mevcut
 - [x] **C-06** ObligationsController.Edit ✅ 2026-05-17 — commit 3a28fa0
 - [x] **ADR-016** Calendar Unified Event Source ✅ 2026-05-17 — commit d32ffd3, `docs/ADR/016-calendar-unified-event-source.md`
-- [ ] **C-07** Plan 27 Faz A eksikleri (4-6h) — ContractExtractionValidator + Stage 3 + 10 field prompt
-- [ ] **C-08** Plan 25.1 Faz 5+6 (5-7h) — Queue migration + admin inline style + smoke + hook enable
+- [x] **C-07** Plan 27 Faz A eksikleri ✅ 2026-05-19 — ContractExtractionValidator + Stage 3 hedefli alan retry (maks 3) + 7 field prompt. Build/test 349/349 yeşil. Post-review 3 agent: HasArray semantic + CT honor + ayrı catch (JsonException/HttpRequestException) + Warnings log + failedFields/skippedFields ErrorMessage'a. ContractExtractionValidator.cs + AiExtractionWorker.Stage3.cs (yeni partial) + ExtractionPrompts.GetStage3Prompt + Stage 1↔Stage 2 arası entegrasyon.
+- [x] **C-08** Plan 25.1 Faz 5+6 ✅ — Task.Run→ApplicationStopping CT + inline style 0 + hook enabled (DISABLED=false)
 
 ---
 
@@ -68,7 +68,11 @@ Build: 0 hata 0 uyarı. Test: **337/337 geçti** (test-discipline.md kanıtland�
   - **Faz F** (10-14h, S-23..S-30) — **AI Danışman MVP** — `SopAiAdvisorService` + drawer + KVKK banner + rate limit + thumbs-up/down + retention job
   - **Faz G** (4-8h, S-31, OPSİYONEL) — 27 BKM SOP migrate
 - [ ] **Comment / Mention sistemi** (1-2 hafta + modül başına 1 gün) — Cross-cutting. Polymorphic `Comments` tablo + `EntityType`/`EntityId` + `@user` mention + `INotificationService` callback. Tamim/Doküman/Sözleşme/OrgChart entegrasyonu. **Bağımlılık:** Plan 31 SMTP caller (Plan 32 bekliyor). Plan yazılacak (Plan 35 adayı).
-- [ ] **Workflow Designer + Onay Akışları** (3-4 hafta + 1 hafta entegrasyon) — `IWorkflow` Core abstraction üzerine designer UI + chain config + assignment + reminder. SOP onayı + sözleşme onayı + satın alma onayı + izin talebi onayı **hepsi aynı engine**. **En yüksek leverage iş** — kalan modüllerin bağımlılığı. Plan yazılacak (Plan 36 adayı).
+- [ ] **[Plan 36 · Workflow Designer + Onay Akışları](plans/36-workflow-designer-onay-akislari.md)** ✅ **ONAYLANDI 2026-05-19** — sequential-workflow-designer (MIT, zero-dep) + custom WorkflowEngine. Tüm modüllerin onay zinciri tek engine. 30-40 saat, 4 faz.
+  - **Faz A** (12-16h, W-01..W-08) — Core engine + designer UI + migration 62
+  - **Faz B** (8-10h, W-09..W-13) — Hangfire job + bildirim + escalation + ICS feed
+  - **Faz C** (6-8h, W-14..W-17) — Obligations + Contracts entegrasyonu + "bekleyen onaylarım" widget
+  - **Faz D** (4-6h, W-18..W-19) — SOP entegrasyonu (Plan 34 sonrası)
 
 **Paralel ikincil iş:**
 

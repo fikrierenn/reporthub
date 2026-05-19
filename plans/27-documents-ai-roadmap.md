@@ -205,9 +205,9 @@ Bu iki açık tek bir koordineli yol haritasında çözülmeli — birçok patte
 3. [ ] **A-03** TesseractOcrExtractor DPI 300 + dil `tur+eng` + MaxPages 30 (geçici fallback)
 4. [ ] **A-04** Per-page confidence gate — Tesseract `conf` skor + threshold
 5. [ ] **A-05** AiExtractionWorker smart page seçim — scorer + low-conf sayfalar vision'a
-6. [ ] **A-06** ExtractionPrompts: field-specific 10 prompt registry
-7. [ ] **A-07** ContractExtractionValidator — JSON schema + null alan retry
-8. [ ] **A-08** Stage 3 doğrulama çağrısı (opsiyonel)
+6. [x] **A-06** ExtractionPrompts: field-specific prompt registry ✅ 2026-05-19 — 7 alan (counterparty, startDate, endDate, contractValue, jurisdiction, parties, obligations). `GetStage3Prompt(fieldName)` switch
+7. [x] **A-07** ContractExtractionValidator — null kritik alan tespiti ✅ 2026-05-19 — 7 kritik alan; `NullFields` + `Warnings`. HasArray `>=` semantic
+8. [x] **A-08** Stage 3 hedefli alan retry ✅ 2026-05-19 — maks 3 alan, JsonNode merge (null override izin), CT honor, ayrı catch, failedFields+skipped ErrorMessage'a
 9. [ ] **A-09** Turkcell PDF smoke test — §5 maddeleri çıkıyor mu
 
 ### Sprint 2 — Faz B (2-3 gün)

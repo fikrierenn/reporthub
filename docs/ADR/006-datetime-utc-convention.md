@@ -71,3 +71,39 @@ UTC'ye çevrildiğinde ay başı UTC 00:00'da başlar. Ay sonu edge case: yerel 
 ## Sonuç
 
 Faz C bu ADR ile yapılıyor. Faz D ve E ayrı TODO maddeleri, ayrı commit, ayrı backup.
+
+---
+
+## Ek · IBusinessClock — Türkiye Yerel Takvim (2026-05-19)
+
+**Tetik:** `ComplianceDueCalculator.ComputeFirstDue` + `DailyReminderJob` "bugün" hesaplamasında UTC'nin yanlış gün göstermesi sorunu (gece 21:00-24:00 TR arası UTC farklı güne denk gelir).
+
+### Karar
+
+**`DateTime.UtcNow.Date` iş günü / vade karşılaştırmalarında kullanılamaz.** Bunun yerine `IBusinessClock.Today` (Türkiye yerel takvim) zorunlu.
+
+```csharp
+// Doğru
+var today = _clock.Today;  // DateOnly, Europe/Istanbul
+
+// Yanlış — gece geç saatlerde bir önceki günü döner
+var today = DateOnly.FromDateTime(DateTime.UtcNow);
+```
+
+### Uygulama
+
+- **`Mosaik.Core.Domain.IBusinessClock`** — `DateOnly Today` property, singleton DI.
+- **`SystemBusinessClock`** — `ResolveTurkeyTimeZone()` fail-fast: Windows'ta `"Turkey Standard Time"`, Linux/Mac'ta `"Europe/Istanbul"`. Timezone bulunamazsa startup'ta exception fırlatır (silent UTC fallback yasak).
+- **`Program.cs`** — `turkeyTz` singleton, `AddSingleton<IBusinessClock>` kayıt.
+- **`ComplianceController`** — constructor inject, `Import` action'da `_clock.Today`.
+- **`DailyReminderJob`** — constructor inject, reminder threshold hesabında `_clock.Today`.
+
+### Kural (ek)
+
+| Senaryo | Kullan |
+|---|---|
+| DB yazma (CreatedAt, UpdatedAt, audit) | `DateTime.UtcNow` (bu ADR orijinal kuralı) |
+| İş günü / vade "bugün" karşılaştırma | `IBusinessClock.Today` (Türkiye) |
+| Display / log timestamp | `DateTime.UtcNow` (view katmanı dönüştürür) |
+
+**Static `DateOnly.FromDateTime(DateTime.UtcNow)` iş takvim kodunda `[Obsolete]` kural ihlalidir.** Yeni servis/controller yazılırken DI ile `IBusinessClock` inject et.
