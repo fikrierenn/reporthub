@@ -111,6 +111,7 @@ else
                         </td>
                         <td>@StatusBadge(o.Status)</td>
                         <td class="ta-right">
+                            <a href="/Workflow/Trigger?entityType=Obligation&entityId=@o.Id" class="btn sm ghost" title="Onay akışı başlat"><i class="fas fa-play"></i></a>
                             <a href="/Obligations/Edit/@o.Id" class="btn sm ghost">Düzenle</a>
                             @if (o.Status == ObligationStatus.Pending || o.Status == ObligationStatus.Overdue)
                             {

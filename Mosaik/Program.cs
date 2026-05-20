@@ -97,6 +97,7 @@ builder.Services.AddScoped<Mosaik.Core.Intelligence.IDecisionLogService, Mosaik.
 // Plan 36 — Workflow Designer + onay akışları engine + bildirim + processor
 builder.Services.AddScoped<Mosaik.Services.Workflow.WorkflowNotifier>();
 builder.Services.AddScoped<Mosaik.Services.Workflow.WorkflowStepProcessor>();
+builder.Services.AddScoped<Mosaik.Services.Workflow.WorkflowInboxService>();
 builder.Services.AddScoped<Mosaik.Core.Workflow.IWorkflowService, Mosaik.Services.Workflow.WorkflowEngine>();
 
 // Plan 31 — Email (SMTP)

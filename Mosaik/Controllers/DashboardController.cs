@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Mosaik.Models;
 using Mosaik.Modules.Circular.Services;
+using Mosaik.Services.Workflow;
 using Mosaik.ViewModels;
 using System.Security.Claims;
 
@@ -13,11 +14,13 @@ namespace Mosaik.Controllers
     {
         private readonly MosaikContext _context;
         private readonly CircularService _tamim;
+        private readonly WorkflowInboxService _workflowInbox;
 
-        public DashboardController(MosaikContext context, CircularService tamim)
+        public DashboardController(MosaikContext context, CircularService tamim, WorkflowInboxService workflowInbox)
         {
             _context = context;
             _tamim = tamim;
+            _workflowInbox = workflowInbox;
         }
 
         public async Task<IActionResult> Index()
@@ -312,6 +315,22 @@ namespace Mosaik.Controllers
             {
                 // Circular modülü kapalıysa veya hata varsa dashboard'u kırma
                 System.Diagnostics.Debug.WriteLine($"Dashboard tamim widget hatası: {ex.Message}");
+            }
+
+            // Plan 36 W-16 — Workflow bekleyen onaylar widget (current user'a atanmış aktif step'ler).
+            try
+            {
+                if (int.TryParse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value, out var uid))
+                {
+                    var userRoleSet = roles.ToHashSet(StringComparer.OrdinalIgnoreCase);
+                    var pending = await _workflowInbox.GetPendingForUserAsync(uid, userRoleSet);
+                    model.WorkflowPendingCount = pending.Count;
+                    model.WorkflowPreview = pending.Take(3).ToList();
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Dashboard workflow widget hatası: {ex.Message}");
             }
 
             return View(model);

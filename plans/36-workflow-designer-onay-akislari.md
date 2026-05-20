@@ -129,12 +129,12 @@ Mosaik'te yükümlülük, SOP adımı, sözleşme onayı, tamim onayı gibi işl
 12. [x] **W-12** ✅ `GET /Workflow/Instance/{id}.ics` — RFC 5545 VCALENDAR + tek VEVENT (aktif step deadline). UID `workflow-{id}-step-{stepId}@mosaik`. Instance view'a "Takvime Ekle" linki. IcsEscape (virgül/noktalı virgül/satır sonu).
 13. [x] **W-13** ✅ POST `/Workflow/Instance/{id}/Respond` — `WorkflowController.Respond` (AntiForgery + Authorize + NameIdentifier claim parse + AuditLog). Engine üzerinden Approve/Reject; Index + Instance GET action iskeletleri var (view'lar W-05..W-07'de). Plan 38 §8.1 dual-write engine içinden (E-09).
 
-### Faz C — Modül Entegrasyonu (6-8h)
+### Faz C — Modül Entegrasyonu (6-8h) ✅ TAMAMLANDI 2026-05-21
 
-14. [ ] **W-14** `ObligationsController` — yükümlülük oluşturulunca workflow tetikle (opsiyonel template seçimi)
-15. [ ] **W-15** `ContractsController` — sözleşme onay workflow tetikleme
-16. [ ] **W-16** Instance dashboard widget — ana sayfada "bekleyen onaylarım" paneli
-17. [ ] **W-17** Smoke test — end-to-end: template oluştur → instance başlat → onayla → tamamlandı
+14. [x] **W-14** ✅ Obligations/Index.cshtml row action → "Onay Akışı Başlat" (fa-play icon). `GET /Workflow/Trigger?entityType=Obligation&entityId={id}` generic endpoint.
+15. [x] **W-15** ✅ Contracts/Details.cshtml TopActions → "Onay Akışı Başlat" buton. `GET /Workflow/Trigger?entityType=Contract&entityId={id}` aynı endpoint. Trigger.cshtml: aktif şablon dropdown + form post → engine.StartAsync.
+16. [x] **W-16** ✅ Dashboard widget — `_DashWorkflow.cshtml` partial. DashboardViewModel.WorkflowPendingCount + WorkflowPreview (max 3). `WorkflowInboxService` extract (Controller + Dashboard ortak). Sadece count > 0 ise render.
+17. [x] **W-17** ✅ `docs/smoke/plan-36-workflow-smoke.md` — 10 bölüm manuel smoke (template create → trigger → notify → ICS → approve dual-write → reject → escalation SQL → negative senaryolar → done criteria → bilinen sınırlama). Integration test infra olmadığı için manuel.
 
 ### Faz D — SOP Entegrasyonu (Plan 34 sonrası, 4-6h)
 

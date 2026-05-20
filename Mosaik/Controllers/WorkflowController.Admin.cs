@@ -192,4 +192,83 @@ namespace Mosaik.Controllers
             return 1; // fallback — tek firmalı kurulum
         }
     }
+
+    // Plan 36 W-14/W-15 — generic workflow trigger (Contract/Obligation/Circular/Document/...).
+    // Auth: herhangi bir authenticated user (modül-spesifik permission yok şimdilik).
+    public partial class WorkflowController
+    {
+        // GET /Workflow/Trigger?entityType=Contract&entityId=42
+        [HttpGet("Workflow/Trigger")]
+        [Authorize]
+        public async Task<IActionResult> Trigger(string entityType, int entityId, CancellationToken ct)
+        {
+            if (string.IsNullOrWhiteSpace(entityType) || entityId <= 0) return BadRequest();
+
+            var templates = await _db.WorkflowTemplates.AsNoTracking()
+                .Where(t => t.IsActive && t.EntityType == entityType)
+                .OrderBy(t => t.Name)
+                .Select(t => new { t.Id, t.Name })
+                .ToListAsync(ct);
+
+            ViewBag.EntityType = entityType;
+            ViewBag.EntityId = entityId;
+            ViewBag.Templates = templates;
+            return View("Trigger");
+        }
+
+        // POST /Workflow/Trigger
+        [HttpPost("Workflow/Trigger")]
+        [Authorize]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Trigger(TriggerViewModel input, CancellationToken ct)
+        {
+            if (input is null || string.IsNullOrWhiteSpace(input.EntityType)
+                || input.EntityId <= 0 || input.TemplateId <= 0)
+                return BadRequest();
+            if (!TryGetUserId(out var userId)) return Forbid();
+
+            var template = await _db.WorkflowTemplates.AsNoTracking()
+                .FirstOrDefaultAsync(t => t.Id == input.TemplateId && t.IsActive, ct);
+            if (template is null || template.EntityType != input.EntityType)
+            {
+                TempData["Message"] = "Seçilen şablon bu modüle uygun değil.";
+                return RedirectToAction(nameof(Trigger), new { entityType = input.EntityType, entityId = input.EntityId });
+            }
+
+            var firmaId = template.FirmaId; // template hangi firmaya aitse instance da o firmaya
+            var start = new Core.Workflow.WorkflowStartInput(
+                FirmaId: firmaId,
+                TemplateId: input.TemplateId,
+                EntityType: input.EntityType,
+                EntityId: input.EntityId,
+                StartedBy: userId,
+                PayloadJson: null);
+
+            var result = await _engine.StartAsync(start, ct);
+            await _auditLog.LogAsync(new AuditLogEntry
+            {
+                EventType = "workflow_instance_start",
+                TargetType = "workflow_instance",
+                TargetKey = result.Data.ToString(),
+                Description = $"{input.EntityType} #{input.EntityId} → şablon {template.Name}",
+                IsSuccess = result.IsSuccess
+            });
+
+            if (!result.IsSuccess)
+            {
+                TempData["Message"] = result.Message;
+                return RedirectToAction(nameof(Trigger), new { entityType = input.EntityType, entityId = input.EntityId });
+            }
+
+            TempData["Message"] = "Onay akışı başlatıldı.";
+            return RedirectToAction(nameof(Instance), new { id = result.Data });
+        }
+
+        public class TriggerViewModel
+        {
+            public string EntityType { get; set; } = string.Empty;
+            public int EntityId { get; set; }
+            public int TemplateId { get; set; }
+        }
+    }
 }

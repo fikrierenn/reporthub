@@ -1,0 +1,31 @@
+@model Mosaik.ViewModels.DashboardViewModel
+
+@if (Model.WorkflowPendingCount > 0)
+{
+    <section class="paper-card clip stack-12">
+        <header class="paper-card-header">
+            <h2><i class="fas fa-clipboard-check"></i> Bekleyen Onaylarım <span class="pill mono">@Model.WorkflowPendingCount</span></h2>
+            <a class="btn ghost sm" href="/Workflow/Inbox">Tümü <i class="fas fa-chevron-right"></i></a>
+        </header>
+        <ul class="wf-timeline">
+            @foreach (var item in Model.WorkflowPreview)
+            {
+                <li class="wf-timeline-item">
+                    <span class="wf-timeline-dot">
+                        <i class="fas fa-clock" aria-hidden="true"></i>
+                    </span>
+                    <div class="wf-timeline-body">
+                        <div class="wf-timeline-title">
+                            <a href="/Workflow/Instance/@item.InstanceId">@item.TemplateName — @item.StepLabel</a>
+                        </div>
+                        <div class="text-muted text-xs">
+                            <span class="mono">@item.EntityType #@item.EntityId</span>
+                            <span> · </span>
+                            <span class="ago">@item.StartedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</span>
+                        </div>
+                    </div>
+                </li>
+            }
+        </ul>
+    </section>
+}

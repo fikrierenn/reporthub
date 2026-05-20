@@ -1,0 +1,76 @@
+@{
+    var entityType = (string)ViewBag.EntityType;
+    var entityId = (int)ViewBag.EntityId;
+    var templates = ViewBag.Templates as IEnumerable<dynamic> ?? Enumerable.Empty<dynamic>();
+    ViewData["Title"] = "Onay Akışı Başlat";
+    Layout = "_AppLayout";
+
+    string EntityLabel(string t) => t switch
+    {
+        "Contract" => "Sözleşme",
+        "Obligation" => "Yükümlülük",
+        "Circular" => "Tamim",
+        "Document" => "Doküman",
+        "Report" => "Rapor",
+        _ => t
+    };
+}
+
+@section Breadcrumb {
+    <nav class="crumbs" aria-label="Sayfa konumu">
+        <a href="/">Ana sayfa</a>
+        <span>›</span>
+        <span aria-current="page">Onay Akışı Başlat</span>
+    </nav>
+}
+
+<div class="hero">
+    <h1>Onay Akışı Başlat</h1>
+    <div class="sub">
+        <span class="mono">@EntityLabel(entityType) #@entityId</span>
+    </div>
+</div>
+
+@if (!string.IsNullOrEmpty(TempData["Message"] as string))
+{
+    <div role="alert" class="alert error">@TempData["Message"]</div>
+}
+
+@if (!templates.Any())
+{
+    <div class="empty-state paper-dashed">
+        <i class="fas fa-diagram-project empty-state__icon" aria-hidden="true"></i>
+        <h3>Şablon yok</h3>
+        <p>Bu modül (@EntityLabel(entityType)) için aktif workflow şablonu tanımlı değil. Admin → Workflow Şablonları'ndan oluştur.</p>
+    </div>
+}
+else
+{
+    <form method="post" action="/Workflow/Trigger">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="EntityType" value="@entityType" />
+        <input type="hidden" name="EntityId" value="@entityId" />
+
+        <section class="form-section-card narrow">
+            <div class="paper-card-body">
+                <div class="field">
+                    <label class="lab" for="TemplateId">Şablon seç *</label>
+                    <select class="inp" name="TemplateId" id="TemplateId" required>
+                        <option value="">Seçin...</option>
+                        @foreach (var t in templates)
+                        {
+                            <option value="@t.Id">@t.Name</option>
+                        }
+                    </select>
+                </div>
+            </div>
+        </section>
+
+        <section class="action-row narrow">
+            <a class="btn ghost" href="javascript:history.back()">Geri Dön</a>
+            <button type="submit" class="btn primary">
+                <i class="fas fa-play"></i> Akışı Başlat
+            </button>
+        </section>
+    </form>
+}

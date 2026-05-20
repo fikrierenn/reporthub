@@ -18,17 +18,20 @@ namespace Mosaik.Controllers
     {
         private readonly MosaikContext _db;
         private readonly IWorkflowService _engine;
+        private readonly WorkflowInboxService _inbox;
         private readonly AuditLogService _auditLog;
         private readonly ILogger<WorkflowController> _logger;
 
         public WorkflowController(
             MosaikContext db,
             IWorkflowService engine,
+            WorkflowInboxService inbox,
             AuditLogService auditLog,
             ILogger<WorkflowController> logger)
         {
             _db = db;
             _engine = engine;
+            _inbox = inbox;
             _auditLog = auditLog;
             _logger = logger;
         }
@@ -45,38 +48,7 @@ namespace Mosaik.Controllers
         public async Task<IActionResult> Inbox(CancellationToken ct)
         {
             if (!TryGetUserId(out var userId)) return Forbid();
-
-            var userRoles = User.Claims
-                .Where(c => c.Type == System.Security.Claims.ClaimTypes.Role)
-                .Select(c => c.Value)
-                .ToHashSet(StringComparer.OrdinalIgnoreCase);
-
-            var active = await _db.WorkflowInstances.AsNoTracking()
-                .Where(i => i.Status == WorkflowInstanceStatus.Active && i.CurrentStepId != null)
-                .Include(i => i.Template)
-                .ToListAsync(ct);
-
-            var items = new List<InboxItem>();
-            foreach (var instance in active)
-            {
-                if (instance.Template is null) continue;
-                var definition = WorkflowDefinition.Parse(instance.Template.DefinitionJson);
-                var step = definition?.Steps.FirstOrDefault(s => s.Id == instance.CurrentStepId);
-                if (step is null) continue;
-
-                if (!IsAssignedToUser(step, userId, userRoles)) continue;
-
-                items.Add(new InboxItem
-                {
-                    InstanceId = instance.Id,
-                    TemplateName = instance.Template.Name,
-                    StepLabel = step.Name ?? step.Id,
-                    EntityType = instance.EntityType,
-                    EntityId = instance.EntityId,
-                    StartedAt = instance.StartedAt
-                });
-            }
-
+            var items = await _inbox.GetPendingForUserAsync(userId, GetUserRoles(), limit: null, ct);
             return View(new WorkflowInboxViewModel { Items = items });
         }
 
@@ -102,11 +74,7 @@ namespace Mosaik.Controllers
                 var step = definition?.Steps.FirstOrDefault(s => s.Id == instance.CurrentStepId);
                 if (step is not null)
                 {
-                    var userRoles = User.Claims
-                        .Where(c => c.Type == System.Security.Claims.ClaimTypes.Role)
-                        .Select(c => c.Value)
-                        .ToHashSet(StringComparer.OrdinalIgnoreCase);
-                    canRespond = IsAssignedToUser(step, userId, userRoles);
+                    canRespond = WorkflowInboxService.IsAssignedToUser(step, userId, GetUserRoles());
                 }
             }
             ViewBag.CanRespond = canRespond;
@@ -136,11 +104,7 @@ namespace Mosaik.Controllers
             var step = definition?.Steps.FirstOrDefault(s => s.Id == instance.CurrentStepId);
             if (step is null) return BadRequest();
 
-            var userRoles = User.Claims
-                .Where(c => c.Type == System.Security.Claims.ClaimTypes.Role)
-                .Select(c => c.Value)
-                .ToHashSet(StringComparer.OrdinalIgnoreCase);
-            if (!IsAssignedToUser(step, actorId, userRoles)) return Forbid();
+            if (!WorkflowInboxService.IsAssignedToUser(step, actorId, GetUserRoles())) return Forbid();
 
             var advance = new WorkflowAdvanceInput(
                 ActorId: actorId,
@@ -251,33 +215,10 @@ namespace Mosaik.Controllers
                 out userId);
         }
 
-        // Step.properties.assigneeUserId | assigneeUserIds | assigneeRole pattern.
-        private static bool IsAssignedToUser(WorkflowDefinitionStep step, int userId, ISet<string> userRoles)
-        {
-            if (step.Properties is null) return false;
-
-            if (step.Properties.TryGetValue("assigneeUserId", out var single)
-                && single.ValueKind == JsonValueKind.Number
-                && single.TryGetInt32(out var sid)
-                && sid == userId)
-                return true;
-
-            if (step.Properties.TryGetValue("assigneeUserIds", out var many)
-                && many.ValueKind == JsonValueKind.Array)
-            {
-                foreach (var el in many.EnumerateArray())
-                    if (el.TryGetInt32(out var id) && id == userId) return true;
-            }
-
-            if (step.Properties.TryGetValue("assigneeRole", out var role)
-                && role.ValueKind == JsonValueKind.String)
-            {
-                var roleName = role.GetString();
-                if (!string.IsNullOrWhiteSpace(roleName) && userRoles.Contains(roleName))
-                    return true;
-            }
-
-            return false;
-        }
+        private ISet<string> GetUserRoles() =>
+            User.Claims
+                .Where(c => c.Type == System.Security.Claims.ClaimTypes.Role)
+                .Select(c => c.Value)
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
     }
 }

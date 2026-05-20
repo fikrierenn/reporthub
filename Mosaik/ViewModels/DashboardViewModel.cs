@@ -33,6 +33,10 @@ namespace Mosaik.ViewModels
         public Mosaik.Modules.Circular.Models.Circular? TodaysCircular { get; set; }
         public int TodaysBlockCount { get; set; }
         public int TodaysUrgentCount { get; set; }
+
+        // Plan 36 W-16 — Bekleyen workflow onayları (kullanıcıya atanmış aktif step)
+        public int WorkflowPendingCount { get; set; }
+        public List<Mosaik.ViewModels.Workflow.InboxItem> WorkflowPreview { get; set; } = new();
     }
 
     public class TopRunReportItem
