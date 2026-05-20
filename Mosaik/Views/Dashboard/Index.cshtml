@@ -6,14 +6,18 @@
     ViewData["PageTitle"] = "Genel Bakış";
 
     var trCulture = new CultureInfo("tr-TR");
-    var todayStr = DateTime.Now.ToString("d MMMM yyyy, dddd", trCulture);
+    // ADR-006 — UTC convention. View'da Turkey TZ'ye convert.
+    var trTz = TimeZoneInfo.FindSystemTimeZoneById(
+        OperatingSystem.IsWindows() ? "Turkey Standard Time" : "Europe/Istanbul");
+    var nowLocal = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, trTz);
+    var todayStr = nowLocal.ToString("d MMMM yyyy, dddd", trCulture);
     var firstName = !string.IsNullOrWhiteSpace(Model.FullName)
         ? Model.FullName.Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? Model.User
         : Model.User;
 
     string GreetingByHour()
     {
-        var h = DateTime.Now.Hour;
+        var h = nowLocal.Hour;
         if (h < 6) return "İyi geceler";
         if (h < 12) return "Günaydın";
         if (h < 18) return "İyi günler";

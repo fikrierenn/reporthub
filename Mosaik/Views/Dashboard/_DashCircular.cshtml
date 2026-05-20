@@ -3,8 +3,12 @@
 @{
     var tr = new CultureInfo("tr-TR");
     var t = Model.TodaysCircular;
-    var saatNow = DateTime.Now.Hour;
-    var bugun = DateTime.Now.ToString("dd MMMM yyyy dddd", tr);
+    // ADR-006 UTC convention — Turkey TZ convert.
+    var trTz = TimeZoneInfo.FindSystemTimeZoneById(
+        OperatingSystem.IsWindows() ? "Turkey Standard Time" : "Europe/Istanbul");
+    var nowLocal = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, trTz);
+    var saatNow = nowLocal.Hour;
+    var bugun = nowLocal.ToString("dd MMMM yyyy dddd", tr);
 }
 
 <div class="section-title">
