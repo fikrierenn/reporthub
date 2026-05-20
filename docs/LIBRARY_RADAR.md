@@ -334,6 +334,177 @@
 
 ---
 
+## 6. Workflow + Canvas Kütüphaneleri
+
+### 6.1 sequential-workflow-designer ✅ SEÇILDI (Plan 36)
+- **GitHub:** https://github.com/nocode-js/sequential-workflow-designer — MIT — vanilla TS/SVG — sıfır bağımlılık
+- **Ne yapar:** Step container (sequence/switch/task), drag-drop, read-only mode, JSON serialize/deserialize. launchPad component ile parallel path desteği.
+- **Neden:** ADR-014 uyumlu (React gerektirmez, CDN tek dosya). Bundle ~45 KB. Plan 36 zincir onay modeli için tam fit.
+- **Entegrasyon:** CDN `<script>`. `Designer.create(container, definition, config)`. `designer.getDefinition()` → JSON → `WorkflowTemplate.DefinitionJson` DB alanına kaydet.
+- **Read-only / instance highlight:** `isReadonly: true` + custom step renderer ile mevcut adımı vurgula.
+- **Öncelik:** 🔴 | **Durum:** Planlandı | **Hedef plan:** Plan 36 Faz A
+
+### 6.2 JointJS
+- **GitHub:** https://github.com/clientIO/joint — MIT — vanilla JS/SVG
+- **Ne yapar:** Graph + port + link tabanlı diagram framework. `graph.toJSON()` / `graph.fromJSON()` built-in. Framework-agnostic.
+- **Neden:** ADR-014 tam uyumlu (React yok). sequential-workflow-designer'a göre dezavantajı: hazır step-container yok, ~30-50h ek scaffolding.
+- **Plan 36 kararı:** YAGNI — sequential-workflow-designer yeterli. JointJS free-form DAG ihtiyacı belirginleşirse değerlendirilir.
+- **Öncelik:** 🟢 | **Durum:** Reddedildi (Plan 36 için)
+
+### 6.3 React Flow
+- **GitHub:** https://github.com/xyflow/xyflow — MIT — React zorunlu
+- **Neden değil (Plan 36):** ADR-014 ihlali. Bundle 280-320 KB gzip. Node.js build pipeline Mosaik'e eklenmeli.
+- **Ne zaman:** Serbest 2D DAG (process map, bağımlılık grafiği, karmaşık parallel/fork-join) gerektiğinde — ADR ek onayıyla izole Razor sayfasına embed edilir.
+- **Gömme pattern (gelecek için):**
+  ```js
+  // vite.config.ts — IIFE build
+  build: { lib: { name: 'WorkflowDesigner', formats: ['iife'] } }
+  // _Layout.cshtml
+  // <div id="flow-canvas"></div>
+  // <script>WorkflowDesigner.mount(document.getElementById('flow-canvas'))</script>
+  ```
+- **Öncelik:** 🟢 | **Durum:** Ertelendi — ADR onayı gerekli
+
+---
+
+## 7. Notification + Takvim Altyapısı
+
+### 7.1 Novu
+- **GitHub:** https://github.com/novuhq/novu — MIT core — NuGet `Novu` v3.12 — self-host Docker
+- **Ne yapar:** Multi-channel notification engine (in-app, email, push, SMS). Workflow step bazlı routing.
+- **Neden:** .NET SDK mevcut, self-host, MIT core. BKM on-premise için uygun.
+- **Entegrasyon:**
+  ```csharp
+  services.AddNovu(options => options.ApiKey = config["Novu:ApiKey"]);
+  await _novu.Event.Trigger("obligation-deadline", new { to = new { subscriberId = userId.ToString() } });
+  ```
+- **Pragmatik:** Novu full Docker overhead büyük (6+ servis). İlk MVP: Hangfire + FluentEmail + in-house `INotificationService`. Novu sonraya ertelenebilir.
+- **Öncelik:** 🟡 | **Durum:** İncelendi | **Hedef plan:** Plan 32 sonrası
+
+### 7.2 EscalationRule Pattern (in-house — library değil)
+- **Ne yapar:** Yükümlülük deadline geçince kademeli bildirim zinciri.
+- **Mosaik modeli:**
+  ```csharp
+  class EscalationRule { int TriggerAfterHours; EscalationTarget EscalateTo; NotificationChannel Channel; }
+  // Hangfire recurring job — saatlik kontrol
+  // T+72h → Manager, T+120h → DeptHead, T+168h → Admin
+  ```
+- **Tablo:** `EscalationRules { ObligationTypeId, TriggerAfterHours, EscalateTo, Channel }`
+- **Öncelik:** 🟡 | **Hedef plan:** Plan 36 Faz B
+
+### 7.3 Ical.Net (RRULE + VALARM)
+- Bkz. §4.2 — feed endpoint + RRULE örnekleri eklendi.
+- **Yeni:** `GET /Obligations/Calendar.ics?token={hmacToken}` — HMACSHA256 imzalı, cookie-less.
+- **RRULE Q-due örneği:**
+  ```csharp
+  new RecurrencePattern {
+      Frequency = FrequencyType.Yearly,
+      ByMonth = new List<int> { 2, 5, 8, 11 },  // Şubat, Mayıs, Ağustos, Kasım
+      ByMonthDay = new List<int> { -1 }           // ayın son günü
+  }
+  ```
+- **VALARM:** 7 gün + 1 gün önce `ACTION:DISPLAY` (Outlook uyumlu).
+- **Öncelik:** 🔴 | **Durum:** Planlandı | **Hedef plan:** Plan 36 Faz B
+
+---
+
+## 8. Platform Mimari Dersleri
+
+_Library değil; Backstage/NocoBase/n8n/Twenty/Plane/FlowiseAI araştırmasından çıkan Mosaik mimarisine uygulanacak pattern'ler._
+
+### 8.1 NocoBase — PENDING Status + Instruction Registry
+- Workflow step `PENDING` döndüğünde execution durur, harici event (onay, zamanlayıcı) `Resume()` tetikler.
+- `IWorkflowStep.ResumeAsync(ctx, resumeData, ct)` — suspend/resume çifti Plan 36 WorkflowEngine'e girmeli.
+- String-keyed instruction registry: `RegisterStep("send-email", SendEmailStep)` → plugin step tipi ekleyebilir.
+
+### 8.2 n8n — Error Workflow + Correlation ID + putExecutionToWait
+- Her `WorkflowDefinition`'a `OnErrorWorkflowId` FK — hata olunca başka chain tetiklenir.
+- `ExecutionId` (GUID) — tüm log satırları bu ID ile gruplanır.
+- `ResumeAt DATETIME2` kolonu + Hangfire poller — `WaitingUntil <= UtcNow` olan execution'ları uyandırır.
+
+### 8.3 Twenty CRM — BaseRecord + Activity Timeline
+- `Contract`, `SOP`, `Task`, `Document`, `Obligation` → ortak `BaseRecord` (audit log, activity feed, comment, attachment paylaşır).
+- Activity timeline: `AuditLog` tablosunun `EntityType + EntityId` ile filtrelenmesi + `_ActivityFeed.cshtml` partial.
+
+### 8.4 Plane — Cycle/Module + 5 View
+- Görev modülü (Plan 29): `Donem` (sprint/zaman kutusu) + `GorevGrubu` (tema/epic) — M2M junction.
+- 5 görünüm (List/Board/Gantt/Calendar/Spreadsheet) tek endpoint, client-side Alpine `x-data="{ view: 'list' }"`.
+
+### 8.5 FlowiseAI — ChatFlow vs AgentFlow + IMosaikTool
+- `DocumentChatService` → ChatFlow (tek pass, retriever → LLM).
+- `SOP AI Danışman` (Plan 34) → AgentFlow (tool calling, koşullu dal).
+- `IMosaikTool { string Name, string Description, JsonSchema Schema, Task<object> ExecuteAsync }` — LLM araç seçer, Mosaik execute eder.
+
+### 8.6 Backstage — Cross-modül Unified Search + Scaffolder
+- Her modül `ISearchCollator.CollectAsync()` → `SearchDocument` üretir → SQL-backed search index.
+- Yeni modül scaffolding: `GetScaffoldTemplate()` → plans/ şablonu + DB migration + csproj iskeleti.
+
+---
+
+## 9. Operational Intelligence — Rekabet Haritası + Mosaik Konumlandırma
+
+_Kaynak: Organizational Digital Twin + Autonomous Ops + Process Mining araştırması (2026-05-20). **Bu bölüm vizyon ve durum tespiti — implement plan değil.** Yakın-vade yakalama: Plan 36 event sourcing log tablosu + Plan 38 EntityRelations/DecisionLog. Bu altyapı VAR olunca aşağıdaki query'ler ve şemalar "bedava" gelir._
+
+### 9.1 Competitive Landscape
+
+| Oyuncu | Fiyat | Yaklaşım | Mosaik fark |
+|---|---|---|---|
+| **Celonis** | $100k+/yıl + danışman | ERP event log'larından process model | Veri zaten içeride — day-1 log, sıfır data plumbing |
+| **Signavio** (SAP) | $50k+ | BPMN modeling + SAP entegrasyonu | SMB için fazla; SAP bağımlısı |
+| **Minit** (Microsoft) | $30k+ | Azure + Power Platform odaklı | Microsoft stack dışında zor |
+| **Apromore** | Open-source (Java Docker) | Process mining + XES format | Salesforce 2025'te aldı; Java operasyonel yük yüksek |
+| **iGrafx Process360** | $20k+ | Process mining + simulation tek platform | SMB için fazla; Gartner "DTO" kategorisi yeni oyuncu |
+| **ProcessMind** | Erken aşama | Celonis alternatifi | Nişe, referans yok |
+
+**Sonuç:** Pazar konsolide — büyük ERP oyuncuları segment'i satın alıyor. Bağımsız SMB process intelligence boşluğu var. Mosaik'in "inside-out" avantajı: veri ERP'den çekilmiyor, Mosaik üretirken zaten biriktirilmiş.
+
+### 9.2 Organizational Digital Twin — Mosaik için MVP Yol Haritası
+
+**Ne değil:** System dynamics simülasyonu (AnyLogic/iThink) — akademik araç, SMB için YAGNI.
+
+**Ne:** Deterministik "what-if" — geçmiş veri ortalamasından projeksiyon.
+
+```sql
+-- Bottleneck tespiti: hangi adım en çok zaman tutuyor?
+SELECT StepName, 
+       AVG(DATEDIFF(hour, StartedAt, CompletedAt)) AS AvgHours,
+       PERCENTILE_CONT(0.9) WITHIN GROUP (ORDER BY DATEDIFF(hour, StartedAt, CompletedAt)) 
+           OVER (PARTITION BY StepName) AS P90Hours,
+       COUNT(*) AS SampleSize
+FROM WorkflowInstanceSteps
+WHERE CompletedAt IS NOT NULL
+GROUP BY StepName
+ORDER BY AvgHours DESC;
+
+-- What-if: bu adımı kaldırırsak ne kadar kazanırız?
+SELECT AVG(TotalCycleHours) - 
+       (SELECT AVG(DATEDIFF(hour, StartedAt, CompletedAt)) 
+        FROM WorkflowInstanceSteps WHERE StepName = @StepName)
+AS PredictedSavingHours
+FROM (
+  SELECT InstanceId, SUM(DATEDIFF(hour, StartedAt, CompletedAt)) AS TotalCycleHours
+  FROM WorkflowInstanceSteps GROUP BY InstanceId
+) t;
+```
+
+Plan 36 `WorkflowInstanceSteps` log tablosu hazır olunca bu query arayüze taşınır — **2-3 günlük iş, Faz 2 kapsamında.**
+
+### 9.3 Autonomous Operations — Kavram (uzun vade)
+
+**Pipeline gap (vizyon):** `AiExtractionWorker` (VAR) → VendorHistory (YOK) → DecisionRules (YOK) → WorkflowEngine (Plan 36)
+
+**Plan yok.** İki konsept tablo (`VendorHistory`, `DecisionRules`) uzun vade Autonomous Ops için aday — yakın-vade plan değil. Yapılırsa Plan 38 DecisionLog'un üzerine yazılır (kararı kim aldı + neden + sonuç zaten DecisionLog'ta).
+
+**Rivet.gg** (github.com/Ironclad/rivet) — MIT, visual LLM pipeline builder. Şu an erken; Plan 36 WorkflowEngine canlanınca değerlendir. **Bağımlılık ekleme; önce WorkflowEngine.**
+
+### 9.4 Apromore XES Pipeline — Değerlendirme
+
+Teknik path: `WorkflowInstanceSteps` → C# XES exporter → Apromore self-host (Java Docker). Feasible ama **operasyonel yük yüksek** (Java stack + ayrı instance). Kısa vade değil.
+
+Pragmatik alternatif: Mosaik'in kendi hafif process visualization'ı (`DashboardRenderer` + ECharts sankey/timeline widget). §1.1 ECharts calendar heatmap + sankey diagram Friction Heatmap için yeterli.
+
+---
+
 ## Özet Öncelik Tablosu
 
 ### 🔴 Hemen (CDN/NuGet, sıfır altyapı)
@@ -346,6 +517,7 @@
 | Ical.Net | Workflow/Obligations | NuGet | 0.5 gün |
 | FluentEmail + MailKit | Notifications/Email | NuGet | 1-2 gün |
 | SheetJS CE | Reports export | CDN | 0.5 gün |
+| sequential-workflow-designer | Workflow Designer | CDN | Plan 36 kapsamında |
 
 ### 🟡 Orta vadeli (küçük setup, NuGet veya npm build)
 
@@ -360,6 +532,8 @@
 | Audit.NET | Audit | NuGet | 1 gün |
 | Mark.js | Documents FTS | CDN | 0.5 gün |
 | LiteLLM proxy | AI | Docker | 1-2 gün |
+| Novu | Multi-channel notifications | Docker (self-host) | 2-3 gün |
+| Frappe Gantt | Workflow/Timeline | CDN | 1 gün |
 
 ### 🟢 Uzun vadeli (sidecar/altyapı/Docker)
 
@@ -373,6 +547,8 @@
 | Playwright .NET | PDF gen | Chromium | 1-2 gün |
 | WebPush-CSharp | Notifications | NuGet | 1 gün |
 | D3 OrgChart | OrgChart | CDN + custom | 3-5 gün |
+| React Flow | DAG canvas (gelecek) | npm+Vite bundle | 3-5 gün + ADR |
+| JointJS | Diagram (alternatif) | CDN | 5+ gün scaffolding |
 
 ---
 
@@ -395,9 +571,10 @@ Tek port, tek Docker container. `IDocumentAiService` interface ile ASP.NET Core'
 
 ## İlişkili Dosyalar
 
-- `docs/VISION.md` — hangi modüller planlı
+- `docs/VISION.md` — hangi modüller planlı + §7 yeni vizyon katmanları
 - `plans/27-documents-ai-roadmap.md` — Documents + AI planı
 - `plans/34-sop-prosedur-yonetimi.md` — SOP planı
-- `plans/36-workflow-designer-onay-akislari.md` — Workflow planı
+- `plans/36-workflow-designer-onay-akislari.md` — Workflow planı (sequential-workflow-designer + custom engine)
 - `TODO.md` — aktif sprint
 - `.claude/rules/architecture.md` — stack kısıtları (ADR-014: vanilla JS + Alpine, no React/Vue)
+- Plan 37 (Unified Action Inbox) — henüz yazılmadı, §6/7 ön araştırma tamamlandı
