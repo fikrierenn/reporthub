@@ -168,6 +168,80 @@ namespace Mosaik.Controllers
             public string? Comment { get; set; }
         }
 
+        // W-12 — GET /Workflow/Instance/{id}.ics
+        // Aktif step'in deadline'ını VCALENDAR formatında döner (Outlook/Apple Calendar import).
+        [HttpGet("Workflow/Instance/{id:int}.ics")]
+        public async Task<IActionResult> InstanceIcs(int id, CancellationToken ct)
+        {
+            var instance = await _db.WorkflowInstances.AsNoTracking()
+                .Include(i => i.Template)
+                .FirstOrDefaultAsync(i => i.Id == id, ct);
+            if (instance is null) return NotFound();
+            if (instance.Template is null || instance.CurrentStepId is null
+                || instance.Status != WorkflowInstanceStatus.Active)
+                return NotFound();
+
+            var definition = WorkflowDefinition.Parse(instance.Template.DefinitionJson);
+            var step = definition?.Steps.FirstOrDefault(s => s.Id == instance.CurrentStepId);
+            if (step?.Properties is null) return NotFound();
+
+            int deadlineDays = 0;
+            if (step.Properties.TryGetValue("deadlineDays", out var dd))
+            {
+                if (dd.ValueKind == JsonValueKind.Number && dd.TryGetInt32(out var n)) deadlineDays = n;
+                else if (dd.ValueKind == JsonValueKind.String && int.TryParse(dd.GetString(), out var s)) deadlineDays = s;
+            }
+            if (deadlineDays <= 0) return NotFound();
+
+            // StepEntered tarihi
+            var stepEnteredAt = await _db.WorkflowInstanceLogs.AsNoTracking()
+                .Where(l => l.InstanceId == id
+                         && l.EventType == WorkflowEventType.StepEntered
+                         && l.StepId == instance.CurrentStepId)
+                .OrderByDescending(l => l.OccurredAt)
+                .Select(l => (DateTime?)l.OccurredAt)
+                .FirstOrDefaultAsync(ct);
+            if (stepEnteredAt is null) return NotFound();
+
+            var deadline = stepEnteredAt.Value.AddDays(deadlineDays);
+            var dtStart = deadline.ToString("yyyyMMddTHHmmssZ");
+            var dtEnd = deadline.AddHours(1).ToString("yyyyMMddTHHmmssZ");
+            var dtStamp = DateTime.UtcNow.ToString("yyyyMMddTHHmmssZ");
+
+            // ICS metni — VCALENDAR + tek VEVENT
+            var summary = IcsEscape($"{instance.Template.Name} — {step.Name ?? step.Id}");
+            var description = IcsEscape(
+                $"Workflow #{instance.Id} ({instance.EntityType} #{instance.EntityId}) onay adımı son tarihi.");
+            var uid = $"workflow-{instance.Id}-step-{instance.CurrentStepId}@mosaik";
+
+            var ics =
+                "BEGIN:VCALENDAR\r\n" +
+                "VERSION:2.0\r\n" +
+                "PRODID:-//Mosaik//Workflow//TR\r\n" +
+                "METHOD:PUBLISH\r\n" +
+                "BEGIN:VEVENT\r\n" +
+                $"UID:{uid}\r\n" +
+                $"DTSTAMP:{dtStamp}\r\n" +
+                $"DTSTART:{dtStart}\r\n" +
+                $"DTEND:{dtEnd}\r\n" +
+                $"SUMMARY:{summary}\r\n" +
+                $"DESCRIPTION:{description}\r\n" +
+                "STATUS:CONFIRMED\r\n" +
+                "END:VEVENT\r\n" +
+                "END:VCALENDAR\r\n";
+
+            return File(System.Text.Encoding.UTF8.GetBytes(ics), "text/calendar",
+                fileDownloadName: $"workflow-{id}.ics");
+        }
+
+        // RFC 5545 escape — virgül, noktalı virgül, ters slash, satır sonu.
+        private static string IcsEscape(string s) =>
+            s.Replace("\\", "\\\\")
+             .Replace(",", "\\,")
+             .Replace(";", "\\;")
+             .Replace("\n", "\\n")
+             .Replace("\r", "");
+
         // ─── ortak yardımcılar (Admin partial da kullanır) ───
 
         private bool TryGetUserId(out int userId)

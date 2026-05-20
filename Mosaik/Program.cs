@@ -94,8 +94,9 @@ builder.Services.AddScoped<Mosaik.Core.Notification.INotificationService, Mosaik
 builder.Services.AddScoped<Mosaik.Core.Intelligence.IEntityRelationService, Mosaik.Services.Intelligence.EntityRelationService>();
 builder.Services.AddScoped<Mosaik.Core.Intelligence.IDecisionLogService, Mosaik.Services.Intelligence.DecisionLogService>();
 
-// Plan 36 — Workflow Designer + onay akışları engine + bildirim
+// Plan 36 — Workflow Designer + onay akışları engine + bildirim + processor
 builder.Services.AddScoped<Mosaik.Services.Workflow.WorkflowNotifier>();
+builder.Services.AddScoped<Mosaik.Services.Workflow.WorkflowStepProcessor>();
 builder.Services.AddScoped<Mosaik.Core.Workflow.IWorkflowService, Mosaik.Services.Workflow.WorkflowEngine>();
 
 // Plan 31 — Email (SMTP)
@@ -256,5 +257,11 @@ RecurringJob.AddOrUpdate<Mosaik.Modules.Circular.Services.CompileCircularJob>(
         TimeZone = TimeZoneInfo.FindSystemTimeZoneById(
             OperatingSystem.IsWindows() ? "Turkey Standard Time" : "Europe/Istanbul")
     });
+
+// Plan 36 W-09 + W-11 — Workflow step deadline + escalation processor (her 30 dk).
+RecurringJob.AddOrUpdate<Mosaik.Services.Workflow.WorkflowStepProcessor>(
+    recurringJobId: "workflow-step-processor",
+    methodCall: job => job.ExecuteAsync(CancellationToken.None),
+    cronExpression: "*/30 * * * *");
 
 app.Run();

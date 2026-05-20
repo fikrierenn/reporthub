@@ -45,6 +45,7 @@
                 assigneeUserId: null,
                 assigneeRole: '',
                 deadlineDays: null,
+                escalateTo: '',
                 requireComment: false
             }
         };
@@ -199,6 +200,16 @@
             notify();
         });
         addField('Süre (gün)', deadlineInput);
+
+        var escalateInput = textInput(step.properties.escalateTo);
+        escalateInput.placeholder = 'UserId (42) veya rol (admin)';
+        escalateInput.addEventListener('input', function () {
+            var v = escalateInput.value.trim();
+            // Sayıysa int, değilse string olarak sakla
+            step.properties.escalateTo = v === '' ? '' : (isNaN(v) ? v : parseInt(v, 10));
+            notify();
+        });
+        addField('Eskalasyon Hedefi (süre+1 gün geçince)', escalateInput);
 
         var requireCommentRow = document.createElement('label');
         requireCommentRow.style.display = 'flex';

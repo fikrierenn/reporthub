@@ -123,10 +123,10 @@ Mosaik'te yükümlülük, SOP adımı, sözleşme onayı, tamim onayı gibi işl
 
 > **Kısmen tamam 2026-05-21:** W-10 + W-13 + E-09 (Plan 38 dual-write) backend yazıldı. W-09/W-11/W-12 designer UI sonrası (step properties.deadline + assigneeRole schema W-05'te) genişler.
 
-9. [ ] **W-09** `WorkflowStepProcessor` Hangfire job — her dakika aktif adım kontrol (deadline schema W-05 sonrası)
+9. [x] **W-09** ✅ `WorkflowStepProcessor` Hangfire recurring job (`*/30 * * * *`). Aktif instance + step.properties.deadlineDays okur, StepEntered tarihi + deadline + 1 gün geçince EscalationFired log + bildirim. Idempotent (aynı step için 2. log yazılmaz).
 10. [x] **W-10** ✅ `WorkflowNotifier` — StepEntered → atanan kullanıcıya in-app notification. Step.properties: assigneeUserId | assigneeUserIds | assigneeRole. `CreateBulkIfNotExistsAsync` ile dedup. Email Plan 31 SMTP üzerinden Faz B-2.
-11. [ ] **W-11** Escalation — deadline+1 gün geçmişse yöneticiye bildirim (W-09 ile)
-12. [ ] **W-12** ICS endpoint — `/Workflow/Instance/{id}.ics` Outlook export
+11. [x] **W-11** ✅ Escalation logic W-09 içinde — step.properties.escalateTo (UserId int veya rol string). Boşsa fallback admin rolüne bildirim. Designer'a "Eskalasyon Hedefi" alanı eklendi.
+12. [x] **W-12** ✅ `GET /Workflow/Instance/{id}.ics` — RFC 5545 VCALENDAR + tek VEVENT (aktif step deadline). UID `workflow-{id}-step-{stepId}@mosaik`. Instance view'a "Takvime Ekle" linki. IcsEscape (virgül/noktalı virgül/satır sonu).
 13. [x] **W-13** ✅ POST `/Workflow/Instance/{id}/Respond` — `WorkflowController.Respond` (AntiForgery + Authorize + NameIdentifier claim parse + AuditLog). Engine üzerinden Approve/Reject; Index + Instance GET action iskeletleri var (view'lar W-05..W-07'de). Plan 38 §8.1 dual-write engine içinden (E-09).
 
 ### Faz C — Modül Entegrasyonu (6-8h)

@@ -63,6 +63,15 @@
     </div>
 </div>
 
+@if (Model.Status == Mosaik.Core.Workflow.WorkflowInstanceStatus.Active && Model.CurrentStepId is not null)
+{
+    <div class="action-row">
+        <a class="btn ghost sm" href="/Workflow/Instance/@(Model.Id).ics" download>
+            <i class="fas fa-calendar-plus"></i> Takvime Ekle (.ics)
+        </a>
+    </div>
+}
+
 @if (!string.IsNullOrEmpty(TempData["Message"] as string))
 {
     <div role="alert" class="alert success">@TempData["Message"]</div>
