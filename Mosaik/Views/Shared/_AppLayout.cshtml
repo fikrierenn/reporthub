@@ -171,6 +171,12 @@
                                 <span class="label">Genel Bakış</span>
                             </a>
                         </li>
+                        <li>
+                            <a href="/Workflow/Inbox" class="@(IsActive("Workflow") ? "active" : "")" aria-current="@(IsActive("Workflow") ? "page" : null)">
+                                <span class="icon" aria-hidden="true"><i class="fas fa-inbox"></i></span>
+                                <span class="label">Bekleyen Onaylar</span>
+                            </a>
+                        </li>
                     </ul>
                 </div>
 
@@ -291,6 +297,12 @@
                                 <a href="/Admin/OrgChart" class="@(ActionActive("orgchart") ? "active" : "")">
                                     <span class="icon" aria-hidden="true"><i class="fas fa-sitemap"></i></span>
                                     <span class="label">Organizasyon</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="/Workflow/Admin" class="@(IsActive("Workflow") ? "active" : "")">
+                                    <span class="icon" aria-hidden="true"><i class="fas fa-diagram-project"></i></span>
+                                    <span class="label">Workflow Şablonları</span>
                                 </a>
                             </li>
 

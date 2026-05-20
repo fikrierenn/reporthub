@@ -114,9 +114,9 @@ Mosaik'te yükümlülük, SOP adımı, sözleşme onayı, tamim onayı gibi işl
 2. [x] **W-02** ✅ Migration 65 — `WorkflowTemplates`, `WorkflowInstances`, `WorkflowInstanceLogs` event sourcing + 5 index (Entity, Active, Instance, StepEvent + EntityType). DB'ye uygulandı.
 3. [x] **W-03** ✅ `Mosaik/Models/Workflow/` 3 EF entity + `MosaikContext` DbSet + `OnModelCreating` konfig
 4. [x] **W-04** ✅ `WorkflowEngine.cs` — StartAsync (InstanceStarted + StepEntered), AdvanceAsync (Approve → next step / last → Completed; Reject → Cancelled), CancelAsync, GetLogsAsync. `WorkflowDefinition.Parse` sequential-workflow-designer JSON.
-5. [ ] **W-05** `sequential-workflow-designer` CDN entegrasyonu — `workflow-designer.js` wrapper IIFE
-6. [ ] **W-06** `WorkflowController` — `Index` (liste) + `Create/Edit` (designer canvas) + `Instance` (aktif adım görünümü)
-7. [ ] **W-07** Workflow designer Razor view — canvas + adım property panel + kaydet
+5. [x] **W-05** ✅ `sequential-workflow-designer@0.31.0` CDN + `wwwroot/assets/js/workflow-designer.js` IIFE wrapper. Step properties form: name (zorunlu) + assigneeUserId + assigneeRole + deadlineDays + requireComment. Legacy `{steps:[...]}` ↔ designer `{sequence:[...]}` migration auto. `WorkflowDefinition.Parse` iki formatı destekler.
+6. [x] **W-06** ✅ `WorkflowController` partial split: `WorkflowController.cs` user actions (Index/Inbox/Instance/Respond) + `WorkflowController.Admin.cs` admin actions (AdminIndex/AdminCreate/AdminEdit/AdminToggle). Sidebar link: Sistem → Workflow Şablonları (admin), Ana → Bekleyen Onaylar (her kullanıcı).
+7. [x] **W-07** ✅ 4 Razor view: AdminIndex (şablon listesi + son akış), AdminTemplateForm (designer canvas + form), Inbox (bana atanmış), Instance (timeline + Approve/Reject). Inline-style: **0** (components.css'e `.wf-canvas-host`, `.wf-grid`, `.wf-timeline*`, `.paper-card-header`, `.paper-card-body`, `.d-inline*` utility eklendi).
 8. [x] **W-08** ✅ Unit test — 8 WorkflowEngine test (Start/Advance/Approve/Reject/Cancel/Complete/Logs ordering). Full regression: 368/368 yeşil.
 
 ### Faz B — Hangfire Job + Bildirim + Escalation (8-10h)

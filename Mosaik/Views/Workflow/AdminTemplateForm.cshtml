@@ -1,0 +1,100 @@
+@model Mosaik.ViewModels.Workflow.WorkflowTemplateViewModel
+@{
+    var isEdit = Model.Id > 0;
+    ViewData["Title"] = isEdit ? "Şablonu Düzenle" : "Yeni Şablon";
+    Layout = "_AppLayout";
+    var formAction = isEdit ? $"/Workflow/Admin/Edit/{Model.Id}" : "/Workflow/Admin/Create";
+}
+
+@section Breadcrumb {
+    <nav class="crumbs" aria-label="Sayfa konumu">
+        <a href="/Admin">Yönetim</a>
+        <span>›</span>
+        <a href="/Workflow/Admin">Workflow</a>
+        <span>›</span>
+        <span aria-current="page">@(isEdit ? "Düzenle" : "Yeni")</span>
+    </nav>
+}
+
+@section TopActions {
+    <a class="btn" href="/Workflow/Admin">İptal</a>
+}
+
+@section Styles {
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sequential-workflow-designer@0.31.0/css/designer.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sequential-workflow-designer@0.31.0/css/designer-light.css" />
+}
+
+<div class="hero">
+    <h1>@(isEdit ? "Şablonu Düzenle" : "Yeni Şablon")</h1>
+    <div class="sub">
+        <span>Sürükle-bırak ile adımları yerleştir, her adımın özelliklerini düzenle, kaydet.</span>
+    </div>
+</div>
+
+<form method="post" action="@formAction">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="Id" />
+
+    <div asp-validation-summary="ModelOnly" class="alert error"></div>
+
+    <section class="form-section-card wide">
+        <div class="paper-card-body">
+            <div class="grid-2col">
+                <div class="field">
+                    <label class="lab" asp-for="Name">Şablon Adı *</label>
+                    <input class="inp" asp-for="Name" placeholder="örn. Sözleşme Onay Zinciri" />
+                    <span asp-validation-for="Name" class="text-muted text-xs"></span>
+                </div>
+                <div class="field">
+                    <label class="lab" asp-for="EntityType">Bağlı Modül *</label>
+                    <select class="inp" asp-for="EntityType">
+                        <option value="">Seçin...</option>
+                        <option value="Contract">Sözleşme</option>
+                        <option value="Obligation">Yükümlülük</option>
+                        <option value="Circular">Tamim</option>
+                        <option value="Document">Doküman</option>
+                        <option value="Report">Rapor</option>
+                    </select>
+                    <span asp-validation-for="EntityType" class="text-muted text-xs"></span>
+                </div>
+            </div>
+            <div class="field-check">
+                <input type="checkbox" asp-for="IsActive" id="IsActive" />
+                <label for="IsActive">Aktif (tetiklenebilir)</label>
+            </div>
+        </div>
+    </section>
+
+    <section class="paper-card">
+        <header class="paper-card-header">
+            <h2>Akış Tasarımı</h2>
+        </header>
+        <div class="paper-card-body">
+            <div id="workflow-canvas" class="wf-canvas-host"></div>
+            <input type="hidden" asp-for="DefinitionJson" id="DefinitionJsonInput" />
+            <span asp-validation-for="DefinitionJson" class="text-muted text-xs"></span>
+        </div>
+    </section>
+
+    <section class="action-row wide">
+        <a class="btn ghost" href="/Workflow/Admin">Geri Dön</a>
+        <button type="submit" class="btn primary"><i class="fas fa-save"></i> Kaydet</button>
+    </section>
+</form>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sequential-workflow-designer@0.31.0/dist/index.umd.js"></script>
+    <script src="~/assets/js/workflow-designer.js"></script>
+    <script>
+        (function () {
+            var initial = document.getElementById('DefinitionJsonInput').value;
+            MosaikWorkflowDesigner.init({
+                canvasId: 'workflow-canvas',
+                hiddenInputId: 'DefinitionJsonInput',
+                initialJson: initial,
+                readonly: false
+            });
+        })();
+    </script>
+}

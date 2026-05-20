@@ -2118,3 +2118,47 @@ select.inp {
 
 /* Render hata fallback (chart/canvas render fail mesajı) */
 .render-error { padding: 20px; color: #b91c1c; }
+
+/* ---- Plan 36 — Workflow Designer + Instance + Inbox ---- */
+
+/* Designer canvas wrapper (sequential-workflow-designer host) */
+.wf-canvas-host { height: 560px; border: 1px solid var(--line); border-radius: 6px; }
+
+/* Instance detail layout: 2-col (timeline + decision panel) */
+.wf-grid { display: grid; grid-template-columns: 1fr 360px; gap: 18px; }
+@media (max-width: 900px) { .wf-grid { grid-template-columns: 1fr; } }
+
+/* Event timeline (Instance view) */
+.wf-timeline { list-style: none; margin: 0; padding: 14px 18px; display: flex; flex-direction: column; gap: 10px; }
+.wf-timeline-item { display: flex; gap: 12px; align-items: flex-start; }
+.wf-timeline-dot {
+    width: 28px; height: 28px; border-radius: 50%;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    font-size: 11px;
+}
+.wf-timeline-body { flex: 1; }
+.wf-timeline-title { font-weight: 600; font-size: 13px; }
+.wf-timeline-payload {
+    margin-top: 6px; padding: 8px;
+    background: var(--paper);
+    border-radius: 4px; font-size: 11px; overflow-x: auto;
+}
+
+/* Decision panel button row (Approve + Reject) */
+.wf-decision-row { display: flex; gap: 8px; margin-top: 14px; }
+.wf-decision-row > .btn { flex: 1; }
+
+/* Section card header şeridi (paper-card içinde) */
+.paper-card-header {
+    padding: 14px 18px; border-bottom: 1px solid var(--line);
+    display: flex; align-items: center; justify-content: space-between;
+}
+.paper-card-header h2 { margin: 0; font-size: 15px; }
+.paper-card-body { padding: 20px; }
+
+/* Display helpers */
+.d-inline { display: inline; }
+.d-inline-block { display: inline-block; }
+.d-flex { display: flex; }

@@ -1,0 +1,64 @@
+@model Mosaik.ViewModels.Workflow.WorkflowInboxViewModel
+@{
+    ViewData["Title"] = "Bekleyen Onaylar";
+    Layout = "_AppLayout";
+}
+
+@section Breadcrumb {
+    <nav class="crumbs" aria-label="Sayfa konumu">
+        <a href="/">Ana sayfa</a>
+        <span>›</span>
+        <span aria-current="page">Workflow · Bana Atanmış</span>
+    </nav>
+}
+
+<div class="hero">
+    <h1>Bekleyen Onaylarım</h1>
+    <div class="sub">
+        <span class="mono">@Model.Items.Count akış</span>
+    </div>
+</div>
+
+@if (!string.IsNullOrEmpty(TempData["Message"] as string))
+{
+    <div role="alert" class="alert success">@TempData["Message"]</div>
+}
+
+@if (Model.Items.Count == 0)
+{
+    <div class="empty-state paper-dashed">
+        <i class="fas fa-inbox empty-state__icon" aria-hidden="true"></i>
+        <h3>Bekleyen onayın yok</h3>
+        <p>Bir workflow adımı sana atandığında burada görünür.</p>
+    </div>
+}
+else
+{
+    <section class="paper-card clip">
+        <table class="dt">
+            <thead>
+                <tr>
+                    <th scope="col">Şablon</th>
+                    <th scope="col">Adım</th>
+                    <th scope="col">Hedef</th>
+                    <th scope="col">Başlama</th>
+                    <th scope="col" class="ta-right">İşlem</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model.Items)
+                {
+                    <tr>
+                        <td>@item.TemplateName</td>
+                        <td><strong>@item.StepLabel</strong></td>
+                        <td><span class="mono">@item.EntityType #@item.EntityId</span></td>
+                        <td><span class="ago">@item.StartedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</span></td>
+                        <td class="ta-right">
+                            <a class="btn primary sm" href="/Workflow/Instance/@item.InstanceId">Aç</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </section>
+}

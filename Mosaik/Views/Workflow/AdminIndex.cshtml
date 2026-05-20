@@ -1,0 +1,142 @@
+@model Mosaik.ViewModels.Workflow.WorkflowAdminListViewModel
+@{
+    ViewData["Title"] = "Workflow Şablonları";
+    Layout = "_AppLayout";
+
+    string StatusBadge(string s) => s switch
+    {
+        "Active" => "<span class=\"pill ok\">Aktif</span>",
+        "Completed" => "<span class=\"pill\">Tamamlandı</span>",
+        "Cancelled" => "<span class=\"pill error\">İptal</span>",
+        _ => "<span class=\"pill\">" + s + "</span>"
+    };
+}
+
+@section Breadcrumb {
+    <nav class="crumbs" aria-label="Sayfa konumu">
+        <a href="/Admin">Yönetim</a>
+        <span>›</span>
+        <span aria-current="page">Workflow Şablonları</span>
+    </nav>
+}
+
+@section TopActions {
+    <a class="btn primary" href="/Workflow/Admin/Create"><i class="fas fa-plus"></i> Yeni Şablon</a>
+}
+
+<div class="hero">
+    <h1>Workflow Şablonları</h1>
+    <div class="sub">
+        <span class="mono">@Model.Templates.Count şablon</span>
+        <span>·</span>
+        <span class="mono">@Model.RecentInstances.Count son akış</span>
+    </div>
+</div>
+
+@if (!string.IsNullOrEmpty(TempData["Message"] as string))
+{
+    <div role="alert" class="alert success">@TempData["Message"]</div>
+}
+
+<section class="paper-card clip stack-12">
+    <header class="paper-card-header">
+        <h2>Şablonlar</h2>
+    </header>
+    @if (Model.Templates.Count == 0)
+    {
+        <div class="empty-state">
+            <i class="fas fa-diagram-project empty-state__icon" aria-hidden="true"></i>
+            <h3>Henüz şablon yok</h3>
+            <p>Yeni Şablon butonu ile designer'ı aç ve ilk workflow'unu çiz.</p>
+        </div>
+    }
+    else
+    {
+        <table class="dt">
+            <thead>
+                <tr>
+                    <th scope="col">Ad</th>
+                    <th scope="col">Modül</th>
+                    <th scope="col">Aktif</th>
+                    <th scope="col">Açık Akış</th>
+                    <th scope="col">Oluşturulma</th>
+                    <th scope="col" class="ta-right">İşlem</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var t in Model.Templates)
+                {
+                    <tr>
+                        <td><span>@t.Name</span></td>
+                        <td><span class="mono">@t.EntityType</span></td>
+                        <td>
+                            @if (t.IsActive)
+                            {
+                                <span class="status ok">Aktif</span>
+                            }
+                            else
+                            {
+                                <span class="status warn">Pasif</span>
+                            }
+                        </td>
+                        <td><span class="mono">@t.InstanceCount</span></td>
+                        <td><span class="ago">@t.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</span></td>
+                        <td class="ta-right">
+                            <a class="btn ghost sm" href="/Workflow/Admin/Edit/@t.Id"><i class="fas fa-pen"></i> Düzenle</a>
+                            <form method="post" action="/Workflow/Admin/Toggle/@t.Id" class="d-inline">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="btn sm @(t.IsActive ? "danger" : "primary")">
+                                    @(t.IsActive ? "Pasifleştir" : "Aktifleştir")
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</section>
+
+<section class="paper-card clip">
+    <header class="paper-card-header">
+        <h2>Son Akışlar</h2>
+    </header>
+    @if (Model.RecentInstances.Count == 0)
+    {
+        <div class="empty-state">
+            <i class="fas fa-inbox empty-state__icon" aria-hidden="true"></i>
+            <h3>Henüz akış yok</h3>
+            <p>Bir modülden workflow tetiklendiğinde bu listede görünür.</p>
+        </div>
+    }
+    else
+    {
+        <table class="dt">
+            <thead>
+                <tr>
+                    <th scope="col">Şablon</th>
+                    <th scope="col">Hedef</th>
+                    <th scope="col">Aktif Adım</th>
+                    <th scope="col">Durum</th>
+                    <th scope="col">Başlama</th>
+                    <th scope="col" class="ta-right">Detay</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var i in Model.RecentInstances)
+                {
+                    <tr>
+                        <td>@i.TemplateName</td>
+                        <td><span class="mono">@i.EntityType #@i.EntityId</span></td>
+                        <td><span class="mono">@(i.CurrentStepLabel ?? "—")</span></td>
+                        <td>@Html.Raw(StatusBadge(i.StatusLabel))</td>
+                        <td><span class="ago">@i.StartedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</span></td>
+                        <td class="ta-right">
+                            <a class="btn ghost sm" href="/Workflow/Instance/@i.Id">Aç</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</section>
