@@ -212,6 +212,16 @@ Hafta 10+:  Form/Anket (integrate karar), Documents iki-plan çakışmasını ç
 
 ## 7. Büyük Vizyon — Operational Intelligence Platform
 
+> **Bu bölüm kuzey yıldızıdır, plan değildir.** Aşağıdaki katmanlar (Living Org Map, Decision Memory, Digital Twin, AI COO, Autonomous Ops, Invisible ERP) **uzun vade hedef**. Yarın implement edilmez, refactor borcu üretmez.
+>
+> **Pragmatik bağlantı:** Yeni iş yazarken (Plan 36, 37, 38, 34) bu vizyona doğru **temel atılır** — eski kodu yeniden yazmak yok, sadece yeni yazılan kodun event sourcing / EntityRelations / DecisionLog / Inbox sözleşmesine uyması. Üst yapı kendiliğinden çıkar.
+>
+> Somut yakın-vade müdahaleler:
+> - **Plan 36 Migration 62** — `WorkflowInstanceLogs` append-only event sourcing (EventType enum). Friction Heatmap + Digital Twin what-if query bedava gelir.
+> - **Plan 38 (yeni mini-plan)** — `EntityRelations` + `DecisionLog` core tablolar. Yeni modüller (SOP, Comment, Workflow approve/reject) doğal yazıcı. Eski FK'lar dokunmaz.
+> - **Plan 37 (Unified Inbox)** — `IInboxProvider` + `IWidgetProvider` sözleşmesi. Yeni modüller kayıt olur, mevcut dashboard ayrı yaşar.
+> - **ADR-016 (IMosaikModule evrim)** — opt-in arama/katalog/widget kayıt. Eski modüller zorlanmaz.
+
 ### 7.0 Asıl Problem Nedir?
 
 Şirketlerde **bilgi eksikliği** yok. Problem şu:
