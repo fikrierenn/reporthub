@@ -60,6 +60,10 @@ namespace Mosaik.Models
         public DbSet<HolidayOccurrence> HolidayOccurrences { get; set; }
         public DbSet<ImportantDate> ImportantDates { get; set; }
 
+        // Plan 38 — Living Org Map + Decision Memory (VISION §7)
+        public DbSet<Intelligence.EntityRelation> EntityRelations { get; set; }
+        public DbSet<Intelligence.DecisionLog> DecisionLogs { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             // DataSource configuration
@@ -500,6 +504,38 @@ namespace Mosaik.Models
                 e.Property(d => d.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
                 e.HasOne(d => d.Firma).WithMany().HasForeignKey(d => d.FirmaId).OnDelete(DeleteBehavior.Restrict);
                 e.HasIndex(d => new { d.FirmaId, d.EventDate });
+            });
+
+            // Plan 38 — Living Org Map + Decision Memory
+            modelBuilder.Entity<Intelligence.EntityRelation>(e =>
+            {
+                e.HasKey(r => r.Id);
+                e.Property(r => r.SourceType).HasMaxLength(50).IsRequired();
+                e.Property(r => r.RelationType).HasMaxLength(50).IsRequired();
+                e.Property(r => r.TargetType).HasMaxLength(50).IsRequired();
+                e.Property(r => r.SourceSystem).HasMaxLength(50);
+                e.Property(r => r.ValidFrom).HasDefaultValueSql("SYSUTCDATETIME()");
+                e.Property(r => r.CreatedAt).HasDefaultValueSql("SYSUTCDATETIME()");
+                e.HasIndex(r => new { r.FirmaId, r.SourceType, r.SourceId })
+                 .HasDatabaseName("IX_EntityRelations_Source");
+                e.HasIndex(r => new { r.FirmaId, r.TargetType, r.TargetId })
+                 .HasDatabaseName("IX_EntityRelations_Target");
+                e.HasIndex(r => new { r.FirmaId, r.SourceType, r.SourceId, r.RelationType, r.TargetType, r.TargetId })
+                 .HasDatabaseName("UQ_EntityRelations_Tuple")
+                 .IsUnique();
+            });
+
+            modelBuilder.Entity<Intelligence.DecisionLog>(e =>
+            {
+                e.HasKey(d => d.Id);
+                e.Property(d => d.Title).HasMaxLength(300).IsRequired();
+                e.Property(d => d.RelatedEntityType).HasMaxLength(50);
+                e.Property(d => d.Status).HasMaxLength(20).IsRequired().HasDefaultValue("Active");
+                e.Property(d => d.MadeAt).HasDefaultValueSql("SYSUTCDATETIME()");
+                e.HasIndex(d => new { d.FirmaId, d.RelatedEntityType, d.RelatedEntityId })
+                 .HasDatabaseName("IX_DecisionLogs_Entity");
+                e.HasIndex(d => new { d.FirmaId, d.MadeBy, d.MadeAt })
+                 .HasDatabaseName("IX_DecisionLogs_MadeBy");
             });
 
             // Plan 16.6 — Her vNext modül kendi entity'lerini ConfigureModelBuilder

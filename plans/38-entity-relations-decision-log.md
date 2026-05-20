@@ -2,7 +2,7 @@
 
 **Tarih:** 2026-05-20
 **Yazan:** Fikri / Claude
-**Durum:** `Taslak`
+**Durum:** `Onaylandı` (2026-05-21)
 
 ---
 
@@ -33,7 +33,7 @@ Bu iki tablo yokken vizyon hayal. **Eski FK'lar refactor edilmez** — sadece ye
 - RAG embedding'i DecisionLog üzerinde — ileride AI COO ile
 
 ### Etkilenen dosyalar
-- `Mosaik/Database/63_EntityRelationsDecisionLog.sql` — yeni migration
+- `Mosaik/Database/64_EntityRelationsDecisionLog.sql` — yeni migration
 - `Mosaik/Models/EntityRelation.cs` — yeni entity
 - `Mosaik/Models/DecisionLog.cs` — yeni entity
 - `Mosaik/Models/MosaikContext.cs` — DbSet kayıt
@@ -76,7 +76,7 @@ Bu iki tablo yokken vizyon hayal. **Eski FK'lar refactor edilmez** — sadece ye
 
 ## 5. Done Criteria
 
-- [ ] Migration 63 yeşil — 2 tablo + index
+- [ ] Migration 64 yeşil — 2 tablo + index
 - [ ] EF entity'ler `dotnet build` yeşil
 - [ ] `IEntityRelationService.AddAsync` + `GetBySourceAsync` + `GetByTargetAsync` çalışıyor (5 unit test)
 - [ ] `IDecisionLogService.LogAsync` + `GetByEntityAsync` çalışıyor (3 unit test)
@@ -90,7 +90,7 @@ Bu iki tablo yokken vizyon hayal. **Eski FK'lar refactor edilmez** — sadece ye
 
 ## 6. Rollback Planı
 
-- Migration 63 drop: 2 tablo bağımsız, FK yok (polymorphic) — `DROP TABLE EntityRelations; DROP TABLE DecisionLogs;`
+- Migration 64 drop: 2 tablo bağımsız, FK yok (polymorphic) — `DROP TABLE EntityRelations; DROP TABLE DecisionLogs;`
 - Servis interface kullanılmıyorsa yeni modüller fallback null-guard ile sessiz skip
 - `git revert` + migration down: veri kaybı yok
 
@@ -98,16 +98,16 @@ Bu iki tablo yokken vizyon hayal. **Eski FK'lar refactor edilmez** — sadece ye
 
 ## 7. Adımlar
 
-### Faz A — Core Tablo + Servis (4-6h)
+### Faz A — Core Tablo + Servis (4-6h) ✅ TAMAMLANDI 2026-05-21
 
-1. [ ] **E-01** `Mosaik.Core/Intelligence/` klasörü + `IEntityRelationService` + `IDecisionLogService` interface'leri
-2. [ ] **E-02** `Mosaik.Core/Intelligence/EntityType.cs` + `RelationType.cs` static const class (5+5 başlangıç)
-3. [ ] **E-03** Migration 63 — `EntityRelations` + `DecisionLogs` tabloları + index'ler
-4. [ ] **E-04** `EntityRelation` + `DecisionLog` EF entity + `MosaikContext` DbSet
-5. [ ] **E-05** `EntityRelationService` impl (Add idempotent + Get by source/target)
-6. [ ] **E-06** `DecisionLogService` impl (LogAsync + GetByEntity)
-7. [ ] **E-07** `Program.cs` DI kayıt — `AddScoped<IEntityRelationService, ...>`
-8. [ ] **E-08** Unit test — 8 test (5 EntityRelation + 3 DecisionLog)
+1. [x] **E-01** ✅ `Mosaik.Core/Intelligence/IEntityRelationService` + `IDecisionLogService` interface'leri + DTO record'ları
+2. [x] **E-02** ✅ `EntityType.cs` (10 tip) + `RelationType.cs` (8 tip) static const + `IsValid`
+3. [x] **E-03** ✅ Migration 64 — `EntityRelations` + `DecisionLogs` tabloları + 4 index, DB'ye uygulandı
+4. [x] **E-04** ✅ `Mosaik/Models/Intelligence/EntityRelation.cs` + `DecisionLog.cs` EF entity + `MosaikContext` DbSet + `OnModelCreating` konfig
+5. [x] **E-05** ✅ `EntityRelationService` impl — idempotent Add (mevcut tuple → update), Remove, GetBySource/Target
+6. [x] **E-06** ✅ `DecisionLogService` impl — LogAsync + GetByEntityAsync (MadeAt DESC)
+7. [x] **E-07** ✅ `Program.cs` DI kayıt — `AddScoped<IEntityRelationService, ...>` + `IDecisionLogService`
+8. [x] **E-08** ✅ Unit test — 7 EntityRelation + 4 DecisionLog = 11 test, hepsi yeşil (full regression: 360/360)
 
 ### Faz B — Plan 36 Entegrasyonu (1-2h)
 
@@ -170,23 +170,44 @@ CREATE INDEX IX_DecisionLogs_MadeBy ON DecisionLogs(MadeBy, MadeAt DESC);
 
 ---
 
-## 8.1 Mevcut yapıya uyumlandırma — C hibrit (2026-05-20 karar)
+## 8.1 Mevcut yapıya uyumlandırma — C hibrit (2026-05-20 karar, 2026-05-21 netleştirildi)
 
-**Karar:** Eski FK'lar (UserDepartments, ContractVendor, ObligationContract, ...) **yerinde kalır**, refactor yok. EntityRelations okuma katmanında aggregator pattern ile birleşir.
+**Karar:** Eski FK'lar (UserDepartments, ContractVendor, ObligationContract, ...) **yerinde kalır** — global refactor yok. AMA: **dokunduğumuz yeni iş paralel yazar.** Yeni feature yazarken o feature'ın yazdığı FK aynı zamanda `EntityRelations`'a da kayıt düşer.
+
+**Üç katmanlı kural:**
+
+1. **Eski okuma kodu** → eski FK'ya bakmaya devam eder, dokunulmaz.
+2. **Yeni okuma kodu** → `IEntityRelationService.GetBySourceAsync` aggregator (iki kaynağı birleştirir: EntityRelations + eski FK adapter).
+3. **Yazma (yeni veya değiştirilen feature)** → her zaman çift yazar:
+   - Eski FK'ya (mevcut UI ve okuma kodu kırılmasın)
+   - `EntityRelations`'a (yeni okuma + analitik + Living Org Map için)
 
 **Faz B (sonraki sprint — Plan 38 kapsamı dışı, taslak not):**
-- `IEntityRelationService.GetBySourceAsync` çağrısında **iki kaynak birleşir**:
+- `IEntityRelationService.GetBySourceAsync` aggregator iki kaynak:
   1. `EntityRelations` tablosundan polymorphic kayıtlar
   2. Eski FK tablolarından adapter ile çevrilmiş kayıtlar (örn: `UserDepartments` → `(User, manages|member_of, Department)`)
 - 3 ana ilişki ile başla: User↔Department, Contract↔Vendor, Obligation↔Contract
 - Adapter `IEntityRelationSource` interface — her FK tablosu için küçük mapping metod
-- Yeni kod yazma yalnızca `EntityRelations`'a, okuma aggregate
+
+**Çift-yazma pattern (Plan 36/34/35 yazıcısı):**
+```csharp
+// Örnek: Plan 36 W-13 Approve
+_db.WorkflowInstanceLogs.Add(log);        // mevcut FK / log tablosu
+await _entityRelations.AddAsync(new {     // yeni paralel kayıt
+    SourceType = EntityType.User, SourceId = userId,
+    RelationType = RelationType.Approved,
+    TargetType = EntityType.WorkflowInstance, TargetId = instanceId
+});
+await _decisionLog.LogAsync(...);
+```
+
+Mevcut UI eskisini okur, kırılmaz. Yeni analitik / Living Org Map / Friction Heatmap yenisini okur. Aggregator ikisini birleştirir.
 
 **İleride (Plan 38 kapsamı dışı, opsiyonel):**
 - Hangfire sync job (15-30dk): eski FK → EntityRelations idempotent upsert (denormalize read model). Yük artarsa değerlendir; şu an aggregator yeterli.
 
 **DecisionLog ↔ AuditLog link:**
-- `DecisionLog.RelatedAuditId INT NULL` kolonu eklenir (Migration 63'te baştan)
+- `DecisionLog.RelatedAuditId INT NULL` kolonu eklenir (Migration 64'te baştan)
 - Yeni karar action'ı (Plan 36 W-13 Approve/Reject) hem AuditLog hem DecisionLog'a yazar; DecisionLog `RelatedAuditId` üzerinden audit kaydına link
 - Eski AuditLog kayıtları yerinde kalır, backfill yok (rationale bilgisi geriye gidip yazılamaz)
 
@@ -206,6 +227,6 @@ CREATE INDEX IX_DecisionLogs_MadeBy ON DecisionLogs(MadeBy, MadeAt DESC);
 
 > Kullanıcı onay verene kadar implement edilmez.
 
-- [ ] Plan kullanıcıya gösterildi
-- [ ] Geri bildirim alındı
-- [ ] Onay alındı
+- [x] Plan kullanıcıya gösterildi
+- [x] Geri bildirim alındı (çift-yazma kuralı 8.1'e eklendi)
+- [x] Onay alındı (2026-05-21)

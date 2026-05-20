@@ -90,6 +90,10 @@ builder.Services.AddScoped<Mosaik.Services.IOrgChartService, Mosaik.Services.Org
 // Plan 17 Faz H — cross-modül bildirim
 builder.Services.AddScoped<Mosaik.Core.Notification.INotificationService, Mosaik.Services.NotificationService>();
 
+// Plan 38 — Living Org Map + Decision Memory (VISION §7)
+builder.Services.AddScoped<Mosaik.Core.Intelligence.IEntityRelationService, Mosaik.Services.Intelligence.EntityRelationService>();
+builder.Services.AddScoped<Mosaik.Core.Intelligence.IDecisionLogService, Mosaik.Services.Intelligence.DecisionLogService>();
+
 // Plan 31 — Email (SMTP)
 builder.Services.Configure<Mosaik.Core.Email.SmtpSettings>(builder.Configuration.GetSection("SmtpSettings"));
 builder.Services.AddScoped<Mosaik.Core.Email.IEmailService, Mosaik.Services.Email.SmtpEmailService>();
