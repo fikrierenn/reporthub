@@ -213,8 +213,10 @@ else
                         <td class="text-right">
                             @if (f.MimeType?.Contains("pdf") == true)
                             {
-                                <button type="button" class="btn sm ghost" title="Belgeye soru sor"
-                                        onclick="DocChat.open(@f.Id, @Html.Raw(System.Text.Json.JsonSerializer.Serialize(f.FileName)))">
+                                <button type="button" class="btn sm ghost doc-chat-btn"
+                                        title="Belgeye soru sor"
+                                        data-file-id="@f.Id"
+                                        data-file-name="@f.FileName">
                                     <i class="fas fa-comments text-[9px]"></i>
                                     Sor
                                 </button>
@@ -318,6 +320,16 @@ window.toggleUpload = function (force) {
             render();
             setTimeout(function () { el('docChatQ').focus(); }, 50);
         },
+        bindButtons: function () {
+            // XSS fix: inline onclick yerine data-attribute + delegation.
+            document.querySelectorAll('.doc-chat-btn').forEach(function (btn) {
+                btn.addEventListener('click', function (e) {
+                    var fid = parseInt(e.currentTarget.dataset.fileId, 10);
+                    var fname = e.currentTarget.dataset.fileName || '';
+                    window.DocChat.open(fid, fname);
+                });
+            });
+        },
         close: function () {
             el('docChatDrawer').classList.add('hidden');
         },
@@ -351,6 +363,13 @@ window.toggleUpload = function (force) {
             }
         }
     };
+
+    // DOMContentLoaded sonrası butonları bağla.
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function () { window.DocChat.bindButtons(); });
+    } else {
+        window.DocChat.bindButtons();
+    }
 })();
 </script>
 }

@@ -15,6 +15,7 @@ namespace Mosaik.Controllers
         private readonly IWebHostEnvironment _env;
         private readonly AiPipelineQueue _queue;
         private readonly IServiceScopeFactory _scopeFactory;
+        private readonly IHostApplicationLifetime _lifetime;
         private readonly ILogger<DocumentsController> _logger;
 
         private static readonly byte[] PdfMagic = new byte[] { 0x25, 0x50, 0x44, 0x46 };
@@ -26,6 +27,7 @@ namespace Mosaik.Controllers
             IWebHostEnvironment env,
             AiPipelineQueue queue,
             IServiceScopeFactory scopeFactory,
+            IHostApplicationLifetime lifetime,
             ILogger<DocumentsController> logger)
         {
             _db = db;
@@ -33,6 +35,7 @@ namespace Mosaik.Controllers
             _env = env;
             _queue = queue;
             _scopeFactory = scopeFactory;
+            _lifetime = lifetime;
             _logger = logger;
         }
 
@@ -177,7 +180,8 @@ namespace Mosaik.Controllers
             // Plan 27 Faz B-02 — auto-classify + summary fire-and-forget (PDF/DOCX dahil).
             // Sözleşme extraction'ı zaten Stage 1 özetini üretiyor; bu sadece liste tooltip için
             // hızlı bir özet + tag üretir. Hata fırlatmaz, kullanıcıyı bekletmez.
-            _ = Task.Run(async () => await RunDocumentInsightAsync(cf.Id));
+            // Audit fix — ApplicationStopping CT (graceful shutdown).
+            _ = Task.Run(async () => await RunDocumentInsightAsync(cf.Id), _lifetime.ApplicationStopping);
 
             return RedirectToAction(nameof(Index), new { contractId });
         }
