@@ -126,7 +126,7 @@ Site arama kutusu üzerinden 66k içinden filtrelenecek anahtar kelimeler:
 
 ## 6. Sonraki Sprint Aksiyonları
 
-- [ ] **claudskills.com search** — yukarıdaki 12 anahtar kelime ile 1 oturum derin tarama. Bulguları bu dosyaya §3'e ekle.
+- [ ] **claudskills.com DERİN TARAMA** ⭐ kullanıcı 2026-05-21 onayı — "müsait olunca yap". 12 anahtar kelime (ef core, hangfire, workflow, multi-tenant, event-sourcing, audit-log, pdf-extract, ocr, sql-server, razor, asp.net, tailwind) ile arama. Her keyword paralel sub-agent (WebFetch + analiz). Bulgular bu dosyaya §3 tablosuna eklenir. ~2h.
 - [ ] **qa-security skill** — OWASP checklist'i `.claude/rules/security-principles.md`'ye port karşılaştırması (eksik kalem var mı?). Yeni skill açma; mevcut rule'a satır ekle.
 - [ ] **write-prd / pm-discovery** — `plans/feature-template.md`'yi 8-bölüm pattern ile karşılaştır, eksik bölüm varsa ekle.
 - [ ] **workflow / event-sourcing / state-machine** etiketli skill'ler — Plan 36 referans/alternatif desen.

@@ -54,6 +54,7 @@ Build: 0 hata 0 uyarı. Test: **337/337 geçti** (test-discipline.md kanıtland�
 - [ ] **D-03** Vision çoklaştırma (4-6h) — Gemini + OpenAI vision fallback
 - [ ] **D-04** Test coverage (6-8h) — Documents/Wizard/multi-firma integration
 - [ ] **D-05** Plan 16.7 Tag Sistemi Faz A (8-10h) — bağımsız (AI önerici 16.5 Faz C bekliyor)
+- [ ] **D-06** claudskills.com derin tarama (~2h) — 12 anahtar kelime, paralel WebFetch sub-agent. Bulgular `docs/SKILL_POOL.md` §3'e. Kullanıcı onayı 2026-05-21 "müsait olunca".
 
 ---
 
