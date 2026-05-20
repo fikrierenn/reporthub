@@ -502,7 +502,7 @@ interface IMosaikModule {
 }
 ```
 
-ADR yazılacak (ADR-016 adayı). Tüm yeni modüller bu interface'i dolduracak.
+**ADR-018 taslak yazıldı (2026-05-20):** [`docs/ADR/018-imosaikmodule-capability-evolution.md`](ADR/018-imosaikmodule-capability-evolution.md). Opt-in capability interfaces (IInboxProvider, IWidgetProvider, ISearchDocumentProvider, ICatalogEntityProvider, IEntityWorkflowProvider). `IMosaikModule` çekirdek değişmez — eski modüller dokunulmaz. İlk implementasyon Plan 37 (Unified Inbox).
 
 ---
 
