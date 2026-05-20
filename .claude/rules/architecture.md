@@ -47,7 +47,7 @@ POST /Reports/Run
 
 ## Bilinen Tutarsızlıklar (YÜKSEK risk)
 
-1. **`AllowedRoles` CSV — DashboardController hâlâ kullanıyor** — `DashboardController.cs:62,169,345` CSV-bazlı `AllowedForUser`. `ReportsController` ise junction tablosunu doğru kullanıyor. İki paralel sistem. **Plan 39 Faz A** (M-03 final), 2026-05-21 sonrası kapanacak.
+_Şu an açık YÜKSEK risk yok._ (M-03 final 2026-05-20'de kapandı — `DashboardController` junction'a geçti, commit `5dfefe1`.)
 
 ## ORTA risk
 
@@ -73,7 +73,8 @@ POST /Reports/Run
 
 **20 Mayıs 2026 stale-claim sweep (`todo-verification.md` disiplini):**
 - ✅ **M-01 AdminController split** — 1736 satır → ana 368 + 11 partial (en büyük 266 `Reports.cs`). Hard-limit altı.
-- ✅ **M-03 User.Roles CSV — kod tarafı** — `User.cs` Roles property silindi (ADR-003 Faz C). DashboardController CSV `AllowedRoles` (rapor-bazlı, farklı katman) Plan 39 Faz A'da kapanacak.
+- ✅ **M-03 User.Roles CSV — kod tarafı** — `User.cs` Roles property silindi (ADR-003 Faz C).
+- ✅ **M-03 final — DashboardController CSV → junction** — commit `5dfefe1` (Plan 39 Faz A). `AllowedForUser` helper silindi, junction filter DB tarafına itildi.
 - ✅ **async void** — proje genelinde 0 (re-confirmed).
 - ✅ **new HttpClient()** — proje genelinde 0 (`IHttpClientFactory` standart).
 - ✅ **DateTime.Now view-side** — `Dashboard/Index.cshtml` + `_DashCircular.cshtml` UTC convert (commit `8adea01`).
