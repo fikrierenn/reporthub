@@ -41,8 +41,8 @@ Build: 0 hata 0 uyarı. Test: **337/337 geçti** (test-discipline.md kanıtland�
 
 #### Plan 33 Faz 3 — Mimari kararlar (~4-6 saat) ⏳
 
-- [ ] **ADR-016** Calendar Unified Event Source (Plan 22'den önce)
-- [ ] **ADR-017** Compliance Scope Sınırı
+- [x] **ADR-016** Calendar Unified Event Source ✅ 2026-05-17 (commit d32ffd3, `docs/ADR/016-calendar-unified-event-source.md`)
+- [x] **ADR-017** Compliance Scope Sınırı ✅ 2026-05-21 (`docs/ADR/017-compliance-scope-boundary.md`)
 - [ ] **VISION update** — AI Generation karar notu (scope tut, modüllerde çıkar)
 
 ---
