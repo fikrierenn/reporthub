@@ -6,6 +6,7 @@ using Mosaik.Core.Workflow;
 using Mosaik.Models;
 using Mosaik.Models.Workflow;
 using Mosaik.Services;
+using Mosaik.Services.Intelligence;
 using Mosaik.Services.Workflow;
 
 namespace Mosaik.Tests;
@@ -24,8 +25,13 @@ public class WorkflowStepProcessorTests
     private static NotificationService NewNotificationService(MosaikContext ctx) =>
         new NotificationService(ctx, NullLogger<NotificationService>.Instance);
 
-    private static WorkflowStepProcessor NewProcessor(MosaikContext ctx) =>
-        new WorkflowStepProcessor(ctx, NewNotificationService(ctx), NullLogger<WorkflowStepProcessor>.Instance);
+    private static WorkflowStepProcessor NewProcessor(MosaikContext ctx)
+    {
+        var decisionLog = new DecisionLogService(ctx, NullLogger<DecisionLogService>.Instance);
+        var entityRelations = new EntityRelationService(ctx, NullLogger<EntityRelationService>.Instance);
+        var engine = new WorkflowEngine(ctx, decisionLog, entityRelations, NullLogger<WorkflowEngine>.Instance);
+        return new WorkflowStepProcessor(ctx, NewNotificationService(ctx), engine, NullLogger<WorkflowStepProcessor>.Instance);
+    }
 
     private static string OneStepDefinition(int deadlineDays, object? escalateTo = null)
     {

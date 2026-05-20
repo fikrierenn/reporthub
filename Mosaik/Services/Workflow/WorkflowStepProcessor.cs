@@ -9,8 +9,8 @@ namespace Mosaik.Services.Workflow
 {
     // Plan 36 W-09 + W-11 — Hangfire periodic job.
     // 30 dakikada bir aktif instance'ları tarar:
-    //   1. StepEntered tarihi + deadlineDays > now → süresi dolmuş
-    //   2. Süresi dolmuşsa + henüz EscalationFired log yoksa → escalate
+    //   1. Delay step'leri: waitDays süresi dolanları auto-advance (IWorkflowService.TickDelayedStepsAsync)
+    //   2. Approval step'leri: StepEntered + deadlineDays + 1 gün geçti + henüz EscalationFired yok → escalate
     //   3. Escalation hedefi: step.properties.escalateTo (UserId int veya role string)
     //      - hedef yoksa fallback: admin rolüne bildirim
     // Idempotent — aynı instance+step için EscalationFired sadece bir kez yazılır.
@@ -18,20 +18,34 @@ namespace Mosaik.Services.Workflow
     {
         private readonly MosaikContext _db;
         private readonly INotificationService _notifications;
+        private readonly IWorkflowService _engine;
         private readonly ILogger<WorkflowStepProcessor> _logger;
 
         public WorkflowStepProcessor(
             MosaikContext db,
             INotificationService notifications,
+            IWorkflowService engine,
             ILogger<WorkflowStepProcessor> logger)
         {
             _db = db;
             _notifications = notifications;
+            _engine = engine;
             _logger = logger;
         }
 
         public async Task ExecuteAsync(CancellationToken ct = default)
         {
+            // 1. Delay step'lerini tick et — süresi dolan delay'ler next step'e geçer.
+            int autoAdvanced = 0;
+            try
+            {
+                autoAdvanced = await _engine.TickDelayedStepsAsync(ct);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "WorkflowStepProcessor: TickDelayedSteps hata.");
+            }
+
             var now = DateTime.UtcNow;
             var active = await _db.WorkflowInstances.AsNoTracking()
                 .Where(i => i.Status == WorkflowInstanceStatus.Active && i.CurrentStepId != null)
@@ -130,8 +144,8 @@ namespace Mosaik.Services.Workflow
             }
 
             _logger.LogInformation(
-                "WorkflowStepProcessor tamamlandı. Aktif: {Total}, Eskalasyon: {Esc}, Hata: {Failed}",
-                processed, escalated, failed);
+                "WorkflowStepProcessor tamamlandı. Aktif: {Total}, Eskalasyon: {Esc}, AutoAdvance: {Auto}, Hata: {Failed}",
+                processed, escalated, autoAdvanced, failed);
         }
 
         private async Task<List<int>> ResolveEscalationTargetsAsync(WorkflowDefinitionStep step, CancellationToken ct)

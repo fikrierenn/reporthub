@@ -69,7 +69,135 @@ namespace Mosaik.Services.Workflow
             await _context.SaveChangesAsync(ct);
 
             await NotifyStepEnteredSafeAsync(instance.Id, firstStep.Id, ct);
+            await AutoAdvanceIfNeededAsync(instance.Id, input.StartedBy, ct);
             return ServiceResult<int>.Ok(instance.Id, "Workflow başlatıldı.");
+        }
+
+        // Notify step: bildir + otomatik next. Delay step: log + WorkflowStepProcessor zamanı geldiğinde geçirir.
+        private async Task AutoAdvanceIfNeededAsync(int instanceId, int actorId, CancellationToken ct)
+        {
+            var instance = await _context.WorkflowInstances
+                .Include(i => i.Template)
+                .FirstOrDefaultAsync(i => i.Id == instanceId, ct);
+            if (instance is null || instance.Template is null) return;
+            if (instance.Status != WorkflowInstanceStatus.Active) return;
+            if (string.IsNullOrEmpty(instance.CurrentStepId)) return;
+
+            var definition = WorkflowDefinition.Parse(instance.Template.DefinitionJson);
+            var step = definition?.Steps.FirstOrDefault(s => s.Id == instance.CurrentStepId);
+            if (step is null) return;
+
+            var kind = (step.Type ?? WorkflowStepKind.Approval).ToLowerInvariant();
+            if (!WorkflowStepKind.IsAuto(kind)) return; // approval — kullanıcı bekler
+
+            if (kind == WorkflowStepKind.Notify)
+            {
+                // Bildirim notifier'da zaten atıldı (NotifyStepEnteredSafeAsync). Direkt complete + next.
+                await AdvanceProgrammaticAsync(instance, definition!, actorId, "auto-notify", ct);
+            }
+            // delay → log "DelayScheduled" (idempotent), processor handle eder
+            else if (kind == WorkflowStepKind.Delay)
+            {
+                var alreadyScheduled = await _context.WorkflowInstanceLogs.AsNoTracking()
+                    .AnyAsync(l => l.InstanceId == instance.Id
+                                && l.StepId == instance.CurrentStepId
+                                && l.EventType == "DelayScheduled", ct);
+                if (!alreadyScheduled)
+                {
+                    var waitDays = TryGetInt(step, "waitDays", 1);
+                    _context.WorkflowInstanceLogs.Add(NewLog(instance.Id, instance.CurrentStepId, "DelayScheduled", null,
+                        System.Text.Json.JsonSerializer.Serialize(new { waitDays })));
+                    await _context.SaveChangesAsync(ct);
+                }
+            }
+        }
+
+        // Programatik advance — notify/delay step otomatik geçişi için (kullanıcı kararı YOK).
+        // Engine logic'i AdvanceAsync ile aynı ama Approve/Reject yerine "auto-complete".
+        private async Task AdvanceProgrammaticAsync(WorkflowInstance instance, WorkflowDefinition definition, int actorId, string reason, CancellationToken ct)
+        {
+            var currentIndex = definition.Steps.FindIndex(s => s.Id == instance.CurrentStepId);
+            if (currentIndex < 0) return;
+
+            _context.WorkflowInstanceLogs.Add(NewLog(instance.Id, instance.CurrentStepId,
+                WorkflowEventType.StepCompleted, actorId,
+                System.Text.Json.JsonSerializer.Serialize(new { auto = true, reason })));
+
+            var nextIndex = currentIndex + 1;
+            if (nextIndex >= definition.Steps.Count)
+            {
+                instance.Status = WorkflowInstanceStatus.Completed;
+                instance.CurrentStepId = null;
+                instance.CompletedAt = DateTime.UtcNow;
+                _context.WorkflowInstanceLogs.Add(NewLog(instance.Id, null, WorkflowEventType.InstanceCompleted, actorId));
+                await _context.SaveChangesAsync(ct);
+                return;
+            }
+
+            var nextStep = definition.Steps[nextIndex];
+            instance.CurrentStepId = nextStep.Id;
+            _context.WorkflowInstanceLogs.Add(NewLog(instance.Id, nextStep.Id, WorkflowEventType.StepEntered, actorId));
+            await _context.SaveChangesAsync(ct);
+
+            await NotifyStepEnteredSafeAsync(instance.Id, nextStep.Id, ct);
+            // Recursive — bir sonraki adım da auto ise zincir devam eder.
+            await AutoAdvanceIfNeededAsync(instance.Id, actorId, ct);
+        }
+
+        private static int TryGetInt(WorkflowDefinitionStep step, string key, int defaultValue)
+        {
+            if (step.Properties is null) return defaultValue;
+            if (!step.Properties.TryGetValue(key, out var el)) return defaultValue;
+            if (el.ValueKind == System.Text.Json.JsonValueKind.Number && el.TryGetInt32(out var n)) return n;
+            if (el.ValueKind == System.Text.Json.JsonValueKind.String && int.TryParse(el.GetString(), out var s)) return s;
+            return defaultValue;
+        }
+
+        public async Task<int> TickDelayedStepsAsync(CancellationToken ct = default)
+        {
+            var now = DateTime.UtcNow;
+            var active = await _context.WorkflowInstances
+                .Where(i => i.Status == WorkflowInstanceStatus.Active && i.CurrentStepId != null)
+                .Include(i => i.Template)
+                .ToListAsync(ct);
+
+            int advanced = 0;
+            foreach (var instance in active)
+            {
+                try
+                {
+                    if (instance.Template is null) continue;
+                    var definition = WorkflowDefinition.Parse(instance.Template.DefinitionJson);
+                    var step = definition?.Steps.FirstOrDefault(s => s.Id == instance.CurrentStepId);
+                    if (step is null) continue;
+                    var kind = (step.Type ?? WorkflowStepKind.Approval).ToLowerInvariant();
+                    if (kind != WorkflowStepKind.Delay) continue;
+
+                    var waitDays = TryGetInt(step, "waitDays", 1);
+                    if (waitDays <= 0) continue;
+
+                    var stepEnteredAt = await _context.WorkflowInstanceLogs.AsNoTracking()
+                        .Where(l => l.InstanceId == instance.Id
+                                 && l.EventType == WorkflowEventType.StepEntered
+                                 && l.StepId == instance.CurrentStepId)
+                        .OrderByDescending(l => l.OccurredAt)
+                        .Select(l => (DateTime?)l.OccurredAt)
+                        .FirstOrDefaultAsync(ct);
+                    if (stepEnteredAt is null) continue;
+
+                    var due = stepEnteredAt.Value.AddDays(waitDays);
+                    if (now < due) continue;
+
+                    await AdvanceProgrammaticAsync(instance, definition!, actorId: 0, "delay-expired", ct);
+                    advanced++;
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "WorkflowEngine.TickDelayedSteps: InstanceId={Id} hata.", instance.Id);
+                }
+            }
+
+            return advanced;
         }
 
         public async Task<ServiceResult> AdvanceAsync(int instanceId, WorkflowAdvanceInput input, CancellationToken ct = default)
@@ -123,6 +251,7 @@ namespace Mosaik.Services.Workflow
             _context.WorkflowInstanceLogs.Add(NewLog(instance.Id, nextStep.Id, WorkflowEventType.StepEntered, input.ActorId));
             await _context.SaveChangesAsync(ct);
             await NotifyStepEnteredSafeAsync(instance.Id, nextStep.Id, ct);
+            await AutoAdvanceIfNeededAsync(instance.Id, input.ActorId, ct);
             return ServiceResult.Ok($"Adım ilerletildi: {nextStep.Name ?? nextStep.Id}");
         }
 

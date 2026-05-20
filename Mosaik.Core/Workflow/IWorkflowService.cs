@@ -13,6 +13,10 @@ namespace Mosaik.Core.Workflow
         Task<ServiceResult> CancelAsync(int instanceId, int actorId, string? reason = null, CancellationToken ct = default);
 
         Task<IReadOnlyList<WorkflowInstanceLogDto>> GetLogsAsync(int instanceId, CancellationToken ct = default);
+
+        // Aktif "delay" step'leri tara, waitDays süresi dolanları auto-advance yap.
+        // WorkflowStepProcessor periyodik olarak çağırır.
+        Task<int> TickDelayedStepsAsync(CancellationToken ct = default);
     }
 
     public sealed record WorkflowStartInput(
