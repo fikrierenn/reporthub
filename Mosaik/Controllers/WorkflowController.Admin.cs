@@ -48,6 +48,13 @@ namespace Mosaik.Controllers
                 })
                 .ToListAsync(ct);
 
+            // Entity title lookup (her satir icin ResolveEntityPreviewAsync — N+1 ama 20 satir max).
+            foreach (var item in instances)
+            {
+                var (title, _, _) = await _inbox.ResolveEntityPreviewAsync(item.EntityType, item.EntityId, ct);
+                item.EntityTitle = title;
+            }
+
             return View("AdminIndex", new WorkflowAdminListViewModel
             {
                 Templates = templates,
@@ -57,6 +64,7 @@ namespace Mosaik.Controllers
 
         // GET /Workflow/Admin/Create
         [HttpGet("Workflow/Admin/Create")]
+        [Authorize(Roles = "admin")]
         public IActionResult AdminCreate()
         {
             return View("AdminTemplateForm", new WorkflowTemplateViewModel

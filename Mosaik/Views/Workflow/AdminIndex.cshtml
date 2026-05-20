@@ -127,7 +127,13 @@
                 {
                     <tr>
                         <td>@i.TemplateName</td>
-                        <td><span class="mono">@i.EntityType #@i.EntityId</span></td>
+                        <td>
+                            <strong>@(string.IsNullOrEmpty(i.EntityTitle) ? $"{i.EntityType} #{i.EntityId}" : i.EntityTitle)</strong>
+                            @if (!string.IsNullOrEmpty(i.EntityTitle))
+                            {
+                                <div class="text-xs text-muted">@i.EntityType #@i.EntityId</div>
+                            }
+                        </td>
                         <td><span class="mono">@(i.CurrentStepLabel ?? "—")</span></td>
                         <td>@Html.Raw(StatusBadge(i.StatusLabel))</td>
                         <td><span class="ago">@i.StartedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</span></td>
