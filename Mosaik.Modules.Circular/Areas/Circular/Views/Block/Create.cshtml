@@ -1,3 +1,4 @@
+@inject Mosaik.Core.Html.IContentSanitizer Sanitizer
 @model Mosaik.Modules.Circular.ViewModels.BlockFormViewModel
 @{
     ViewData["Title"] = "Yeni Block";
@@ -79,7 +80,7 @@
                 <label class="lab" for="editor-container">Detaylı içerik <span class="req">*</span></label>
                 <div class="tamim-quill">
                     @* Content QuillContentSanitizer ile save-time sanitize edildi (BlockService) *@
-                    <div id="editor-container" class="tamim-quill__editor">@Html.Raw(Model.Content)</div>
+                    <div id="editor-container" class="tamim-quill__editor">@Html.Raw(Sanitizer.Sanitize(Model.Content))</div>
                 </div>
                 <textarea id="Content" name="Content" hidden>@Model.Content</textarea>
                 <p class="help-text">

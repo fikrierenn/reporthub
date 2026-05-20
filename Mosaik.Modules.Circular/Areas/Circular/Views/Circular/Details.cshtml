@@ -1,5 +1,6 @@
 @using Mosaik.Modules.Circular.Models
 @using System.Globalization
+@inject Mosaik.Core.Html.IContentSanitizer Sanitizer
 @model Circular
 @{
     ViewData["Title"] = Model.Title;
@@ -200,8 +201,8 @@ else
                     </div>
                 </div>
                 <h4>@b.Subject</h4>
-                @* Content QuillContentSanitizer ile save-time sanitize edildi (BlockService) *@
-                <div class="list-item__body">@Html.Raw(b.Content)</div>
+                @* Content save-time sanitize (QuillContentSanitizer) + render-time defense-in-depth (Plan 39 Faz B). *@
+                <div class="list-item__body">@Html.Raw(Sanitizer.Sanitize(b.Content))</div>
                 @if (fileMap.TryGetValue(b.Id, out var blockFiles) && blockFiles.Any())
                 {
                     <div class="list-item__files">

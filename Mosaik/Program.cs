@@ -53,6 +53,8 @@ builder.Services.AddScoped<Mosaik.Services.UserDataFilterInjector>();
 builder.Services.AddScoped<Mosaik.Services.StoredProcedureExecutor>();
 builder.Services.AddSingleton<Mosaik.Services.IBrandService, Mosaik.Services.BrandSettingsService>();
 builder.Services.AddSingleton<Mosaik.Services.IModuleService, Mosaik.Services.ModuleService>();
+// Plan 39 Faz B — Stored XSS koruma için render-time HTML sanitize (Block.Content + gelecek Comment/Mention).
+builder.Services.AddSingleton<Mosaik.Core.Html.IContentSanitizer, Mosaik.Services.HtmlSanitizerContentSanitizer>();
 
 // Plan 17 Faz F — AI özet altyapısı (Groq/Gemini provider, runtime config Admin'den)
 builder.Services.AddHttpClient("ai");

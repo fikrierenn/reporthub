@@ -1,5 +1,6 @@
 @using Mosaik.Modules.Circular.Models
 @using System.Globalization
+@inject Mosaik.Core.Html.IContentSanitizer Sanitizer
 @model DailyBlock
 @{
     ViewData["Title"] = Model.Subject;
@@ -90,9 +91,9 @@
 
 <div class="content-card">
     <div class="content-card__label">Detaylı içerik</div>
-    @* Content QuillContentSanitizer ile save-time sanitize edildi (BlockService) *@
+    @* Content save-time sanitize (QuillContentSanitizer) + render-time defense-in-depth (Plan 39 Faz B). *@
     <div class="content-card__body">
-        @Html.Raw(Model.Content)
+        @Html.Raw(Sanitizer.Sanitize(Model.Content))
     </div>
 
     @if (files.Any())
