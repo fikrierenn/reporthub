@@ -6,6 +6,7 @@ using Mosaik.Models;
 using Mosaik.Services;
 using Mosaik.Services.Ai;
 using Mosaik.Services.Contracts;
+using Mosaik.Services.Workflow;
 using Mosaik.ViewModels;
 
 namespace Mosaik.Controllers
@@ -20,6 +21,7 @@ namespace Mosaik.Controllers
         private readonly AuditLogService _auditLog;
         private readonly ILogger<ContractsController> _logger;
         private readonly IModuleService _modules;
+        private readonly WorkflowInboxService _workflowInbox;
 
         public ContractsController(
             MosaikContext db,
@@ -28,7 +30,8 @@ namespace Mosaik.Controllers
             IWebHostEnvironment env,
             AuditLogService auditLog,
             ILogger<ContractsController> logger,
-            IModuleService modules)
+            IModuleService modules,
+            WorkflowInboxService workflowInbox)
         {
             _db = db;
             _currentUser = currentUser;
@@ -37,6 +40,7 @@ namespace Mosaik.Controllers
             _auditLog = auditLog;
             _logger = logger;
             _modules = modules;
+            _workflowInbox = workflowInbox;
         }
 
         // N-2: DB-driven modül yetki kontrolü
@@ -113,6 +117,7 @@ namespace Mosaik.Controllers
                 .ToListAsync();
 
             ViewBag.Extractions = extractions;
+            ViewBag.Workflows = await _workflowInbox.GetForEntityAsync("Contract", id);
             return View(contract);
         }
 

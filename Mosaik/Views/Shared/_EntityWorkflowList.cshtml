@@ -1,0 +1,70 @@
+@model IReadOnlyList<Mosaik.ViewModels.Workflow.EntityWorkflowSummary>
+@using Mosaik.Core.Workflow
+
+@if (Model is null || Model.Count == 0)
+{
+    return;
+}
+
+@{
+    string StatusPill(WorkflowInstanceStatus s) => s switch
+    {
+        WorkflowInstanceStatus.Active => "<span class=\"pill ok\">Aktif</span>",
+        WorkflowInstanceStatus.Completed => "<span class=\"pill\">Tamamlandı</span>",
+        WorkflowInstanceStatus.Cancelled => "<span class=\"pill error\">İptal</span>",
+        _ => ""
+    };
+}
+
+<div class="form-section-card wf-entity-list">
+    <div class="form-section-head with-actions">
+        <span>Onay Akışları <span class="mono text-xs">@Model.Count</span></span>
+    </div>
+    <div class="form-section-body">
+        <ul class="wf-entity-list__items">
+            @foreach (var wf in Model)
+            {
+                var progressPct = wf.StepCount > 0 ? (wf.CompletedStepCount * 100 / wf.StepCount) : 0;
+                <li class="wf-entity-list__item">
+                    <div class="wf-entity-list__head">
+                        <a class="wf-entity-list__title" href="/Workflow/Instance/@wf.InstanceId">
+                            @wf.TemplateName
+                        </a>
+                        @Html.Raw(StatusPill(wf.Status))
+                    </div>
+                    <div class="wf-entity-list__meta text-xs text-muted">
+                        @if (!string.IsNullOrEmpty(wf.StartedByName))
+                        {
+                            <span><strong>@wf.StartedByName</strong> başlattı</span>
+                            <span aria-hidden="true">·</span>
+                        }
+                        <span>@wf.StartedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</span>
+                        @if (wf.CompletedAt.HasValue)
+                        {
+                            <span aria-hidden="true">·</span>
+                            <span>Bitti @wf.CompletedAt.Value.ToLocalTime().ToString("dd.MM.yyyy")</span>
+                        }
+                    </div>
+                    @if (wf.Status == WorkflowInstanceStatus.Active && !string.IsNullOrEmpty(wf.CurrentStepName))
+                    {
+                        <div class="wf-entity-list__current">
+                            <i class="fas fa-arrow-right" aria-hidden="true"></i>
+                            <strong>@wf.CurrentStepName</strong>
+                            @if (!string.IsNullOrEmpty(wf.CurrentStepAssigneeName))
+                            {
+                                <span class="text-muted">— @wf.CurrentStepAssigneeName bekleniyor</span>
+                            }
+                        </div>
+                    }
+                    @if (wf.StepCount > 0)
+                    {
+                        <div class="wf-entity-list__progress" aria-label="İlerleme @progressPct%">
+                            <div class="wf-entity-list__progress-bar" style="--w: @progressPct%"></div>
+                            <span class="text-xs text-muted">@wf.CompletedStepCount / @wf.StepCount adım</span>
+                        </div>
+                    }
+                </li>
+            }
+        </ul>
+    </div>
+</div>
