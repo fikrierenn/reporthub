@@ -94,6 +94,9 @@ builder.Services.AddScoped<Mosaik.Core.Notification.INotificationService, Mosaik
 builder.Services.AddScoped<Mosaik.Core.Intelligence.IEntityRelationService, Mosaik.Services.Intelligence.EntityRelationService>();
 builder.Services.AddScoped<Mosaik.Core.Intelligence.IDecisionLogService, Mosaik.Services.Intelligence.DecisionLogService>();
 
+// Plan 36 — Workflow Designer + onay akışları engine
+builder.Services.AddScoped<Mosaik.Core.Workflow.IWorkflowService, Mosaik.Services.Workflow.WorkflowEngine>();
+
 // Plan 31 — Email (SMTP)
 builder.Services.Configure<Mosaik.Core.Email.SmtpSettings>(builder.Configuration.GetSection("SmtpSettings"));
 builder.Services.AddScoped<Mosaik.Core.Email.IEmailService, Mosaik.Services.Email.SmtpEmailService>();

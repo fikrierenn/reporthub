@@ -64,6 +64,11 @@ namespace Mosaik.Models
         public DbSet<Intelligence.EntityRelation> EntityRelations { get; set; }
         public DbSet<Intelligence.DecisionLog> DecisionLogs { get; set; }
 
+        // Plan 36 — Workflow Designer + onay akışları
+        public DbSet<Workflow.WorkflowTemplate> WorkflowTemplates { get; set; }
+        public DbSet<Workflow.WorkflowInstance> WorkflowInstances { get; set; }
+        public DbSet<Workflow.WorkflowInstanceLog> WorkflowInstanceLogs { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             // DataSource configuration
@@ -536,6 +541,43 @@ namespace Mosaik.Models
                  .HasDatabaseName("IX_DecisionLogs_Entity");
                 e.HasIndex(d => new { d.FirmaId, d.MadeBy, d.MadeAt })
                  .HasDatabaseName("IX_DecisionLogs_MadeBy");
+            });
+
+            // Plan 36 — Workflow
+            modelBuilder.Entity<Workflow.WorkflowTemplate>(e =>
+            {
+                e.HasKey(t => t.Id);
+                e.Property(t => t.Name).HasMaxLength(200).IsRequired();
+                e.Property(t => t.EntityType).HasMaxLength(50).IsRequired();
+                e.Property(t => t.DefinitionJson).IsRequired();
+                e.Property(t => t.CreatedAt).HasDefaultValueSql("SYSUTCDATETIME()");
+                e.HasIndex(t => new { t.FirmaId, t.EntityType, t.IsActive })
+                 .HasDatabaseName("IX_WorkflowTemplates_EntityType");
+            });
+
+            modelBuilder.Entity<Workflow.WorkflowInstance>(e =>
+            {
+                e.HasKey(i => i.Id);
+                e.Property(i => i.EntityType).HasMaxLength(50).IsRequired();
+                e.Property(i => i.CurrentStepId).HasMaxLength(100);
+                e.Property(i => i.StartedAt).HasDefaultValueSql("SYSUTCDATETIME()");
+                e.HasOne(i => i.Template).WithMany().HasForeignKey(i => i.TemplateId).OnDelete(DeleteBehavior.Restrict);
+                e.HasIndex(i => new { i.FirmaId, i.EntityType, i.EntityId })
+                 .HasDatabaseName("IX_WorkflowInstances_Entity");
+                e.HasIndex(i => new { i.FirmaId, i.Status })
+                 .HasDatabaseName("IX_WorkflowInstances_Active");
+            });
+
+            modelBuilder.Entity<Workflow.WorkflowInstanceLog>(e =>
+            {
+                e.HasKey(l => l.Id);
+                e.Property(l => l.StepId).HasMaxLength(100);
+                e.Property(l => l.EventType).HasMaxLength(50).IsRequired();
+                e.Property(l => l.OccurredAt).HasDefaultValueSql("SYSUTCDATETIME()");
+                e.HasIndex(l => new { l.InstanceId, l.OccurredAt })
+                 .HasDatabaseName("IX_WorkflowInstanceLogs_Instance");
+                e.HasIndex(l => new { l.StepId, l.EventType })
+                 .HasDatabaseName("IX_WorkflowInstanceLogs_StepEvent");
             });
 
             // Plan 16.6 — Her vNext modül kendi entity'lerini ConfigureModelBuilder

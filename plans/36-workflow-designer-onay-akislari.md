@@ -108,20 +108,16 @@ Mosaik'te yükümlülük, SOP adımı, sözleşme onayı, tamim onayı gibi işl
 
 > **Mimari karar (2026-05-20):** `WorkflowInstanceLogs` **append-only event sourcing** olarak baştan tasarlanır. UPDATE yok — her state değişimi yeni satır. `WorkflowInstance.CurrentStepId` sadece **projeksiyon** (latest log'tan türetilir, opsiyonel cache). Bu pattern Friction Heatmap + Digital Twin what-if query'lerini ücretsiz açar (VISION §7 yakın-vade müdahale).
 
-1. [ ] **W-01** `Mosaik.Core/Workflow/` interface'lerini genişlet — `IWorkflowService.StartAsync`, `IWorkflowStep`, `StepResult`
-2. [ ] **W-02** Migration 62 — `WorkflowTemplates`, `WorkflowInstances`, `WorkflowInstanceLogs` (event sourcing) tabloları.
-   - `WorkflowInstanceLogs (Id, InstanceId, StepId, EventType, ActorId, OccurredAt, PayloadJson)` — append-only, hiç UPDATE yok
-   - `EventType` enum: `InstanceStarted | StepEntered | StepCompleted | StepRejected | StepReassigned | EscalationFired | InstanceCompleted | InstanceCancelled`
-   - Index: `(InstanceId, OccurredAt)` + `(StepId, EventType)` (Friction Heatmap query'leri için)
-3. [ ] **W-03** `WorkflowTemplate` + `WorkflowInstance` + `WorkflowInstanceLog` EF entity'leri
-4. [ ] **W-04** `WorkflowEngine.cs` — instance başlatma + adım ilerletme (sequential, no-branch).
-   - Her state değişimi: `INSERT INTO WorkflowInstanceLogs (EventType=...)`
-   - `CurrentStepId` projeksiyon — son `StepEntered` log'tan
-   - `Approve/Reject` action → ileride Plan 38 `DecisionLog`'a da kayıt (W-13'te bağlanır)
+> **Backend altyapı tamamlandı 2026-05-21** (W-01..W-04 + W-08). UI bloğu (W-05..W-07) sonraki batch — sequential-workflow-designer CDN + Razor view.
+
+1. [x] **W-01** ✅ `Mosaik.Core/Workflow/IWorkflowService` + `WorkflowEventType` (8 sabit) + `WorkflowInstanceStatus` + DTO record'ları
+2. [x] **W-02** ✅ Migration 65 — `WorkflowTemplates`, `WorkflowInstances`, `WorkflowInstanceLogs` event sourcing + 5 index (Entity, Active, Instance, StepEvent + EntityType). DB'ye uygulandı.
+3. [x] **W-03** ✅ `Mosaik/Models/Workflow/` 3 EF entity + `MosaikContext` DbSet + `OnModelCreating` konfig
+4. [x] **W-04** ✅ `WorkflowEngine.cs` — StartAsync (InstanceStarted + StepEntered), AdvanceAsync (Approve → next step / last → Completed; Reject → Cancelled), CancelAsync, GetLogsAsync. `WorkflowDefinition.Parse` sequential-workflow-designer JSON.
 5. [ ] **W-05** `sequential-workflow-designer` CDN entegrasyonu — `workflow-designer.js` wrapper IIFE
 6. [ ] **W-06** `WorkflowController` — `Index` (liste) + `Create/Edit` (designer canvas) + `Instance` (aktif adım görünümü)
 7. [ ] **W-07** Workflow designer Razor view — canvas + adım property panel + kaydet
-8. [ ] **W-08** Unit test — WorkflowEngine sequential adım ilerletme (en az 5 test)
+8. [x] **W-08** ✅ Unit test — 8 WorkflowEngine test (Start/Advance/Approve/Reject/Cancel/Complete/Logs ordering). Full regression: 368/368 yeşil.
 
 ### Faz B — Hangfire Job + Bildirim + Escalation (8-10h)
 
