@@ -47,16 +47,14 @@ POST /Reports/Run
 
 ## Bilinen Tutarsızlıklar (YÜKSEK risk)
 
-1. **`AllowedRoles` CSV — DashboardController hâlâ kullanıyor** — `DashboardController.cs:299-313` CSV-bazlı `AllowedForUser`. `ReportsController` ise junction tablosunu doğru kullanıyor. İki paralel sistem. TODO M-03 kapsamı. `DashboardController` junction'a geçmeli.
-2. **User.Roles CSV + UserRole tablo ikili sistem** — TODO M-03, bu hafta.
-3. **AdminController çok büyük** — service layer'a bölünmüş ama partial split yeterli değil. TODO M-01.
+1. **`AllowedRoles` CSV — DashboardController hâlâ kullanıyor** — `DashboardController.cs:62,169,345` CSV-bazlı `AllowedForUser`. `ReportsController` ise junction tablosunu doğru kullanıyor. İki paralel sistem. **Plan 39 Faz A** (M-03 final), 2026-05-21 sonrası kapanacak.
 
 ## ORTA risk
 
-- **`ReportType [Obsolete]` hâlâ yazılıyor** — `ReportManagementService.cs` + `AdminController.cs:273` `"dashboard"` sabit yazıyor. Migration 19 çalıştırıldıktan sonra `#pragma` + DTO temizle.
-- **`DateTime.Now` view'da** — `Dashboard/Index.cshtml:9,16`. Server UTC değilse yanlış saat. Comment ekle veya timezone config.
+- **`ReportType [Obsolete]` hâlâ yazılıyor** — `ReportManagementService.cs` + `AdminController.cs:273` `"dashboard"` sabit yazıyor. Migration 19 çalıştırıldıktan sonra `#pragma` + DTO temizle. **Plan 39 karar bekliyor.**
 - **ViewModel entity direkt mapping** — mass assignment riski. TODO M-07.
-- **`.AsNoTracking()` eksik** — okuma sorgularının büyük kısmı tracked. ✅ `AdminController.Brand.cs` düzeltildi (7 Mayıs 2026).
+- **Hard-limit ihlali** — `Models/ReportPanelContext.cs` 591 satır, `Controllers/AiController.cs` 587 satır, `wwwroot/assets/js/workflow-designer.js` 392 satır. **Plan 39 Faz C** (6-8h split).
+- **A11y batch** — 91 `<th scope=>` + 93 `<label for=>` + 15 anchor `href="#"` + 6 tab pattern role + 3 dialog role eksik. **Plan 39 Faz D** (6-8h paralel agent).
 
 ## DÜŞÜK risk
 
@@ -64,14 +62,22 @@ POST /Reports/Run
 - **AuditLog selektif** — datasource/category delete log'lanmıyor. TODO G-04.
 - **Test coverage <%10** — öncelik: DashboardRenderer, UserDataFilter, UserRole sync.
 
-## Düzeltilen Aykırılıklar (7 Mayıs 2026 taraması)
+## Düzeltilen Aykırılıklar
 
+**7 Mayıs 2026 taraması:**
 - ✅ `ex.Message` → user'a JSON dönme — `AdminController.Filters.cs:158` güvenli mesaja çevrildi.
 - ✅ `IsDashboard` ölü property — `ReportRunViewModel.cs` + 2 controller set satırı silindi.
 - ✅ CSS eski class — `form-card`/`btn-brand` vb. tüm view'larda temiz (M-13 Plan 03 R2 sonrası).
 - ✅ `[ValidateAntiForgeryToken]` — tüm POST action'larda mevcut.
-- ✅ `async void` — hiç yok.
 - ✅ `AdminController.Brand.cs` GET → `.AsNoTracking()` eklendi.
+
+**20 Mayıs 2026 stale-claim sweep (`todo-verification.md` disiplini):**
+- ✅ **M-01 AdminController split** — 1736 satır → ana 368 + 11 partial (en büyük 266 `Reports.cs`). Hard-limit altı.
+- ✅ **M-03 User.Roles CSV — kod tarafı** — `User.cs` Roles property silindi (ADR-003 Faz C). DashboardController CSV `AllowedRoles` (rapor-bazlı, farklı katman) Plan 39 Faz A'da kapanacak.
+- ✅ **async void** — proje genelinde 0 (re-confirmed).
+- ✅ **new HttpClient()** — proje genelinde 0 (`IHttpClientFactory` standart).
+- ✅ **DateTime.Now view-side** — `Dashboard/Index.cshtml` + `_DashCircular.cshtml` UTC convert (commit `8adea01`).
+- ✅ **AsNoTracking** — 129 occurrence proje genelinde; büyük ölçüde uygulanmış. Drive-by düzeltme yok, touch ettikçe.
 
 ## Kararlar (kronolojik — küçük notlar, büyük kararlar ADR'lere)
 
@@ -95,7 +101,7 @@ POST /Reports/Run
 
 ## Controller → Sorumluluk Hızlı Referans
 
-`AdminController` (8 partial) → admin CRUD hub | `AuthController` → login/cookie | `DashboardController` → ana sayfa | `LogsController` → audit viewer | `ProfileController` → profil+şifre | `ReportsController` (3 partial) → rapor index+run+export+preview | `TestController` → dev-only DB test
+`AdminController` (11 partial) → admin CRUD hub | `AuthController` → login/cookie | `DashboardController` → ana sayfa | `LogsController` → audit viewer | `ProfileController` → profil+şifre | `ReportsController` (3 partial) → rapor index+run+export+preview | `TestController` → dev-only DB test
 
 ## Service → Sorumluluk Hızlı Referans
 
