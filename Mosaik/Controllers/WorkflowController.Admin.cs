@@ -8,12 +8,14 @@ using Mosaik.ViewModels.Workflow;
 namespace Mosaik.Controllers
 {
     // Plan 36 W-06 / W-07 — Admin workflow template CRUD + canlı instance görünüm.
-    // Route prefix: /Workflow/Admin. Tüm action'lar admin rolü.
-    [Authorize(Roles = "admin")]
+    // Route prefix: /Workflow/Admin. NOT: Class-level [Authorize(Roles)] partial
+    // class'ta tüm action'lara yayılır (bug: 2026-05-21). Bu yüzden admin guard
+    // METHOD-LEVEL yapılır. Class-level sadece WorkflowController.cs'teki [Authorize].
     public partial class WorkflowController
     {
         // GET /Workflow/Admin
         [HttpGet("Workflow/Admin")]
+        [Authorize(Roles = "admin")]
         public async Task<IActionResult> AdminIndex(CancellationToken ct)
         {
             var templates = await _db.WorkflowTemplates.AsNoTracking()
@@ -66,6 +68,7 @@ namespace Mosaik.Controllers
 
         // POST /Workflow/Admin/Create
         [HttpPost("Workflow/Admin/Create")]
+        [Authorize(Roles = "admin")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> AdminCreate(WorkflowTemplateViewModel input, CancellationToken ct)
         {
@@ -103,6 +106,7 @@ namespace Mosaik.Controllers
 
         // GET /Workflow/Admin/Edit/{id}
         [HttpGet("Workflow/Admin/Edit/{id:int}")]
+        [Authorize(Roles = "admin")]
         public async Task<IActionResult> AdminEdit(int id, CancellationToken ct)
         {
             var template = await _db.WorkflowTemplates.FirstOrDefaultAsync(t => t.Id == id, ct);
@@ -121,6 +125,7 @@ namespace Mosaik.Controllers
 
         // POST /Workflow/Admin/Edit/{id}
         [HttpPost("Workflow/Admin/Edit/{id:int}")]
+        [Authorize(Roles = "admin")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> AdminEdit(int id, WorkflowTemplateViewModel input, CancellationToken ct)
         {
@@ -159,6 +164,7 @@ namespace Mosaik.Controllers
 
         // POST /Workflow/Admin/Toggle/{id}
         [HttpPost("Workflow/Admin/Toggle/{id:int}")]
+        [Authorize(Roles = "admin")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> AdminToggle(int id, CancellationToken ct)
         {
@@ -190,6 +196,26 @@ namespace Mosaik.Controllers
             var firmaClaim = User.FindFirst("FirmaId")?.Value;
             if (int.TryParse(firmaClaim, out var fid) && fid > 0) return fid;
             return 1; // fallback — tek firmalı kurulum
+        }
+
+        // W-05 designer için step.properties dropdown veri kaynağı.
+        // Active users + active roles JSON.
+        [HttpGet("Workflow/Admin/StepDataSources")]
+        [Authorize(Roles = "admin")]
+        public async Task<IActionResult> StepDataSources(CancellationToken ct)
+        {
+            var users = await _db.Users.AsNoTracking()
+                .Where(u => u.IsActive)
+                .OrderBy(u => u.FullName)
+                .Select(u => new { id = u.UserId, label = u.FullName + " (" + u.Username + ")" })
+                .ToListAsync(ct);
+
+            var roles = await _db.Roles.AsNoTracking()
+                .OrderBy(r => r.Name)
+                .Select(r => new { name = r.Name })
+                .ToListAsync(ct);
+
+            return Json(new { users, roles });
         }
     }
 
