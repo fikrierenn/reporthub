@@ -106,10 +106,18 @@ Mosaik'te yükümlülük, SOP adımı, sözleşme onayı, tamim onayı gibi işl
 
 ### Faz A — Core Engine + Designer UI (12-16h)
 
+> **Mimari karar (2026-05-20):** `WorkflowInstanceLogs` **append-only event sourcing** olarak baştan tasarlanır. UPDATE yok — her state değişimi yeni satır. `WorkflowInstance.CurrentStepId` sadece **projeksiyon** (latest log'tan türetilir, opsiyonel cache). Bu pattern Friction Heatmap + Digital Twin what-if query'lerini ücretsiz açar (VISION §7 yakın-vade müdahale).
+
 1. [ ] **W-01** `Mosaik.Core/Workflow/` interface'lerini genişlet — `IWorkflowService.StartAsync`, `IWorkflowStep`, `StepResult`
-2. [ ] **W-02** Migration 62 — `WorkflowTemplates`, `WorkflowInstances`, `WorkflowStepLogs` tabloları
-3. [ ] **W-03** `WorkflowTemplate` + `WorkflowInstance` + `WorkflowStepLog` EF entity'leri
-4. [ ] **W-04** `WorkflowEngine.cs` — instance başlatma + adım ilerletme (sequential, no-branch)
+2. [ ] **W-02** Migration 62 — `WorkflowTemplates`, `WorkflowInstances`, `WorkflowInstanceLogs` (event sourcing) tabloları.
+   - `WorkflowInstanceLogs (Id, InstanceId, StepId, EventType, ActorId, OccurredAt, PayloadJson)` — append-only, hiç UPDATE yok
+   - `EventType` enum: `InstanceStarted | StepEntered | StepCompleted | StepRejected | StepReassigned | EscalationFired | InstanceCompleted | InstanceCancelled`
+   - Index: `(InstanceId, OccurredAt)` + `(StepId, EventType)` (Friction Heatmap query'leri için)
+3. [ ] **W-03** `WorkflowTemplate` + `WorkflowInstance` + `WorkflowInstanceLog` EF entity'leri
+4. [ ] **W-04** `WorkflowEngine.cs` — instance başlatma + adım ilerletme (sequential, no-branch).
+   - Her state değişimi: `INSERT INTO WorkflowInstanceLogs (EventType=...)`
+   - `CurrentStepId` projeksiyon — son `StepEntered` log'tan
+   - `Approve/Reject` action → ileride Plan 38 `DecisionLog`'a da kayıt (W-13'te bağlanır)
 5. [ ] **W-05** `sequential-workflow-designer` CDN entegrasyonu — `workflow-designer.js` wrapper IIFE
 6. [ ] **W-06** `WorkflowController` — `Index` (liste) + `Create/Edit` (designer canvas) + `Instance` (aktif adım görünümü)
 7. [ ] **W-07** Workflow designer Razor view — canvas + adım property panel + kaydet
