@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Mosaik.Core.Domain;
+using Mosaik.Core.Intelligence;
 using Mosaik.Core.Workflow;
 using Mosaik.Models;
 using Mosaik.Models.Workflow;
@@ -9,14 +10,29 @@ namespace Mosaik.Services.Workflow
     // Plan 36 Faz A — IWorkflowService implementasyonu.
     // Append-only event sourcing: state değişimi yeni WorkflowInstanceLog satırı.
     // CurrentStepId projeksiyon güncellenir (cache amaçlı, log otorite).
+    //
+    // Plan 38 §8.1 çift-yazma: Approve/Reject sonrası DecisionLog + EntityRelations
+    // paralel kayıt. Eski FK (WorkflowInstanceLogs) yerinde, yeni okuma katmanı
+    // (DecisionLog by-entity, EntityRelations by-source/target) ek değer.
     public class WorkflowEngine : IWorkflowService
     {
         private readonly MosaikContext _context;
+        private readonly IDecisionLogService _decisionLog;
+        private readonly IEntityRelationService _entityRelations;
+        private readonly WorkflowNotifier? _notifier;
         private readonly ILogger<WorkflowEngine> _logger;
 
-        public WorkflowEngine(MosaikContext context, ILogger<WorkflowEngine> logger)
+        public WorkflowEngine(
+            MosaikContext context,
+            IDecisionLogService decisionLog,
+            IEntityRelationService entityRelations,
+            ILogger<WorkflowEngine> logger,
+            WorkflowNotifier? notifier = null)
         {
             _context = context;
+            _decisionLog = decisionLog;
+            _entityRelations = entityRelations;
+            _notifier = notifier;
             _logger = logger;
         }
 
@@ -52,6 +68,7 @@ namespace Mosaik.Services.Workflow
             _context.WorkflowInstanceLogs.Add(NewLog(instance.Id, firstStep.Id, WorkflowEventType.StepEntered, input.StartedBy));
             await _context.SaveChangesAsync(ct);
 
+            await NotifyStepEnteredSafeAsync(instance.Id, firstStep.Id, ct);
             return ServiceResult<int>.Ok(instance.Id, "Workflow başlatıldı.");
         }
 
@@ -75,6 +92,7 @@ namespace Mosaik.Services.Workflow
                 return ServiceResult.Failure("Mevcut adım şablonda bulunamadı.", "STEP_NOT_IN_TEMPLATE");
 
             var completedEvent = input.Approved ? WorkflowEventType.StepCompleted : WorkflowEventType.StepRejected;
+            var currentStepName = definition.Steps[currentIndex].Name ?? instance.CurrentStepId;
             _context.WorkflowInstanceLogs.Add(NewLog(instance.Id, instance.CurrentStepId, completedEvent, input.ActorId, BuildPayload(input)));
 
             if (!input.Approved)
@@ -83,8 +101,11 @@ namespace Mosaik.Services.Workflow
                 instance.CompletedAt = DateTime.UtcNow;
                 _context.WorkflowInstanceLogs.Add(NewLog(instance.Id, null, WorkflowEventType.InstanceCancelled, input.ActorId, input.Comment));
                 await _context.SaveChangesAsync(ct);
+                await WriteDecisionAndRelationAsync(instance, input, currentStepName, approved: false, ct);
                 return ServiceResult.Ok("Workflow reddedildi.");
             }
+
+            await WriteDecisionAndRelationAsync(instance, input, currentStepName, approved: true, ct);
 
             var nextIndex = currentIndex + 1;
             if (nextIndex >= definition.Steps.Count)
@@ -101,7 +122,61 @@ namespace Mosaik.Services.Workflow
             instance.CurrentStepId = nextStep.Id;
             _context.WorkflowInstanceLogs.Add(NewLog(instance.Id, nextStep.Id, WorkflowEventType.StepEntered, input.ActorId));
             await _context.SaveChangesAsync(ct);
+            await NotifyStepEnteredSafeAsync(instance.Id, nextStep.Id, ct);
             return ServiceResult.Ok($"Adım ilerletildi: {nextStep.Name ?? nextStep.Id}");
+        }
+
+        private async Task NotifyStepEnteredSafeAsync(int instanceId, string stepId, CancellationToken ct)
+        {
+            if (_notifier is null) return;
+            try
+            {
+                await _notifier.NotifyStepEnteredAsync(instanceId, stepId, ct);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex,
+                    "WorkflowEngine: StepEntered bildirimi gönderilemedi. InstanceId={Id} StepId={StepId}",
+                    instanceId, stepId);
+            }
+        }
+
+        // Plan 38 §8.1 — Approve/Reject sonrası DecisionLog + EntityRelations paralel yazıcı.
+        // Hata atılırsa workflow ana akışı kırılmaz — log + devam (eski FK = WorkflowInstanceLogs canonical).
+        private async Task WriteDecisionAndRelationAsync(
+            WorkflowInstance instance,
+            WorkflowAdvanceInput input,
+            string stepLabel,
+            bool approved,
+            CancellationToken ct)
+        {
+            try
+            {
+                var decision = new DecisionLogEntry(
+                    FirmaId: instance.FirmaId,
+                    Title: $"Workflow [{stepLabel}] {(approved ? "onaylandı" : "reddedildi")}",
+                    MadeBy: input.ActorId,
+                    Rationale: input.Comment,
+                    RelatedEntityType: EntityType.WorkflowInstance,
+                    RelatedEntityId: instance.Id);
+                await _decisionLog.LogAsync(decision, ct);
+
+                var relation = new EntityRelationInput(
+                    FirmaId: instance.FirmaId,
+                    SourceType: EntityType.User,
+                    SourceId: input.ActorId,
+                    RelationType: approved ? RelationType.Approved : RelationType.Rejected,
+                    TargetType: EntityType.WorkflowInstance,
+                    TargetId: instance.Id,
+                    CreatedBy: input.ActorId);
+                await _entityRelations.AddAsync(relation, ct);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex,
+                    "WorkflowEngine: DecisionLog/EntityRelations çift-yazma başarısız. InstanceId={Id} Actor={Actor}",
+                    instance.Id, input.ActorId);
+            }
         }
 
         public async Task<ServiceResult> CancelAsync(int instanceId, int actorId, string? reason = null, CancellationToken ct = default)

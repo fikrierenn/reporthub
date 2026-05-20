@@ -121,11 +121,13 @@ Mosaik'te yükümlülük, SOP adımı, sözleşme onayı, tamim onayı gibi işl
 
 ### Faz B — Hangfire Job + Bildirim + Escalation (8-10h)
 
-9. [ ] **W-09** `WorkflowStepProcessor` Hangfire job — her dakika aktif adım kontrol
-10. [ ] **W-10** `WorkflowNotifier.cs` — atanan kullanıcıya in-app + email bildirim
-11. [ ] **W-11** Escalation logic — deadline+1 gün geçmişse yöneticiye bildirim
-12. [ ] **W-12** ICS endpoint — `/Workflow/Instance/{id}.ics` — deadline'ları Outlook'a export
-13. [ ] **W-13** Approve/Reject action — `POST /Workflow/Instance/{id}/Step/{stepId}/Respond`
+> **Kısmen tamam 2026-05-21:** W-10 + W-13 + E-09 (Plan 38 dual-write) backend yazıldı. W-09/W-11/W-12 designer UI sonrası (step properties.deadline + assigneeRole schema W-05'te) genişler.
+
+9. [ ] **W-09** `WorkflowStepProcessor` Hangfire job — her dakika aktif adım kontrol (deadline schema W-05 sonrası)
+10. [x] **W-10** ✅ `WorkflowNotifier` — StepEntered → atanan kullanıcıya in-app notification. Step.properties: assigneeUserId | assigneeUserIds | assigneeRole. `CreateBulkIfNotExistsAsync` ile dedup. Email Plan 31 SMTP üzerinden Faz B-2.
+11. [ ] **W-11** Escalation — deadline+1 gün geçmişse yöneticiye bildirim (W-09 ile)
+12. [ ] **W-12** ICS endpoint — `/Workflow/Instance/{id}.ics` Outlook export
+13. [x] **W-13** ✅ POST `/Workflow/Instance/{id}/Respond` — `WorkflowController.Respond` (AntiForgery + Authorize + NameIdentifier claim parse + AuditLog). Engine üzerinden Approve/Reject; Index + Instance GET action iskeletleri var (view'lar W-05..W-07'de). Plan 38 §8.1 dual-write engine içinden (E-09).
 
 ### Faz C — Modül Entegrasyonu (6-8h)
 

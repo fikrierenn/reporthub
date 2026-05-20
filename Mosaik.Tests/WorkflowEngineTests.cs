@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Mosaik.Core.Workflow;
 using Mosaik.Models;
 using Mosaik.Models.Workflow;
+using Mosaik.Services.Intelligence;
 using Mosaik.Services.Workflow;
 
 namespace Mosaik.Tests;
@@ -17,6 +18,13 @@ public class WorkflowEngineTests
             .UseInMemoryDatabase(databaseName: name + "_" + Guid.NewGuid())
             .Options;
         return new MosaikContext(options);
+    }
+
+    private static WorkflowEngine NewEngine(MosaikContext ctx)
+    {
+        var decisionLog = new DecisionLogService(ctx, NullLogger<DecisionLogService>.Instance);
+        var entityRelations = new EntityRelationService(ctx, NullLogger<EntityRelationService>.Instance);
+        return new WorkflowEngine(ctx, decisionLog, entityRelations, NullLogger<WorkflowEngine>.Instance);
     }
 
     private static string ThreeStepDefinition() => JsonSerializer.Serialize(new
@@ -56,7 +64,7 @@ public class WorkflowEngineTests
     public async Task StartAsync_NewInstance_CreatesInstanceStartedAndStepEnteredLogs()
     {
         await using var ctx = NewContext(nameof(StartAsync_NewInstance_CreatesInstanceStartedAndStepEnteredLogs));
-        var engine = new WorkflowEngine(ctx, NullLogger<WorkflowEngine>.Instance);
+        var engine = NewEngine(ctx);
         var template = await SeedTemplate(ctx);
 
         var result = await engine.StartAsync(SampleStart(template.Id));
@@ -77,7 +85,7 @@ public class WorkflowEngineTests
     public async Task StartAsync_InactiveTemplate_ReturnsFailure()
     {
         await using var ctx = NewContext(nameof(StartAsync_InactiveTemplate_ReturnsFailure));
-        var engine = new WorkflowEngine(ctx, NullLogger<WorkflowEngine>.Instance);
+        var engine = NewEngine(ctx);
         var template = await SeedTemplate(ctx);
         template.IsActive = false;
         await ctx.SaveChangesAsync();
@@ -92,7 +100,7 @@ public class WorkflowEngineTests
     public async Task AdvanceAsync_Approve_MovesToNextStep()
     {
         await using var ctx = NewContext(nameof(AdvanceAsync_Approve_MovesToNextStep));
-        var engine = new WorkflowEngine(ctx, NullLogger<WorkflowEngine>.Instance);
+        var engine = NewEngine(ctx);
         var template = await SeedTemplate(ctx);
         var start = await engine.StartAsync(SampleStart(template.Id));
 
@@ -112,7 +120,7 @@ public class WorkflowEngineTests
     public async Task AdvanceAsync_ApproveLastStep_CompletesInstance()
     {
         await using var ctx = NewContext(nameof(AdvanceAsync_ApproveLastStep_CompletesInstance));
-        var engine = new WorkflowEngine(ctx, NullLogger<WorkflowEngine>.Instance);
+        var engine = NewEngine(ctx);
         var template = await SeedTemplate(ctx);
         var start = await engine.StartAsync(SampleStart(template.Id));
 
@@ -134,7 +142,7 @@ public class WorkflowEngineTests
     public async Task AdvanceAsync_Reject_CancelsInstance()
     {
         await using var ctx = NewContext(nameof(AdvanceAsync_Reject_CancelsInstance));
-        var engine = new WorkflowEngine(ctx, NullLogger<WorkflowEngine>.Instance);
+        var engine = NewEngine(ctx);
         var template = await SeedTemplate(ctx);
         var start = await engine.StartAsync(SampleStart(template.Id));
 
@@ -155,7 +163,7 @@ public class WorkflowEngineTests
     public async Task AdvanceAsync_AlreadyCompleted_ReturnsFailure()
     {
         await using var ctx = NewContext(nameof(AdvanceAsync_AlreadyCompleted_ReturnsFailure));
-        var engine = new WorkflowEngine(ctx, NullLogger<WorkflowEngine>.Instance);
+        var engine = NewEngine(ctx);
         var template = await SeedTemplate(ctx);
         var start = await engine.StartAsync(SampleStart(template.Id));
 
@@ -170,7 +178,7 @@ public class WorkflowEngineTests
     public async Task CancelAsync_ActiveInstance_LogsCancellation()
     {
         await using var ctx = NewContext(nameof(CancelAsync_ActiveInstance_LogsCancellation));
-        var engine = new WorkflowEngine(ctx, NullLogger<WorkflowEngine>.Instance);
+        var engine = NewEngine(ctx);
         var template = await SeedTemplate(ctx);
         var start = await engine.StartAsync(SampleStart(template.Id));
 
@@ -182,10 +190,57 @@ public class WorkflowEngineTests
     }
 
     [Fact]
+    public async Task AdvanceAsync_Approve_WritesDecisionLogAndEntityRelation()
+    {
+        await using var ctx = NewContext(nameof(AdvanceAsync_Approve_WritesDecisionLogAndEntityRelation));
+        var engine = NewEngine(ctx);
+        var template = await SeedTemplate(ctx);
+        var start = await engine.StartAsync(SampleStart(template.Id));
+
+        await engine.AdvanceAsync(start.Data,
+            new WorkflowAdvanceInput(ActorId: 77, Approved: true, Comment: "uygun"));
+
+        var decisions = await ctx.DecisionLogs.ToListAsync();
+        Assert.Single(decisions);
+        Assert.Equal(77, decisions[0].MadeBy);
+        Assert.Equal("WorkflowInstance", decisions[0].RelatedEntityType);
+        Assert.Equal(start.Data, decisions[0].RelatedEntityId);
+        Assert.Contains("onaylandı", decisions[0].Title);
+
+        var relations = await ctx.EntityRelations.ToListAsync();
+        Assert.Single(relations);
+        Assert.Equal("User", relations[0].SourceType);
+        Assert.Equal(77, relations[0].SourceId);
+        Assert.Equal("approved", relations[0].RelationType);
+        Assert.Equal("WorkflowInstance", relations[0].TargetType);
+        Assert.Equal(start.Data, relations[0].TargetId);
+    }
+
+    [Fact]
+    public async Task AdvanceAsync_Reject_WritesDecisionLogAndRejectedRelation()
+    {
+        await using var ctx = NewContext(nameof(AdvanceAsync_Reject_WritesDecisionLogAndRejectedRelation));
+        var engine = NewEngine(ctx);
+        var template = await SeedTemplate(ctx);
+        var start = await engine.StartAsync(SampleStart(template.Id));
+
+        await engine.AdvanceAsync(start.Data,
+            new WorkflowAdvanceInput(ActorId: 88, Approved: false, Comment: "uygun değil"));
+
+        var decisions = await ctx.DecisionLogs.ToListAsync();
+        Assert.Single(decisions);
+        Assert.Contains("reddedildi", decisions[0].Title);
+
+        var relations = await ctx.EntityRelations.ToListAsync();
+        Assert.Single(relations);
+        Assert.Equal("rejected", relations[0].RelationType);
+    }
+
+    [Fact]
     public async Task GetLogsAsync_ReturnsLogsInChronologicalOrder()
     {
         await using var ctx = NewContext(nameof(GetLogsAsync_ReturnsLogsInChronologicalOrder));
-        var engine = new WorkflowEngine(ctx, NullLogger<WorkflowEngine>.Instance);
+        var engine = NewEngine(ctx);
         var template = await SeedTemplate(ctx);
         var start = await engine.StartAsync(SampleStart(template.Id));
         await engine.AdvanceAsync(start.Data, new WorkflowAdvanceInput(20, true));
