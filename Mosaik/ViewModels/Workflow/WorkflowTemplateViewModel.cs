@@ -53,6 +53,7 @@ namespace Mosaik.ViewModels.Workflow
         public string TemplateName { get; set; } = string.Empty;
         public string EntityType { get; set; } = string.Empty;
         public int EntityId { get; set; }
+        public string EntityTitle { get; set; } = string.Empty;
         public string? CurrentStepLabel { get; set; }
         public string StatusLabel { get; set; } = string.Empty;
         public DateTime StartedAt { get; set; }
@@ -104,18 +105,6 @@ namespace Mosaik.ViewModels.Workflow
         public string StartedByName { get; set; } = string.Empty;
     }
 
-    // Entity detay sayfalarında (Contracts/Details, Tamim/Details vb.) workflow listesi.
-    public class EntityWorkflowSummary
-    {
-        public int InstanceId { get; set; }
-        public string TemplateName { get; set; } = string.Empty;
-        public Mosaik.Core.Workflow.WorkflowInstanceStatus Status { get; set; }
-        public string? CurrentStepName { get; set; }
-        public string? CurrentStepAssigneeName { get; set; }
-        public DateTime StartedAt { get; set; }
-        public DateTime? CompletedAt { get; set; }
-        public string StartedByName { get; set; } = string.Empty;
-        public int StepCount { get; set; }
-        public int CompletedStepCount { get; set; }
-    }
+    // NOT: EntityWorkflowSummary -> Mosaik.Core/Workflow/IEntityWorkflowProvider.cs taşındı
+    // (modül projelerinin de erişebilmesi için).
 }

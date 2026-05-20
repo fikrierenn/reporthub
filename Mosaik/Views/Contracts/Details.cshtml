@@ -85,7 +85,7 @@
         </div>
 
         @* Onay Akışları (Plan 36) *@
-        @await Html.PartialAsync("_EntityWorkflowList", (IReadOnlyList<Mosaik.ViewModels.Workflow.EntityWorkflowSummary>)(ViewBag.Workflows ?? new List<Mosaik.ViewModels.Workflow.EntityWorkflowSummary>()))
+        @await Html.PartialAsync("_EntityWorkflowList", (IReadOnlyList<Mosaik.Core.Workflow.EntityWorkflowSummary>)(ViewBag.Workflows ?? new List<Mosaik.Core.Workflow.EntityWorkflowSummary>()))
 
         @* Yükümlülükler *@
         <div class="form-section-card">

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Mosaik.Core.Logging;
 using Mosaik.Core.Lookup;
+using Mosaik.Core.Workflow;
 using Mosaik.Modules.Circular.Services;
 using System.Text.Json;
 
@@ -18,13 +19,20 @@ namespace Mosaik.Modules.Circular.Areas.Circular.Controllers
         private readonly ILookupService _lookup;
         private readonly BlockFileService _dosya;
         private readonly IAuditLog _audit;
+        private readonly IEntityWorkflowProvider _workflows;
 
-        public CircularController(CircularService service, ILookupService lookup, BlockFileService file, IAuditLog audit)
+        public CircularController(
+            CircularService service,
+            ILookupService lookup,
+            BlockFileService file,
+            IAuditLog audit,
+            IEntityWorkflowProvider workflows)
         {
             _service = service;
             _lookup = lookup;
             _dosya = file;
             _audit = audit;
+            _workflows = workflows;
         }
 
         public async Task<IActionResult> Index()
@@ -52,6 +60,9 @@ namespace Mosaik.Modules.Circular.Areas.Circular.Controllers
 
             // Audit log: "circular_read" — kullanıcı sayfa ziyaret etti
             await _service.TrackReadAsync(id);
+
+            // Plan 36 — bu Circular'a bağlı workflow akışları
+            ViewBag.Workflows = await _workflows.GetForEntityAsync("Circular", id);
 
             return View(circular);
         }

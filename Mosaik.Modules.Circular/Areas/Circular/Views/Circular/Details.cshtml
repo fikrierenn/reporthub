@@ -61,6 +61,9 @@
     @await Html.PartialAsync("_AlertMessage", (TempData["MessageType"]?.ToString() ?? "info", TempData["Message"]?.ToString() ?? ""))
 }
 
+@* Plan 36 — bu tamim üzerindeki onay akışları *@
+@await Html.PartialAsync("_EntityWorkflowList", (IReadOnlyList<Mosaik.Core.Workflow.EntityWorkflowSummary>)(ViewBag.Workflows ?? new List<Mosaik.Core.Workflow.EntityWorkflowSummary>()))
+
 <article class="tamim-envelope">
     <div class="te-no">@Model.CircularNumber · GÜNLÜK TAMİM</div>
     <h1>@Model.Title</h1>

@@ -8,7 +8,8 @@ namespace Mosaik.Services.Workflow
 {
     // Plan 36 W-16 — Inbox query servisi.
     // WorkflowController.Inbox + DashboardController widget ortak kullanır.
-    public class WorkflowInboxService
+    // IEntityWorkflowProvider impl — modül projeleri Core üzerinden erişir.
+    public class WorkflowInboxService : IEntityWorkflowProvider
     {
         private readonly MosaikContext _db;
 
@@ -92,6 +93,18 @@ namespace Mosaik.Services.Workflow
                         parts.Add($"{startStr} — {endStr}");
                     }
                     return (c.Title, $"/Contracts/Details/{entityId}", string.Join(" · ", parts));
+
+                case "circular":
+                case "tamim":
+                    var circ = await _db.Set<Mosaik.Modules.Circular.Models.Circular>().AsNoTracking()
+                        .Where(x => x.Id == entityId)
+                        .Select(x => new { x.Title, x.CircularNumber, x.PublishedAt })
+                        .FirstOrDefaultAsync(ct);
+                    if (circ is null) return ($"Tamim #{entityId}", $"/Circular/Circular/Details/{entityId}", string.Empty);
+                    var cParts = new List<string>();
+                    if (!string.IsNullOrWhiteSpace(circ.CircularNumber)) cParts.Add(circ.CircularNumber);
+                    cParts.Add($"Yayın: {circ.PublishedAt:dd.MM.yyyy}");
+                    return (circ.Title, $"/Circular/Circular/Details/{entityId}", string.Join(" · ", cParts));
 
                 default:
                     return ($"{entityType} #{entityId}", string.Empty, string.Empty);
