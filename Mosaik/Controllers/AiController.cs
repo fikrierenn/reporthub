@@ -433,7 +433,12 @@ namespace Mosaik.Controllers
                         var parsedDue = ParseDateOnly(ds);
                         if (parsedDue.HasValue) dueDate = parsedDue.Value;
                     }
-                    catch (JsonException) { }
+                    catch (JsonException jex)
+                    {
+                        _logger.LogWarning(jex,
+                            "ApplySuggestions: SuggestionId={Id} JSON parse fail — default değerlerle obligation oluşturuluyor.",
+                            s.Id);
+                    }
                 }
                 var ob = new ContractObligation
                 {

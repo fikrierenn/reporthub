@@ -393,7 +393,7 @@ namespace Mosaik.Services.Ai
                 extractionId, extraction.ModelUsed, extraction.InputTokens, extraction.OutputTokens);
         }
 
-        private static void UpdateProgress(Mosaik.Models.MosaikContext db, ContractAiExtraction e, string step)
+        private void UpdateProgress(Mosaik.Models.MosaikContext db, ContractAiExtraction e, string step)
         {
             e.ProgressStep = step;
             db.Entry(e).Property(x => x.ProgressStep).IsModified = true;
@@ -408,7 +408,10 @@ namespace Mosaik.Services.Ai
                     var parsed = JsonSerializer.Deserialize<Dictionary<string, string>>(e.ProgressTimestampsJson);
                     if (parsed != null) stamps = parsed;
                 }
-                catch (JsonException) { /* malformed → sıfırla */ }
+                catch (JsonException jex)
+                {
+                    _logger.LogWarning(jex, "AiExtractionWorker: ProgressTimestampsJson malformed; sifirlaniyor. ExtractionId={Id}", e.Id);
+                }
             }
             if (!stamps.ContainsKey(step))
             {

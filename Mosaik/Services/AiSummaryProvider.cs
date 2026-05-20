@@ -151,8 +151,9 @@ namespace Mosaik.Services
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "{Provider} JSON parse hatası. Body={Body}", cfg.Provider, Truncate(text, 300));
                 return new AiSummaryResult(false, null,
-                    $"{cfg.Provider} JSON parse/yapı hatası: {ex.Message}. Body: {Truncate(text, 300)}");
+                    $"{cfg.Provider} yanıtı çözümlenemedi. Lütfen tekrar deneyin.");
             }
 
             if (string.IsNullOrWhiteSpace(content))
@@ -263,8 +264,9 @@ namespace Mosaik.Services
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "z.ai JSON parse hatası. Body={Body}", Truncate(text, 300));
                 return new AiSummaryResult(false, null,
-                    $"z.ai JSON parse/yapı hatası: {ex.Message}. Body: {Truncate(text, 300)}");
+                    $"z.ai yanıtı çözümlenemedi. Lütfen tekrar deneyin.");
             }
 
             if (string.IsNullOrWhiteSpace(content))
@@ -352,8 +354,9 @@ namespace Mosaik.Services
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Gemini JSON parse hatası. Body={Body}", Truncate(text, 300));
                 return new AiSummaryResult(false, null,
-                    $"Gemini JSON parse/yapı hatası: {ex.Message}. Body: {Truncate(text, 300)}");
+                    $"Gemini yanıtı çözümlenemedi. Lütfen tekrar deneyin.");
             }
 
             if (string.IsNullOrWhiteSpace(content))
