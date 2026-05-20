@@ -39,6 +39,9 @@ namespace Mosaik.Services.Workflow
 
                 if (!IsAssignedToUser(step, userId, userRoles)) continue;
 
+                var (title, url, _) = await ResolveEntityPreviewAsync(instance.EntityType, instance.EntityId, ct);
+                var startedByName = await ResolveUserNameAsync(instance.StartedBy, ct);
+
                 items.Add(new InboxItem
                 {
                     InstanceId = instance.Id,
@@ -46,12 +49,140 @@ namespace Mosaik.Services.Workflow
                     StepLabel = step.Name ?? step.Id,
                     EntityType = instance.EntityType,
                     EntityId = instance.EntityId,
-                    StartedAt = instance.StartedAt
+                    StartedAt = instance.StartedAt,
+                    EntityTitle = title,
+                    EntityUrl = url,
+                    StartedByName = startedByName
                 });
 
                 if (limit.HasValue && items.Count >= limit.Value) break;
             }
             return items;
+        }
+
+        // Entity tipine göre title + URL + kısa özet döner. Bilinmeyen tip → ham EntityType #EntityId.
+        public async Task<(string Title, string Url, string Summary)> ResolveEntityPreviewAsync(
+            string entityType,
+            int entityId,
+            CancellationToken ct = default)
+        {
+            switch (entityType?.ToLowerInvariant())
+            {
+                case "contract":
+                    var c = await _db.Contracts.AsNoTracking()
+                        .Where(x => x.Id == entityId)
+                        .Select(x => new
+                        {
+                            x.Title,
+                            x.Counterparty,
+                            x.ContractValue,
+                            x.Currency,
+                            x.StartDate,
+                            x.EndDate
+                        })
+                        .FirstOrDefaultAsync(ct);
+                    if (c is null) return ($"Sözleşme #{entityId}", $"/Contracts/Details/{entityId}", string.Empty);
+                    var parts = new List<string>();
+                    if (!string.IsNullOrWhiteSpace(c.Counterparty)) parts.Add(c.Counterparty);
+                    if (c.ContractValue.HasValue) parts.Add($"{c.ContractValue:N0} {c.Currency ?? "TRY"}");
+                    if (c.StartDate.HasValue || c.EndDate.HasValue)
+                    {
+                        var startStr = c.StartDate?.ToString("dd.MM.yyyy") ?? "?";
+                        var endStr = c.EndDate?.ToString("dd.MM.yyyy") ?? "süresiz";
+                        parts.Add($"{startStr} — {endStr}");
+                    }
+                    return (c.Title, $"/Contracts/Details/{entityId}", string.Join(" · ", parts));
+
+                default:
+                    return ($"{entityType} #{entityId}", string.Empty, string.Empty);
+            }
+        }
+
+        public async Task<string> ResolveUserNameAsync(int? userId, CancellationToken ct = default)
+        {
+            if (!userId.HasValue || userId.Value <= 0) return string.Empty;
+            var name = await _db.Users.AsNoTracking()
+                .Where(u => u.UserId == userId.Value)
+                .Select(u => !string.IsNullOrWhiteSpace(u.FullName) ? u.FullName : u.Username)
+                .FirstOrDefaultAsync(ct);
+            return name ?? $"UserId {userId}";
+        }
+
+        // Entity detay sayfaları için — bu entity'ye bağlı tüm workflow instance'ları (en yeni önce).
+        public async Task<List<EntityWorkflowSummary>> GetForEntityAsync(
+            string entityType,
+            int entityId,
+            CancellationToken ct = default)
+        {
+            var instances = await _db.WorkflowInstances.AsNoTracking()
+                .Where(i => i.EntityType == entityType && i.EntityId == entityId)
+                .Include(i => i.Template)
+                .OrderByDescending(i => i.StartedAt)
+                .ToListAsync(ct);
+
+            if (instances.Count == 0) return new();
+
+            // Tüm actor ID'lerini topla — tek query'de username çek.
+            var actorIds = instances.Select(i => i.StartedBy).Where(id => id > 0).Distinct().ToList();
+            var actorNames = await ResolveUserNamesAsync(actorIds, ct);
+
+            var instanceIds = instances.Select(i => i.Id).ToList();
+            var completedCounts = await _db.WorkflowInstanceLogs.AsNoTracking()
+                .Where(l => instanceIds.Contains(l.InstanceId)
+                         && (l.EventType == WorkflowEventType.StepCompleted || l.EventType == WorkflowEventType.StepRejected))
+                .GroupBy(l => l.InstanceId)
+                .Select(g => new { InstanceId = g.Key, Count = g.Count() })
+                .ToDictionaryAsync(x => x.InstanceId, x => x.Count, ct);
+
+            var result = new List<EntityWorkflowSummary>();
+            foreach (var instance in instances)
+            {
+                if (instance.Template is null) continue;
+                var definition = WorkflowDefinition.Parse(instance.Template.DefinitionJson);
+                var step = definition?.Steps.FirstOrDefault(s => s.Id == instance.CurrentStepId);
+
+                string? assigneeName = null;
+                if (step?.Properties is not null)
+                {
+                    if (step.Properties.TryGetValue("assigneeUserId", out var aid)
+                        && aid.ValueKind == JsonValueKind.Number && aid.TryGetInt32(out var uid) && uid > 0)
+                    {
+                        assigneeName = await ResolveUserNameAsync(uid, ct);
+                    }
+                    else if (step.Properties.TryGetValue("assigneeRole", out var ar)
+                        && ar.ValueKind == JsonValueKind.String)
+                    {
+                        var role = ar.GetString();
+                        if (!string.IsNullOrWhiteSpace(role)) assigneeName = $"Rol: {role}";
+                    }
+                }
+
+                result.Add(new EntityWorkflowSummary
+                {
+                    InstanceId = instance.Id,
+                    TemplateName = instance.Template.Name,
+                    Status = instance.Status,
+                    CurrentStepName = step?.Name ?? instance.CurrentStepId,
+                    CurrentStepAssigneeName = assigneeName,
+                    StartedAt = instance.StartedAt,
+                    CompletedAt = instance.CompletedAt,
+                    StartedByName = actorNames.GetValueOrDefault(instance.StartedBy, ""),
+                    StepCount = definition?.Steps.Count ?? 0,
+                    CompletedStepCount = completedCounts.GetValueOrDefault(instance.Id, 0)
+                });
+            }
+            return result;
+        }
+
+        public async Task<Dictionary<int, string>> ResolveUserNamesAsync(IEnumerable<int> userIds, CancellationToken ct = default)
+        {
+            var ids = userIds.Where(i => i > 0).Distinct().ToList();
+            if (ids.Count == 0) return new();
+            var rows = await _db.Users.AsNoTracking()
+                .Where(u => ids.Contains(u.UserId))
+                .Select(u => new { u.UserId, Name = !string.IsNullOrWhiteSpace(u.FullName) ? u.FullName : u.Username })
+                .ToListAsync(ct);
+            return rows.ToDictionary(r => r.UserId, r => r.Name);
         }
 
         public async Task<int> CountPendingForUserAsync(

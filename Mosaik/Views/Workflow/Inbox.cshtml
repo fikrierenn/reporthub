@@ -38,9 +38,10 @@ else
         <table class="dt">
             <thead>
                 <tr>
-                    <th scope="col">Şablon</th>
+                    <th scope="col">Belge</th>
                     <th scope="col">Adım</th>
-                    <th scope="col">Hedef</th>
+                    <th scope="col">Şablon</th>
+                    <th scope="col">Başlatan</th>
                     <th scope="col">Başlama</th>
                     <th scope="col" class="ta-right">İşlem</th>
                 </tr>
@@ -49,9 +50,16 @@ else
                 @foreach (var item in Model.Items)
                 {
                     <tr>
-                        <td>@item.TemplateName</td>
+                        <td>
+                            <strong>@(string.IsNullOrEmpty(item.EntityTitle) ? $"{item.EntityType} #{item.EntityId}" : item.EntityTitle)</strong>
+                            @if (!string.IsNullOrEmpty(item.EntityTitle))
+                            {
+                                <div class="text-xs text-muted">@item.EntityType #@item.EntityId</div>
+                            }
+                        </td>
                         <td><strong>@item.StepLabel</strong></td>
-                        <td><span class="mono">@item.EntityType #@item.EntityId</span></td>
+                        <td class="text-muted">@item.TemplateName</td>
+                        <td>@(string.IsNullOrEmpty(item.StartedByName) ? "—" : item.StartedByName)</td>
                         <td><span class="ago">@item.StartedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</span></td>
                         <td class="ta-right">
                             <a class="btn primary sm" href="/Workflow/Instance/@item.InstanceId">Aç</a>

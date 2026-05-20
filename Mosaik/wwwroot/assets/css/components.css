@@ -2162,3 +2162,53 @@ select.inp {
 .d-inline { display: inline; }
 .d-inline-block { display: inline-block; }
 .d-flex { display: flex; }
+
+/* Workflow designer step editor (sağ panel) */
+.wf-root-editor { padding: 12px; }
+.wf-step-editor { padding: 14px; display: flex; flex-direction: column; gap: 12px; }
+.wf-edit-field { display: flex; flex-direction: column; gap: 4px; }
+.wf-step-type-badge {
+    padding: 4px 10px; border-radius: 999px;
+    background: var(--paper); border: 1px solid var(--line);
+    font-size: 11px; color: var(--ink-2);
+    align-self: flex-start;
+}
+.wf-escalate-wrap { display: flex; flex-direction: column; gap: 6px; }
+.wf-escalate-mode { display: flex; gap: 4px; }
+.wf-escalate-slot { min-height: 36px; }
+.wf-canvas-load-error { padding: 24px; color: var(--accent-ink, #b91c1c); }
+
+/* Workflow step meta (Instance.cshtml — Şu anki adım kartı) */
+.wf-step-meta { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; margin: 0; }
+.wf-step-meta dt { color: var(--ink-2); font-size: 12px; }
+.wf-step-meta dd { margin: 0; font-size: 13px; }
+.wf-timeline-comment {
+    margin: 8px 0 0 0; padding: 8px 12px;
+    border-left: 3px solid var(--accent, #2563eb);
+    background: var(--paper-2, #f8fafc);
+    border-radius: 4px;
+    font-size: 13px;
+}
+.wf-timeline-extras { margin-top: 4px; }
+.wf-entity-card__title { margin: 0 0 6px 0; font-size: 16px; }
+.wf-current-step-card { border-left: 4px solid var(--accent, #2563eb); }
+.wf-current-step__title { margin: 0 0 12px 0; font-size: 15px; }
+
+/* Workflow entity list (Contracts/Details, Tamim/Details vb. detay sayfa widget) */
+.wf-entity-list__items { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 14px; }
+.wf-entity-list__item { padding: 12px 14px; border: 1px solid var(--line); border-radius: 6px; background: var(--paper); }
+.wf-entity-list__head { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 4px; }
+.wf-entity-list__title { font-weight: 600; color: var(--ink, #111); text-decoration: none; }
+.wf-entity-list__title:hover { text-decoration: underline; }
+.wf-entity-list__meta { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 6px; }
+.wf-entity-list__current { font-size: 13px; margin: 4px 0; color: var(--ink, #111); }
+.wf-entity-list__current i { color: var(--accent, #2563eb); margin-right: 4px; }
+.wf-entity-list__progress { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
+.wf-entity-list__progress-bar {
+    flex: 0 0 100px; height: 6px; background: var(--line);
+    border-radius: 999px; overflow: hidden; position: relative;
+}
+.wf-entity-list__progress-bar::after {
+    content: ""; position: absolute; left: 0; top: 0; height: 100%;
+    width: var(--w, 0%); background: var(--accent, #2563eb);
+}

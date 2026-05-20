@@ -61,9 +61,28 @@ namespace Mosaik.Controllers
                 .FirstOrDefaultAsync(i => i.Id == id, ct);
             if (instance is null) return NotFound();
 
-            ViewBag.Logs = await _engine.GetLogsAsync(id, ct);
+            var logs = await _engine.GetLogsAsync(id, ct);
 
-            // CanRespond → kullanıcı aktif step'in atanmış kişisi mi?
+            var vm = new WorkflowInstanceDetailViewModel
+            {
+                Instance = instance,
+                Logs = logs
+            };
+
+            // Entity preview
+            var (title, url, summary) = await _inbox.ResolveEntityPreviewAsync(instance.EntityType, instance.EntityId, ct);
+            vm.EntityTitle = title;
+            vm.EntityUrl = url;
+            vm.EntitySummary = summary;
+
+            // Actor lookup (logs + instance.StartedBy)
+            var actorIds = logs.Where(l => l.ActorId.HasValue).Select(l => l.ActorId!.Value).ToList();
+            if (instance.StartedBy > 0) actorIds.Add(instance.StartedBy);
+            vm.ActorNames = await _inbox.ResolveUserNamesAsync(actorIds, ct);
+            if (instance.StartedBy > 0)
+                vm.StartedByName = vm.ActorNames.GetValueOrDefault(instance.StartedBy, $"UserId {instance.StartedBy}");
+
+            // Aktif step detay + CanRespond
             bool canRespond = false;
             if (instance.Status == WorkflowInstanceStatus.Active
                 && instance.CurrentStepId is not null
@@ -75,10 +94,53 @@ namespace Mosaik.Controllers
                 if (step is not null)
                 {
                     canRespond = WorkflowInboxService.IsAssignedToUser(step, userId, GetUserRoles());
+                    vm.CurrentStepName = step.Name ?? step.Id;
+                    vm.CurrentStepType = step.Type;
+                    vm.CurrentStepDeadlineDays = TryReadInt(step, "deadlineDays");
+                    vm.CurrentStepRequireComment = TryReadBool(step, "requireComment");
+                    var assigneeUserId = TryReadInt(step, "assigneeUserId");
+                    if (assigneeUserId.HasValue && assigneeUserId.Value > 0)
+                    {
+                        vm.CurrentStepAssigneeName = await _inbox.ResolveUserNameAsync(assigneeUserId.Value, ct);
+                    }
+                    else
+                    {
+                        var assigneeRole = TryReadString(step, "assigneeRole");
+                        if (!string.IsNullOrWhiteSpace(assigneeRole))
+                            vm.CurrentStepAssigneeName = $"Rol: {assigneeRole}";
+                    }
+                    vm.CurrentStepEnteredAt = logs
+                        .Where(l => l.EventType == "StepEntered" && l.StepId == instance.CurrentStepId)
+                        .Select(l => (DateTime?)l.OccurredAt)
+                        .LastOrDefault();
                 }
             }
-            ViewBag.CanRespond = canRespond;
-            return View(instance);
+            vm.CanRespond = canRespond;
+
+            return View(vm);
+        }
+
+        private static int? TryReadInt(WorkflowDefinitionStep step, string key)
+        {
+            if (step.Properties is null) return null;
+            if (!step.Properties.TryGetValue(key, out var el)) return null;
+            if (el.ValueKind == JsonValueKind.Number && el.TryGetInt32(out var n)) return n;
+            if (el.ValueKind == JsonValueKind.String && int.TryParse(el.GetString(), out var s)) return s;
+            return null;
+        }
+
+        private static bool TryReadBool(WorkflowDefinitionStep step, string key)
+        {
+            if (step.Properties is null) return false;
+            if (!step.Properties.TryGetValue(key, out var el)) return false;
+            return el.ValueKind == JsonValueKind.True;
+        }
+
+        private static string? TryReadString(WorkflowDefinitionStep step, string key)
+        {
+            if (step.Properties is null) return null;
+            if (!step.Properties.TryGetValue(key, out var el)) return null;
+            return el.ValueKind == JsonValueKind.String ? el.GetString() : null;
         }
 
         // W-13 — POST /Workflow/Instance/{id}/Respond

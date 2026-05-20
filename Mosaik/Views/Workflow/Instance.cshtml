@@ -1,10 +1,9 @@
-@model Mosaik.Models.Workflow.WorkflowInstance
+@model Mosaik.ViewModels.Workflow.WorkflowInstanceDetailViewModel
 @using Mosaik.Core.Workflow
+@using System.Text.Json
 @{
-    ViewData["Title"] = $"Workflow #{Model.Id}";
     Layout = "_AppLayout";
-    var logs = ViewBag.Logs as IReadOnlyList<WorkflowInstanceLogDto> ?? new List<WorkflowInstanceLogDto>();
-    var canRespond = (bool)(ViewBag.CanRespond ?? false);
+    ViewData["Title"] = $"Workflow #{Model.Instance.Id}";
 
     string EventLabel(string e) => e switch
     {
@@ -14,11 +13,11 @@
         "StepRejected" => "Adım reddedildi",
         "StepReassigned" => "Yeniden atandı",
         "EscalationFired" => "Yöneticiye eskalasyon",
+        "DelayScheduled" => "Bekleme başladı",
         "InstanceCompleted" => "Akış tamamlandı",
         "InstanceCancelled" => "Akış iptal edildi",
         _ => e
     };
-
     string EventIcon(string e) => e switch
     {
         "InstanceStarted" => "fas fa-play",
@@ -27,124 +26,245 @@
         "StepRejected" => "fas fa-xmark",
         "StepReassigned" => "fas fa-people-arrows",
         "EscalationFired" => "fas fa-bell",
+        "DelayScheduled" => "fas fa-hourglass-half",
         "InstanceCompleted" => "fas fa-flag-checkered",
         "InstanceCancelled" => "fas fa-ban",
         _ => "fas fa-circle"
     };
-
-    string StatusBadge(WorkflowInstanceStatus s) => s switch
+    string EventColor(string e) => e switch
     {
-        WorkflowInstanceStatus.Active => "<span class=\"pill ok\">Aktif</span>",
-        WorkflowInstanceStatus.Completed => "<span class=\"pill\">Tamamlandı</span>",
-        WorkflowInstanceStatus.Cancelled => "<span class=\"pill error\">İptal</span>",
+        "StepCompleted" or "InstanceCompleted" => "ok",
+        "StepRejected" or "InstanceCancelled" => "err",
+        "EscalationFired" => "warn",
         _ => ""
     };
+    (string cls, string lbl) StatusPill(WorkflowInstanceStatus s) => s switch
+    {
+        WorkflowInstanceStatus.Active => ("ok", "Aktif"),
+        WorkflowInstanceStatus.Completed => ("", "Tamamlandı"),
+        WorkflowInstanceStatus.Cancelled => ("err", "İptal"),
+        _ => ("", s.ToString())
+    };
+    string StepTypeLabel(string? t) => t?.ToLowerInvariant() switch
+    {
+        "approval" => "Onay",
+        "notify" => "Bilgilendirme",
+        "delay" => "Bekleme",
+        _ => t ?? ""
+    };
+    (string? Comment, bool Auto, string? Other) ParsePayload(string? json)
+    {
+        if (string.IsNullOrWhiteSpace(json)) return (null, false, null);
+        try
+        {
+            using var doc = JsonDocument.Parse(json);
+            var r = doc.RootElement;
+            string? comment = null, other = null; bool auto = false;
+            if (r.ValueKind == JsonValueKind.Object)
+            {
+                if (r.TryGetProperty("comment", out var c) && c.ValueKind == JsonValueKind.String) comment = c.GetString();
+                if (r.TryGetProperty("auto", out var a)) auto = a.ValueKind == JsonValueKind.True;
+                var extras = new List<string>();
+                foreach (var p in r.EnumerateObject())
+                {
+                    if (p.Name == "comment" || p.Name == "auto") continue;
+                    extras.Add($"{p.Name}: {p.Value}");
+                }
+                if (extras.Count > 0) other = string.Join(" · ", extras);
+            }
+            return (comment, auto, other);
+        }
+        catch { return (null, false, json); }
+    }
+
+    var inst = Model.Instance;
+    var (statusCls, statusLbl) = StatusPill(inst.Status);
 }
 
 @section Breadcrumb {
     <nav class="crumbs" aria-label="Sayfa konumu">
+        <a href="/">Ana Sayfa</a>
         <a href="/Workflow/Inbox">Workflow</a>
-        <span>›</span>
-        <span aria-current="page">#@Model.Id</span>
+        <span aria-current="page">#@inst.Id</span>
     </nav>
 }
 
+@section TopActions {
+    @if (inst.Status == WorkflowInstanceStatus.Active)
+    {
+        <a class="btn" href="/Workflow/Instance/@(inst.Id).ics" download>
+            <i class="fas fa-calendar-plus text-[10px]"></i> Takvime Ekle
+        </a>
+    }
+    @if (!string.IsNullOrEmpty(Model.EntityUrl))
+    {
+        <a class="btn primary" href="@Model.EntityUrl">
+            <i class="fas fa-up-right-from-square text-[10px]"></i> Belgeyi Aç
+        </a>
+    }
+}
+
 <div class="hero">
-    <h1>@(Model.Template?.Name ?? "Workflow") #@Model.Id</h1>
+    <h1>@(inst.Template?.Name ?? "Workflow") #@inst.Id</h1>
     <div class="sub">
-        <span class="mono">@Model.EntityType #@Model.EntityId</span>
-        <span>·</span>
-        @Html.Raw(StatusBadge(Model.Status))
-        @if (Model.CurrentStepId is not null)
+        <span class="pill"><span class="dot @statusCls"></span>@statusLbl</span>
+        @if (!string.IsNullOrEmpty(Model.StartedByName))
         {
-            <span>·</span>
-            <span>Aktif adım: <strong>@Model.CurrentStepId</strong></span>
+            <span><strong>@Model.StartedByName</strong> başlattı</span>
         }
+        <span>@inst.StartedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</span>
     </div>
 </div>
 
-@if (Model.Status == Mosaik.Core.Workflow.WorkflowInstanceStatus.Active && Model.CurrentStepId is not null)
+@if (TempData["Message"] is string msg)
 {
-    <div class="action-row">
-        <a class="btn ghost sm" href="/Workflow/Instance/@(Model.Id).ics" download>
-            <i class="fas fa-calendar-plus"></i> Takvime Ekle (.ics)
-        </a>
+    @await Html.PartialAsync("_AlertMessage", ("success", msg))
+}
+
+<div class="detail-header-grid">
+
+    @* Sol kolon: Entity preview + Timeline *@
+    <div>
+        <div class="form-section-card">
+            <div class="form-section-head">@inst.EntityType</div>
+            <div class="form-section-body">
+                <h2 class="wf-entity-card__title">@Model.EntityTitle</h2>
+                @if (!string.IsNullOrEmpty(Model.EntitySummary))
+                {
+                    <div class="text-muted">@Model.EntitySummary</div>
+                }
+            </div>
+        </div>
+
+        <div class="form-section-card">
+            <div class="form-section-head">Olay Zaman Çizelgesi</div>
+            <div class="form-section-body">
+                <ul class="wf-timeline">
+                    @foreach (var log in Model.Logs)
+                    {
+                        var (cmt, auto, other) = ParsePayload(log.PayloadJson);
+                        var actorName = log.ActorId.HasValue
+                            ? Model.ActorNames.GetValueOrDefault(log.ActorId.Value, $"UserId {log.ActorId}")
+                            : null;
+                        var colorCls = EventColor(log.EventType);
+                        <li class="wf-timeline-item">
+                            <span class="wf-timeline-dot @colorCls">
+                                <i class="@EventIcon(log.EventType)" aria-hidden="true"></i>
+                            </span>
+                            <div class="wf-timeline-body">
+                                <div class="wf-timeline-title">@EventLabel(log.EventType)</div>
+                                <div class="text-muted text-xs">
+                                    @log.OccurredAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")
+                                    @if (!string.IsNullOrEmpty(actorName))
+                                    {
+                                        <span> · <strong>@actorName</strong></span>
+                                    }
+                                    @if (!string.IsNullOrEmpty(log.StepId))
+                                    {
+                                        <span> · @log.StepId</span>
+                                    }
+                                    @if (auto)
+                                    {
+                                        <span> · <em>otomatik</em></span>
+                                    }
+                                </div>
+                                @if (!string.IsNullOrEmpty(cmt))
+                                {
+                                    <blockquote class="wf-timeline-comment">@cmt</blockquote>
+                                }
+                                @if (!string.IsNullOrEmpty(other))
+                                {
+                                    <div class="text-xs text-muted wf-timeline-extras">@other</div>
+                                }
+                            </div>
+                        </li>
+                    }
+                </ul>
+            </div>
+        </div>
     </div>
-}
 
-@if (!string.IsNullOrEmpty(TempData["Message"] as string))
-{
-    <div role="alert" class="alert success">@TempData["Message"]</div>
-}
-
-<div class="wf-grid">
-
-    <section class="paper-card">
-        <header class="paper-card-header">
-            <h2>Olay Zaman Çizelgesi</h2>
-        </header>
-        <ul class="wf-timeline">
-            @foreach (var log in logs)
-            {
-                <li class="wf-timeline-item">
-                    <span class="wf-timeline-dot">
-                        <i class="@EventIcon(log.EventType)" aria-hidden="true"></i>
-                    </span>
-                    <div class="wf-timeline-body">
-                        <div class="wf-timeline-title">@EventLabel(log.EventType)</div>
-                        <div class="text-muted text-xs">
-                            @log.OccurredAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")
-                            @if (log.ActorId.HasValue) { <span> · UserId @log.ActorId</span> }
-                            @if (!string.IsNullOrEmpty(log.StepId)) { <span> · @log.StepId</span> }
-                        </div>
-                        @if (!string.IsNullOrEmpty(log.PayloadJson))
+    @* Sağ kolon: Aktif step + karar paneli *@
+    <div>
+        @if (inst.Status == WorkflowInstanceStatus.Active && !string.IsNullOrEmpty(Model.CurrentStepName))
+        {
+            <div class="form-section-card wf-current-step-card">
+                <div class="form-section-head">Şu Anki Adım</div>
+                <div class="form-section-body">
+                    <h3 class="wf-current-step__title">@Model.CurrentStepName</h3>
+                    <dl class="wf-step-meta">
+                        <dt>Tür</dt><dd>@StepTypeLabel(Model.CurrentStepType)</dd>
+                        @if (!string.IsNullOrEmpty(Model.CurrentStepAssigneeName))
                         {
-                            <pre class="wf-timeline-payload">@log.PayloadJson</pre>
+                            <dt>Atanan</dt><dd>@Model.CurrentStepAssigneeName</dd>
                         }
-                    </div>
-                </li>
-            }
-        </ul>
-    </section>
-
-    <aside>
-        @if (canRespond)
-        {
-            <section class="paper-card with-padding-lg">
-                <h2>Kararını Ver</h2>
-                <form method="post" action="/Workflow/Instance/@Model.Id/Respond">
-                    @Html.AntiForgeryToken()
-                    <div class="field">
-                        <label class="lab" for="comment-input">Yorum</label>
-                        <textarea id="comment-input" name="Comment" class="inp" rows="4" placeholder="Karar gerekçesi (opsiyonel)"></textarea>
-                    </div>
-                    <div class="wf-decision-row">
-                        <button type="submit" name="Approved" value="true" class="btn primary">
-                            <i class="fas fa-check"></i> Onayla
-                        </button>
-                        <button type="submit" name="Approved" value="false" class="btn danger">
-                            <i class="fas fa-xmark"></i> Reddet
-                        </button>
-                    </div>
-                </form>
-            </section>
+                        @if (Model.CurrentStepDeadlineDays.HasValue)
+                        {
+                            <dt>Süre</dt><dd>@Model.CurrentStepDeadlineDays gün</dd>
+                        }
+                        @if (Model.CurrentStepEnteredAt.HasValue)
+                        {
+                            <dt>Açıldı</dt><dd>@Model.CurrentStepEnteredAt.Value.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</dd>
+                        }
+                        @if (Model.CurrentStepRequireComment)
+                        {
+                            <dt>Yorum</dt><dd><span class="pill warn">Zorunlu</span></dd>
+                        }
+                    </dl>
+                </div>
+            </div>
         }
-        else if (Model.Status == WorkflowInstanceStatus.Active)
+
+        @if (Model.CanRespond)
         {
-            <section class="paper-card with-padding-lg">
-                <p class="text-muted">Bu adım sana atanmadığı için karar veremezsin.</p>
-            </section>
+            <div class="form-section-card">
+                <div class="form-section-head">Kararını Ver</div>
+                <div class="form-section-body">
+                    <form method="post" action="/Workflow/Instance/@inst.Id/Respond">
+                        @Html.AntiForgeryToken()
+                        <div class="field">
+                            <label class="lab" for="comment-input">
+                                Yorum @(Model.CurrentStepRequireComment ? "(zorunlu)" : "(opsiyonel)")
+                            </label>
+                            <textarea id="comment-input" name="Comment" class="inp" rows="4"
+                                      placeholder="Karar gerekçesi"
+                                      @(Model.CurrentStepRequireComment ? "required" : "")></textarea>
+                        </div>
+                        <div class="action-row">
+                            <button type="submit" name="Approved" value="true" class="btn primary">
+                                <i class="fas fa-check text-[10px]"></i> Onayla
+                            </button>
+                            <button type="submit" name="Approved" value="false" class="btn danger">
+                                <i class="fas fa-xmark text-[10px]"></i> Reddet
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        }
+        else if (inst.Status == WorkflowInstanceStatus.Active)
+        {
+            <div class="form-section-card">
+                <div class="form-section-body ta-center">
+                    <span class="text-muted text-sm">Bu adım sana atanmadığı için karar veremezsin.</span>
+                </div>
+            </div>
         }
         else
         {
-            <section class="paper-card with-padding-lg">
-                <p class="text-muted">Akış kapanmış.</p>
-                @if (Model.CompletedAt.HasValue)
-                {
-                    <p class="text-xs">Tamamlanma: @Model.CompletedAt.Value.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</p>
-                }
-            </section>
+            <div class="form-section-card">
+                <div class="form-section-body ta-center">
+                    <span class="text-muted text-sm">
+                        Akış kapanmış.
+                        @if (inst.CompletedAt.HasValue)
+                        {
+                            <br/>
+                            <span class="text-xs">@inst.CompletedAt.Value.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</span>
+                        }
+                    </span>
+                </div>
+            </div>
         }
-    </aside>
+    </div>
 
 </div>
