@@ -48,19 +48,30 @@ namespace Mosaik.Controllers
                 IsAdminView = isAdminView
             };
 
-            var userRolesCsv = string.Join(",", roles);
+            // M-03 final: Rapor erişim kaynağı UserRole + ReportAllowedRole junction (CSV path silindi).
+            int? currentUserId = null;
+            if (int.TryParse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value, out var uidParsed))
+            {
+                currentUserId = uidParsed;
+            }
+            var userRoleIds = currentUserId.HasValue
+                ? await _context.UserRoles
+                    .AsNoTracking()
+                    .Where(ur => ur.UserId == currentUserId.Value)
+                    .Select(ur => ur.RoleId)
+                    .ToListAsync()
+                : new List<int>();
 
             // ---- Erişilebilir raporlar ----
-            var allReports = await _context.ReportCatalog
-                .AsNoTracking()
-                .Include(r => r.DataSource)
-                .Where(r => r.IsActive && r.DataSource != null && r.DataSource.IsActive)
-                .OrderBy(r => r.Title)
-                .ToListAsync();
-
-            var accessibleReports = allReports
-                .Where(r => AllowedForUser(r.AllowedRoles, userRolesCsv))
-                .ToList();
+            var accessibleReports = userRoleIds.Count > 0
+                ? await _context.ReportCatalog
+                    .AsNoTracking()
+                    .Include(r => r.DataSource)
+                    .Where(r => r.IsActive && r.DataSource != null && r.DataSource.IsActive)
+                    .Where(r => r.ReportAllowedRoles.Any(ar => userRoleIds.Contains(ar.RoleId)))
+                    .OrderBy(r => r.Title)
+                    .ToListAsync()
+                : new List<ReportCatalog>();
 
             model.ReportCount = accessibleReports.Count;
 
@@ -139,12 +150,6 @@ namespace Mosaik.Controllers
                 .ToList();
 
             // ---- Favoriler (kullanıcının) ----
-            var currentUserId = await _context.Users
-                .AsNoTracking()
-                .Where(u => u.Username == userName)
-                .Select(u => (int?)u.UserId)
-                .FirstOrDefaultAsync();
-
             var favoriteIds = currentUserId.HasValue
                 ? await _context.ReportFavorites
                     .AsNoTracking()
@@ -156,17 +161,19 @@ namespace Mosaik.Controllers
                 : new List<int>();
 
             model.HasUserFavorites = favoriteIds.Count > 0;
-            if (favoriteIds.Count > 0)
+            if (favoriteIds.Count > 0 && userRoleIds.Count > 0)
             {
+                // M-03 final: junction üzerinden filtrele (CSV AllowedForUser silindi).
                 var favReports = await _context.ReportCatalog
                     .AsNoTracking()
                     .Include(r => r.DataSource)
                     .Where(r => favoriteIds.Contains(r.ReportId) && r.IsActive)
+                    .Where(r => r.ReportAllowedRoles.Any(ar => userRoleIds.Contains(ar.RoleId)))
                     .ToListAsync();
                 // Favori sırasını koru
                 model.FavoriteReports = favoriteIds
                     .Select(id => favReports.FirstOrDefault(r => r.ReportId == id))
-                    .Where(r => r != null && AllowedForUser(r!.AllowedRoles, userRolesCsv))
+                    .Where(r => r != null)
                     .Cast<ReportCatalog>()
                     .ToList();
             }
@@ -340,23 +347,6 @@ namespace Mosaik.Controllers
             }
 
             return View(model);
-        }
-
-        private static bool AllowedForUser(string allowedRolesCsv, string userRolesCsv)
-        {
-            if (string.IsNullOrWhiteSpace(allowedRolesCsv))
-            {
-                return false;
-            }
-
-            var allowedRoles = allowedRolesCsv
-                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-                .ToHashSet(StringComparer.OrdinalIgnoreCase);
-
-            var userRoles = userRolesCsv
-                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-
-            return userRoles.Any(r => allowedRoles.Contains(r));
         }
     }
 }
