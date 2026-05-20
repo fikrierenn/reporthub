@@ -33,13 +33,24 @@ namespace Mosaik.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> Index(bool unreadOnly = false)
+        public async Task<IActionResult> Index(string? filter = null, bool unreadOnly = false)
         {
             var uid = await CurrentUserIdAsync();
             if (uid == null) return Unauthorized();
 
-            var items = await _notifications.GetRecentAsync(uid.Value, take: 100, unreadOnly: unreadOnly);
-            ViewData["UnreadOnly"] = unreadOnly;
+            // Backward compat: ?unreadOnly=true → filter=unread.
+            var f = (filter ?? (unreadOnly ? "unread" : "all"))?.ToLowerInvariant() ?? "all";
+
+            // Read filter için tüm liste çek + bellekte filtrele (read endpoint yok service'te).
+            var raw = await _notifications.GetRecentAsync(uid.Value, take: 200, unreadOnly: false);
+            var items = f switch
+            {
+                "unread" => raw.Where(n => !n.IsRead).ToList(),
+                "read" => raw.Where(n => n.IsRead).ToList(),
+                _ => raw.ToList()
+            };
+
+            ViewData["Filter"] = f;
             return View(items);
         }
 
@@ -69,6 +80,40 @@ namespace Mosaik.Controllers
                 isRead = n.IsRead,
                 createdAt = n.CreatedAt
             }));
+        }
+
+        // GET /Notifications/Open/{id} — tıklama: okundu işaretle + hedef URL'e redirect.
+        // Idempotent. Bildirim sahibi olmayan → AccessDenied. TargetUrl yoksa Index'e.
+        // Open redirect koruması: yalnız local URL (Url.IsLocalUrl + // prefix block).
+        [HttpGet("/Notifications/Open/{id:int}")]
+        public async Task<IActionResult> Open(int id)
+        {
+            var uid = await CurrentUserIdAsync();
+            if (uid == null) return Unauthorized();
+
+            var n = await _context.Notifications.AsNoTracking()
+                .Where(x => x.Id == id && x.UserId == uid.Value)
+                .Select(x => new { x.Id, x.TargetUrl })
+                .FirstOrDefaultAsync();
+            if (n is null)
+            {
+                _logger.LogWarning("NotificationsController.Open: not found or not owned id={Id} userId={UserId}", id, uid);
+                return NotFound();
+            }
+
+            // markAsRead — fail olsa bile devam et (best-effort).
+            try { await _notifications.MarkAsReadAsync(id, uid.Value); }
+            catch (Exception ex) { _logger.LogWarning(ex, "NotificationsController.Open: markAsRead failed id={Id}", id); }
+
+            var target = n.TargetUrl;
+            if (string.IsNullOrWhiteSpace(target)
+                || !Url.IsLocalUrl(target)
+                || !target.StartsWith("/")
+                || target.StartsWith("//"))
+            {
+                return RedirectToAction(nameof(Index));
+            }
+            return Redirect(target);
         }
 
         [HttpPost]

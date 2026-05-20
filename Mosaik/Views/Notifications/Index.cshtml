@@ -4,7 +4,7 @@
     ViewData["Title"] = "Bildirimler — Mosaik";
     ViewData["PageTitle"] = "Bildirimler";
 
-    var unreadOnly = (bool)(ViewData["UnreadOnly"] ?? false);
+    var filter = (string)(ViewData["Filter"] ?? "all");
     var unreadCount = Model.Count(n => !n.IsRead);
     var totalCount = Model.Count;
 }
@@ -48,11 +48,14 @@
 }
 
 <div role="tablist" aria-label="Filtre" class="notif-tabs">
-    <a href="?unreadOnly=false" role="tab" aria-selected="@(!unreadOnly ? "true" : "false")" class="btn @(!unreadOnly ? "primary" : "ghost") sm">
+    <a href="?filter=all" role="tab" aria-selected="@(filter == "all" ? "true" : "false")" class="btn @(filter == "all" ? "primary" : "ghost") sm">
         Tümü
     </a>
-    <a href="?unreadOnly=true" role="tab" aria-selected="@(unreadOnly ? "true" : "false")" class="btn @(unreadOnly ? "primary" : "ghost") sm">
+    <a href="?filter=unread" role="tab" aria-selected="@(filter == "unread" ? "true" : "false")" class="btn @(filter == "unread" ? "primary" : "ghost") sm">
         Okunmamış
+    </a>
+    <a href="?filter=read" role="tab" aria-selected="@(filter == "read" ? "true" : "false")" class="btn @(filter == "read" ? "primary" : "ghost") sm">
+        Okunmuş
     </a>
 </div>
 
@@ -62,7 +65,13 @@
         <div class="notif-empty">
             <i class="fas fa-bell-slash icon" aria-hidden="true"></i>
             <h3>Bildirim yok</h3>
-            <p>@(unreadOnly ? "Okunmamış bildirim bulunmuyor." : "Henüz hiç bildirim almadınız.")</p>
+            <p>
+                @(filter switch {
+                    "unread" => "Okunmamış bildirim yok.",
+                    "read" => "Henüz okuduğun bildirim yok.",
+                    _ => "Henüz hiç bildirim almadınız."
+                })
+            </p>
         </div>
     }
     else
@@ -70,11 +79,15 @@
         <ul>
             @foreach (var n in Model)
             {
-                <li class="notif-item @(n.IsRead ? "" : "unread")">
+                <li class="notif-item @(n.IsRead ? "" : "unread") @(!string.IsNullOrWhiteSpace(n.TargetUrl) ? "is-link" : "")">
                     <span class="notif-dot" aria-hidden="true">
                         <i class="fas fa-circle"></i>
                     </span>
                     <div class="notif-body">
+                        @if (!string.IsNullOrWhiteSpace(n.TargetUrl))
+                        {
+                            <a href="/Notifications/Open/@n.Id" class="notif-stretched" aria-label="@n.Title"></a>
+                        }
                         <div class="notif-head">
                             <strong class="notif-title">@n.Title</strong>
                             <span class="notif-time ago">@n.CreatedAt.ToLocalTime().ToString("dd MMM HH:mm")</span>
@@ -85,13 +98,6 @@
                         }
                     </div>
                     <div class="notif-actions">
-                        @if (!string.IsNullOrWhiteSpace(n.TargetUrl))
-                        {
-                            <a href="@n.TargetUrl" class="btn ghost sm" title="Aç">
-                                <i class="fas fa-arrow-right text-[9px]" aria-hidden="true"></i>
-                                Aç
-                            </a>
-                        }
                         @if (!n.IsRead)
                         {
                             <form method="post" action="/Notifications/MarkAsRead" class="inline-form">
