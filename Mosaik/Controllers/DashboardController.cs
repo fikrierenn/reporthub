@@ -15,12 +15,18 @@ namespace Mosaik.Controllers
         private readonly MosaikContext _context;
         private readonly CircularService _tamim;
         private readonly WorkflowInboxService _workflowInbox;
+        private readonly ILogger<DashboardController> _logger;
 
-        public DashboardController(MosaikContext context, CircularService tamim, WorkflowInboxService workflowInbox)
+        public DashboardController(
+            MosaikContext context,
+            CircularService tamim,
+            WorkflowInboxService workflowInbox,
+            ILogger<DashboardController> logger)
         {
             _context = context;
             _tamim = tamim;
             _workflowInbox = workflowInbox;
+            _logger = logger;
         }
 
         public async Task<IActionResult> Index()
@@ -313,8 +319,8 @@ namespace Mosaik.Controllers
             }
             catch (Exception ex)
             {
-                // Circular modülü kapalıysa veya hata varsa dashboard'u kırma
-                System.Diagnostics.Debug.WriteLine($"Dashboard tamim widget hatası: {ex.Message}");
+                // Circular modülü kapalıysa veya hata varsa dashboard'u kırma — log ile iz bırak.
+                _logger.LogWarning(ex, "Dashboard tamim widget hatasi — widget gizlendi, ana sayfa devam ediyor.");
             }
 
             // Plan 36 W-16 — Workflow bekleyen onaylar widget (current user'a atanmış aktif step'ler).
@@ -330,7 +336,7 @@ namespace Mosaik.Controllers
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Dashboard workflow widget hatası: {ex.Message}");
+                _logger.LogWarning(ex, "Dashboard workflow widget hatasi — widget gizlendi, ana sayfa devam ediyor.");
             }
 
             return View(model);
