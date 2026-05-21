@@ -53,8 +53,7 @@ _Şu an açık YÜKSEK risk yok._ (M-03 final 2026-05-20'de kapandı — `Dashbo
 
 - **`ReportType [Obsolete]` hâlâ yazılıyor** — `ReportManagementService.cs` + `AdminController.cs:273` `"dashboard"` sabit yazıyor. Migration 19 çalıştırıldıktan sonra `#pragma` + DTO temizle. **Plan 39 karar bekliyor.**
 - **ViewModel entity direkt mapping** — mass assignment riski. TODO M-07.
-- **Hard-limit ihlali** — `Models/ReportPanelContext.cs` 591 satır, `Controllers/AiController.cs` 587 satır, `wwwroot/assets/js/workflow-designer.js` 392 satır. **Plan 39 Faz C** (6-8h split).
-- **A11y batch** — 91 `<th scope=>` + 93 `<label for=>` + 15 anchor `href="#"` + 6 tab pattern role + 3 dialog role eksik. **Plan 39 Faz D** (6-8h paralel agent).
+- **Dialog `role="dialog" aria-modal` eksik** — 3 view (Documents/Calendar/OrgChart modal'lar) + focus trap. Plan 39 Faz D kapsamı dışı bırakıldı (manuel focus trap JS gerekli).
 
 ## DÜŞÜK risk
 
@@ -79,6 +78,14 @@ _Şu an açık YÜKSEK risk yok._ (M-03 final 2026-05-20'de kapandı — `Dashbo
 - ✅ **new HttpClient()** — proje genelinde 0 (`IHttpClientFactory` standart).
 - ✅ **DateTime.Now view-side** — `Dashboard/Index.cshtml` + `_DashCircular.cshtml` UTC convert (commit `8adea01`).
 - ✅ **AsNoTracking** — 129 occurrence proje genelinde; büyük ölçüde uygulanmış. Drive-by düzeltme yok, touch ettikçe.
+
+**21 Mayıs 2026 Plan 39 audit hardening (4 faz):**
+- ✅ **Faz A — DashboardController CSV → junction** — commit `5dfefe1`.
+- ✅ **Faz B — Stored XSS render-time sanitize** — commit `0c19af6`. `IContentSanitizer` Mosaik.Core + 5 view (Block + Circular) inject, 11 yeni test.
+- ✅ **Faz C-1 — MosaikContext split** — commit `c4e947e`. 591 → 199 ana + 4 partial (Reports/Workflow/Contracts/Compliance).
+- ✅ **Faz C-2 — AiController split** — commit `d7b0d0e`. 592 → 289 ana + Suggestions.cs + CreateContract.cs.
+- ✅ **Faz C-3 — workflow-designer.js split** — commit `f6534a9`. 392 → 177+188+75 (entry + inputs + editor).
+- ✅ **Faz D — A11y batch** — commit `b47d33a` (4 paralel agent). 88 `<th scope="col">` (15 dosya) + ~103 `<label for>` (16 form) + 10 `href="#"` → button (9 dosya) + 1 Alpine tab role pattern + decorative `<i aria-hidden>` (geniş scan). Dialog role + focus trap kapsam dışı (manuel JS).
 
 ## Kararlar (kronolojik — küçük notlar, büyük kararlar ADR'lere)
 
