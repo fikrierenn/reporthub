@@ -126,7 +126,8 @@
                         ["orgchart"]    = "fas fa-sitemap",
                         ["ai"]          = "fas fa-robot",
                         ["hr"]          = "fas fa-users",
-                        ["approval"]    = "fas fa-check-double"
+                        ["approval"]    = "fas fa-check-double",
+                        ["forms"]       = "fas fa-clipboard-list"
                     };
 
                     // ModuleKey → controller-route URL mapping. Default: PascalCase ModuleKey.
@@ -142,6 +143,7 @@
                         "compliance"  => "/Compliance",
                         "ai"          => "/Ai",
                         "circular"    => "/Circular/Circular",
+                        "forms"       => "/Forms",
                         _             => "/" + char.ToUpper(key[0]) + key.Substring(1)
                     };
 
