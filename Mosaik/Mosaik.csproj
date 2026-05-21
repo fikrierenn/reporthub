@@ -13,6 +13,7 @@
     <ProjectReference Include="..\Mosaik.Core\Mosaik.Core.csproj" />
     <!-- Plan 16.6 modül referansları — yeni vNext modüller burada listelenir -->
     <ProjectReference Include="..\Mosaik.Modules.Circular\Mosaik.Modules.Circular.csproj" />
+    <ProjectReference Include="..\Mosaik.Modules.Forms\Mosaik.Modules.Forms.csproj" />
   </ItemGroup>
 
   <ItemGroup>
