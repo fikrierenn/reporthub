@@ -31,17 +31,17 @@
         <div class="form-section-head">Bilgiler</div>
         <div class="form-section-body stack">
             <div class="field">
-                <label class="lab">Başlık <span class="req">*</span></label>
-                <input class="inp" name="Title" value="@Model.Title" required maxlength="200" />
+                <label class="lab" for="Title">Başlık <span class="req">*</span></label>
+                <input class="inp" id="Title" name="Title" value="@Model.Title" required maxlength="200" />
             </div>
             <div class="field">
-                <label class="lab">Karşı Taraf</label>
-                <input class="inp" name="Counterparty" value="@Model.Counterparty" maxlength="200" />
+                <label class="lab" for="Counterparty">Karşı Taraf</label>
+                <input class="inp" id="Counterparty" name="Counterparty" value="@Model.Counterparty" maxlength="200" />
             </div>
             <div class="grid-2col">
                 <div class="field">
-                    <label class="lab">Kategori</label>
-                    <select class="inp" name="Category">
+                    <label class="lab" for="Category">Kategori</label>
+                    <select class="inp" id="Category" name="Category">
                         <option value="0" selected="@(Model.Category == ContractCategory.Lease)">Kira</option>
                         <option value="1" selected="@(Model.Category == ContractCategory.Service)">Hizmet</option>
                         <option value="2" selected="@(Model.Category == ContractCategory.Supply)">Tedarik</option>
@@ -52,8 +52,8 @@
                     </select>
                 </div>
                 <div class="field">
-                    <label class="lab">Durum</label>
-                    <select class="inp" name="Status">
+                    <label class="lab" for="Status">Durum</label>
+                    <select class="inp" id="Status" name="Status">
                         <option value="0" selected="@(Model.Status == ContractStatus.Draft)">Taslak</option>
                         <option value="1" selected="@(Model.Status == ContractStatus.Active)">Aktif</option>
                         <option value="2" selected="@(Model.Status == ContractStatus.Expired)">Süresi Doldu</option>
@@ -63,17 +63,17 @@
             </div>
             <div class="grid-2col">
                 <div class="field">
-                    <label class="lab">Başlangıç</label>
-                    <input class="inp" type="date" name="StartDate" value="@(Model.StartDate?.ToString("yyyy-MM-dd"))" />
+                    <label class="lab" for="StartDate">Başlangıç</label>
+                    <input class="inp" id="StartDate" type="date" name="StartDate" value="@(Model.StartDate?.ToString("yyyy-MM-dd"))" />
                 </div>
                 <div class="field">
-                    <label class="lab">Bitiş</label>
-                    <input class="inp" type="date" name="EndDate" value="@(Model.EndDate?.ToString("yyyy-MM-dd"))" />
+                    <label class="lab" for="EndDate">Bitiş</label>
+                    <input class="inp" id="EndDate" type="date" name="EndDate" value="@(Model.EndDate?.ToString("yyyy-MM-dd"))" />
                 </div>
             </div>
             <div class="field">
-                <label class="lab">Notlar</label>
-                <textarea class="inp" name="Notes" rows="3" maxlength="2000">@Model.Notes</textarea>
+                <label class="lab" for="Notes">Notlar</label>
+                <textarea class="inp" id="Notes" name="Notes" rows="3" maxlength="2000">@Model.Notes</textarea>
             </div>
         </div>
     </div>

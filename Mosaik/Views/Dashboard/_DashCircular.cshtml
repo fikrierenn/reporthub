@@ -13,7 +13,7 @@
 
 <div class="section-title">
     <h2>Bugünün Tamimi</h2>
-    <a href="/Circular/Circular" class="more">Tüm tamimler <i class="fas fa-chevron-right text-[10px]"></i></a>
+    <a href="/Circular/Circular" class="more">Tüm tamimler <i class="fas fa-chevron-right text-[10px]" aria-hidden="true"></i></a>
 </div>
 
 @if (t != null)
@@ -28,21 +28,21 @@
             <a href="/Circular/Circular/Details/@t.Id" class="qcard__link">
                 <h3>@t.Title</h3>
                 <div class="sub">
-                    <i class="fas fa-layer-group qcard__sub-icon"></i>
+                    <i class="fas fa-layer-group qcard__sub-icon" aria-hidden="true"></i>
                     @Model.TodaysBlockCount blok
                     @if (Model.TodaysUrgentCount > 0)
                     {
                         <span class="qcard__urgent">
-                            <i class="fas fa-bolt"></i> @Model.TodaysUrgentCount acil
+                            <i class="fas fa-bolt" aria-hidden="true"></i> @Model.TodaysUrgentCount acil
                         </span>
                     }
                 </div>
                 <div class="meta">
                     <span class="ago">
-                        <i class="fas fa-clock qcard__meta-icon"></i>
+                        <i class="fas fa-clock qcard__meta-icon" aria-hidden="true"></i>
                         @t.PublishedAt.ToString("HH:mm")
                     </span>
-                    <span class="run">Aç <i class="fas fa-arrow-right text-[10px]"></i></span>
+                    <span class="run">Aç <i class="fas fa-arrow-right text-[10px]" aria-hidden="true"></i></span>
                 </div>
             </a>
         </div>
@@ -52,14 +52,14 @@ else if (saatNow < 17)
 {
     <div class="dash-info-card">
         <div class="dash-info-card__icon tone-warn">
-            <i class="fas fa-hourglass-half"></i>
+            <i class="fas fa-hourglass-half" aria-hidden="true"></i>
         </div>
         <div class="dash-info-card__body">
             <div class="dash-info-card__title">Bugünün tamimi 17:00'de yayınlanacak</div>
             <div class="dash-info-card__desc mono">@bugun</div>
         </div>
         <a href="/Circular/Block/Create" class="btn">
-            <i class="fas fa-plus text-[10px]"></i>
+            <i class="fas fa-plus text-[10px]" aria-hidden="true"></i>
             Block Yaz
         </a>
     </div>
@@ -68,14 +68,14 @@ else
 {
     <div class="dash-info-card dashed">
         <div class="dash-info-card__icon tone-neutral">
-            <i class="fas fa-inbox"></i>
+            <i class="fas fa-inbox" aria-hidden="true"></i>
         </div>
         <div class="dash-info-card__body">
             <div class="dash-info-card__title">Bugün için tamim yayınlanmadı</div>
             <div class="dash-info-card__desc mono">@bugun</div>
         </div>
         <a href="/Circular/Circular" class="btn">
-            <i class="fas fa-list text-[10px]"></i>
+            <i class="fas fa-list text-[10px]" aria-hidden="true"></i>
             Geçmiş
         </a>
     </div>

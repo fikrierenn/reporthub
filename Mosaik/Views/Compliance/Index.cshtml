@@ -44,9 +44,9 @@
 }
 
 @section TopActions {
-    <a href="#" class="icon-btn" title="Yardım">
-        <i class="fas fa-circle-question"></i>
-    </a>
+    <button type="button" class="icon-btn" title="Yardım" aria-label="Yardım">
+        <i class="fas fa-circle-question" aria-hidden="true"></i>
+    </button>
 }
 
 <div class="hero">
@@ -60,7 +60,7 @@
 @if (!Model.Any())
 {
     <div class="empty-state">
-        <i class="fas fa-clipboard-check icon-lg"></i>
+        <i class="fas fa-clipboard-check icon-lg" aria-hidden="true"></i>
         <h3>Uyum şablonu bulunamadı</h3>
         <p>Sistem yöneticisi şablon ekleyebilir.</p>
     </div>
@@ -81,7 +81,7 @@ else
                 <h3>@PackageLabel(pkg)</h3>
                 <div class="sub">@PackageDesc(pkg)</div>
                 <div class="meta">
-                    <span class="run">İncele ve Yükle <i class="fas fa-arrow-right icon-xs"></i></span>
+                    <span class="run">İncele ve Yükle <i class="fas fa-arrow-right icon-xs" aria-hidden="true"></i></span>
                 </div>
             </a>
         }

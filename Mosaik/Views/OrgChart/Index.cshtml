@@ -52,9 +52,9 @@
             Düzenle
         </a>
     }
-    <a href="#" class="icon-btn" title="Yardım: Bir kutuya tıklayarak o pozisyondaki çalışanları görebilirsiniz.">
-        <i class="fas fa-circle-question"></i>
-    </a>
+    <button type="button" class="icon-btn" title="Yardım: Bir kutuya tıklayarak o pozisyondaki çalışanları görebilirsiniz." aria-label="Yardım">
+        <i class="fas fa-circle-question" aria-hidden="true"></i>
+    </button>
 }
 
 <div class="hero">
@@ -195,7 +195,7 @@
                 </p>
             </div>
             <button type="button" class="icon-btn" @@click="open = false" title="Kapat">
-                <i class="fas fa-xmark"></i>
+                <i class="fas fa-xmark" aria-hidden="true"></i>
             </button>
         </div>
         <input type="text" class="inp" placeholder="Ad/lokasyon ara…" x-model="search" />

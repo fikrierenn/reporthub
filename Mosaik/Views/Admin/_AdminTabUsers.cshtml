@@ -3,7 +3,7 @@
 <div class="tab-toolbar">
     <div class="tab-toolbar__desc">Kullanıcıları ekleyin, güncelleyin ve pasif edin</div>
     <a href="/Admin/CreateUser" class="btn primary">
-        <i class="fas fa-user-plus text-[10px]"></i>
+        <i class="fas fa-user-plus text-[10px]" aria-hidden="true"></i>
         Yeni Kullanıcı
     </a>
 </div>
@@ -12,13 +12,13 @@
     <table class="dt">
         <thead>
             <tr>
-                <th>Kullanıcı</th>
-                <th>Ad Soyad</th>
-                <th>E-posta</th>
-                <th>Roller</th>
-                <th>Durum</th>
-                <th>Son Giriş</th>
-                <th class="col-right">İşlemler</th>
+                <th scope="col">Kullanıcı</th>
+                <th scope="col">Ad Soyad</th>
+                <th scope="col">E-posta</th>
+                <th scope="col">Roller</th>
+                <th scope="col">Durum</th>
+                <th scope="col">Son Giriş</th>
+                <th scope="col" class="col-right">İşlemler</th>
             </tr>
         </thead>
         <tbody>
@@ -36,7 +36,7 @@
                     <td class="cell-right">
                         <div class="row-actions">
                             <a href="/Admin/EditUser/@user.UserId" class="btn ghost sm">
-                                <i class="fas fa-pen text-[9px]"></i>
+                                <i class="fas fa-pen text-[9px]" aria-hidden="true"></i>
                                 Düzenle
                             </a>
                             <form method="post" class="inline-form" onsubmit="return confirm('Bu kullanıcıyı silmek istediğinizden emin misiniz?')">
@@ -44,7 +44,7 @@
                                 <input type="hidden" name="action" value="delete_user" />
                                 <input type="hidden" name="id" value="@user.UserId" />
                                 <button type="submit" class="btn sm danger">
-                                    <i class="fas fa-trash text-[9px]"></i>
+                                    <i class="fas fa-trash text-[9px]" aria-hidden="true"></i>
                                     Sil
                                 </button>
                             </form>

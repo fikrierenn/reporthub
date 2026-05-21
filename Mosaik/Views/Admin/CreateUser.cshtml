@@ -26,7 +26,7 @@
 
 @section TopActions {
     <a href="/Admin?tab=users" class="btn">
-        <i class="fas fa-xmark text-[10px]"></i>
+        <i class="fas fa-xmark text-[10px]" aria-hidden="true"></i>
         İptal
     </a>
 }
@@ -36,7 +36,7 @@
     <div class="sub">
         <span>Yeni kullanıcı oluşturun</span>
         <span class="pill">
-            <i class="fas fa-circle-info text-[9px] text-muted"></i>
+            <i class="fas fa-circle-info text-[9px] text-muted" aria-hidden="true"></i>
             Roller + opsiyonel veri filtreleri
         </span>
     </div>
@@ -45,7 +45,7 @@
 @if (!string.IsNullOrWhiteSpace(message))
 {
     <div role="alert" class="alert @(messageType == "success" ? "success" : "error")">
-        <i class="fas @(messageType == "success" ? "fa-check-circle" : "fa-exclamation-circle")"></i>
+        <i class="fas @(messageType == "success" ? "fa-check-circle" : "fa-exclamation-circle")" aria-hidden="true"></i>
         @message
     </div>
 }
@@ -56,7 +56,7 @@
     <div class="form-section-card wide">
         <div class="form-section-head">
             <h2>
-                <i class="fas fa-user-plus text-muted"></i>
+                <i class="fas fa-user-plus text-muted" aria-hidden="true"></i>
                 Kullanıcı Bilgileri
             </h2>
             <div class="help-text">Gerekli alanları doldurun</div>
@@ -142,7 +142,7 @@
                            class="checkbox" />
                     <label for="IsAdUser" class="lab inline">Windows AD kullanıcısı</label>
                     <span class="text-xs text-muted" title="AD kullanıcıları DOMAIN\\kullanici ile giriş yapar">
-                        <i class="fas fa-circle-info"></i>
+                        <i class="fas fa-circle-info" aria-hidden="true"></i>
                     </span>
                 </div>
                 <div class="checkbox-row">
@@ -159,11 +159,11 @@
 
     <div class="action-row wide">
         <a href="/Admin?tab=users" class="btn ghost">
-            <i class="fas fa-arrow-left text-[10px]"></i>
+            <i class="fas fa-arrow-left text-[10px]" aria-hidden="true"></i>
             Geri Dön
         </a>
         <button type="submit" class="btn primary">
-            <i class="fas fa-check text-[10px]"></i>
+            <i class="fas fa-check text-[10px]" aria-hidden="true"></i>
             Kullanıcı Kaydet
         </button>
     </div>

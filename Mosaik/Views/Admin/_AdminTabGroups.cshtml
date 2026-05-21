@@ -2,19 +2,19 @@
 
 <div class="inline-create-card">
     <h2 class="inline-create-card__title">
-        <i class="fas fa-circle-plus"></i>
+        <i class="fas fa-circle-plus" aria-hidden="true"></i>
         Yeni Grup Ekle
     </h2>
     <form method="post" class="inline-create-form">
         @Html.AntiForgeryToken()
         <input type="hidden" name="action" value="create_group" />
         <div class="field tight">
-            <label class="lab">Grup Adı <span class="req">*</span></label>
-            <input type="text" name="Name" class="inp" required />
+            <label class="lab" for="Name">Grup Adı <span class="req">*</span></label>
+            <input type="text" id="Name" name="Name" class="inp" required />
         </div>
         <div class="field tight">
-            <label class="lab">Açıklama</label>
-            <input type="text" name="Description" class="inp" />
+            <label class="lab" for="Description">Açıklama</label>
+            <input type="text" id="Description" name="Description" class="inp" />
         </div>
         <div class="checkbox-cell">
             <input type="hidden" name="IsActive" value="false" />
@@ -22,7 +22,7 @@
             <label for="newGroupActive" class="lab inline">Aktif</label>
         </div>
         <button type="submit" class="btn primary">
-            <i class="fas fa-plus text-[10px]"></i>
+            <i class="fas fa-plus text-[10px]" aria-hidden="true"></i>
             Ekle
         </button>
     </form>
@@ -32,10 +32,10 @@
     <table class="dt">
         <thead>
             <tr>
-                <th>Grup</th>
-                <th>Açıklama</th>
-                <th>Durum</th>
-                <th class="col-right">İşlemler</th>
+                <th scope="col">Grup</th>
+                <th scope="col">Açıklama</th>
+                <th scope="col">Durum</th>
+                <th scope="col" class="col-right">İşlemler</th>
             </tr>
         </thead>
         <tbody>
@@ -50,7 +50,7 @@
                     <td class="cell-right">
                         <div class="row-actions">
                             <a href="/Admin/EditGroup/@group.GroupId" class="btn ghost sm">
-                                <i class="fas fa-pen text-[9px]"></i>
+                                <i class="fas fa-pen text-[9px]" aria-hidden="true"></i>
                                 Düzenle
                             </a>
                             <form method="post" class="inline-form" onsubmit="return confirm('Grup silinsin mi?')">
@@ -58,7 +58,7 @@
                                 <input type="hidden" name="action" value="delete_group" />
                                 <input type="hidden" name="id" value="@group.GroupId" />
                                 <button type="submit" class="btn sm danger">
-                                    <i class="fas fa-trash text-[9px]"></i>
+                                    <i class="fas fa-trash text-[9px]" aria-hidden="true"></i>
                                     Sil
                                 </button>
                             </form>

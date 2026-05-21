@@ -23,13 +23,13 @@
               onsubmit="return confirm('Bugünün pending bloklarını şimdi derleyip tamim olarak yayınla?');">
             @Html.AntiForgeryToken()
             <button type="submit" class="btn primary" title="Cron'u beklemeden manuel derleme">
-                <i class="fas fa-bolt text-[10px]"></i>
+                <i class="fas fa-bolt text-[10px]" aria-hidden="true"></i>
                 Şimdi Derle
             </button>
         </form>
     }
     <a href="#" class="icon-btn" title="Yardım">
-        <i class="fas fa-circle-question"></i>
+        <i class="fas fa-circle-question" aria-hidden="true"></i>
     </a>
 }
 
@@ -48,7 +48,7 @@
 <form method="get" class="filter-bar with-toggle">
     <div class="fb-search-grow">
         <span class="fb-icon">
-            <i class="fas fa-magnifying-glass"></i>
+            <i class="fas fa-magnifying-glass" aria-hidden="true"></i>
         </span>
         <input type="text" id="tamimSearch" name="q" x-model="q"
                class="inp"
@@ -56,11 +56,11 @@
     </div>
     <div class="filter-bar__actions">
         <button type="submit" class="btn primary" title="URL'ye yansıt (paylaşılabilir link)">
-            <i class="fas fa-filter text-[10px]"></i>
+            <i class="fas fa-filter text-[10px]" aria-hidden="true"></i>
             Filtrele
         </button>
         <button type="button" class="btn ghost" @@click="q = ''" x-show="q" x-cloak>
-            <i class="fas fa-xmark text-[10px]"></i>
+            <i class="fas fa-xmark text-[10px]" aria-hidden="true"></i>
             Temizle
         </button>
     </div>
@@ -69,7 +69,7 @@
 @if (!Model.Any())
 {
     <div class="empty-state paper-dashed">
-        <i class="fas fa-folder-open empty-state__icon"></i>
+        <i class="fas fa-folder-open empty-state__icon" aria-hidden="true"></i>
         <h3>Son 30 günde yayınlanmış tamim yok</h3>
         <p>Sistem her gün <strong>17:00</strong>'de o güne ait blokları otomatik tamim olarak yayınlar.</p>
     </div>
@@ -93,15 +93,15 @@ else
                 <a href="@Url.Action("Details", new { id = t.Id })" class="qcard__link">
                     <h3>@t.Title</h3>
                     <div class="sub">
-                        <i class="fas fa-calendar qcard__date-icon"></i>
+                        <i class="fas fa-calendar qcard__date-icon" aria-hidden="true"></i>
                         @dateStr
                     </div>
                     <div class="meta">
                         <span class="ago qcard__ago-mono">
-                            <i class="fas fa-clock qcard__time-icon"></i>
+                            <i class="fas fa-clock qcard__time-icon" aria-hidden="true"></i>
                             @hour
                         </span>
-                        <span class="run">Aç <i class="fas fa-arrow-right text-[10px]"></i></span>
+                        <span class="run">Aç <i class="fas fa-arrow-right text-[10px]" aria-hidden="true"></i></span>
                     </div>
                 </a>
             </div>

@@ -3,7 +3,7 @@
 @if (!Model.FavoriteReports.Any())
 {
     <div class="empty-state paper-dashed">
-        <i class="fas fa-folder-open empty-state__icon"></i>
+        <i class="fas fa-folder-open empty-state__icon" aria-hidden="true"></i>
         <p>Henüz erişilebilir rapor yok. Yöneticinizden rol veya rapor erişimi isteyin.</p>
     </div>
 }
@@ -21,7 +21,7 @@ else
                 <div class="sub">@(string.IsNullOrWhiteSpace(report.Description) ? (report.DataSource?.Title ?? report.DataSourceKey) : report.Description)</div>
                 <div class="meta">
                     <span class="ago">@(report.DataSource?.Title ?? report.DataSourceKey)</span>
-                    <span class="run">Aç <i class="fas fa-arrow-right text-[10px]"></i></span>
+                    <span class="run">Aç <i class="fas fa-arrow-right text-[10px]" aria-hidden="true"></i></span>
                 </div>
             </a>
         }

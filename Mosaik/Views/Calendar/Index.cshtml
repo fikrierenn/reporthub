@@ -18,12 +18,12 @@
 
 @section TopActions {
     <button type="button" class="btn primary" id="btnNewEvent">
-        <i class="fas fa-plus text-[10px]"></i>
+        <i class="fas fa-plus text-[10px]" aria-hidden="true"></i>
         Etkinlik Ekle
     </button>
-    <a href="#" class="icon-btn" title="Yardım">
-        <i class="fas fa-circle-question"></i>
-    </a>
+    <button type="button" class="icon-btn" title="Yardım" aria-label="Yardım">
+        <i class="fas fa-circle-question" aria-hidden="true"></i>
+    </button>
 }
 
 <div class="hero">
@@ -61,25 +61,25 @@
         <div class="modal-head">
             <h3 id="modalTitle" class="modal-title"></h3>
             <button type="button" class="icon-btn modal-close" onclick="closeEventModal()" title="Kapat">
-                <i class="fas fa-xmark"></i>
+                <i class="fas fa-xmark" aria-hidden="true"></i>
             </button>
         </div>
         <div class="modal-body">
             <div class="meta-row">
-                <i class="fas fa-calendar-day"></i>
+                <i class="fas fa-calendar-day" aria-hidden="true"></i>
                 <span id="modalDate"></span>
             </div>
             <div class="meta-row">
-                <i class="fas fa-tag"></i>
+                <i class="fas fa-tag" aria-hidden="true"></i>
                 <span id="modalType"></span>
                 <span id="modalStatus" class="pill"></span>
             </div>
             <div id="modalContractRow" class="meta-row is-hidden">
-                <i class="fas fa-file-contract"></i>
+                <i class="fas fa-file-contract" aria-hidden="true"></i>
                 <a id="modalContractLink" href="#" class="accent-link"></a>
             </div>
             <div id="modalNotesRow" class="meta-row top is-hidden">
-                <i class="fas fa-note-sticky mt-2"></i>
+                <i class="fas fa-note-sticky mt-2" aria-hidden="true"></i>
                 <span id="modalNotes" class="ink-3"></span>
             </div>
         </div>

@@ -16,7 +16,7 @@
 
 @section TopActions {
     <a href="/Admin" class="btn ghost">
-        <i class="fas fa-arrow-left text-[10px]"></i>
+        <i class="fas fa-arrow-left text-[10px]" aria-hidden="true"></i>
         Geri
     </a>
 }
@@ -92,16 +92,16 @@
                     @Html.AntiForgeryToken()
                     <input type="hidden" name="typeId" value="@type.Id" />
                     <div class="field">
-                        <label class="lab">Kod</label>
-                        <input class="inp inp-code" type="text" name="code" placeholder="camelCase" required />
+                        <label class="lab" for="fld-code-@type.Id">Kod</label>
+                        <input class="inp inp-code" type="text" id="fld-code-@type.Id" name="code" placeholder="camelCase" required />
                     </div>
                     <div class="field">
-                        <label class="lab">Etiket</label>
-                        <input class="inp inp-label" type="text" name="label" placeholder="Türkçe görünen ad" required />
+                        <label class="lab" for="fld-label-@type.Id">Etiket</label>
+                        <input class="inp inp-label" type="text" id="fld-label-@type.Id" name="label" placeholder="Türkçe görünen ad" required />
                     </div>
                     <div class="field">
-                        <label class="lab">Sıra</label>
-                        <input class="inp inp-order" type="number" name="displayOrder" value="@(type.Values.Any() ? type.Values.Max(v => v.DisplayOrder) + 10 : 10)" />
+                        <label class="lab" for="fld-order-@type.Id">Sıra</label>
+                        <input class="inp inp-order" type="number" id="fld-order-@type.Id" name="displayOrder" value="@(type.Values.Any() ? type.Values.Max(v => v.DisplayOrder) + 10 : 10)" />
                     </div>
                     <button type="submit" class="btn primary">Ekle</button>
                 </form>

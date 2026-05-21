@@ -81,7 +81,7 @@
             {
                 <li class="notif-item @(n.IsRead ? "" : "unread") @(!string.IsNullOrWhiteSpace(n.TargetUrl) ? "is-link" : "")">
                     <span class="notif-dot" aria-hidden="true">
-                        <i class="fas fa-circle"></i>
+                        <i class="fas fa-circle" aria-hidden="true"></i>
                     </span>
                     <div class="notif-body">
                         @if (!string.IsNullOrWhiteSpace(n.TargetUrl))

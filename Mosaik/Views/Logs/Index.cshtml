@@ -39,7 +39,7 @@
         {
             <span class="pill mono">Sayfa @Model.Page / @Model.TotalPages</span>
         }
-        <span class="pill"><i class="fas fa-shield-halved pill-icon"></i> @(Model.IsAdmin ? "Tüm kullanıcılar" : "Sadece sen")</span>
+        <span class="pill"><i class="fas fa-shield-halved pill-icon" aria-hidden="true"></i> @(Model.IsAdmin ? "Tüm kullanıcılar" : "Sadece sen")</span>
     </div>
 </div>
 
@@ -96,13 +96,13 @@
         <input id="logDateEnd" name="logEnd" type="date" value="@Model.LogEnd" class="inp" />
     </div>
     <button type="submit" class="btn primary">
-        <i class="fas fa-filter text-[10px]"></i>
+        <i class="fas fa-filter text-[10px]" aria-hidden="true"></i>
         Filtrele
     </button>
     @if (hasFilter)
     {
         <a href="/Logs" class="btn ghost">
-            <i class="fas fa-xmark text-[10px]"></i>
+            <i class="fas fa-xmark text-[10px]" aria-hidden="true"></i>
             Temizle
         </a>
     }
@@ -111,7 +111,7 @@
 @if (!Model.Logs.Any())
 {
     <div class="empty-state">
-        <i class="fas fa-history empty-state__icon"></i>
+        <i class="fas fa-history empty-state__icon" aria-hidden="true"></i>
         <h3>Log bulunamadı</h3>
         <p>@(hasFilter ? "Filtre kriterlerini değiştirin." : "Sistemde henüz aktivite kaydı yok.")</p>
     </div>
@@ -173,7 +173,7 @@ else
             {
                 <a class="btn"
                    href="@Url.Action("Index", new { logSearch = Model.LogSearch, logStart = Model.LogStart, logEnd = Model.LogEnd, eventType = Model.SelectedEventType, logUser = Model.SelectedUser, targetType = Model.SelectedTargetType, success = Model.SelectedSuccess, page = Model.Page - 1 })">
-                    <i class="fas fa-chevron-left text-[10px]"></i>
+                    <i class="fas fa-chevron-left text-[10px]" aria-hidden="true"></i>
                     Önceki
                 </a>
             }
@@ -182,7 +182,7 @@ else
                 <a class="btn"
                    href="@Url.Action("Index", new { logSearch = Model.LogSearch, logStart = Model.LogStart, logEnd = Model.LogEnd, eventType = Model.SelectedEventType, logUser = Model.SelectedUser, targetType = Model.SelectedTargetType, success = Model.SelectedSuccess, page = Model.Page + 1 })">
                     Sonraki
-                    <i class="fas fa-chevron-right text-[10px]"></i>
+                    <i class="fas fa-chevron-right text-[10px]" aria-hidden="true"></i>
                 </a>
             }
         </div>

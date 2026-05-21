@@ -67,12 +67,12 @@
 
 @section TopActions {
     <a href="/Documents" class="btn ghost">
-        <i class="fas fa-folder-open text-[10px]"></i>
+        <i class="fas fa-folder-open text-[10px]" aria-hidden="true"></i>
         Belgeler
     </a>
-    <a href="#" class="icon-btn" title="Yardım">
-        <i class="fas fa-circle-question"></i>
-    </a>
+    <button type="button" class="icon-btn" title="Yardım" aria-label="Yardım">
+        <i class="fas fa-circle-question" aria-hidden="true"></i>
+    </button>
 }
 
 <div class="hero">
@@ -97,7 +97,7 @@
 @if (!Model.Any())
 {
     <div class="empty-state">
-        <i class="fas fa-robot icon-lg"></i>
+        <i class="fas fa-robot icon-lg" aria-hidden="true"></i>
         <h3>AI analiz kaydı bulunamadı</h3>
         <p>PDF belgesi yükleyin — analiz otomatik başlar.</p>
         <a href="/Documents" class="btn primary mt-12">Belge Yükle</a>
@@ -151,7 +151,7 @@ else
                                                     : si == currentIdx ? "active"
                                                     : "pending";
                                         <div class="ai-step @state" title="@StepLabel(stepCode)" data-step-code="@stepCode">
-                                            <i class="fas @StepIcon(stepCode)"></i>
+                                            <i class="fas @StepIcon(stepCode)" aria-hidden="true"></i>
                                             <span class="ai-step-label">@StepLabel(stepCode)</span>
                                             <span class="ai-step-duration" data-step-duration></span>
                                         </div>
@@ -166,7 +166,7 @@ else
                             {
                                 <br>
                                 <span class="text-xs text-dim">
-                                    <i class="fas @StepIcon(x.ProgressStep) mr-1"></i>
+                                    <i class="fas @StepIcon(x.ProgressStep) mr-1" aria-hidden="true"></i>
                                     @StepLabel(x.ProgressStep)
                                 </span>
                             }
@@ -196,13 +196,13 @@ else
                         </td>
                         <td class="text-right">
                             <a href="/Ai/Detail/@x.Id" class="btn sm ghost" title="Detay (ham metin + AI çıktıları)">
-                                <i class="fas fa-file-lines text-[9px]"></i>
+                                <i class="fas fa-file-lines text-[9px]" aria-hidden="true"></i>
                                 Detay
                             </a>
                             @if (x.Status == ExtractionStatus.AwaitingReview)
                             {
                                 <a href="/Ai/Review/@x.Id" class="btn sm primary">
-                                    <i class="fas fa-magnifying-glass text-[9px]"></i>
+                                    <i class="fas fa-magnifying-glass text-[9px]" aria-hidden="true"></i>
                                     İncele
                                 </a>
                             }
@@ -211,7 +211,7 @@ else
                                 <form method="post" action="/Ai/Cancel/@x.Id" class="form-inline" onsubmit="return confirm('Bu AI işlemi iptal edilsin mi?')">
                                     @Html.AntiForgeryToken()
                                     <button type="submit" class="btn sm danger" title="İptal et">
-                                        <i class="fas fa-stop text-[9px]"></i>
+                                        <i class="fas fa-stop text-[9px]" aria-hidden="true"></i>
                                         İptal
                                     </button>
                                 </form>
@@ -221,7 +221,7 @@ else
                                 <form method="post" action="/Ai/Retry/@x.Id" class="form-inline">
                                     @Html.AntiForgeryToken()
                                     <button type="submit" class="btn sm ghost">
-                                        <i class="fas fa-rotate-right text-[9px]"></i>
+                                        <i class="fas fa-rotate-right text-[9px]" aria-hidden="true"></i>
                                         Yeniden Dene
                                     </button>
                                 </form>

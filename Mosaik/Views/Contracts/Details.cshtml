@@ -17,10 +17,10 @@
 
 @section TopActions {
     <a href="/Workflow/Trigger?entityType=Contract&entityId=@Model.Id" class="btn">
-        <i class="fas fa-play text-[10px]"></i> Onay Akışı Başlat
+        <i class="fas fa-play text-[10px]" aria-hidden="true"></i> Onay Akışı Başlat
     </a>
     <a href="/Contracts/Edit/@Model.Id" class="btn primary">
-        <i class="fa fa-pen text-[10px]"></i> Düzenle
+        <i class="fa fa-pen text-[10px]" aria-hidden="true"></i> Düzenle
     </a>
 }
 
@@ -92,7 +92,7 @@
             <div class="form-section-head with-actions">
                 <span>Yükümlülükler <span class="mono text-xs">@Model.Obligations.Count</span></span>
                 <a href="/Obligations/Create?contractId=@Model.Id" class="btn sm primary">
-                    <i class="fa fa-plus text-[9px]"></i> Ekle
+                    <i class="fa fa-plus text-[9px]" aria-hidden="true"></i> Ekle
                 </a>
             </div>
             @if (!Model.Obligations.Any())
@@ -104,11 +104,11 @@
                 <table class="dt">
                     <thead>
                         <tr>
-                            <th>Başlık</th>
-                            <th>Vade</th>
-                            <th>Tutar</th>
-                            <th>Durum</th>
-                            <th></th>
+                            <th scope="col">Başlık</th>
+                            <th scope="col">Vade</th>
+                            <th scope="col">Tutar</th>
+                            <th scope="col">Durum</th>
+                            <th scope="col"></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -150,11 +150,11 @@
                 <table class="dt">
                     <thead>
                         <tr>
-                            <th>Tarih</th>
-                            <th>Durum</th>
-                            <th>Model</th>
-                            <th>Token</th>
-                            <th class="text-right">İşlem</th>
+                            <th scope="col">Tarih</th>
+                            <th scope="col">Durum</th>
+                            <th scope="col">Model</th>
+                            <th scope="col">Token</th>
+                            <th scope="col" class="text-right">İşlem</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -167,12 +167,12 @@
                                 <td><span class="mono text-xs">@(x.InputTokens + x.OutputTokens)</span></td>
                                 <td class="text-right">
                                     <a href="/Ai/Detail/@x.Id" class="btn sm ghost" title="Çıkarım detayı">
-                                        <i class="fa fa-file-lines text-[9px]"></i>
+                                        <i class="fa fa-file-lines text-[9px]" aria-hidden="true"></i>
                                     </a>
                                     @if (x.Status == ExtractionStatus.AwaitingReview)
                                     {
                                         <a href="/Ai/Review/@x.Id" class="btn sm primary" title="İnceleme">
-                                            <i class="fa fa-magnifying-glass text-[9px]"></i>
+                                            <i class="fa fa-magnifying-glass text-[9px]" aria-hidden="true"></i>
                                             İncele
                                         </a>
                                     }
@@ -197,7 +197,7 @@
                         <input type="file" name="file" accept=".pdf,.doc,.docx"
                                class="inp text-xs" />
                         <button type="submit" class="btn sm primary">
-                            <i class="fa fa-upload text-[9px]"></i> Yükle
+                            <i class="fa fa-upload text-[9px]" aria-hidden="true"></i> Yükle
                         </button>
                     </div>
                 </form>
@@ -214,7 +214,7 @@
                             var fileExt = extractions.FirstOrDefault(e => e.ContractFileId == f.Id);
                             var isPdf = f.MimeType == "application/pdf";
                             <div class="file-row__head">
-                                <i class="fa fa-file-pdf text-err icon-md"></i>
+                                <i class="fa fa-file-pdf text-err icon-md" aria-hidden="true"></i>
                                 <div class="flex-fill">
                                     <div class="text-strong text-truncate">@f.FileName</div>
                                     <div class="text-muted">@(f.FileSize / 1024) KB</div>
@@ -222,13 +222,13 @@
                                 @if (isPdf)
                                 {
                                     <a href="/@f.FilePath" target="_blank" class="btn sm ghost" title="PDF önizleme">
-                                        <i class="fa fa-eye text-[9px]"></i>
+                                        <i class="fa fa-eye text-[9px]" aria-hidden="true"></i>
                                     </a>
                                     @if (fileExt != null)
                                     {
                                         @* Mevcut AI çıkarımı var — sadece izlet *@
                                         <a href="/Ai/Detail/@fileExt.Id" class="btn sm ghost" title="AI çıkarımını görüntüle">
-                                            <i class="fa fa-robot text-[9px]"></i>
+                                            <i class="fa fa-robot text-[9px]" aria-hidden="true"></i>
                                         </a>
                                     }
                                     else
@@ -238,7 +238,7 @@
                                             @Html.AntiForgeryToken()
                                             <input type="hidden" name="contractFileId" value="@f.Id" />
                                             <button type="submit" class="btn sm ghost" title="AI ile analiz et">
-                                                <i class="fa fa-wand-magic-sparkles text-[9px]"></i>
+                                                <i class="fa fa-wand-magic-sparkles text-[9px]" aria-hidden="true"></i>
                                             </button>
                                         </form>
                                     }

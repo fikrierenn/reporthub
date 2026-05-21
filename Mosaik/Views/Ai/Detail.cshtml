@@ -65,7 +65,7 @@
     @if (Model.Status == Mosaik.Models.ExtractionStatus.AwaitingReview || Model.Status == Mosaik.Models.ExtractionStatus.Approved)
     {
         <a href="/Ai/Review/@Model.Id" class="btn primary">
-            <i class="fas fa-magnifying-glass text-[10px]"></i>
+            <i class="fas fa-magnifying-glass text-[10px]" aria-hidden="true"></i>
             İnceleme
         </a>
     }
@@ -96,7 +96,7 @@
 {
     <div class="form-section-card wide">
         <div class="form-section-head">
-            <h2><i class="fas fa-stopwatch text-muted"></i> Adım Süreleri</h2>
+            <h2><i class="fas fa-stopwatch text-muted" aria-hidden="true"></i> Adım Süreleri</h2>
             @{
                 var firstTs = stamps.Values.Min();
                 var lastTs = stamps.ContainsKey("done") ? stamps["done"] : (Model.ProcessedAt ?? DateTime.UtcNow);
@@ -128,7 +128,7 @@
                         if (end == null && code != "done") end = Model.ProcessedAt;
                         var dur = end.HasValue ? end.Value - start : TimeSpan.Zero;
                         <tr>
-                            <td><i class="fas @stepIcons[code] text-muted"></i></td>
+                            <td><i class="fas @stepIcons[code] text-muted" aria-hidden="true"></i></td>
                             <td>@stepLabels[code]</td>
                             <td><span class="mono text-xs">@start.ToLocalTime().ToString("HH:mm:ss")</span></td>
                             <td class="text-right">
@@ -152,36 +152,36 @@
 <div x-data="{ tab: 'raw' }">
 
     @* Tab başlıkları *@
-    <div class="tab-row">
-        <button type="button" class="tab-btn" :class="{ 'active': tab === 'raw' }" @@click="tab = 'raw'">
-            <i class="fas fa-file-lines"></i>
+    <div class="tab-row" role="tablist" aria-label="AI çıkarım detay sekmeleri">
+        <button type="button" id="tab-raw" class="tab-btn" role="tab" :aria-selected="tab === 'raw' ? 'true' : 'false'" aria-controls="panel-raw" :class="{ 'active': tab === 'raw' }" @@click="tab = 'raw'">
+            <i class="fas fa-file-lines" aria-hidden="true"></i>
             Ham Metin (@(Model.RawText?.Length ?? 0) char)
         </button>
-        <button type="button" class="tab-btn" :class="{ 'active': tab === 'stage1' }" @@click="tab = 'stage1'">
-            <i class="fas fa-brain"></i>
+        <button type="button" id="tab-stage1" class="tab-btn" role="tab" :aria-selected="tab === 'stage1' ? 'true' : 'false'" aria-controls="panel-stage1" :class="{ 'active': tab === 'stage1' }" @@click="tab = 'stage1'">
+            <i class="fas fa-brain" aria-hidden="true"></i>
             Stage 1 — Yapısal JSON
         </button>
-        <button type="button" class="tab-btn" :class="{ 'active': tab === 'stage2' }" @@click="tab = 'stage2'">
-            <i class="fas fa-microscope"></i>
+        <button type="button" id="tab-stage2" class="tab-btn" role="tab" :aria-selected="tab === 'stage2' ? 'true' : 'false'" aria-controls="panel-stage2" :class="{ 'active': tab === 'stage2' }" @@click="tab = 'stage2'">
+            <i class="fas fa-microscope" aria-hidden="true"></i>
             Stage 2 — Derin Analiz
         </button>
         @if (!string.IsNullOrWhiteSpace(Model.ErrorMessage))
         {
-            <button type="button" class="tab-btn danger right-align" :class="{ 'active': tab === 'error' }" @@click="tab = 'error'">
-                <i class="fas fa-triangle-exclamation"></i>
+            <button type="button" id="tab-error" class="tab-btn danger right-align" role="tab" :aria-selected="tab === 'error' ? 'true' : 'false'" aria-controls="panel-error" :class="{ 'active': tab === 'error' }" @@click="tab = 'error'">
+                <i class="fas fa-triangle-exclamation" aria-hidden="true"></i>
                 Hata
             </button>
         }
     </div>
 
     @* Ham metin *@
-    <div x-show="tab === 'raw'" class="form-section-card wide">
+    <div x-show="tab === 'raw'" id="panel-raw" role="tabpanel" aria-labelledby="tab-raw" class="form-section-card wide">
         <div class="form-section-head">
-            <h2><i class="fas fa-file-lines text-muted"></i> Ham Metin (PdfPig / Tesseract / Vision)</h2>
+            <h2><i class="fas fa-file-lines text-muted" aria-hidden="true"></i> Ham Metin (PdfPig / Tesseract / Vision)</h2>
             @if (!string.IsNullOrWhiteSpace(Model.RawText))
             {
                 <button type="button" class="btn sm ghost section-head-right" onclick="navigator.clipboard.writeText(document.getElementById('raw-text').textContent)">
-                    <i class="fas fa-copy text-[9px]"></i> Kopyala
+                    <i class="fas fa-copy text-[9px]" aria-hidden="true"></i> Kopyala
                 </button>
             }
         </div>
@@ -198,13 +198,13 @@
     </div>
 
     @* Stage 1 *@
-    <div x-show="tab === 'stage1'" x-cloak class="form-section-card wide">
+    <div x-show="tab === 'stage1'" x-cloak id="panel-stage1" role="tabpanel" aria-labelledby="tab-stage1" class="form-section-card wide">
         <div class="form-section-head">
-            <h2><i class="fas fa-brain text-muted"></i> Stage 1 — Yapısal Çıkarım (JSON)</h2>
+            <h2><i class="fas fa-brain text-muted" aria-hidden="true"></i> Stage 1 — Yapısal Çıkarım (JSON)</h2>
             @if (!string.IsNullOrWhiteSpace(Model.ExtractionResultJson))
             {
                 <button type="button" class="btn sm ghost section-head-right" onclick="navigator.clipboard.writeText(document.getElementById('stage1-json').textContent)">
-                    <i class="fas fa-copy text-[9px]"></i> Kopyala
+                    <i class="fas fa-copy text-[9px]" aria-hidden="true"></i> Kopyala
                 </button>
             }
         </div>
@@ -221,13 +221,13 @@
     </div>
 
     @* Stage 2 *@
-    <div x-show="tab === 'stage2'" x-cloak class="form-section-card wide">
+    <div x-show="tab === 'stage2'" x-cloak id="panel-stage2" role="tabpanel" aria-labelledby="tab-stage2" class="form-section-card wide">
         <div class="form-section-head">
-            <h2><i class="fas fa-microscope text-muted"></i> Stage 2 — Kategori-Spesifik Derinleştirme</h2>
+            <h2><i class="fas fa-microscope text-muted" aria-hidden="true"></i> Stage 2 — Kategori-Spesifik Derinleştirme</h2>
             @if (!string.IsNullOrWhiteSpace(Model.Stage2ResultText))
             {
                 <button type="button" class="btn sm ghost section-head-right" onclick="navigator.clipboard.writeText(document.getElementById('stage2-text').textContent)">
-                    <i class="fas fa-copy text-[9px]"></i> Kopyala
+                    <i class="fas fa-copy text-[9px]" aria-hidden="true"></i> Kopyala
                 </button>
             }
         </div>
@@ -246,9 +246,9 @@
     @* Hata *@
     @if (!string.IsNullOrWhiteSpace(Model.ErrorMessage))
     {
-        <div x-show="tab === 'error'" x-cloak class="form-section-card wide">
+        <div x-show="tab === 'error'" x-cloak id="panel-error" role="tabpanel" aria-labelledby="tab-error" class="form-section-card wide">
             <div class="form-section-head">
-                <h2 class="text-err"><i class="fas fa-triangle-exclamation"></i> Hata Detayı</h2>
+                <h2 class="text-err"><i class="fas fa-triangle-exclamation" aria-hidden="true"></i> Hata Detayı</h2>
             </div>
             <div class="form-section-body stack-12">
                 <pre class="code-block error">@Model.ErrorMessage</pre>

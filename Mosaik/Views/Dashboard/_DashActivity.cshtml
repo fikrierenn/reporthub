@@ -25,7 +25,7 @@
 @if (!Model.RecentLogs.Any())
 {
     <div class="empty-state solid">
-        <i class="fas fa-history empty-state__icon"></i>
+        <i class="fas fa-history empty-state__icon" aria-hidden="true"></i>
         <p>Henüz aktivite kaydı yok.</p>
     </div>
 }
@@ -35,12 +35,12 @@ else
         <table class="dt">
             <thead>
                 <tr>
-                    <th class="w-28p">Kullanıcı</th>
-                    <th>Eylem</th>
-                    <th>Hedef</th>
-                    <th class="num">Sonuç</th>
-                    <th>Durum</th>
-                    <th class="num">Zaman</th>
+                    <th scope="col" class="w-28p">Kullanıcı</th>
+                    <th scope="col">Eylem</th>
+                    <th scope="col">Hedef</th>
+                    <th scope="col" class="num">Sonuç</th>
+                    <th scope="col">Durum</th>
+                    <th scope="col" class="num">Zaman</th>
                 </tr>
             </thead>
             <tbody>

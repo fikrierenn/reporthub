@@ -21,7 +21,7 @@
 }
 
 @section TopActions {
-    <a class="btn primary" href="/Workflow/Admin/Create"><i class="fas fa-plus"></i> Yeni Şablon</a>
+    <a class="btn primary" href="/Workflow/Admin/Create"><i class="fas fa-plus" aria-hidden="true"></i> Yeni Şablon</a>
 }
 
 <div class="hero">
@@ -82,7 +82,7 @@
                         <td><span class="mono">@t.InstanceCount</span></td>
                         <td><span class="ago">@t.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</span></td>
                         <td class="ta-right">
-                            <a class="btn ghost sm" href="/Workflow/Admin/Edit/@t.Id"><i class="fas fa-pen"></i> Düzenle</a>
+                            <a class="btn ghost sm" href="/Workflow/Admin/Edit/@t.Id"><i class="fas fa-pen" aria-hidden="true"></i> Düzenle</a>
                             <form method="post" action="/Workflow/Admin/Toggle/@t.Id" class="d-inline">
                                 @Html.AntiForgeryToken()
                                 <button type="submit" class="btn sm @(t.IsActive ? "danger" : "primary")">

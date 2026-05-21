@@ -14,13 +14,13 @@
     @if (isAdmin)
     {
         <a href="/Admin/CreateReportV2" class="btn primary">
-            <i class="fas fa-plus text-[10px]"></i>
+            <i class="fas fa-plus text-[10px]" aria-hidden="true"></i>
             Yeni Rapor
         </a>
     }
-    <a href="#" class="icon-btn" title="Yardım">
-        <i class="fas fa-circle-question"></i>
-    </a>
+    <button type="button" class="icon-btn" title="Yardım" aria-label="Yardım">
+        <i class="fas fa-circle-question" aria-hidden="true"></i>
+    </button>
 }
 
 <div class="hero">
@@ -29,7 +29,7 @@
         <span class="mono">@totalCount erişilebilir rapor</span>
         @if (favCount > 0)
         {
-            <span class="pill"><i class="fas fa-star pill__icon"></i> @favCount favori</span>
+            <span class="pill"><i class="fas fa-star pill__icon" aria-hidden="true"></i> @favCount favori</span>
         }
         @if (Model.UserRoles.Any())
         {
@@ -43,7 +43,7 @@
         <label class="lab" for="reportSearch">Arama</label>
         <div class="search-input-wrap">
             <span class="search-input-wrap__icon">
-                <i class="fas fa-magnifying-glass"></i>
+                <i class="fas fa-magnifying-glass" aria-hidden="true"></i>
             </span>
             <input type="text" id="reportSearch" name="q" value="@Model.SearchTerm"
                    class="inp"
@@ -71,13 +71,13 @@
 
     <div class="filter-bar__actions">
         <button type="submit" class="btn primary">
-            <i class="fas fa-filter text-[10px]"></i>
+            <i class="fas fa-filter text-[10px]" aria-hidden="true"></i>
             Filtrele
         </button>
         @if (!string.IsNullOrWhiteSpace(Model.SearchTerm) || !string.IsNullOrWhiteSpace(Model.SelectedGroup))
         {
             <a href="/Reports" class="btn ghost">
-                <i class="fas fa-xmark text-[10px]"></i>
+                <i class="fas fa-xmark text-[10px]" aria-hidden="true"></i>
                 Temizle
             </a>
         }
@@ -87,7 +87,7 @@
 @if (!Model.Reports.Any())
 {
     <div class="empty-state">
-        <i class="fas fa-folder-open empty-state__icon"></i>
+        <i class="fas fa-folder-open empty-state__icon" aria-hidden="true"></i>
         <h3>Erişilebilir rapor bulunamadı</h3>
         @if (!string.IsNullOrWhiteSpace(Model.SearchTerm) || !string.IsNullOrWhiteSpace(Model.SelectedGroup))
         {
@@ -125,11 +125,11 @@ else
                                 title="@(isFavorite ? "Favoriden kaldır" : "Favorilere ekle")">
                             @if (isFavorite)
                             {
-                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star" aria-hidden="true"></i>
                             }
                             else
                             {
-                                <i class="far fa-star"></i>
+                                <i class="far fa-star" aria-hidden="true"></i>
                             }
                         </button>
                     </form>
@@ -139,10 +139,10 @@ else
                     <div class="sub">@displaySub</div>
                     <div class="meta">
                         <span class="ago">
-                            <i class="fas fa-database qcard__db-icon"></i>
+                            <i class="fas fa-database qcard__db-icon" aria-hidden="true"></i>
                             @(report.DataSource?.Title ?? report.DataSourceKey)
                         </span>
-                        <span class="run">Çalıştır <i class="fas fa-arrow-right text-[10px]"></i></span>
+                        <span class="run">Çalıştır <i class="fas fa-arrow-right text-[10px]" aria-hidden="true"></i></span>
                     </div>
                 </a>
             </div>

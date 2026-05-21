@@ -22,7 +22,7 @@
 {
     @section TopActions {
         <button type="button" onclick="toggleDashboardFullscreen()" class="btn">
-            <i class="fas fa-expand text-[10px]" id="fsIcon"></i>
+            <i class="fas fa-expand text-[10px]" id="fsIcon" aria-hidden="true"></i>
             Tam Ekran
         </button>
     }
@@ -44,7 +44,7 @@ else
                 <span>@report.Description</span>
             }
             <span class="pill">
-                <i class="fas fa-database pill-icon"></i>
+                <i class="fas fa-database pill-icon" aria-hidden="true"></i>
                 @dsTitle
             </span>
             <span class="pill">
@@ -56,7 +56,7 @@ else
     @if (!string.IsNullOrWhiteSpace(Model.RunError))
     {
         <div class="run-error-bar" role="alert">
-            <i class="fas fa-exclamation-circle"></i>
+            <i class="fas fa-exclamation-circle" aria-hidden="true"></i>
             <strong>Hata:</strong> @Model.RunError
         </div>
     }
@@ -69,11 +69,11 @@ else
 
             <div class="report-form-head">
                 <div class="secure-tag">
-                    <i class="fas fa-shield-halved"></i>
+                    <i class="fas fa-shield-halved" aria-hidden="true"></i>
                     Güvenli stored procedure çalıştırma
                 </div>
                 <button type="submit" class="btn primary">
-                    <i class="fas fa-play text-[10px]"></i>
+                    <i class="fas fa-play text-[10px]" aria-hidden="true"></i>
                     Raporu Çalıştır
                 </button>
             </div>
@@ -81,7 +81,7 @@ else
             @if (!Model.ParamFields.Any())
             {
                 <div class="param-empty-hint">
-                    <i class="fas fa-sliders"></i>
+                    <i class="fas fa-sliders" aria-hidden="true"></i>
                     Bu rapor parametre gerektirmiyor.
                 </div>
             }
@@ -176,7 +176,7 @@ else
     @if (Model.RunSuccess)
     {
         <div class="run-success-bar" role="status">
-            <i class="fas fa-circle-check"></i>
+            <i class="fas fa-circle-check" aria-hidden="true"></i>
             <div>
                 <div class="run-msg">@Model.RunMessage</div>
                 <div class="run-meta">

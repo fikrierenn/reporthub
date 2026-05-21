@@ -4,8 +4,8 @@
 {
     <section class="paper-card clip stack-12">
         <header class="paper-card-header">
-            <h2><i class="fas fa-clipboard-check"></i> Bekleyen Onaylarım <span class="pill mono">@Model.WorkflowPendingCount</span></h2>
-            <a class="btn ghost sm" href="/Workflow/Inbox">Tümü <i class="fas fa-chevron-right"></i></a>
+            <h2><i class="fas fa-clipboard-check" aria-hidden="true"></i> Bekleyen Onaylarım <span class="pill mono">@Model.WorkflowPendingCount</span></h2>
+            <a class="btn ghost sm" href="/Workflow/Inbox">Tümü <i class="fas fa-chevron-right" aria-hidden="true"></i></a>
         </header>
         <ul class="wf-timeline">
             @foreach (var item in Model.WorkflowPreview)

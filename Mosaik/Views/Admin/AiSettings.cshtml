@@ -19,12 +19,12 @@
 
 @section TopActions {
     <a href="/Admin/AiSettings/Edit" class="btn primary">
-        <i class="fas fa-plus text-[10px]"></i>
+        <i class="fas fa-plus text-[10px]" aria-hidden="true"></i>
         Yeni Profil
     </a>
-    <a href="#" class="icon-btn" title="Yardım">
-        <i class="fas fa-circle-question"></i>
-    </a>
+    <button type="button" class="icon-btn" title="Yardım" aria-label="Yardım">
+        <i class="fas fa-circle-question" aria-hidden="true"></i>
+    </button>
 }
 
 <div class="hero">
@@ -61,13 +61,13 @@ else
         <table class="dt">
             <thead>
                 <tr>
-                    <th class="th-w-30"></th>
-                    <th>Ad</th>
-                    <th>Provider / Model</th>
-                    <th>Durum</th>
-                    <th>Öncelik</th>
-                    <th>Son Test</th>
-                    <th class="text-right">İşlemler</th>
+                    <th scope="col" class="th-w-30"></th>
+                    <th scope="col">Ad</th>
+                    <th scope="col">Provider / Model</th>
+                    <th scope="col">Durum</th>
+                    <th scope="col">Öncelik</th>
+                    <th scope="col">Son Test</th>
+                    <th scope="col" class="text-right">İşlemler</th>
                 </tr>
             </thead>
             <tbody>
@@ -84,11 +84,11 @@ else
                             <span class="fw-500 text-ink-1">@(p.Name ?? p.Provider)</span>
                             @if (!string.IsNullOrEmpty(p.ApiKey))
                             {
-                                <span class="key-ind ok ml-4" title="Anahtar kayıtlı"><i class="fas fa-key"></i></span>
+                                <span class="key-ind ok ml-4" title="Anahtar kayıtlı"><i class="fas fa-key" aria-hidden="true"></i></span>
                             }
                             else
                             {
-                                <span class="key-ind err" title="Anahtar yok"><i class="fas fa-triangle-exclamation"></i></span>
+                                <span class="key-ind err" title="Anahtar yok"><i class="fas fa-triangle-exclamation" aria-hidden="true"></i></span>
                             }
                         </td>
                         <td>
@@ -99,11 +99,11 @@ else
                         <td>
                             @if (p.IsEnabled)
                             {
-                                <span class="status ok"><i class="fas fa-check"></i> Aktif</span>
+                                <span class="status ok"><i class="fas fa-check" aria-hidden="true"></i> Aktif</span>
                             }
                             else
                             {
-                                <span class="status warn"><i class="fas fa-pause"></i> Kapalı</span>
+                                <span class="status warn"><i class="fas fa-pause" aria-hidden="true"></i> Kapalı</span>
                             }
                         </td>
                         <td><span class="mono">@p.Priority</span></td>
@@ -111,7 +111,7 @@ else
                             @if (p.LastTestAt.HasValue)
                             {
                                 <span class="ago test-ago @(p.LastTestSuccess ? "ok" : "err")">
-                                    <i class="fas @(p.LastTestSuccess ? "fa-circle-check" : "fa-circle-xmark") icon-mr"></i>
+                                    <i class="fas @(p.LastTestSuccess ? "fa-circle-check" : "fa-circle-xmark") icon-mr" aria-hidden="true"></i>
                                     @p.LastTestAt.Value.ToLocalTime().ToString("dd.MM HH:mm")
                                 </span>
                             }
@@ -127,7 +127,7 @@ else
                                     <form method="post" action="/Admin/AiSettings/SetPrimary/@p.Id" class="form-inline">
                                         @Html.AntiForgeryToken()
                                         <button type="submit" class="btn ghost sm" title="Birincil yap">
-                                            <i class="fas fa-star text-[9px]"></i>
+                                            <i class="fas fa-star text-[9px]" aria-hidden="true"></i>
                                             Primary
                                         </button>
                                     </form>
@@ -135,19 +135,19 @@ else
                                 <form method="post" action="/Admin/AiSettings/Test/@p.Id" class="form-inline">
                                     @Html.AntiForgeryToken()
                                     <button type="submit" class="btn ghost sm" title="Bağlantıyı test et">
-                                        <i class="fas fa-bolt text-[9px]"></i>
+                                        <i class="fas fa-bolt text-[9px]" aria-hidden="true"></i>
                                         Test
                                     </button>
                                 </form>
                                 <a href="/Admin/AiSettings/Edit/@p.Id" class="btn ghost sm">
-                                    <i class="fas fa-pen text-[9px]"></i>
+                                    <i class="fas fa-pen text-[9px]" aria-hidden="true"></i>
                                     Düzenle
                                 </a>
                                 <form method="post" action="/Admin/AiSettings/Delete/@p.Id" class="form-inline"
                                       onsubmit="return confirm('@(p.Name ?? p.Provider) profilini sil?');">
                                     @Html.AntiForgeryToken()
                                     <button type="submit" class="btn sm danger">
-                                        <i class="fas fa-trash text-[9px]"></i>
+                                        <i class="fas fa-trash text-[9px]" aria-hidden="true"></i>
                                     </button>
                                 </form>
                             </div>

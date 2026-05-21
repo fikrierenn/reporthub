@@ -21,7 +21,7 @@
     <h1>Profil</h1>
     <div class="sub">
         <span class="mono">@Model.Username</span>
-        <span class="pill"><i class="fas fa-shield-halved icon-xs text-muted"></i> @Model.Roles</span>
+        <span class="pill"><i class="fas fa-shield-halved icon-xs text-muted" aria-hidden="true"></i> @Model.Roles</span>
         <span class="pill @(Model.IsActive ? "" : "error")">
             <span class="dot @(Model.IsActive ? "ok" : "err")"></span>
             @(Model.IsActive ? "Aktif" : "Pasif")
@@ -50,23 +50,23 @@
 
         <div class="grid-2col stack-14">
             <div class="field">
-                <label class="lab">Kullanıcı Adı</label>
-                <input type="text" value="@Model.Username" readonly class="inp disabled-mono" />
+                <label class="lab" for="fld-username">Kullanıcı Adı</label>
+                <input type="text" id="fld-username" value="@Model.Username" readonly class="inp disabled-mono" />
             </div>
             <div class="field">
-                <label class="lab">Durum</label>
-                <input type="text" value="@(Model.IsActive ? "Aktif" : "Pasif")" readonly class="inp disabled-mono" />
+                <label class="lab" for="fld-status">Durum</label>
+                <input type="text" id="fld-status" value="@(Model.IsActive ? "Aktif" : "Pasif")" readonly class="inp disabled-mono" />
             </div>
         </div>
 
         <div class="grid-2col stack-14">
             <div class="field">
-                <label class="lab">Ad Soyad <span class="req">*</span></label>
-                <input type="text" name="FullName" value="@Model.FullName" required class="inp" placeholder="Ad Soyad" />
+                <label class="lab" for="FullName">Ad Soyad <span class="req">*</span></label>
+                <input type="text" id="FullName" name="FullName" value="@Model.FullName" required class="inp" placeholder="Ad Soyad" />
             </div>
             <div class="field">
-                <label class="lab">E-posta</label>
-                <input type="email" name="Email" value="@Model.Email" class="inp" placeholder="ornek@bkmkitap.com" />
+                <label class="lab" for="Email">E-posta</label>
+                <input type="email" id="Email" name="Email" value="@Model.Email" class="inp" placeholder="ornek@bkmkitap.com" />
             </div>
         </div>
 
@@ -94,11 +94,11 @@
 
         <div class="profile-card-actions">
             <a href="/Dashboard" class="btn ghost">
-                <i class="fas fa-arrow-left icon-xs"></i>
+                <i class="fas fa-arrow-left icon-xs" aria-hidden="true"></i>
                 Geri Dön
             </a>
             <button type="submit" class="btn primary">
-                <i class="fas fa-check icon-xs"></i>
+                <i class="fas fa-check icon-xs" aria-hidden="true"></i>
                 Profili Güncelle
             </button>
         </div>

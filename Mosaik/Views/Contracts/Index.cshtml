@@ -17,7 +17,7 @@
 
 @section TopActions {
     <a href="/Contracts/Create" class="btn primary">
-        <i class="fa fa-plus text-[10px]"></i> Yeni Sözleşme
+        <i class="fa fa-plus text-[10px]" aria-hidden="true"></i> Yeni Sözleşme
     </a>
 }
 
@@ -35,7 +35,7 @@
 @if (TempData["Warning"] is string warn)
 {
     <div role="alert" class="alert warn">
-        <i class="fa fa-triangle-exclamation"></i> @warn
+        <i class="fa fa-triangle-exclamation" aria-hidden="true"></i> @warn
     </div>
 }
 
@@ -43,7 +43,7 @@
 <div x-data="{ q: '@q', status: '@(statusFilter?.ToString() ?? "")' }" class="filter-bar">
     <form method="get" style="display:contents;">
         <div class="search-input-wrap">
-            <i class="fa fa-magnifying-glass search-input-wrap__icon"></i>
+            <i class="fa fa-magnifying-glass search-input-wrap__icon" aria-hidden="true"></i>
             <input type="text" name="q" value="@q" placeholder="Başlık veya karşı taraf ara..." x-model="q" class="inp" />
         </div>
         <select name="status" x-model="status" class="inp">
@@ -61,7 +61,7 @@
 @if (!Model.Any())
 {
     <div class="empty-state">
-        <i class="fa fa-file-contract empty-state__icon"></i>
+        <i class="fa fa-file-contract empty-state__icon" aria-hidden="true"></i>
         <h3>Sözleşme bulunamadı</h3>
         <p>Yeni sözleşme ekleyerek başlayın.</p>
     </div>
@@ -72,12 +72,12 @@ else
         <table class="dt">
             <thead>
                 <tr>
-                    <th>Başlık</th>
-                    <th>Karşı Taraf</th>
-                    <th>Kategori</th>
-                    <th>Durum</th>
-                    <th>Bitiş Tarihi</th>
-                    <th class="ta-right">İşlemler</th>
+                    <th scope="col">Başlık</th>
+                    <th scope="col">Karşı Taraf</th>
+                    <th scope="col">Kategori</th>
+                    <th scope="col">Durum</th>
+                    <th scope="col">Bitiş Tarihi</th>
+                    <th scope="col" class="ta-right">İşlemler</th>
                 </tr>
             </thead>
             <tbody>

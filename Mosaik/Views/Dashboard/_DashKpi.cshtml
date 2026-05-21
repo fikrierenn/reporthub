@@ -18,11 +18,11 @@
     <div class="kpi-card k-red">
         <div class="head">
             <span class="label">Erişilebilir Rapor</span>
-            <div class="ico"><i class="fas fa-chart-column"></i></div>
+            <div class="ico"><i class="fas fa-chart-column" aria-hidden="true"></i></div>
         </div>
         <div class="value">@Model.ReportCount.ToString("N0", trCulture)</div>
         <div class="delta up">
-            <i class="fas fa-arrow-up text-[10px]"></i>
+            <i class="fas fa-arrow-up text-[10px]" aria-hidden="true"></i>
             <span>aktif</span>
             <span class="desc">rol filtresine göre</span>
         </div>
@@ -31,7 +31,7 @@
     <div class="kpi-card k-ink">
         <div class="head">
             <span class="label">@(Model.IsAdminView ? "Bugün Çalıştırılan" : "Bugün Çalıştırdıkların")</span>
-            <div class="ico"><i class="fas fa-play"></i></div>
+            <div class="ico"><i class="fas fa-play" aria-hidden="true"></i></div>
         </div>
         <div class="value">@Model.TodayRunCount.ToString("N0", trCulture)</div>
         <div class="delta">
@@ -44,7 +44,7 @@
         <div class="kpi-card k-green">
             <div class="head">
                 <span class="label">Aktif Kullanıcı</span>
-                <div class="ico"><i class="fas fa-users"></i></div>
+                <div class="ico"><i class="fas fa-users" aria-hidden="true"></i></div>
             </div>
             <div class="value">@Model.ActiveUserCount.ToString("N0", trCulture)</div>
             <div class="delta">
@@ -57,7 +57,7 @@
         <div class="kpi-card k-green">
             <div class="head">
                 <span class="label">Son 7 Gün</span>
-                <div class="ico"><i class="fas fa-calendar-week"></i></div>
+                <div class="ico"><i class="fas fa-calendar-week" aria-hidden="true"></i></div>
             </div>
             <div class="value">@Model.Last7DaysRunCount.ToString("N0", trCulture)</div>
             <div class="delta">
@@ -69,7 +69,7 @@
     <div class="kpi-card k-warn">
         <div class="head">
             <span class="label">@(Model.IsAdminView ? "Bu Ay (Sen)" : "Bu Ay")</span>
-            <div class="ico"><i class="fas fa-clock"></i></div>
+            <div class="ico"><i class="fas fa-clock" aria-hidden="true"></i></div>
         </div>
         <div class="value">@Model.MonthlyRunCount.ToString("N0", trCulture)</div>
         <div class="delta">

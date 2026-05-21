@@ -13,10 +13,10 @@
     <div class="builder-v2-modal md">
         <div class="m-head">
             <span class="m-title">
-                <i class="fas fa-grip text-[12px]"></i> Şablondan Seç
+                <i class="fas fa-grip text-[12px]" aria-hidden="true"></i> Şablondan Seç
             </span>
             <button type="button" class="m-close" @@click="closeTemplateModal()" title="Kapat">
-                <i class="fas fa-xmark"></i>
+                <i class="fas fa-xmark" aria-hidden="true"></i>
             </button>
         </div>
         <div class="m-body padded">
@@ -30,7 +30,7 @@
                             class="builder-template-card"
                             @@click="applyTemplate(key)">
                         <div class="builder-template-card__icon">
-                            <i class="fas" :class="templateOptions[key].icon"></i>
+                            <i class="fas" :class="templateOptions[key].icon" aria-hidden="true"></i>
                         </div>
                         <div class="builder-template-card__body">
                             <div class="builder-template-card__title" x-text="templateOptions[key].label"></div>
@@ -38,7 +38,7 @@
                             <div class="builder-template-card__count"
                                  x-text="(templateOptions[key].config.tabs[0].components || []).length + ' bileşen'"></div>
                         </div>
-                        <i class="fas fa-arrow-right builder-template-card__arrow"></i>
+                        <i class="fas fa-arrow-right builder-template-card__arrow" aria-hidden="true"></i>
                     </button>
                 </template>
             </div>

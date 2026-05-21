@@ -56,14 +56,14 @@
 
 <div class="section-title">
     <h2>Bugünün Özeti</h2>
-    <a href="/Logs" class="more">Detaylı analiz <i class="fas fa-chevron-right text-[10px]"></i></a>
+    <a href="/Logs" class="more">Detaylı analiz <i class="fas fa-chevron-right text-[10px]" aria-hidden="true"></i></a>
 </div>
 
 @await Html.PartialAsync("_DashMiniCharts", Model)
 
 <div class="section-title">
     <h2>Hızlı Erişim</h2>
-    <a href="/Reports" class="more">Tüm raporları gör <i class="fas fa-chevron-right text-[10px]"></i></a>
+    <a href="/Reports" class="more">Tüm raporları gör <i class="fas fa-chevron-right text-[10px]" aria-hidden="true"></i></a>
 </div>
 
 @await Html.PartialAsync("_DashFavorites", Model)
@@ -72,7 +72,7 @@
 {
     <div class="section-title">
         <h2>Son Aktivite</h2>
-        <a href="/Logs" class="more">Tüm log <i class="fas fa-chevron-right text-[10px]"></i></a>
+        <a href="/Logs" class="more">Tüm log <i class="fas fa-chevron-right text-[10px]" aria-hidden="true"></i></a>
     </div>
 
     @await Html.PartialAsync("_DashActivity", Model)

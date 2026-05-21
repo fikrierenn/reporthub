@@ -79,7 +79,7 @@
         @if (!Model.TopRunReports.Any())
         {
             <div class="mini-chart__empty">
-                <i class="fas fa-chart-line"></i>
+                <i class="fas fa-chart-line" aria-hidden="true"></i>
                 @(Model.IsAdminView ? "Son 30 günde çalıştırma yok" : "Son 30 günde rapor çalıştırmadın")
             </div>
         }

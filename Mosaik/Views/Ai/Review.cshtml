@@ -54,7 +54,7 @@
         <form method="post" action="/Ai/ApproveAll/@Model.Id" class="form-inline">
             @Html.AntiForgeryToken()
             <button type="submit" class="btn ghost">
-                <i class="fas fa-check-double text-[10px]"></i>
+                <i class="fas fa-check-double text-[10px]" aria-hidden="true"></i>
                 Tümünü Onayla
             </button>
         </form>
@@ -64,7 +64,7 @@
         <form method="post" action="/Ai/CreateContract/@Model.Id" class="form-inline" onsubmit="return confirm('AI çıkarımından sözleşme taslağı oluşturulacak. Onayladığınız yükümlülükler eklenecek. Devam?')">
             @Html.AntiForgeryToken()
             <button type="submit" class="btn primary">
-                <i class="fas fa-file-circle-plus text-[10px]"></i>
+                <i class="fas fa-file-circle-plus text-[10px]" aria-hidden="true"></i>
                 Sözleşme Olarak Kaydet
             </button>
         </form>
@@ -72,7 +72,7 @@
     else
     {
         <a href="/Contracts/Edit/@Model.ContractId" class="btn primary">
-            <i class="fas fa-pen text-[10px]"></i>
+            <i class="fas fa-pen text-[10px]" aria-hidden="true"></i>
             Sözleşmeyi Düzenle
         </a>
     }
@@ -101,7 +101,7 @@
         @if (Model.InputTokens > 0)
         {
             <span class="tb-dim">
-                <i class="fas fa-coins icon-xs"></i>
+                <i class="fas fa-coins icon-xs" aria-hidden="true"></i>
                 @Model.InputTokens giriş · @Model.OutputTokens çıkış token
             </span>
         }
@@ -120,7 +120,7 @@
         {
             <div class="pdf-box">
                 <div class="pdf-box-head">
-                    <i class="fas fa-file-pdf icon-err"></i>
+                    <i class="fas fa-file-pdf icon-err" aria-hidden="true"></i>
                     Belge Önizleme
                 </div>
                 @* Plan 33 BUGFIX-2 (2026-05-14): wwwroot olmayan App_Data path'i src'e direkt
@@ -134,7 +134,7 @@
         else
         {
             <div class="empty-state">
-                <i class="fas fa-file-slash icon-lg"></i>
+                <i class="fas fa-file-slash icon-lg" aria-hidden="true"></i>
                 <p>Dosya bulunamadı.</p>
             </div>
         }
@@ -148,7 +148,7 @@
         {
             <div class="ai-summary-card">
                 <div class="ai-summary-head">
-                    <i class="fas fa-robot icon-14"></i>
+                    <i class="fas fa-robot icon-14" aria-hidden="true"></i>
                     <span class="ai-summary-title">AI Özeti</span>
                     @if (!string.IsNullOrWhiteSpace(counterparty))
                     {
@@ -166,7 +166,7 @@
         @* Sözleşme Bilgileri (yapısal alanlar) *@
         <div class="form-section-card wide">
             <div class="form-section-head">
-                <h2><i class="fas fa-file-contract text-muted"></i> Sözleşme Bilgileri</h2>
+                <h2><i class="fas fa-file-contract text-muted" aria-hidden="true"></i> Sözleşme Bilgileri</h2>
             </div>
             <div class="kv-grid">
                 @if (!string.IsNullOrWhiteSpace(fields.Subject))
@@ -220,7 +220,7 @@
         {
             <div class="form-section-card wide">
                 <div class="form-section-head">
-                    <h2><i class="fas fa-handshake text-muted"></i> Taraflar <span class="pill">@fields.Parties.Count</span></h2>
+                    <h2><i class="fas fa-handshake text-muted" aria-hidden="true"></i> Taraflar <span class="pill">@fields.Parties.Count</span></h2>
                 </div>
                 <div class="form-section-body stack-12">
                     @foreach (var p in fields.Parties)
@@ -252,7 +252,7 @@
         {
             <div class="form-section-card wide">
                 <div class="form-section-head">
-                    <h2><i class="fas fa-list-check text-muted"></i> Önemli Şartlar <span class="pill">@fields.KeyTerms.Count</span></h2>
+                    <h2><i class="fas fa-list-check text-muted" aria-hidden="true"></i> Önemli Şartlar <span class="pill">@fields.KeyTerms.Count</span></h2>
                 </div>
                 <div class="form-section-body stack-12">
                     @foreach (var t in fields.KeyTerms)
@@ -363,7 +363,7 @@
             <div class="form-section-card full-width">
                 <div class="section-head-bar err">
                     <span class="sh-title">
-                        <i class="fas fa-triangle-exclamation icon-mr"></i>
+                        <i class="fas fa-triangle-exclamation icon-mr" aria-hidden="true"></i>
                         Risk Uyarıları <span class="pill">@risks.Count</span>
                     </span>
                 </div>
@@ -388,7 +388,7 @@
         @if (!suggestions.Any())
         {
             <div class="empty-state">
-                <i class="fas fa-robot icon-lg"></i>
+                <i class="fas fa-robot icon-lg" aria-hidden="true"></i>
                 <h3>Öneri bulunamadı</h3>
                 <p>AI bu belgeden henüz öneri çıkarmadı.</p>
             </div>

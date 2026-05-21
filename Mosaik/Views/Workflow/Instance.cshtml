@@ -93,13 +93,13 @@
     @if (inst.Status == WorkflowInstanceStatus.Active)
     {
         <a class="btn" href="/Workflow/Instance/@(inst.Id).ics" download>
-            <i class="fas fa-calendar-plus text-[10px]"></i> Takvime Ekle
+            <i class="fas fa-calendar-plus text-[10px]" aria-hidden="true"></i> Takvime Ekle
         </a>
     }
     @if (!string.IsNullOrEmpty(Model.EntityUrl))
     {
         <a class="btn primary" href="@Model.EntityUrl">
-            <i class="fas fa-up-right-from-square text-[10px]"></i> Belgeyi Aç
+            <i class="fas fa-up-right-from-square text-[10px]" aria-hidden="true"></i> Belgeyi Aç
         </a>
     }
 }
@@ -232,10 +232,10 @@
                         </div>
                         <div class="action-row">
                             <button type="submit" name="Approved" value="true" class="btn primary">
-                                <i class="fas fa-check text-[10px]"></i> Onayla
+                                <i class="fas fa-check text-[10px]" aria-hidden="true"></i> Onayla
                             </button>
                             <button type="submit" name="Approved" value="false" class="btn danger">
-                                <i class="fas fa-xmark text-[10px]"></i> Reddet
+                                <i class="fas fa-xmark text-[10px]" aria-hidden="true"></i> Reddet
                             </button>
                         </div>
                     </form>

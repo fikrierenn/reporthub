@@ -19,12 +19,12 @@
 
 @section TopActions {
     <button type="button" class="btn primary" onclick="toggleUpload()">
-        <i class="fas fa-upload text-[10px]"></i>
+        <i class="fas fa-upload text-[10px]" aria-hidden="true"></i>
         Yeni Belge
     </button>
-    <a href="#" class="icon-btn" title="Yardım">
-        <i class="fas fa-circle-question"></i>
-    </a>
+    <button type="button" class="icon-btn" title="Yardım" aria-label="Yardım">
+        <i class="fas fa-circle-question" aria-hidden="true"></i>
+    </button>
 }
 
 <div class="hero">
@@ -44,11 +44,11 @@
         <div class="form-section-card wide">
             <div class="form-section-head">
                 <h2>
-                    <i class="fas fa-upload text-muted"></i>
+                    <i class="fas fa-upload text-muted" aria-hidden="true"></i>
                     Belge Yükle
                 </h2>
                 <button type="button" class="icon-btn" onclick="toggleUpload(false)" title="Kapat">
-                    <i class="fas fa-xmark"></i>
+                    <i class="fas fa-xmark" aria-hidden="true"></i>
                 </button>
             </div>
             <div class="form-section-body stack">
@@ -77,7 +77,7 @@
         <div class="form-action-row wide">
             <button type="button" class="btn ghost" onclick="toggleUpload(false)">İptal</button>
             <button type="submit" class="btn primary">
-                <i class="fas fa-upload text-[10px]"></i>
+                <i class="fas fa-upload text-[10px]" aria-hidden="true"></i>
                 Yükle
             </button>
         </div>
@@ -110,13 +110,13 @@
             </select>
         </div>
         <button type="submit" class="btn primary">
-            <i class="fas fa-filter text-[10px]"></i>
+            <i class="fas fa-filter text-[10px]" aria-hidden="true"></i>
             Filtrele
         </button>
         @if (hasFilter)
         {
             <a href="/Documents" class="btn ghost">
-                <i class="fas fa-xmark text-[10px]"></i>
+                <i class="fas fa-xmark text-[10px]" aria-hidden="true"></i>
                 Temizle
             </a>
         }
@@ -127,7 +127,7 @@
 @if (!Model.Any())
 {
     <div class="empty-state">
-        <i class="fas fa-folder-open empty-state__icon"></i>
+        <i class="fas fa-folder-open empty-state__icon" aria-hidden="true"></i>
         <h3>Belge bulunamadı</h3>
         <p>@(hasFilter ? "Filtre kriterlerinize uygun belge yok. Filtreleri temizleyip tekrar deneyin." : "Henüz belge yüklenmemiş. \"Yeni Belge\" ile başlayın.")</p>
     </div>
@@ -217,11 +217,11 @@ else
                                         title="Belgeye soru sor"
                                         data-file-id="@f.Id"
                                         data-file-name="@f.FileName">
-                                    <i class="fas fa-comments text-[9px]"></i>
+                                    <i class="fas fa-comments text-[9px]" aria-hidden="true"></i>
                                     Sor
                                 </button>
                                 <a href="/Ai?fileId=@f.Id" class="btn sm ghost" title="AI Analiz">
-                                    <i class="fas fa-robot text-[9px]"></i>
+                                    <i class="fas fa-robot text-[9px]" aria-hidden="true"></i>
                                     AI
                                 </a>
                             }
@@ -229,7 +229,7 @@ else
                                 @Html.AntiForgeryToken()
                                 <input type="hidden" name="id" value="@f.Id">
                                 <button type="submit" class="btn sm danger" title="Sil">
-                                    <i class="fas fa-trash text-[9px]"></i>
+                                    <i class="fas fa-trash text-[9px]" aria-hidden="true"></i>
                                 </button>
                             </form>
                         </td>
@@ -250,7 +250,7 @@ else
             <div class="doc-chat-sub">Belgeye soru sorun, AI cevaplasın</div>
         </div>
         <button type="button" class="icon-btn" onclick="DocChat.close()" title="Kapat">
-            <i class="fas fa-xmark"></i>
+            <i class="fas fa-xmark" aria-hidden="true"></i>
         </button>
     </div>
     <div class="doc-chat-body" id="docChatBody">
@@ -259,7 +259,7 @@ else
     <form class="doc-chat-form" onsubmit="event.preventDefault(); DocChat.ask();">
         <input type="text" id="docChatQ" class="inp" placeholder="Örn. Sözleşme süresi nedir?" autocomplete="off">
         <button type="submit" class="btn primary" id="docChatBtn">
-            <i class="fas fa-paper-plane text-[10px]"></i>
+            <i class="fas fa-paper-plane text-[10px]" aria-hidden="true"></i>
             Sor
         </button>
     </form>
@@ -304,7 +304,7 @@ window.toggleUpload = function (force) {
             if (m.role === 'error')
                 return '<div class="msg-row ai"><div class="msg error">' + escapeHtml(m.text) + '</div></div>';
             if (m.role === 'loading')
-                return '<div class="msg-row ai"><div class="msg loading"><i class="fas fa-spinner fa-spin"></i> Düşünüyor...</div></div>';
+                return '<div class="msg-row ai"><div class="msg loading"><i class="fas fa-spinner fa-spin" aria-hidden="true"></i> Düşünüyor...</div></div>';
             return '';
         }).join('');
         body.scrollTop = body.scrollHeight;

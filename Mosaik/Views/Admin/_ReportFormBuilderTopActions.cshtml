@@ -22,23 +22,23 @@
     }
 " class="contents">
     <span class="dirty-chip" x-show="$store.builder.dirty" x-cloak>
-        <i class="fas fa-circle-exclamation text-[9px]"></i>
+        <i class="fas fa-circle-exclamation text-[9px]" aria-hidden="true"></i>
         kaydedilmemiş
     </span>
     <button type="button" id="dbBtnPreview" class="btn" disabled title="F-9'da aktif olacak">
-        <i class="fas fa-eye text-[10px]"></i>
+        <i class="fas fa-eye text-[10px]" aria-hidden="true"></i>
         Önizle
     </button>
     <button type="button" id="dbBtnUndo" class="btn" disabled title="F-9'da aktif olacak">
-        <i class="fas fa-rotate-left text-[10px]"></i>
+        <i class="fas fa-rotate-left text-[10px]" aria-hidden="true"></i>
         Geri Al
     </button>
     <button type="button" id="dbBtnJson" class="btn" title="DashboardConfigJson'a in/çık">
-        <i class="fas fa-code text-[10px]"></i>
+        <i class="fas fa-code text-[10px]" aria-hidden="true"></i>
         JSON
     </button>
     <button type="submit" form="@Model" class="btn primary" @@click="$store.builder.dirty = false">
-        <i class="fas fa-check text-[10px]"></i>
+        <i class="fas fa-check text-[10px]" aria-hidden="true"></i>
         Kaydet
     </button>
 </div>

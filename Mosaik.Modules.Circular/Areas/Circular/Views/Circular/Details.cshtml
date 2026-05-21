@@ -38,17 +38,17 @@
 
 @section TopActions {
     <a href="@Url.Action("Print", new { id = Model.Id })" class="btn" target="_blank" title="Yazdırma görünümü (browser ile PDF kaydet)">
-        <i class="fas fa-print text-[10px]"></i>
+        <i class="fas fa-print text-[10px]" aria-hidden="true"></i>
         Yazdır / PDF
     </a>
     <a href="@Url.Action("ExportXlsx", new { id = Model.Id })" class="btn">
-        <i class="fas fa-file-excel text-[10px]"></i>
+        <i class="fas fa-file-excel text-[10px]" aria-hidden="true"></i>
         Excel
     </a>
     @if (User.IsInRole("admin"))
     {
         <a href="@Url.Action("ReadingReport", "Admin", new { id = Model.Id })" class="btn">
-            <i class="fas fa-eye text-[10px]"></i>
+            <i class="fas fa-eye text-[10px]" aria-hidden="true"></i>
             Okuma Raporu
         </a>
     }
@@ -130,7 +130,7 @@
                   onsubmit="this.querySelector('button').disabled=true; this.querySelector('button').innerHTML='<i class=\'fas fa-spinner fa-spin text-[9px]\'></i> Üretiliyor...';">
                 @Html.AntiForgeryToken()
                 <button type="submit" class="btn ghost sm" title="AI özetini yeniden üret">
-                    <i class="fas fa-rotate text-[9px]"></i>
+                    <i class="fas fa-rotate text-[9px]" aria-hidden="true"></i>
                     Yeniden Üret
                 </button>
             </form>

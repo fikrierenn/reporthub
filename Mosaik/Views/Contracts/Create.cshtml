@@ -52,15 +52,15 @@
         <div class="form-section-head" role="button" tabindex="0"
              @@click="toggle()" @@keydown.enter="toggle()" @@keydown.space.prevent="toggle()"
              :aria-expanded="open.toString()">
-            <span><i class="fas fa-robot text-[11px]"></i> AI Destekli Doldur</span>
+            <span><i class="fas fa-robot text-[11px]" aria-hidden="true"></i> AI Destekli Doldur</span>
             <span class="text-xs text-muted" x-show="!open">PDF yükle, alanları otomatik doldur</span>
-            <i class="fas fa-chevron-down text-[10px] ml-auto" :class="open ? 'fa-rotate-180' : ''"></i>
+            <i class="fas fa-chevron-down text-[10px] ml-auto" :class="open ? 'fa-rotate-180' : ''" aria-hidden="true"></i>
         </div>
         <div class="form-section-body" x-show="open" x-cloak>
             <p class="help-text">PDF sözleşmeyi yükleyin — AI başlık, taraf, tarih ve kategoriyi otomatik çıkarsın. İstediğiniz alanları düzenleyebilirsiniz.</p>
 
             <div class="upload-zone" @@dragover.prevent @@drop.prevent="onDrop($event)">
-                <div class="upload-icon"><i class="fas fa-file-pdf"></i></div>
+                <div class="upload-icon"><i class="fas fa-file-pdf" aria-hidden="true"></i></div>
                 <div class="upload-title" x-text="file ? file.name : 'PDF seçin veya buraya sürükleyin'"></div>
                 <div class="upload-sub" x-show="!file">Maks. 30 MB</div>
                 <input type="file" id="wizardFile" accept=".pdf" class="upload-input"
@@ -69,17 +69,17 @@
 
             <div class="action-row" x-show="file && !uploading && !result">
                 <button type="button" class="btn primary" @@click="upload()">
-                    <i class="fas fa-magic text-[10px]"></i> AI ile Doldur
+                    <i class="fas fa-magic text-[10px]" aria-hidden="true"></i> AI ile Doldur
                 </button>
             </div>
 
             <div class="alert warn" role="status" x-show="uploading" x-cloak>
-                <i class="fas fa-spinner fa-spin text-[11px]"></i>
+                <i class="fas fa-spinner fa-spin text-[11px]" aria-hidden="true"></i>
                 <span x-text="jobId ? 'Analiz ediliyor...' : 'Yükleniyor...'"></span>
             </div>
 
             <div class="alert success" role="status" x-show="result && !errMsg" x-cloak>
-                <i class="fas fa-check-circle text-[11px]"></i>
+                <i class="fas fa-check-circle text-[11px]" aria-hidden="true"></i>
                 <span x-text="result && result.obligations && result.obligations.length > 0
                     ? 'Alanlar dolduruldu — ' + result.obligations.length + ' yükümlülük önerisi eklendi.'
                     : 'Alanlar dolduruldu. İnceleyip düzenleyebilirsiniz.'"></span>
@@ -88,7 +88,7 @@
 
             <template x-if="riskFlags.length > 0">
                 <div class="alert warn" role="alert">
-                    <strong><i class="fas fa-triangle-exclamation text-[11px]"></i> Hukuki Risk Uyarıları</strong>
+                    <strong><i class="fas fa-triangle-exclamation text-[11px]" aria-hidden="true"></i> Hukuki Risk Uyarıları</strong>
                     <ul class="risk-flag-list">
                         <template x-for="flag in riskFlags" :key="flag">
                             <li x-text="flag"></li>
@@ -98,7 +98,7 @@
             </template>
 
             <div class="alert error" role="alert" x-show="errMsg" x-cloak>
-                <i class="fas fa-exclamation-circle text-[11px]"></i>
+                <i class="fas fa-exclamation-circle text-[11px]" aria-hidden="true"></i>
                 <span x-text="errMsg"></span>
             </div>
         </div>
@@ -218,7 +218,7 @@
         <div class="form-section-head form-section-head--with-action">
             <span>Periyodik Yükümlülükler</span>
             <button type="button" class="btn sm" @@click="addItem()">
-                <i class="fa fa-plus text-[9px]"></i> Ekle
+                <i class="fa fa-plus text-[9px]" aria-hidden="true"></i> Ekle
             </button>
         </div>
         <div class="form-section-body">
@@ -232,20 +232,21 @@
                     <div class="recurring-item-head">
                         <span x-text="'Yükümlülük #' + (i + 1)"></span>
                         <button type="button" class="btn sm danger" @@click="removeItem(i)">
-                            <i class="fa fa-trash text-[9px]"></i>
+                            <i class="fa fa-trash text-[9px]" aria-hidden="true"></i>
                         </button>
                     </div>
 
                     <div class="form-grid-2">
                         <div class="field">
-                            <label class="lab">Başlık <span class="form-required">*</span></label>
+                            <label class="lab" :for="'rec-title-' + i">Başlık <span class="form-required">*</span></label>
                             <input class="inp" type="text" x-model="item.title"
+                                   :id="'rec-title-' + i"
                                    :name="'Recurrences[' + i + '].Title'"
                                    maxlength="200" placeholder="Örn: Aylık Kira" />
                         </div>
                         <div class="field">
-                            <label class="lab">Tür</label>
-                            <select class="inp" x-model="item.type" :name="'Recurrences[' + i + '].Type'">
+                            <label class="lab" :for="'rec-type-' + i">Tür</label>
+                            <select class="inp" x-model="item.type" :id="'rec-type-' + i" :name="'Recurrences[' + i + '].Type'">
                                 <option value="0">Ödeme</option>
                                 <option value="1">Vergi (Stopaj/KDV)</option>
                                 <option value="2">Uyumluluk</option>
@@ -258,21 +259,23 @@
 
                     <div class="recurring-row-3">
                         <div class="field">
-                            <label class="lab">Tutar</label>
+                            <label class="lab" :for="'rec-amount-' + i">Tutar</label>
                             <input class="inp" type="number" step="0.01" min="0" x-model="item.amount"
+                                   :id="'rec-amount-' + i"
                                    :name="'Recurrences[' + i + '].Amount'" placeholder="0.00" />
                         </div>
                         <div class="field">
-                            <label class="lab">Döviz</label>
-                            <select class="inp" x-model="item.currency" :name="'Recurrences[' + i + '].Currency'">
+                            <label class="lab" :for="'rec-currency-' + i">Döviz</label>
+                            <select class="inp" x-model="item.currency" :id="'rec-currency-' + i" :name="'Recurrences[' + i + '].Currency'">
                                 <option value="TRY">TRY</option>
                                 <option value="USD">USD</option>
                                 <option value="EUR">EUR</option>
                             </select>
                         </div>
                         <div class="field">
-                            <label class="lab">Periyot</label>
+                            <label class="lab" :for="'rec-period-' + i">Periyot</label>
                             <select class="inp" x-model="item.recurrenceType"
+                                    :id="'rec-period-' + i"
                                     :name="'Recurrences[' + i + '].RecurrenceType'">
                                 <option value="0">Aylık</option>
                                 <option value="1">3 Aylık</option>
@@ -284,38 +287,44 @@
 
                     <div class="recurring-row-4">
                         <div class="field">
-                            <label class="lab">Ayın günü</label>
+                            <label class="lab" :for="'rec-dom-' + i">Ayın günü</label>
                             <input class="inp" type="number" min="1" max="28" x-model="item.dayOfMonth"
+                                   :id="'rec-dom-' + i"
                                    :name="'Recurrences[' + i + '].DayOfMonth'" />
                         </div>
                         <div class="field" x-show="item.recurrenceType == '2'">
-                            <label class="lab">Yılın ayı</label>
+                            <label class="lab" :for="'rec-moy-' + i">Yılın ayı</label>
                             <input class="inp" type="number" min="1" max="12" x-model="item.monthOfYear"
+                                   :id="'rec-moy-' + i"
                                    :name="'Recurrences[' + i + '].MonthOfYear'" />
                         </div>
                         @* Custom interval — sadece Custom seçildiğinde DOM'da; aynı name'li hidden input ile çakışmasın *@
                         <template x-if="item.recurrenceType == '3'">
                             <div class="field">
-                                <label class="lab">Aralık (ay)</label>
+                                <label class="lab" :for="'rec-interval-' + i">Aralık (ay)</label>
                                 <input class="inp" type="number" min="1" max="60" x-model="item.intervalValue"
+                                       :id="'rec-interval-' + i"
                                        :name="'Recurrences[' + i + '].IntervalValue'" />
                             </div>
                         </template>
                         <div class="field">
-                            <label class="lab">Başlangıç</label>
+                            <label class="lab" :for="'rec-start-' + i">Başlangıç</label>
                             <input class="inp" type="date" x-model="item.startDate"
+                                   :id="'rec-start-' + i"
                                    :name="'Recurrences[' + i + '].StartDate'" />
                         </div>
                         <div class="field">
-                            <label class="lab">Bitiş</label>
+                            <label class="lab" :for="'rec-end-' + i">Bitiş</label>
                             <input class="inp" type="date" x-model="item.endDate"
+                                   :id="'rec-end-' + i"
                                    :name="'Recurrences[' + i + '].EndDate'" />
                         </div>
                     </div>
 
                     <div class="field">
-                        <label class="lab">Notlar</label>
+                        <label class="lab" :for="'rec-notes-' + i">Notlar</label>
                         <input class="inp" type="text" x-model="item.notes"
+                               :id="'rec-notes-' + i"
                                :name="'Recurrences[' + i + '].Notes'" maxlength="2000"
                                placeholder="Örn: Stopaj %20 — vergi dairesine" />
                     </div>
@@ -335,7 +344,7 @@
     <div class="form-action-row">
         <a href="/Contracts" class="btn ghost">Geri Dön</a>
         <button type="submit" class="btn primary">
-            <i class="fa fa-check text-[10px]"></i> Oluştur
+            <i class="fa fa-check text-[10px]" aria-hidden="true"></i> Oluştur
         </button>
     </div>
 </form>
