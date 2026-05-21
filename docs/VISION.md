@@ -2,7 +2,7 @@
 
 **Statü:** Canlı belge. Yön kararları burada yaşar — implementasyon detayı `plans/NN-*.md`'de, kararın gerekçesi `docs/ADR/`'da. Bu dosya **ne** ve **neden** sorularını cevaplar; **nasıl** sorusu plana havale edilir.
 
-**Son güncelleme:** 2026-05-20 (7 platform araştırması + stratejik vizyon genişlemesi).
+**Son güncelleme:** 2026-05-21 (KVKK Process Backbone vizyon dördüncü taş — Plan 40 taslak).
 
 ---
 
@@ -181,24 +181,33 @@ CLAUDE.md "Vanilla JS IIFE" diyor. Ama `_AppLayout.cshtml`'a htmx CDN eklenmiş.
 
 **Değerli ama vNext'in kalbi değil.** Plan 32 raporun caller'ı + Plan 18B HR sync — operasyonel ek özellikler. Ana iddiayı taşımıyorlar.
 
-### vNext'in kalbi — Üçlü kombinasyon
+### vNext'in kalbi — Dörtlü kombinasyon (2026-05-21 revize)
 
 | # | Modül | Effort | Bağımlılık | Değer |
 |---|---|---|---|---|
 | 1 | **SOP / Prosedür** | 2-3 hafta | Tamim altyapısı (mevcut) | BKM'de gün-1 kullanılır |
 | 2 | **Comment / Mention** | 1-2 hafta | INotificationService + Plan 31 caller | Portal "konuşma yerine" döner |
 | 3 | **Workflow Designer** | 3-4 hafta | IWorkflow (Core mevcut) | Geri kalan modüllerin bağımlılığı |
+| 4 | **KVKK Process Backbone** (Plan 40) | 4-5 hafta | Plan 38 EntityRelations (✅), Plan 34/36 paralel | Yasal zorunluluk + Process omurgası + reverse navigation ("ad-soyad nerede?") |
 
-**Toplam: 6-9 hafta**. Bu üçlü tamamlandığında Mosaik gerçek "iç portal" iddiasını taşır. Mevcut altyapıyı reuse eder, BKM Kitap'ta bugün kullanılır.
+**Toplam: 10-14 hafta** (paralel SOP+KVKK + Comment + Workflow). Bu dörtlü tamamlandığında Mosaik "iç portal" değil **Operational Intelligence Layer pilot**. KVKK = §7.3 EntityRelations'ın ilk büyük canlı testi.
 
-### Önerilen sıra (3 ay perspektif)
+**Süreç omurgası fikri (kullanıcı 2026-05-21):** Bir süreç sadece envanter satırı değil — uygulamak için **workflow + form + SOP + audit + kitapçık** üretir. Bu 6 aspect tek `Process` central entity'sinden derived. EntityRelations polymorphic linker. DataElement granular ("ad-soyad", "parmak izi", "IBAN") reverse navigation. **KVKK = bu omurganın yasal vesilesi + ilk büyük tüketici.** Detay [Plan 40](../plans/40-kvkk-process-backbone.md).
+
+### Önerilen sıra (3 ay perspektif — 2026-05-21 KVKK dahil revize)
 
 ```
-Hafta 1-3:  Plan 32 Email caller bitir → SOP modülü (Tamim altyapısı reuse)
+Hafta 1-3:  Plan 32 Email caller bitir → Plan 34 SOP modülü (Tamim altyapısı reuse)
+Hafta 1-4:  Plan 40 KVKK Faz 0-2 paralel başla (veri modeli + xlsx import + CRUD UI)
+            — Plan 38 EntityRelations sözleşmesi ilk büyük canlı test
 Hafta 4-5:  Comment / Mention (cross-cutting, modül başına 1 gün entegrasyon)
-Hafta 6-9:  Workflow Designer (engine + designer UI + her modüle entegre)
+Hafta 5-9:  Plan 36 Workflow Designer (engine + designer UI + her modüle entegre)
+            + Plan 40 KVKK Faz 3 (Workflow + DSAR/Breach bağlama)
+Hafta 9-10: Plan 40 KVKK Faz 4 (SOP entegrasyonu) + Faz 5 (global reverse search)
+Hafta 10-13: Plan 40 KVKK Faz 6-8 (AI integrity + VERBİS export + risk dashboard)
 Paralel:    Plan 18B HR Sync (haftada 1-2 gün, blok değil)
-Hafta 10+:  Form/Anket (integrate karar), Documents iki-plan çakışmasını çöz
+Hafta 14+:  Form/Anket Builder (Plan 41 adayı — KVKK Form aspect tab typed migration)
+            Documents iki-plan çakışmasını çöz
 ```
 
 ### Yapılmayacaklar (vNext kapsamı dışı)
@@ -488,6 +497,33 @@ enum NotificationChannel { InApp, Email, Push, Sms }  // Sms = stub şimdilik
 
 ICS feed: `GET /Obligations/Calendar.ics?token={hmacToken}` — Outlook/Google Calendar aboneliği ile yükümlülükler kişisel takvime düşer. RRULE ile periyodik yükümlülük tekrarı (Q-due → `FREQ=YEARLY;BYMONTH=2,5,8,11`).
 
+### 7.6.b KVKK Process Backbone — Plan 40 (2026-05-21)
+
+EntityRelations'ın ilk büyük canlı tüketicisi. KVKK 6698 envanter yükümlülüğü vesilesiyle **`Process` central entity** kurulur. Her süreç 6 aspect derived:
+
+```
+[Process / KVİE Satırı]
+   │
+   ├── DataElement(s)       atomic veri öğesi (ad-soyad, parmak izi, IBAN…)
+   ├── WorkflowDefinition   Plan 36 onay akışı
+   ├── Form(lar)            Plan 41 Form Builder (henüz yok, geçici string)
+   ├── Sop                  Plan 34 prosedür dokümanı
+   ├── AuditLog             standart audit (var)
+   └── Document/Kitapçık    Documents modülü
+```
+
+Tüm 6 aspect aynı `ProcessId`'ye bağlı + EntityRelations polymorphic kayıt. Reverse navigation:
+
+```sql
+-- "person.fullname" nerelerde işleniyor?
+SELECT * FROM EntityRelations
+WHERE TargetType='DataElement' AND TargetId=@adSoyadId;
+```
+
+**BKM Kitap v7 xlsx envanteri (361 süreç × 20 sütun, 17 departman, 5 REF, Risk Özeti dashboard) Faz 1'de DB'ye seed olarak yüklenir.** AI Integrity Checker (8 pattern — kopyala-yapıştır amaç, CCTV>60gün, gizli yurt dışı SaaS aktarımı, vs) günlük Hangfire job. VERBİS export ClosedXML Mart 2025 rehber formatında.
+
+**Plan 40 detayı:** [`plans/40-kvkk-process-backbone.md`](../plans/40-kvkk-process-backbone.md). 8 faz, 72-92h, 4-5 hafta.
+
 ### 7.7 IMosaikModule Evrim — Backstage + Appsmith Dersleri
 
 Mevcut `IMosaikModule.RegisterServices(IServiceCollection)` yeterli değil. Eklenecek:
@@ -539,3 +575,4 @@ interface IMosaikModule {
 
 - **2026-05-14:** İlk sürüm. Mevcut özellik olgunluğu + vNext değer sıralı modül listesi + 6-9 haftalık SOP+Comment+Workflow Designer üçlüsü önerisi.
 - **2026-05-20:** §7 eklendi — 7 platform araştırması (Backstage, Appsmith, NocoBase, n8n, Twenty CRM, Plane, FlowiseAI) + 6 stratejik vizyon katmanı (Unified Inbox, AI Danışman, Company Memory, Org Intelligence, Dynamic Dashboard, No-excuse). IMosaikModule evrim önerisi. Plan 37 (Unified Inbox) adayı tanımlandı.
+- **2026-05-21:** vNext kalbi üçlüden dörtlüye genişletildi (KVKK Process Backbone Plan 40 eklendi). Süreç omurgası fikri: `Process` central entity → 6 aspect derived (DataElement / Workflow / Form / SOP / Audit / Doküman) + EntityRelations polymorphic linker. §7.6.b yeni alt bölüm. BKM Kitap v7 KVKK envanter xlsx (361 süreç) Faz 1 seed kaynağı. AI Integrity Checker 8 pattern + VERBİS export + global reverse search ("ad-soyad nerede işleniyor?"). KVKK skill (`.claude/skills/kvkk-veri-envanteri/`) repo'ya port edildi (374 satır, claudskills.com export).
