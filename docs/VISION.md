@@ -2,7 +2,7 @@
 
 **Statü:** Canlı belge. Yön kararları burada yaşar — implementasyon detayı `plans/NN-*.md`'de, kararın gerekçesi `docs/ADR/`'da. Bu dosya **ne** ve **neden** sorularını cevaplar; **nasıl** sorusu plana havale edilir.
 
-**Son güncelleme:** 2026-05-21 (KVKK Process Backbone vizyon dördüncü taş — Plan 40 taslak).
+**Son güncelleme:** 2026-05-21 (KVKK Process Backbone + Form Builder + Process Execution Runtime — vNext kalbi altılı; portal = execution platform).
 
 ---
 
@@ -181,34 +181,66 @@ CLAUDE.md "Vanilla JS IIFE" diyor. Ama `_AppLayout.cshtml`'a htmx CDN eklenmiş.
 
 **Değerli ama vNext'in kalbi değil.** Plan 32 raporun caller'ı + Plan 18B HR sync — operasyonel ek özellikler. Ana iddiayı taşımıyorlar.
 
-### vNext'in kalbi — Dörtlü kombinasyon (2026-05-21 revize)
+### vNext'in kalbi — Altılı kombinasyon (2026-05-21 rev 2 — portal execution platform)
 
 | # | Modül | Effort | Bağımlılık | Değer |
 |---|---|---|---|---|
-| 1 | **SOP / Prosedür** | 2-3 hafta | Tamim altyapısı (mevcut) | BKM'de gün-1 kullanılır |
-| 2 | **Comment / Mention** | 1-2 hafta | INotificationService + Plan 31 caller | Portal "konuşma yerine" döner |
-| 3 | **Workflow Designer** | 3-4 hafta | IWorkflow (Core mevcut) | Geri kalan modüllerin bağımlılığı |
-| 4 | **KVKK Process Backbone** (Plan 40) | 4-5 hafta | Plan 38 EntityRelations (✅), Plan 34/36 paralel | Yasal zorunluluk + Process omurgası + reverse navigation ("ad-soyad nerede?") |
+| 1 | **SOP / Prosedür** (Plan 34) | 2-3 hafta | Tamim altyapısı (mevcut) | BKM'de gün-1 kullanılır |
+| 2 | **Comment / Mention** (Plan 35) | 1-2 hafta | INotificationService + Plan 31 caller | Portal "konuşma yerine" döner |
+| 3 | **Workflow Designer** (Plan 36) | 3-4 hafta | IWorkflow (Core mevcut) | Geri kalan modüllerin bağımlılığı |
+| 4 | **KVKK Envanter** (Plan 40 dar tutuldu) | 3-4 hafta | Plan 38 ✅ | Yasal envanter + DataElement granular + reverse navigation + VERBİS export + AI integrity |
+| 5 | **Form Builder** (Plan 41 — KRİTİK PREREQ) | 4-5 hafta | Plan 38 ✅, Plan 36 | Tüm portal form altyapısı (DSAR/İhbar/Aday/Rıza/Engelli/Tedarikçi/Review/PDKS) |
+| 6 | **Process Execution Runtime** (Plan 42 — BİRLEŞTİRİCİ) | 4-5 hafta | Plan 40+41+36+38 | ProcessInstance runtime, 6 aspect timeline, SLA timer, KvkkProcessingActivity log, sonuç PDF/Word üretimi |
 
-**Toplam: 10-14 hafta** (paralel SOP+KVKK + Comment + Workflow). Bu dörtlü tamamlandığında Mosaik "iç portal" değil **Operational Intelligence Layer pilot**. KVKK = §7.3 EntityRelations'ın ilk büyük canlı testi.
+**Toplam: 11-13 hafta** (paralel başlatılabilir). Bu altılı tamamlandığında Mosaik **portal execution platform**:
 
-**Süreç omurgası fikri (kullanıcı 2026-05-21):** Bir süreç sadece envanter satırı değil — uygulamak için **workflow + form + SOP + audit + kitapçık** üretir. Bu 6 aspect tek `Process` central entity'sinden derived. EntityRelations polymorphic linker. DataElement granular ("ad-soyad", "parmak izi", "IBAN") reverse navigation. **KVKK = bu omurganın yasal vesilesi + ilk büyük tüketici.** Detay [Plan 40](../plans/40-kvkk-process-backbone.md).
+> "Excel manuel kayıt biter. Tüm süreç + KVKK + form + workflow + audit + sonuç doküman portal'da yaşar."
 
-### Önerilen sıra (3 ay perspektif — 2026-05-21 KVKK dahil revize)
+**Süreç omurgası fikri (kullanıcı 2026-05-21):**
+- Bir süreç sadece envanter satırı değil — uygulamak için **workflow + form + SOP + audit + kitapçık + KVKK context** üretir.
+- `Process` (tanım, Plan 40) → `ProcessInstance` (vaka, Plan 42 N kez) → 6 aspect derived.
+- EntityRelations polymorphic linker (Plan 38 omurga).
+- DataElement granular reverse navigation: "ad-soyad / parmak izi / IBAN / CCTV nerelerde işleniyor?"
+
+**Portal execution boyutu (kullanıcı 2026-05-21 rev 2):**
+- DSAR public link → form → KVKK Sorumlusu inceleme → 30-gün SLA → cevap mektubu otomatik PDF → email
+- İhbar anonim form (şifreli) → İhbar Komitesi → soruşturma → kapatma
+- Aday başvuru public + CV upload → İK ön eleme → mülakat → karar → arşiv
+- Veri ihlali çalışan formu → 72h Hangfire timer → KVKK Sorumlusu → Kurul taslak
+- Açık rıza yenileme çalışan portal → İK → DisclosureNotice version
+- Engelli belgesi yükleme → İSG onay → özlük dosyası
+- Tedarikçi DPA → Hukuk onay → arşiv
+- Yıllık envanter review → birim müdürü inbox → VERBİS hazır flag
+- PDKS biyometrik rıza → alternatif yöntem → onay
+- Eğitim katılım + quiz → otomatik sertifika PDF
+
+**Detay:** [Plan 40](../plans/40-kvkk-process-backbone.md) KVKK Envanter (dar), [Plan 41](../plans/41-form-builder.md) Form Builder (Hybrid v1 JSON + v2 builder), [Plan 42](../plans/42-process-execution-runtime.md) Process Execution Runtime (ProcessInstance + 6 aspect timeline + KvkkProcessingActivity log).
+
+### Önerilen sıra (3 ay perspektif — 2026-05-21 rev 2 altılı kalp)
 
 ```
-Hafta 1-3:  Plan 32 Email caller bitir → Plan 34 SOP modülü (Tamim altyapısı reuse)
-Hafta 1-4:  Plan 40 KVKK Faz 0-2 paralel başla (veri modeli + xlsx import + CRUD UI)
-            — Plan 38 EntityRelations sözleşmesi ilk büyük canlı test
-Hafta 4-5:  Comment / Mention (cross-cutting, modül başına 1 gün entegrasyon)
-Hafta 5-9:  Plan 36 Workflow Designer (engine + designer UI + her modüle entegre)
-            + Plan 40 KVKK Faz 3 (Workflow + DSAR/Breach bağlama)
-Hafta 9-10: Plan 40 KVKK Faz 4 (SOP entegrasyonu) + Faz 5 (global reverse search)
-Hafta 10-13: Plan 40 KVKK Faz 6-8 (AI integrity + VERBİS export + risk dashboard)
+Hafta 1-3:  Plan 34 SOP modülü (Tamim altyapısı reuse) + Plan 32 SMTP caller
+            Plan 40 KVKK Faz 0-2 paralel (veri modeli + xlsx import + envanter CRUD)
+            Plan 38 EntityRelations sözleşmesi ilk büyük canlı test
+            Plan 36 Workflow Designer Faz A (engine)
+Hafta 2-6:  Plan 41 Form Builder (KRİTİK PATH — Plan 42 prereq)
+            Faz 0-1 (scaffold + render+submit) hafta 2-3
+            Faz 2-3 (admin CRUD + public anonim) hafta 4-5
+            Faz 4-7 (file/signature/encrypted/template seed) hafta 5-6
+Hafta 4-5:  Plan 35 Comment / Mention (cross-cutting, paralel)
+Hafta 5-7:  Plan 36 Workflow Designer Faz B-D (designer UI + entegre)
+Hafta 6-7:  Plan 40 KVKK Faz 3-4 (SOP entegrasyon + global reverse search)
+Hafta 7-10: Plan 42 Process Execution Runtime (ProcessInstance + 6 aspect + SLA + result)
+            Faz 0-3 (scaffold + execution + public + inbox/detail) hafta 7-8
+            Faz 4-6 (SLA + render + KvkkProcessingActivity + retention) hafta 8-9
+            Faz 7-9 (cron + admin + e2e entegrasyon test) hafta 9-10
+Hafta 9-11: Plan 40 KVKK Faz 5-7 (AI integrity + VERBİS export + risk dashboard)
+            Plan 42 KvkkProcessingActivity log Plan 40 dashboard'unu besler
 Paralel:    Plan 18B HR Sync (haftada 1-2 gün, blok değil)
-Hafta 14+:  Form/Anket Builder (Plan 41 adayı — KVKK Form aspect tab typed migration)
-            Documents iki-plan çakışmasını çöz
+Hafta 12+:  Documents Plan 27 Faz C, Plan 33 Faz 4 D-01..D-05 borç temizliği
 ```
+
+**Kritik path:** Plan 41 Form Builder. Olmadan Plan 42 başlamaz, Plan 40 form aspect stub kalır. En önce Faz 0-3 (4 hafta) çıkması şart.
 
 ### Yapılmayacaklar (vNext kapsamı dışı)
 
@@ -497,7 +529,7 @@ enum NotificationChannel { InApp, Email, Push, Sms }  // Sms = stub şimdilik
 
 ICS feed: `GET /Obligations/Calendar.ics?token={hmacToken}` — Outlook/Google Calendar aboneliği ile yükümlülükler kişisel takvime düşer. RRULE ile periyodik yükümlülük tekrarı (Q-due → `FREQ=YEARLY;BYMONTH=2,5,8,11`).
 
-### 7.6.b KVKK Process Backbone — Plan 40 (2026-05-21)
+### 7.6.b KVKK + Process Execution — Plan 40 + 41 + 42 (2026-05-21 rev 2)
 
 EntityRelations'ın ilk büyük canlı tüketicisi. KVKK 6698 envanter yükümlülüğü vesilesiyle **`Process` central entity** kurulur. Her süreç 6 aspect derived:
 
@@ -522,7 +554,21 @@ WHERE TargetType='DataElement' AND TargetId=@adSoyadId;
 
 **BKM Kitap v7 xlsx envanteri (361 süreç × 20 sütun, 17 departman, 5 REF, Risk Özeti dashboard) Faz 1'de DB'ye seed olarak yüklenir.** AI Integrity Checker (8 pattern — kopyala-yapıştır amaç, CCTV>60gün, gizli yurt dışı SaaS aktarımı, vs) günlük Hangfire job. VERBİS export ClosedXML Mart 2025 rehber formatında.
 
-**Plan 40 detayı:** [`plans/40-kvkk-process-backbone.md`](../plans/40-kvkk-process-backbone.md). 8 faz, 72-92h, 4-5 hafta.
+**Üç plan birleşimi (2026-05-21 rev 2):**
+
+| Plan | Görev | Effort | Konum |
+|---|---|---|---|
+| **Plan 40** | KVKK envanter (tanım, integrity, VERBİS, reverse search) | 50-65h, 3-4 hafta | passive registry + denetim |
+| **Plan 41** | Form Builder altyapı (Hybrid v1 JSON + v2 builder UI) | 54-70h, 4-5 hafta | tüm portal form çekirdeği |
+| **Plan 42** | Process Execution Runtime (ProcessInstance + 6 aspect timeline + SLA + result PDF/Word + KvkkProcessingActivity log) | 64-84h, 4-5 hafta | runtime birleştirici |
+
+**Portal execution platform vizyonu (kullanıcı 2026-05-21):**
+
+> "bu süreçlerin ve kvkk kısımlarının tamamının işleyişi formları akışı mümkün olduğunca portal üstünden olmalı"
+
+Excel manuel kayıt biter. DSAR vatandaş başvurusu → public form → 30-gün SLA → cevap PDF email; ihbar anonim form (şifreli) → İhbar Komitesi → soruşturma; aday başvuru + CV → İK ön eleme → karar; veri ihlali 72h timer; yıllık envanter review birim müdürü inbox; PDKS biyometrik rıza alternatif yöntem; eğitim katılım quiz → sertifika otomatik. **Her instance KVKK DataElement işleme kaydı düşer, EntityRelations otomatik dolar, saklama timer çalışır, retention sonu otomatik anonimleştirme/silme tetiklenir.**
+
+**Plan detayları:** [`plans/40-kvkk-process-backbone.md`](../plans/40-kvkk-process-backbone.md), [`plans/41-form-builder.md`](../plans/41-form-builder.md), [`plans/42-process-execution-runtime.md`](../plans/42-process-execution-runtime.md).
 
 ### 7.7 IMosaikModule Evrim — Backstage + Appsmith Dersleri
 
@@ -576,3 +622,4 @@ interface IMosaikModule {
 - **2026-05-14:** İlk sürüm. Mevcut özellik olgunluğu + vNext değer sıralı modül listesi + 6-9 haftalık SOP+Comment+Workflow Designer üçlüsü önerisi.
 - **2026-05-20:** §7 eklendi — 7 platform araştırması (Backstage, Appsmith, NocoBase, n8n, Twenty CRM, Plane, FlowiseAI) + 6 stratejik vizyon katmanı (Unified Inbox, AI Danışman, Company Memory, Org Intelligence, Dynamic Dashboard, No-excuse). IMosaikModule evrim önerisi. Plan 37 (Unified Inbox) adayı tanımlandı.
 - **2026-05-21:** vNext kalbi üçlüden dörtlüye genişletildi (KVKK Process Backbone Plan 40 eklendi). Süreç omurgası fikri: `Process` central entity → 6 aspect derived (DataElement / Workflow / Form / SOP / Audit / Doküman) + EntityRelations polymorphic linker. §7.6.b yeni alt bölüm. BKM Kitap v7 KVKK envanter xlsx (361 süreç) Faz 1 seed kaynağı. AI Integrity Checker 8 pattern + VERBİS export + global reverse search ("ad-soyad nerede işleniyor?"). KVKK skill (`.claude/skills/kvkk-veri-envanteri/`) repo'ya port edildi (374 satır, claudskills.com export).
+- **2026-05-21 rev 2:** Kullanıcı netleştirmesi "bu süreçlerin ve kvkk kısımlarının tamamının işleyişi formları akışı mümkün olduğunca portal üstünden olmalı" sonrası. Plan 40 **dar tutuldu** — execution kapsam dışına çıkarıldı, Plan 42'ye devredildi. **Plan 41 Form Builder** (Hybrid v1 JSON + v2 builder UI, 54-70h) ve **Plan 42 Process Execution Runtime** (ProcessInstance + 6 aspect timeline + SLA timer + sonuç PDF/Word + KvkkProcessingActivity log, 64-84h) eklendi. vNext kalbi **altılı**: SOP + Comment + Workflow + KVKK + Form Builder + Process Execution Runtime. Toplam 11-13 hafta. Plan 41 = kritik path (Plan 42 prereq, Plan 40 form aspect typed bağlama). Portal **runtime execution platform** olarak konumlandı.

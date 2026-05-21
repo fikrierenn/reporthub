@@ -1,9 +1,17 @@
 # Plan 40 — KVKK Veri Envanteri + Process Backbone
 
-**Tarih:** 2026-05-21
+**Tarih:** 2026-05-21 (rev 2 — execution kapsam dışı, Plan 42'ye devredildi)
 **Yazan:** Fikri / Claude
 **Durum:** `Taslak` (onay bekliyor)
-**Bağımlılık:** Plan 38 EntityRelations (✅ onaylandı), Plan 34 SOP (✅ onaylandı, henüz başlamadı), Plan 36 Workflow Engine (✅ onaylandı), Plan 16.5 AI Core (yarım), Plan 31 SMTP (✅ altyapı)
+**Bağımlılık:** Plan 38 EntityRelations (✅ onaylandı), Plan 34 SOP (✅ onaylandı, henüz başlamadı), Plan 36 Workflow Engine (✅ onaylandı), Plan 41 Form Builder (Taslak — KVKK form aspect typed bağlama için), Plan 42 Process Execution Runtime (Taslak — runtime execution Plan 42'de), Plan 16.5 AI Core (yarım), Plan 31 SMTP (✅ altyapı)
+
+> **2026-05-21 rev 2 (kullanıcı netleştirmesi "bu süreçlerin ve kvkk kısımlarının tamamının işleyişi formları akışı mümkün olduğunca portal üstünden olmalı"):**
+>
+> Plan 40 **dar tutuldu** — KVKK envanter (tanım/metadata/integrity check/VERBİS export) odaklı. **Runtime execution Plan 42'ye taşındı.** Önceki Faz 3 (Workflow + Form bağlama + DSAR/Breach) Plan 42 Faz 1-5'te yaşar. Plan 40 burada `Process` tanım entity'sini kurar, Plan 42 `ProcessInstance` ile çalıştırır. Plan 41 form altyapısı.
+>
+> Effort 72-92h → **50-65h** (Faz 3 çıktığı için), 3-4 hafta.
+>
+> Aşağıdaki içerik orijinal — Faz numaralandırması güncel: önceki Faz 3 silindi, Faz 4-8 yeniden numaralandı (3-7 oldu).
 
 ---
 
@@ -49,17 +57,17 @@ Bir süreç sadece envanter satırı değildir. Süreç **uygulamak için** work
 - `KvkkIntegrityFinding` — AI checker çıktısı
 
 **Servis + iş:**
-- `IProcessService` — CRUD + audit
+- `IProcessService` — CRUD + audit (TANIM tarafı, instance çalıştırma Plan 42'de)
 - `IDataElementService` — reverse lookup ("ad-soyad nerede?")
 - `IKvkkIntegrityChecker` — 8 pattern detector
 - `IVerbisExporter` — Mart 2025 rehber formatında Excel
 - `IKvkkAdvisor` — AI prompt orchestration (skill'in runtime karşılığı)
-- Hangfire cron: 6h imha takvimi reminder, breach 72h timer, yıllık review
+- Hangfire cron: yıllık review reminder, integrity scan
+- **Not:** DSAR (m.13) + Breach (m.12) workflow + 30/72h timer → Plan 42 ProcessInstance taşır. Plan 40 sadece Process tanımını + DataElement granular envanteri kurar.
 
 **UI:**
-- KVİE CRUD (Index departman+risk filter, Edit 20 sütun, Detail 6 aspect tab)
+- KVİE CRUD (Index departman+risk filter, Edit 20 sütun, Detail 6 aspect tab — 5 aspect stub Plan 42 bekler)
 - Global reverse search (sidebar üst arama: DataElement adı yaz → modal)
-- DSAR + Breach workflow (Plan 36 engine reuse)
 - VERBİS export butonu
 - Risk dashboard (Risk Özeti xlsx karşılığı)
 - AI integrity findings panel
@@ -78,7 +86,9 @@ Bir süreç sadece envanter satırı değildir. Süreç **uygulamak için** work
 
 ### Kapsam dışı
 
-- **Form Builder modülü** — KVKK Faz 3 form bağlama, **Form Builder ayrı plan** (Plan 41 adayı). Şimdilik Process ↔ Form link manuel/string, builder geldiğinde otomatik mapping.
+- **ProcessInstance runtime** — Plan 42 Process Execution Runtime. Burada sadece `Process` TANIM entity'si kurulur.
+- **Form altyapısı** — Plan 41 Form Builder. KVKK form aspect typed bağlama için Plan 41 prereq.
+- **DSAR + Breach workflow** — Plan 42 ProcessInstance + ProcessSlaTimer ile çalışır. Plan 40 sadece KVKK Process tanımı.
 - Aydınlatma metni AI üretimi — manuel yazılır, sadece versiyonlanır
 - VERBİS web giriş otomasyonu — Excel export yeterli, manuel yükleme
 - Multi-firma KVİE template kütüphanesi — BKM Kitap'a özel, sonradan Belinza vb. yayılma ayrı plan
@@ -366,27 +376,21 @@ Cron job (Hangfire): günlük tarama → `KvkkIntegrityFinding` tablo → dashbo
 - [ ] Multi-firma `IUserDataScope` filter
 - [ ] Test: 8+ unit test (controller, service, workflow trigger)
 
-### Faz 3 — Workflow + Form bağlama
-- [ ] Workflow aspect tab: WorkflowDefinition picker + step preview
-- [ ] Form aspect tab: geçici string link + DataElement mapping uyarısı
-- [ ] EntityRelations kayıt her bağlamada
-- [ ] DSAR (m.13) Plan 36 engine üzerinde — 30 gün SLA timer
-- [ ] Breach (m.12/5) Plan 36 + Hangfire 72h timer
-
-### Faz 4 — SOP entegrasyonu (Plan 34 bağımlılık)
+### Faz 3 — SOP entegrasyonu (Plan 34 bağımlılık)
+> **2026-05-21 rev 2:** Önceki "Faz 3 Workflow + Form bağlama + DSAR/Breach" → **Plan 42 Faz 1-5'e taşındı.** Burada eski Faz 4 yeniden numaralandı (4→3 oldu).
 - [ ] SOP detail page Process picker zorunlu (yeni SOP)
 - [ ] SOP content AI scan → DataElement detect + öneri panel
 - [ ] EntityRelations otomatik bağlama (`derivedFrom`)
 - [ ] Bütünlük check: SOP'ta veri öğesi geçiyor ama Process'te yok → uyarı
 
-### Faz 5 — Global reverse search
+### Faz 4 — Global reverse search
 - [ ] Sidebar üst arama kutusu (her sayfada görünür)
 - [ ] DataElementController.ReverseSearch endpoint
 - [ ] Modal: sol DataElement kart, sağ tüketici listesi gruplu
 - [ ] EntityRelations query 1-hop (3-hop versiyonu Plan 38 v2)
 - [ ] Test: en az 5 DataElement için reverse query unit test
 
-### Faz 6 — AI Integrity Checker
+### Faz 5 — AI Integrity Checker
 - [ ] `KvkkIntegrityChecker` 8 pattern detector
 - [ ] Hangfire daily job
 - [ ] `KvkkIntegrityFinding` entity + dashboard widget
@@ -394,14 +398,14 @@ Cron job (Hangfire): günlük tarama → `KvkkIntegrityFinding` tablo → dashbo
 - [ ] Plan 31 SMTP caller — kritik findings için email digest
 - [ ] Test: 8 pattern için unit test (positive + negative case)
 
-### Faz 7 — VERBİS export + aydınlatma metni versioning
+### Faz 6 — VERBİS export + aydınlatma metni versioning
 - [ ] `VerbisExporter` ClosedXML — Mart 2025 rehber 20 sütun template
 - [ ] Aktif + birim onaylı süreçler export edilir
 - [ ] `DisclosureNotice` versioning entity
 - [ ] Sürüm karşılaştırma (diff view)
 - [ ] Periyodik 6 ay review reminder + sign-off log
 
-### Faz 8 — Risk dashboard
+### Faz 7 — Risk dashboard
 - [ ] Departman bazlı Yüksek/Orta/Düşük chart (xlsx Risk Özeti parite)
 - [ ] DataElement yayılım haritası (top 10)
 - [ ] Açık findings sayım
@@ -462,50 +466,42 @@ Faz 2 — KVİE CRUD UI (12-15h)
   2.8 8+ unit test
   2.9 Commit
 
-Faz 3 — Workflow + Form bağlama (10-12h)
-  3.1 WorkflowDefinition picker
-  3.2 Form string link (geçici)
+Faz 3 — SOP entegrasyonu (6-8h, Plan 34 başlamasını bekler)
+  3.1 SOP detail Process picker
+  3.2 AI scan DataElement detect
   3.3 EntityRelations otomatik
-  3.4 DSAR controller + 30-gün SLA
-  3.5 Breach controller + 72h Hangfire
-  3.6 Plan 31 SMTP caller (DSAR + Breach kanalı)
-  3.7 Commit
+  3.4 Bütünlük uyarısı
+  3.5 Commit
+  Not: Önceki rev1'deki "Workflow+Form+DSAR+Breach" Plan 42'ye taşındı.
 
-Faz 4 — SOP entegrasyonu (6-8h, Plan 34 başlamasını bekler)
-  4.1 SOP detail Process picker
-  4.2 AI scan DataElement detect
-  4.3 EntityRelations otomatik
-  4.4 Bütünlük uyarısı
-  4.5 Commit
+Faz 4 — Global reverse search (8-10h)
+  4.1 DataElementController.ReverseSearch
+  4.2 Sidebar üst arama kutusu (Layout edit)
+  4.3 Modal UI
+  4.4 EntityRelations 1-hop query
+  4.5 5+ unit test
+  4.6 Commit
 
-Faz 5 — Global reverse search (8-10h)
-  5.1 DataElementController.ReverseSearch
-  5.2 Sidebar üst arama kutusu (Layout edit)
-  5.3 Modal UI
-  5.4 EntityRelations 1-hop query
-  5.5 5+ unit test
-  5.6 Commit
+Faz 5 — AI Integrity Checker (12-15h)
+  5.1 KvkkIntegrityChecker 8 pattern
+  5.2 Hangfire daily job
+  5.3 KvkkIntegrityFinding entity + dashboard
+  5.4 Severity + dismiss + per-pattern toggle
+  5.5 Email digest (Plan 31 caller)
+  5.6 16+ unit test (8 pattern × 2 case)
+  5.7 Commit
 
-Faz 6 — AI Integrity Checker (12-15h)
-  6.1 KvkkIntegrityChecker 8 pattern
-  6.2 Hangfire daily job
-  6.3 KvkkIntegrityFinding entity + dashboard
-  6.4 Severity + dismiss + per-pattern toggle
-  6.5 Email digest (Plan 31 caller)
-  6.6 16+ unit test (8 pattern × 2 case)
-  6.7 Commit
+Faz 6 — VERBİS export + aydınlatma metni (6-8h)
+  6.1 VerbisExporter ClosedXML template
+  6.2 DisclosureNotice versioning + diff view
+  6.3 6-ay review reminder cron
+  6.4 Commit
 
-Faz 7 — VERBİS export + aydınlatma metni (6-8h)
-  7.1 VerbisExporter ClosedXML template
-  7.2 DisclosureNotice versioning + diff view
-  7.3 6-ay review reminder cron
+Faz 7 — Risk dashboard (8-10h)
+  7.1 Departman risk chart (Reports modülü reuse)
+  7.2 DataElement yayılım
+  7.3 Findings + breach + DSAR widget'ları (Plan 42 KvkkProcessingActivity tablosundan beslenir)
   7.4 Commit
-
-Faz 8 — Risk dashboard (8-10h)
-  8.1 Departman risk chart (Reports modülü reuse)
-  8.2 DataElement yayılım
-  8.3 Findings + breach + DSAR widget'ları
-  8.4 Commit
 
 Genel kapanış
   9.1 ARCHITECTURE_MAP refresh
@@ -550,3 +546,4 @@ Genel kapanış
 ## 11. Sürüm
 
 - **2026-05-21:** Taslak. Onay bekliyor.
+- **2026-05-21 rev 2:** Kullanıcı netleştirmesi sonrası execution kapsam dışına çıkarıldı. ProcessInstance runtime Plan 42'ye, Form altyapısı Plan 41'e devredildi. Önceki Faz 3 (Workflow+Form+DSAR+Breach) silindi, Faz 4-8 yeniden numaralandı (3-7). Effort 72-92h → 50-65h. 8 faz → 7 faz. Plan 40 artık passive envanter + denetim + reverse search + AI integrity + VERBİS export odaklı.

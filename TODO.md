@@ -69,18 +69,39 @@ Build: 0 hata 0 uyarı. Test: **337/337 geçti** (test-discipline.md kanıtland�
   - **Faz F** (10-14h, S-23..S-30) — **AI Danışman MVP** — `SopAiAdvisorService` + drawer + KVKK banner + rate limit + thumbs-up/down + retention job
   - **Faz G** (4-8h, S-31, OPSİYONEL) — 27 BKM SOP migrate
 - [ ] **Comment / Mention sistemi** (1-2 hafta + modül başına 1 gün) — Cross-cutting. Polymorphic `Comments` tablo + `EntityType`/`EntityId` + `@user` mention + `INotificationService` callback. Tamim/Doküman/Sözleşme/OrgChart entegrasyonu. **Bağımlılık:** Plan 31 SMTP caller (Plan 32 bekliyor). Plan yazılacak (Plan 35 adayı).
-- [ ] **[Plan 40 · KVKK Veri Envanteri + Process Backbone](plans/40-kvkk-process-backbone.md)** ⏳ **TASLAK 2026-05-21** — Onay bekliyor. KVKK 6698 envanter modülü + `Process` central entity + DataElement granular reverse navigation + EntityRelations omurga. BKM Kitap v7 xlsx (361 süreç) Faz 1 seed. AI Integrity Checker 8 pattern + VERBİS export + global reverse search ("ad-soyad nerede işleniyor?") + 6 aspect tab (KVKK/Workflow/Form/SOP/Audit/Doküman). 72-92h, 8 faz, 4-5 hafta. Bağımlılık: Plan 38 ✅, Plan 34/36 paralel.
-  - **Faz 0** (6-8h) — Veri modeli omurgası: Mosaik.Modules.Kvkk csproj + 14 entity + Migration 66/67/68
+- [ ] **[Plan 40 · KVKK Veri Envanteri](plans/40-kvkk-process-backbone.md)** ⏳ **TASLAK 2026-05-21 rev 2** — Onay bekliyor. **DAR TUTULDU** — passive envanter + denetim + reverse search + AI integrity + VERBİS export. Execution kapsam dışı, Plan 42'ye devredildi. BKM Kitap v7 xlsx (361 süreç) Faz 1 seed. 50-65h, **7 faz**, 3-4 hafta. Bağımlılık: Plan 38 ✅, Plan 34/36/41/42 paralel.
+  - **Faz 0** (6-8h) — Mosaik.Modules.Kvkk csproj + 14 entity + Migration 66/67/68
   - **Faz 1** (4-6h) — XlsxImporter + BKM Kitap v7 import (361 süreç, idempotent)
-  - **Faz 2** (12-15h) — KVİE CRUD UI (Index filter + 20 sütun Edit + 6 aspect Detail)
-  - **Faz 3** (10-12h) — Workflow + Form bağlama + DSAR/Breach (Plan 36 reuse + Plan 31 SMTP)
-  - **Faz 4** (6-8h) — SOP entegrasyonu (Plan 34 başladıktan sonra)
-  - **Faz 5** (8-10h) — Global reverse search sidebar
-  - **Faz 6** (12-15h) — AI Integrity Checker 8 pattern + Hangfire daily + email digest
-  - **Faz 7** (6-8h) — VERBİS export ClosedXML + aydınlatma metni versioning
-  - **Faz 8** (8-10h) — Risk dashboard (xlsx Risk Özeti parite)
-- [ ] **KVKK skill import** ✅ 2026-05-21 — `.claude/skills/kvkk-veri-envanteri/SKILL.md` (374 satır, claudskills.com export). Plan 40 AI Integrity Checker prompt kaynağı. **Eklenen ama henüz commit'lenmedi.**
-- [ ] **Plan 41 · Form Builder** (adayı, henüz plan yok) — KVKK Plan 40 Faz 3'te form link string. Form Builder yazılınca typed migration (DataElement field mapping zorunlu). Open vs integrate karar bekliyor (LimeSurvey/Formbricks vs own).
+  - **Faz 2** (12-15h) — KVİE CRUD UI (Index filter + 20 sütun Edit + 6 aspect Detail — 5 aspect stub Plan 42 bekler)
+  - **Faz 3** (6-8h) — SOP entegrasyonu (Plan 34 başladıktan sonra)
+  - **Faz 4** (8-10h) — Global reverse search sidebar
+  - **Faz 5** (12-15h) — AI Integrity Checker 8 pattern + Hangfire daily + email digest
+  - **Faz 6** (6-8h) — VERBİS export ClosedXML + aydınlatma metni versioning
+  - **Faz 7** (8-10h) — Risk dashboard (xlsx Risk Özeti parite, Plan 42 KvkkProcessingActivity log beslemesi)
+
+- [ ] **[Plan 41 · Form Builder](plans/41-form-builder.md)** ⏳ **TASLAK 2026-05-21 — KRİTİK PATH** — Onay bekliyor. Portal form altyapısı. **Plan 42 prereq.** Hybrid yaklaşım: v1 JSON config server-side render + admin form CRUD; v2 drag-drop builder UI ileride. 12 field tipi (text/textarea/number/date/select/multiselect/radio/checkbox/file/signature/hidden/section). Public link + anonim submit + AntiSpam + Şifreli alan (ihbar için). DataElement mapping ZORUNLU Yayında geçişi için (KVKK Plan 40 entegrasyon). 8 template seed (DSAR/İhbar/Aday/İhlal/Rıza/Engelli/DPA/Review). 54-70h, **8 faz**, 4-5 hafta. Bağımlılık: Plan 38 ✅, Plan 36, Documents.
+  - **Faz 0** (6-8h) — Mosaik.Modules.Forms csproj + 7 entity + Migration 70
+  - **Faz 1** (10-12h) — Render + Submit pipeline (JSON config v1)
+  - **Faz 2** (8-10h) — Admin Form CRUD
+  - **Faz 3** (8-10h) — Public link + Anonim + AntiSpam (honeypot + rate limit + reCAPTCHA opsiyonel)
+  - **Faz 4** (8-10h) — File upload (Documents reuse) + Signature pad + DataElement mapping admin UI
+  - **Faz 5** (4-6h) — Şifreli alan AES-256 + Key Vault + İhbar template seed
+  - **Faz 6** (6-8h) — Submission admin + Export ClosedXML
+  - **Faz 7** (4-6h) — 8 template seed (Migration 71)
+
+- [ ] **[Plan 42 · Process Execution Runtime](plans/42-process-execution-runtime.md)** ⏳ **TASLAK 2026-05-21 — BİRLEŞTİRİCİ** — Onay bekliyor. ProcessInstance runtime — Process'in N kez execute edildiği vaka. 6 aspect polymorphic timeline (Form / Workflow / Document / DecisionLog / Audit / KvkkContext). SLA timer (DSAR 30-gün, Breach 72h, custom). Result rendering (PDF QuestPDF + Word OpenXml). KvkkProcessingActivity log (her instance DataElement işleme kaydı). ICS feed. "Süreçlerim" inbox + admin dashboard. 64-84h, **9 faz**, 4-5 hafta. Bağımlılık: Plan 38 ✅, Plan 36, Plan 40, Plan 41 (KRİTİK), Plan 31, Documents.
+  - **Faz 0** (6-8h) — Mosaik.Modules.ProcessRuntime csproj + 5 entity + Migration 72
+  - **Faz 1** (8-10h) — ProcessExecutionService + manuel başlatma + Workflow Engine hookup
+  - **Faz 2** (6-8h) — Public + Anonim başlatma + token validate
+  - **Faz 3** (10-12h) — "Süreçlerim" inbox + Instance Detail 6 aspect timeline
+  - **Faz 4** (8-10h) — SLA Timer Hangfire + Eskaltsiyon (Plan 37 §7.6 pattern)
+  - **Faz 5** (6-8h) — Result Rendering (PDF QuestPDF + Word OpenXml) + Documents arşiv + email ek
+  - **Faz 6** (6-8h) — KvkkProcessingActivity log + Retention Job (auto anonimleştir/sil)
+  - **Faz 7** (4-6h) — Cron + Event trigger + ICS feed (Outlook/Google abone)
+  - **Faz 8** (4-6h) — Process Owner Dashboard + Admin Tüm Instance'lar + Excel export
+  - **Faz 9** (6-8h) — E2E entegrasyon test (DSAR/İhbar/Aday/İhlal/Review uçtan uca)
+
+- [ ] **KVKK skill import** ✅ 2026-05-21 — `.claude/skills/kvkk-veri-envanteri/SKILL.md` (374 satır, claudskills.com export). Plan 40 Faz 5 AI Integrity Checker prompt kaynağı. Commit `36d590e`.
 - [ ] **[Plan 36 · Workflow Designer + Onay Akışları](plans/36-workflow-designer-onay-akislari.md)** ✅ **ONAYLANDI 2026-05-19** — sequential-workflow-designer (MIT, zero-dep) + custom WorkflowEngine. Tüm modüllerin onay zinciri tek engine. 30-40 saat, 4 faz.
   - **Faz A** (12-16h, W-01..W-08) — Core engine + designer UI + migration 62
   - **Faz B** (8-10h, W-09..W-13) — Hangfire job + bildirim + escalation + ICS feed
