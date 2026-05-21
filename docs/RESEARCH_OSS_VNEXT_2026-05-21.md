@@ -193,6 +193,35 @@
 
 ---
 
+## 4.1 Bağımsız doğrulama — awesome-dotnet-pdf-libraries-2025 (2026-05-21 ek tarama)
+
+Kullanıcı `https://github.com/csharp-pdf-libraries/awesome-dotnet-pdf-libraries-2025` referansı paylaştı. 73+ kütüphane envanteri ile mevcut kararlarımız **bağımsız doğrulandı**:
+
+- **Gotenberg MIT** kabul: "Self-hosted Docker API, multiple conversion engines"
+- **PDFSharp + MigraDoc MIT**: "Actively maintained, document object model"
+- **Bootstrap homepage test:** Sadece IronPDF/PuppeteerSharp/Playwright/Gotenberg-Chromium modern CSS3 (Flexbox/Grid) destekliyor → **Mosaik Tailwind reuse için Gotenberg seçimi kritik onay**
+- **iText AGPL, Aspose $1199, wkhtmltopdf deprecated** reddetmelerimiz doğrulandı
+- **QuestPDF** reddetmesi rev 2'de yapıldı (DSL + lisans + Razor reuse yok)
+
+Awesome-list'te keşfedilen 13 yeni aday değerlendirildi, **0'ı stack'i değiştirir**:
+
+| Aday | Lisans | Sonuç |
+|---|---|---|
+| Scryber.core | LGPL | XML XSL-FO, Razor HTML yaklaşımına alakasız |
+| pdfpig | Apache 2.0 | Mosaik'te zaten kullanılıyor (DikkatIQ PDF extract reading) |
+| PeachPDF / ZetPDF / VectSharp | Free / GPL | Niş, Gotenberg kapsıyor |
+| Fluid (sebastienros) | Apache 2.0 | RESEARCH'te zaten yedek (Scriban alternatifi) |
+| Docotic.Pdf / GemBox.Pdf | Free/Commercial dual | MIT pure (PdfSharp+MigraDoc) zaten karşılıyor |
+| FastReport.NET | Free/Commercial dual | Reporting engine, Reports modülü zaten var |
+| Rotativa / NReco / TuesPechkin | MIT/Free | wkhtmltopdf bağımlı, 2023 arşiv |
+| IronPDF | Proprietary $749+ | Pahalı, alternatif var |
+| Syncfusion PDF Framework | Proprietary $395/ay | Aşırı pahalı |
+| Apryse / PSPDFKit / Foxit / Adobe / GdPicture / ABCPDF / DynamicPDF / Telerik | Proprietary | Enterprise scope dışı |
+| Api2pdf / PDFBolt / CraftMyPDF / pdforge | SaaS | Cloud bağımlılık + KVKK riski |
+| HTMLDOC | GPL 2011 | Abandoned |
+
+**Net karar:** Stack değişmez. **Gotenberg + PdfSharp/MigraDoc + QRCoder + Razor.Templating.Core** rev 2 doğrulandı.
+
 ## 4. Kaynak Referansları
 
 ### KVKK Resmi (indirilecek `docs/kvkk-references/` gitignored)
@@ -201,6 +230,9 @@
 - [VERBİS Kılavuz PDF](https://verbis.kvkk.gov.tr/sharedFolder/veri-sorumlulari-sicil-bilgi-sistemi-kilavuzu.pdf)
 - [KVKK 6698 Kanun Tam Metni](https://mevzuat.gov.tr/MevzuatMetin/1.5.6698.pdf) — Resmi Gazete 7 Nisan 2016, No: 29677
 - [6698 Konsolide Metin (LexPera)](https://www.lexpera.com.tr/mevzuat/kanunlar/kisisel-verilerin-korunmasi-kanunu-6698)
+
+### Awesome-list referansı (bağımsız doğrulama 2026-05-21)
+- [awesome-dotnet-pdf-libraries-2025](https://github.com/csharp-pdf-libraries/awesome-dotnet-pdf-libraries-2025) — 73+ kütüphane envanteri. Mevcut kararlarımız bağımsız doğrulandı: Gotenberg + PdfSharp/MigraDoc seçimi onay, iText AGPL + Aspose + wkhtmltopdf reddetmeleri doğru, QuestPDF reddi doğru (Bootstrap CSS3 test geçen 4'ten biri ama lisans/DSL/Razor reuse dezavantajları kalır).
 
 ### GitHub repolar
 - [Stateless](https://github.com/dotnet-state-machine/stateless)
