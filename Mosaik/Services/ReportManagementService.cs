@@ -7,6 +7,7 @@ namespace Mosaik.Services
     // M-05: DashboardHtml parametresi kaldirildi (legacy retirement). DashboardConfigJson
     // birincil. Mevcut DB'deki HTML kayitlari ReportsController legacy fallback ile render
     // edilir ama yeni yazim yollari dokunmaz.
+    // ADR-009 · Migration 66: ReportType parametresi kaldırıldı (21 Mayıs 2026).
     public record ReportFormInput(
         string? Title,
         string? Description,
@@ -15,7 +16,6 @@ namespace Mosaik.Services
         HashSet<int> SelectedRoleIds,
         HashSet<int> SelectedGroupIds,
         bool IsActive,
-        string? ReportType,
         string? ParamSchemaJson,
         string? DashboardConfigJson);
 
@@ -39,7 +39,7 @@ namespace Mosaik.Services
             var err = Validate(input);
             if (err != null) return AdminOperationResult.Fail(err);
 
-            // ADR-009 · M-11 F-1.5: ReportType dallanmasi kaldirildi — her rapor dashboard.
+            // ADR-009 · Migration 66: ReportType drop edildi — her rapor dashboard.
             var configJson = string.IsNullOrWhiteSpace(input.DashboardConfigJson)
                 ? BuildDefaultDashboardConfig(input.Title)
                 : input.DashboardConfigJson;
@@ -47,7 +47,6 @@ namespace Mosaik.Services
             var dashErr = await ValidateDashboardConfigAsync(configJson, reportId: null, input);
             if (dashErr != null) return AdminOperationResult.Fail(dashErr);
 
-#pragma warning disable CS0618 // ReportType [Obsolete], Migration 19 drop edecek.
             var entity = new ReportCatalog
             {
                 Title = (input.Title ?? "").Trim(),
@@ -56,11 +55,9 @@ namespace Mosaik.Services
                 ProcName = (input.ProcName ?? "").Trim(),
                 AllowedRoles = await BuildAllowedRolesCsv(input.SelectedRoleIds),
                 IsActive = input.IsActive,
-                ReportType = "dashboard",
                 ParamSchemaJson = NormalizeParamSchema(input.ParamSchemaJson, null),
                 DashboardConfigJson = configJson
             };
-#pragma warning restore CS0618
 
             _context.ReportCatalog.Add(entity);
             await _context.SaveChangesAsync();
@@ -89,7 +86,7 @@ namespace Mosaik.Services
             var err = Validate(input);
             if (err != null) return AdminOperationResult.Fail(err);
 
-            // ADR-009 · M-11 F-1.5: ReportType dallanmasi kaldirildi — her rapor dashboard.
+            // ADR-009 · Migration 66: ReportType drop edildi — her rapor dashboard.
             var configJson = string.IsNullOrWhiteSpace(input.DashboardConfigJson)
                 ? (string.IsNullOrWhiteSpace(report.DashboardConfigJson)
                     ? BuildDefaultDashboardConfig(input.Title)
@@ -99,7 +96,6 @@ namespace Mosaik.Services
             var dashErr = await ValidateDashboardConfigAsync(configJson, reportId, input);
             if (dashErr != null) return AdminOperationResult.Fail(dashErr);
 
-#pragma warning disable CS0618 // ReportType [Obsolete], Migration 19 drop edecek.
             var oldSnap = new { report.ReportId, report.Title, report.DataSourceKey, report.ProcName, report.AllowedRoles, report.IsActive };
 
             report.Title = (input.Title ?? "").Trim();
@@ -109,9 +105,7 @@ namespace Mosaik.Services
             report.AllowedRoles = await BuildAllowedRolesCsv(input.SelectedRoleIds);
             report.IsActive = input.IsActive;
             report.ParamSchemaJson = NormalizeParamSchema(input.ParamSchemaJson, report.ParamSchemaJson);
-            report.ReportType = "dashboard";
             report.DashboardConfigJson = configJson;
-#pragma warning restore CS0618
 
             await _context.SaveChangesAsync();
             await SyncRolesAndGroupsAsync(report.ReportId, input.SelectedRoleIds, input.SelectedGroupIds);

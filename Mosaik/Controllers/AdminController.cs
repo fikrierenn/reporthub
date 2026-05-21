@@ -321,6 +321,7 @@ namespace Mosaik.Controllers
         }
 
         // M-01: ReportManagementService icin form -> DTO donusumu.
+        // ADR-009 · Migration 66 (21 Mayıs 2026): ReportType parametresi kaldırıldı (kolon DROP edildi).
         private ReportFormInput BuildReportFormInput() => new(
             Title: Request.Form["Title"],
             Description: Request.Form["Description"],
@@ -329,7 +330,6 @@ namespace Mosaik.Controllers
             SelectedRoleIds: ParseIds(Request.Form["SelectedRoles"]),
             SelectedGroupIds: ParseIds(Request.Form["SelectedGroups"]),
             IsActive: ReadFormBool("IsActive"),
-            ReportType: "dashboard", // ADR-009 · M-11 F-1.5: form alanı kaldırıldı, hep dashboard.
             ParamSchemaJson: Request.Form["ParamSchemaJson"],
             DashboardConfigJson: Request.Form["DashboardConfigJson"]);
 
