@@ -429,6 +429,7 @@
 @Html.AntiForgeryToken()
 
 <script src="~/assets/js/app-shell.js" asp-append-version="true"></script>
+<script src="~/assets/js/focus-trap.js" asp-append-version="true"></script>
 @if (User?.Identity is { IsAuthenticated: true })
 {
     <script>

@@ -56,7 +56,7 @@
 </div>
 
 @* Etkinlik Detay Modal *@
-<div id="eventModal" class="modal-backdrop">
+<div id="eventModal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="modalTitle" aria-hidden="true" tabindex="-1">
     <div class="modal-card">
         <div class="modal-head">
             <h3 id="modalTitle" class="modal-title"></h3>
@@ -100,9 +100,9 @@
 </div>
 
 @* Etkinlik Oluşturma Modal *@
-<div id="createModal" class="modal-backdrop">
+<div id="createModal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="createModalTitle" aria-hidden="true" tabindex="-1">
     <div class="modal-card">
-        <h3 class="modal-title compact">Yeni Etkinlik</h3>
+        <h3 id="createModalTitle" class="modal-title compact">Yeni Etkinlik</h3>
         <form method="post" action="/Calendar/Create" id="frmCreate">
             @Html.AntiForgeryToken()
             <div class="field">
@@ -203,21 +203,41 @@
             document.getElementById('frmComplete').style.display = isSystemEvent ? 'none' : '';
             document.getElementById('frmDelete').style.display   = isSystemEvent ? 'none' : '';
 
-            document.getElementById('eventModal').classList.add('is-open');
+            var em = document.getElementById('eventModal');
+            em.classList.add('is-open');
+            em.setAttribute('aria-hidden', 'false');
+            if (window.MosaikFocusTrap) window.MosaikFocusTrap.activate(em);
         }
 
         window.closeEventModal = function () {
-            document.getElementById('eventModal').classList.remove('is-open');
+            var em = document.getElementById('eventModal');
+            em.classList.remove('is-open');
+            em.setAttribute('aria-hidden', 'true');
+            if (window.MosaikFocusTrap) window.MosaikFocusTrap.deactivate(em);
         };
 
         window.closeCreateModal = function () {
-            document.getElementById('createModal').classList.remove('is-open');
+            var cm = document.getElementById('createModal');
+            cm.classList.remove('is-open');
+            cm.setAttribute('aria-hidden', 'true');
+            if (window.MosaikFocusTrap) window.MosaikFocusTrap.deactivate(cm);
         };
 
         document.getElementById('btnNewEvent').addEventListener('click', function () {
             var today = new Date().toISOString().split('T')[0];
             document.getElementById('evDate').value = today;
-            document.getElementById('createModal').classList.add('is-open');
+            var cm = document.getElementById('createModal');
+            cm.classList.add('is-open');
+            cm.setAttribute('aria-hidden', 'false');
+            if (window.MosaikFocusTrap) window.MosaikFocusTrap.activate(cm);
+        });
+
+        document.addEventListener('keydown', function (e) {
+            if (e.key !== 'Escape') return;
+            var em = document.getElementById('eventModal');
+            var cm = document.getElementById('createModal');
+            if (em && em.classList.contains('is-open')) { window.closeEventModal(); return; }
+            if (cm && cm.classList.contains('is-open')) { window.closeCreateModal(); return; }
         });
 
         document.addEventListener('DOMContentLoaded', function () {

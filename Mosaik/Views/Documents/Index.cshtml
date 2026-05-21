@@ -243,7 +243,7 @@ else
 @await Html.PartialAsync("_FooterHint", (string?)$"{Model.Count} belge")
 
 @* Plan 27 Faz B-05 — Belgeye soru sor drawer'ı *@
-<div id="docChatDrawer" class="doc-chat-drawer hidden">
+<div id="docChatDrawer" class="doc-chat-drawer hidden" role="dialog" aria-modal="true" aria-labelledby="docChatFileName" aria-hidden="true" tabindex="-1">
     <div class="doc-chat-head">
         <div>
             <div class="doc-chat-title" id="docChatFileName">—</div>
@@ -316,8 +316,11 @@ window.toggleUpload = function (force) {
             state.fileName = fileName;
             state.messages = [];
             el('docChatFileName').textContent = fileName;
-            el('docChatDrawer').classList.remove('hidden');
+            var drw = el('docChatDrawer');
+            drw.classList.remove('hidden');
+            drw.setAttribute('aria-hidden', 'false');
             render();
+            if (window.MosaikFocusTrap) window.MosaikFocusTrap.activate(drw);
             setTimeout(function () { el('docChatQ').focus(); }, 50);
         },
         bindButtons: function () {
@@ -331,7 +334,10 @@ window.toggleUpload = function (force) {
             });
         },
         close: function () {
-            el('docChatDrawer').classList.add('hidden');
+            var drw = el('docChatDrawer');
+            drw.classList.add('hidden');
+            drw.setAttribute('aria-hidden', 'true');
+            if (window.MosaikFocusTrap) window.MosaikFocusTrap.deactivate(drw);
         },
         ask: async function () {
             var q = el('docChatQ').value.trim();
@@ -370,6 +376,12 @@ window.toggleUpload = function (force) {
     } else {
         window.DocChat.bindButtons();
     }
+
+    document.addEventListener('keydown', function (e) {
+        if (e.key !== 'Escape') return;
+        var drw = el('docChatDrawer');
+        if (drw && !drw.classList.contains('hidden')) window.DocChat.close();
+    });
 })();
 </script>
 }

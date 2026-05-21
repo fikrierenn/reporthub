@@ -183,13 +183,19 @@
 <div x-data="ocPersonelModal()"
      x-show="open"
      x-cloak
+     role="dialog"
+     aria-modal="true"
+     aria-labelledby="ocPersonelTitle"
+     :aria-hidden="open ? 'false' : 'true'"
+     tabindex="-1"
+     x-effect="open ? (window.MosaikFocusTrap && window.MosaikFocusTrap.activate($el)) : (window.MosaikFocusTrap && window.MosaikFocusTrap.deactivate($el))"
      @@oc-show-personel.window="show($event.detail.code, $event.detail.title)"
      @@keydown.escape.window="open = false"
      class="modal-overlay">
     <div @@click.outside="open = false" class="modal-card scrollable">
         <div class="modal-head-block">
             <div>
-                <h3 x-text="title"></h3>
+                <h3 id="ocPersonelTitle" x-text="title"></h3>
                 <p class="modal-head-block__count">
                     <span x-text="people.length"></span> çalışan
                 </p>
