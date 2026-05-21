@@ -63,7 +63,7 @@ Detay: [`.claude/rules/session-protocol.md`](.claude/rules/session-protocol.md).
 - `Mosaik/ViewModels/` — view-model wrapper'ları
 - `Mosaik/Views/` — Razor views, `_AppLayout.cshtml` ana layout
 - `Mosaik/Services/` — `PasswordHasher`, `AuditLogService`, `DashboardRenderer`
-- `Mosaik/Database/` — SQL migration + seed + SP scriptleri (<!-- AUTO:MIGRATION_RANGE -->00_ → 65_<!-- /AUTO:MIGRATION_RANGE -->, <!-- AUTO:MIGRATION_COUNT -->66<!-- /AUTO:MIGRATION_COUNT --> dosya)
+- `Mosaik/Database/` — SQL migration + seed + SP scriptleri (<!-- AUTO:MIGRATION_RANGE -->00_ → 66_<!-- /AUTO:MIGRATION_RANGE -->, <!-- AUTO:MIGRATION_COUNT -->67<!-- /AUTO:MIGRATION_COUNT --> dosya)
 - `Mosaik/wwwroot/assets/{js,css}/` — static assets
 
 ---
