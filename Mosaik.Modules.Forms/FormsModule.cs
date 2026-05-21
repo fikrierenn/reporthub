@@ -39,7 +39,7 @@ namespace Mosaik.Modules.Forms
                 e.Property(x => x.Name).HasMaxLength(200).IsRequired();
                 e.Property(x => x.Description);
                 e.Property(x => x.Category).HasMaxLength(80);
-                e.HasIndex(x => x.Slug).IsUnique();
+                e.HasIndex(x => new { x.FirmaId, x.Slug }).IsUnique();  // multi-tenant: her firmada ayrı slug
                 e.HasIndex(x => new { x.FirmaId, x.Status });
             });
 
@@ -78,7 +78,8 @@ namespace Mosaik.Modules.Forms
                 e.Property(x => x.SubmitterUserAgent).HasMaxLength(500);
                 e.HasOne(x => x.FormDefinition)
                     .WithMany(d => d.Submissions)
-                    .HasForeignKey(x => x.FormDefinitionId);
+                    .HasForeignKey(x => x.FormDefinitionId)
+                    .OnDelete(DeleteBehavior.Restrict);  // KVKK: submission kayıtları silinmez
                 e.HasIndex(x => new { x.FormDefinitionId, x.SubmittedAt });
                 e.HasIndex(x => new { x.SubmittedById, x.SubmittedAt });
             });
@@ -105,7 +106,8 @@ namespace Mosaik.Modules.Forms
                 e.Property(x => x.RecipientEmail).HasMaxLength(200);
                 e.HasOne(x => x.FormDefinition)
                     .WithMany(d => d.PublicTokens)
-                    .HasForeignKey(x => x.FormDefinitionId);
+                    .HasForeignKey(x => x.FormDefinitionId)
+                    .OnDelete(DeleteBehavior.Cascade);   // form silinince tokenlar da silinir
                 e.HasIndex(x => x.TokenHash).IsUnique();
             });
 

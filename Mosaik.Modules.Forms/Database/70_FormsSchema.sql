@@ -37,7 +37,7 @@ BEGIN
         CreatedAt             DATETIME2    NOT NULL DEFAULT SYSUTCDATETIME(),
         UpdatedAt             DATETIME2    NOT NULL DEFAULT SYSUTCDATETIME()
     );
-    CREATE UNIQUE INDEX IX_FormDefinitions_Slug ON dbo.FormDefinitions(Slug);
+    CREATE UNIQUE INDEX IX_FormDefinitions_FirmaSlug ON dbo.FormDefinitions(FirmaId, Slug);  -- multi-tenant
     CREATE INDEX IX_FormDefinitions_FirmaStatus ON dbo.FormDefinitions(FirmaId, Status);
     PRINT 'Migration 70 — FormDefinitions created.';
 END
