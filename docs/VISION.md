@@ -216,31 +216,67 @@ CLAUDE.md "Vanilla JS IIFE" diyor. Ama `_AppLayout.cshtml`'a htmx CDN eklenmiş.
 
 **Detay:** [Plan 40](../plans/40-kvkk-process-backbone.md) KVKK Envanter (dar), [Plan 41](../plans/41-form-builder.md) Form Builder (Hybrid v1 JSON + v2 builder), [Plan 42](../plans/42-process-execution-runtime.md) Process Execution Runtime (ProcessInstance + 6 aspect timeline + KvkkProcessingActivity log).
 
-### Önerilen sıra (3 ay perspektif — 2026-05-21 rev 2 altılı kalp)
+### Önerilen sıra (3 ay perspektif — 2026-05-21 rev 3 bağımlılık + OSS reuse)
+
+> **Detaylı bağımlılık grafiği + matris + hafta hafta plan:** [`docs/VNEXT_DEPENDENCY_ORDER_2026-05-21.md`](VNEXT_DEPENDENCY_ORDER_2026-05-21.md).
 
 ```
-Hafta 1-3:  Plan 34 SOP modülü (Tamim altyapısı reuse) + Plan 32 SMTP caller
-            Plan 40 KVKK Faz 0-2 paralel (veri modeli + xlsx import + envanter CRUD)
-            Plan 38 EntityRelations sözleşmesi ilk büyük canlı test
-            Plan 36 Workflow Designer Faz A (engine)
-Hafta 2-6:  Plan 41 Form Builder (KRİTİK PATH — Plan 42 prereq)
-            Faz 0-1 (scaffold + render+submit) hafta 2-3
-            Faz 2-3 (admin CRUD + public anonim) hafta 4-5
-            Faz 4-7 (file/signature/encrypted/template seed) hafta 5-6
-Hafta 4-5:  Plan 35 Comment / Mention (cross-cutting, paralel)
-Hafta 5-7:  Plan 36 Workflow Designer Faz B-D (designer UI + entegre)
-Hafta 6-7:  Plan 40 KVKK Faz 3-4 (SOP entegrasyon + global reverse search)
-Hafta 7-10: Plan 42 Process Execution Runtime (ProcessInstance + 6 aspect + SLA + result)
-            Faz 0-3 (scaffold + execution + public + inbox/detail) hafta 7-8
-            Faz 4-6 (SLA + render + KvkkProcessingActivity + retention) hafta 8-9
-            Faz 7-9 (cron + admin + e2e entegrasyon test) hafta 9-10
-Hafta 9-11: Plan 40 KVKK Faz 5-7 (AI integrity + VERBİS export + risk dashboard)
-            Plan 42 KvkkProcessingActivity log Plan 40 dashboard'unu besler
-Paralel:    Plan 18B HR Sync (haftada 1-2 gün, blok değil)
-Hafta 12+:  Documents Plan 27 Faz C, Plan 33 Faz 4 D-01..D-05 borç temizliği
+Hafta 0:    Onay + bütçe + aksiyon paketi
+            - 3 plan onay (40/41/42 §10 5 madde her biri)
+            - 4 ADR onay (018/019/020/021)
+            - QuestPDF Pro ~$699/yıl bütçe (BKM revenue >$1M)
+            - Plan 32 SMTP caller 6 açık soru cevap
+            - NuGet + JS + KVKK referansları indir
+            - Docker Presidio Türkçe spaCy bake
+
+Hafta 1-2:  Foundation + kritik path başlangıç (3 paralel hat)
+            A: Plan 32 SMTP caller bitir (~8-12h) — Plan 35/40/42 unlocker
+            B: Plan 41 Form Builder Faz 0-1 (~16-20h) — KRİTİK PATH
+            C: Plan 36 Workflow Faz A — Stateless 5.20.1 + designer scaffold (~8h)
+
+Hafta 2-3:  Plan 40 + Plan 34 + Plan 35 paralel
+            A: Plan 34 SOP Faz A-B — Tamim altyapı reuse (~8-14h)
+            B: Plan 41 Form Builder Faz 2-3 — admin CRUD + public anonim (~16-20h)
+            C: Plan 40 KVKK Faz 0-1 — Mosaik.Modules.Kvkk + xlsx import 361 süreç (~10-14h)
+            D: Plan 35 Comment/Mention başla (~8-12h)
+
+Hafta 3-4:  Plan 41 finalize + Plan 40 CRUD + Plan 36 designer
+            A: Plan 41 Form Builder Faz 4-5 — file/signature/encrypted (~12-16h)
+            B: Plan 40 KVKK Faz 2 — KVİE CRUD UI 20 sütun (~12-15h)
+            C: Plan 36 Workflow Faz B-C — designer UI + Obligations/Contracts (~14-18h)
+            D: Plan 35 Comment/Mention tamam (~12-16h)
+
+Hafta 4-5:  Plan 41 tamamla + Plan 40 SOP entegre + ADR-018 sonrası Plan 37
+            A: Plan 41 Form Builder Faz 6-7 — submission admin + 8 template seed (~10-14h)
+            B: Plan 40 KVKK Faz 3-4 — SOP entegrasyon + global reverse search (~14-18h)
+            C: Plan 36 Workflow Faz D — SOP entegrasyon (~4-6h)
+            D: Plan 34 SOP Faz C-D — tam SOP CRUD + version + onay (~22-36h)
+            E: Plan 37 Unified Inbox Faz 0-1 — ADR-018 onay sonrası (~8-12h)
+
+Hafta 6-8:  Plan 42 Process Execution Runtime (BİRLEŞTİRİCİ)
+            Tüm prereq (34+36+40 Faz 0-4+41+38) bittikten sonra.
+            A: Plan 42 Faz 0-1 — scaffold + ProcessExecutionService + Stateless hookup (~14-18h)
+            B: Plan 42 Faz 2-3 — public/anonim + inbox + 6 aspect timeline vis-timeline (~16-20h)
+            C: Plan 42 Faz 4-5 — SLA Hangfire + result rendering QuestPDF/OpenXml/OfficeIMO (~14-18h)
+
+Hafta 8-9:  Plan 42 finalize + Plan 40 KVKK AI closure
+            A: Plan 42 Faz 6-7 — KvkkProcessingActivity log + retention + ICS Ical.Net (~10-14h)
+            B: Plan 42 Faz 8-9 — owner dashboard + admin + E2E test (~10-14h)
+            C: Plan 40 KVKK Faz 5 — AI Integrity Checker 8 pattern Presidio+FuzzySharp (~12-15h)
+            D: Plan 37 Unified Inbox Faz 2-3 — Plan 42 tüketici (~10-14h)
+
+Hafta 10-11: KVKK closure + borç temizliği
+            A: Plan 40 KVKK Faz 6-7 — VERBİS export + aydınlatma versioning + Risk dashboard (~14-18h)
+            B: Plan 33 Faz 4 D-01..D-06 — Documents/AI/Vision/Test/Tag borç (~38-52h)
+
+Paralel:    Plan 18B HR Sync — bağımsız, haftada 1-2 gün (~16-24h)
+
+Hafta 12+:  Plan 41 v2 drag-drop builder UI, Documents çakışma çözüm, VISION §7 OI pilot
 ```
 
-**Kritik path:** Plan 41 Form Builder. Olmadan Plan 42 başlamaz, Plan 40 form aspect stub kalır. En önce Faz 0-3 (4 hafta) çıkması şart.
+**Kritik path:** Plan 41 Form Builder Faz 0-3 (~32-40h Hafta 1-3). Olmadan Plan 42 başlamaz. **vNext kalbi toplam ~11 hafta wall-clock paralel.**
+
+**Effort özet (OSS reuse + Plan 32+35+37 dahil):** Plan 32 (~8-12h) + 34 (~30-50h) + 35 (~12-16h) + 36 (~22-32h) + 37 (~18-26h) + 40 (~38-50h) + 41 (~38-48h) + 42 (~48-64h) = **~214-298h** sequential. Paralel ~11 hafta.
 
 ### Yapılmayacaklar (vNext kapsamı dışı)
 
