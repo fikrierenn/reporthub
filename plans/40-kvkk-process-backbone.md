@@ -160,6 +160,33 @@ Tek `Process` tablosu KVİE satırını taşır. Workflow / Form / SOP / Doküma
 
 **Reddetme:** OneTrust $50K+ lisans, self-host yok. Privado AI-first ama enterprise pricing. OpenComply LGPD odaklı (Brezilya), KVKK adapt etmek effort. Türkçe + KVKK Mart 2025 rehber + VERBİS + BKM-özgü hukuki sebep eşleşmeleri kütüphaneye gömülü değil.
 
+### OSS reuse stack (2026-05-21 araştırma — `docs/RESEARCH_OSS_VNEXT_2026-05-21.md`)
+
+| Bileşen | OSS | Lisans | Faz | Tasarruf |
+|---|---|---|---|---|
+| PII detection + anonymization | **Microsoft Presidio** (MIT, 8.2k★) Docker yan-servis REST | MIT | Faz 5 AI Integrity + Faz 7 retention sweep | ~%20-25 (TC Kimlik + IBAN custom recognizer ~100 satır Python; aydınlatma metni Analyzer; retention sonu Anonymizer) |
+| Türkçe NLP modeli | **`turkish-nlp-suite/tr_core_news_trf`** spaCy transformer | MIT-like | Presidio NlpEngine config | resmi `tr` paket yok, community model — version pin |
+| Fuzzy text similarity (Pattern 1) | **FuzzySharp** (MIT, C# native, JakeBayer) | MIT | Faz 5 | ~%15-20 Token-Set Ratio. ⚠️ Türkçe için `PreprocessMode.None` + manual i↔I/ç↔c normalize |
+| AI Integrity Checker prompt orchestration | **DikkatIQ AI Layer reuse** (Mosaik.Core.AI 3-katman fallback) | İç | Faz 5 | ~%30 — Ollama→Gemini→Claude hazır |
+| VERBİS export Excel template | **KVKK resmi xlsx** `kvkk.gov.tr/.../b5fe209d-...xlsx` referans | Resmi | Faz 6 | ~%15 — birebir format reverse-engineer yok |
+| Mevzuat referansları | KVKK 6698 PDF + Mart 2025 Rehber + VERBİS Kılavuz | Resmi | `docs/kvkk-references/` gitignored | doc tarafı |
+| Excel I/O | **ClosedXML** (mevcut, MIT) | MIT | Faz 1 import + Faz 6 export | 0 (korunsun) |
+| Cookie banner (opsiyonel scope dışı) | **CookieConsent v3** (MIT vanilla ~24kb) | MIT | Mosaik `/Privacy` sayfası | 1 saat entegrasyon |
+| KVKK Türk SaaS (kvkkasistan/nesil) | Proprietary ₺15-50k/yıl abonelik | — | — | ❌ Reddedildi — in-house Plan 40 |
+| Bearer CLI | Elastic License 2.0 | — | — | ❌ Reddedildi — C# desteklemiyor |
+| Privado | Apache-2.0 | — | — | ❌ Reddedildi — C# yok |
+| OpenMetadata / DataHub | Apache-2.0 | — | — | 🔄 Ertelendi — Airflow+ES overkill, Plan 42+ retention DB scan için tekrar değerlendir |
+| Lucene.Net TurkishAnalyzer | Apache-2.0 | — | Pattern 6 opsiyonel | FuzzySharp+regex çoğu için yeter |
+
+**Net Plan 40 effort tasarrufu: ~%25-30** (~65h → ~48h).
+
+**Aksiyon (Faz 0 başlangıçta):**
+1. KVKK envanter xlsx + Mart 2025 Rehber + VERBİS Kılavuz → `docs/kvkk-references/` (gitignored, telif)
+2. NuGet: `FuzzySharp` (Mosaik.Modules.Kvkk)
+3. Docker compose: Presidio Analyzer + Anonymizer + `tr_core_news_trf` bake
+4. Custom Python recognizer: `TcKimlikRecognizer.py` (11-hane + Mod10/Mod11), `IbanTrRecognizer.py` (`^TR\d{24}$` + checksum)
+5. `Mosaik.Core.AI/Privacy/PresidioClient.cs` HttpClient + DTO
+
 ### Lens kontrolü
 
 - 🔴 **Contrarian:** Process omurga fatal flaw: eski modüller (Tamim, Documents, Contracts) refactor olmadan bu omurgaya nasıl bağlanır? **Cevap:** Bağlanmaz — Plan 38 ilkesi. Yeni iş omurgaya kayıt düşer. Eski FK'lar dokunmaz. Üst yapı kendiliğinden çıkar.

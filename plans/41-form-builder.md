@@ -186,6 +186,22 @@ wwwroot/assets/css/components-forms.css        modül-özel CSS
 - Embed iframe Mosaik design system bozuluyor
 - Toplam effort ~3-4 hafta integrate + 2 hafta KVKK adapt = own v1 ile aynı
 
+### OSS reuse stack (2026-05-21 araştırma sonrası — `docs/RESEARCH_OSS_VNEXT_2026-05-21.md`)
+
+| Bileşen | OSS | Lisans | Konum | Tasarruf |
+|---|---|---|---|---|
+| Renderer | **SurveyJS Form Library 3.x** (MIT) | MIT | `wwwroot/lib/surveyjs/` UMD | %70 (~12h → 4h) — JSON schema + `Serializer.addProperty()` ile KVKK DataElement custom metadata |
+| Builder UI | **Mosaik DIY** (Survey Creator £422/yıl ticari değil) | İç | Plan 41 Faz B-C drag-drop | 0 (kapsamda kalır, ~30h korunur) |
+| Signature pad | **signature_pad 5.1.1** (MIT, ~5KB UMD) | MIT | `wwwroot/assets/js/form-signature.js` IIFE wrapper | %85 (~6h → 1h) |
+| AntiSpam (zorunlu) | **Honeypot + time-based** (5 satır pattern) | Pattern | controller side | %50 (~4h → 2h) |
+| AntiSpam (opsiyonel public) | **Cloudflare Turnstile** SaaS ücretsiz | SaaS | DSAR/ihbar yüksek risk endpoint | KVKK-friendly, "no PII collection" |
+| DataElement KVKK metadata | Plan 40 entegrasyon, **kapsamda kalır** | İç | Plan 41 Faz D | 0 |
+| Workflow trigger | Plan 36 Stateless callback | İç | Plan 41 Faz G | 0 |
+
+**Reddedilenler:** Formbricks (AGPLv3 viral), LimeSurvey (GPL+PHP), formio.js (OSL-3.0), Survey Creator (£422/dev/yıl ticari), reCAPTCHA v3 (KVKK riski — Google), Blazor formlar (stack uyumsuz), kevinchappell/formBuilder (jQuery), json-editor/Alpaca (Bootstrap/jQuery UI legacy), Tripetto (proprietary), Syncfusion (proprietary).
+
+**Net Plan 41 effort tasarrufu: ~%30-35** (~62h → ~42h).
+
 ### Lens kontrolü
 
 - 🔴 **Contrarian:** v1 drag-drop builder yok = admin form yorucu. **Cevap:** v1 BKM iç kullanım için 8-10 form template seed (DSAR, ihbar, başvuru, rıza, engelli, vs) — bunlar admin form ile yapılır, son kullanıcı bir form template seçer + doldurur.

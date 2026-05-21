@@ -60,9 +60,30 @@ Mosaik'te yükümlülük, SOP adımı, sözleşme onayı, tamim onayı gibi işl
 **Açıklama:** Elsa (MIT, .NET native) veya Camunda 8 self-hosted entegre et.
 **Reddetme sebebi:** Elsa 3.x hâlâ instabil, heavy dependency, öğrenme eğrisi yüksek. Camunda harici servis + JVM = operasyonel yük. Mosaik'in ihtiyacı Elsa'nın sunduğunun %20'si — YAGNI. Bağımlılık riskini almaya değmez.
 
-### C: `sequential-workflow-designer` + custom engine (SEÇİLEN)
-**Açıklama:** Frontend'de `sequential-workflow-designer` (MIT, zero-dep, Razor-embeddable) ile görsel tasarım. Backend'de lightweight custom `WorkflowEngine` — template JSON'dan instance üretir, Hangfire ile adım işler, `IWorkflow` Core abstraction üzerinden modüllere bağlanır.
-**Sebep:** Kontrolümüzde, tam fit, sıfır harici runtime bağımlılığı. Mosaik.Core'daki `IWorkflow` iskelet zaten bu yönü işaret ediyor. Modüller sadece `IWorkflowService.StartAsync(templateId, entityId)` çağırır — engine detayını bilmez.
+### C: `sequential-workflow-designer` + **Stateless 5.20.1** custom engine (SEÇİLEN, 2026-05-21 rev — Stateless somut)
+**Açıklama:** Frontend'de `sequential-workflow-designer` (MIT, zero-dep, Razor-embeddable) ile görsel tasarım. Backend'de **Stateless 5.20.1** (Apache-2.0, ~700 satır, hierarchical FSM + async actions + extern state persistence) state machine kütüphanesi + Hangfire scheduler + custom `WorkflowEngine` wrapper. Template JSON → Stateless `Configure().Permit()` mapper (~50-80 satır). Persistence-agnostic → state JSON Mosaik DB'ye (`WorkflowInstance.StateJson`).
+**Sebep:** Kontrolümüzde, tam fit, sıfır harici runtime bağımlılığı. Mosaik.Core'daki `IWorkflow` iskelet zaten bu yönü işaret ediyor. Modüller sadece `IWorkflowService.StartAsync(templateId, entityId)` çağırır — engine detayını bilmez. Stateless API'sı 5 method (Configure/Permit/OnEntry/OnExit/Fire) — öğrenme eğrisi 1 gün. Hiyerarşik state desteği Plan 36 Faz 2 koşullu branch için hazır. Plan 42 ProcessInstance ile bire bir uyumlu — Stateless state machine WorkflowInstance seviyesinde yaşar.
+
+**Karşılaştırma** (2026-05-21 OSS araştırma sonucu, `docs/RESEARCH_OSS_VNEXT_2026-05-21.md`):
+- ❌ **Elsa 3.6** (MIT, 7.4k★) — designer embed yok (Elsa Studio Blazor WASM ayrı), Plan 42 ProcessInstance + 6 aspect Elsa entity'leri (`WorkflowDefinition`, `WorkflowInstance`, `Bookmark`, `Trigger`, `ActivityExecutionRecord`) ile çakışıyor, "10-25 workflows incredibly inefficient" GitHub şikayet, doc gap. **Net +2 hafta zarar.**
+- ❌ **Workflow Core 3.17** (MIT, 5.4k★) — yarı aktif (son commit Eki 2025), designer yok. Stateless ile fark kapanıyor.
+- ❌ **Camunda 8 / Zeebe** (Source-available) — prod 8.5+ lisansı zorunlu, multi-component (Zeebe+Tasklist+Operate+Keycloak), BKM IT yükü, 6-12 ay satın alma süreci.
+- ❌ **Temporal** (MIT engine, Cloud $200+/ay) — Cassandra+ES self-host SRE yükü, 4 kişilik IT karşılayamaz.
+- ❌ **MassTransit Saga** (Apache-2.0) — Saga = distributed transaction, Mosaik monolit, yanlış pattern.
+- ❌ **DIY pure Hangfire + state JSON** — 200-300 satır boilerplate. State transition validation, guard, hierarchical state, sync/async entry actions sıfırdan yazımı. Stateless zaten bunları çözüyor.
+
+**Effort tasarrufu (Plan 36 + Plan 42 birleşik):**
+- Plan 36 Faz A WorkflowEngine: 12h → **8h** (-33%, Stateless boilerplate'i siler)
+- Plan 36 Faz 2 conditional branch: 16h → **10h** (Stateless hierarchical state hazır)
+- Plan 42 Faz 4 SLA Timer: 8-10h → **6-8h** (-20%)
+- Plan 42 Faz 1 Workflow hookup: 8-10h → **5-7h** (-30%)
+- **Toplam: ~15-20h tasarruf** (Plan 36 + Plan 42 ~209h, önceden 224h)
+
+**Risk + önlem:**
+- Stateless tek bakıcı (Nicholas Blumhardt + DotNet State Machine org). ~700 satır → gerekirse `Mosaik.Core/Workflow/` altına internal copy + Apache-2.0 attribution.
+- Designer JSON → Stateless config drift: mapper unit test, Plan 36 Faz A done criteria.
+
+**ADR-019 yazılır** — "Workflow backend engine — Stateless + Hangfire" (Elsa/Camunda/Temporal/Workflow Core reddedildi).
 
 ---
 

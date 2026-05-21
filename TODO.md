@@ -102,6 +102,17 @@ Build: 0 hata 0 uyarı. Test: **337/337 geçti** (test-discipline.md kanıtland�
   - **Faz 9** (6-8h) — E2E entegrasyon test (DSAR/İhbar/Aday/İhlal/Review uçtan uca)
 
 - [ ] **KVKK skill import** ✅ 2026-05-21 — `.claude/skills/kvkk-veri-envanteri/SKILL.md` (374 satır, claudskills.com export). Plan 40 Faz 5 AI Integrity Checker prompt kaynağı. Commit `36d590e`.
+
+- [ ] **OSS Reuse Araştırması — vNext altılı kalp** ✅ 2026-05-21 — `docs/RESEARCH_OSS_VNEXT_2026-05-21.md` (5 paralel agent). vNext altılı kalp toplam **~60-75h tasarruf** (~%23-25). Yıllık lisans tek kalem: **QuestPDF Pro ~$699/yıl 1 dev**. Diğer hepsi MIT/Apache/BSD ücretsiz.
+  - **Plan 36 Workflow** — Stateless 5.20.1 (Apache-2.0, ~700 satır FSM) + Hangfire — Elsa/Camunda/Temporal/Workflow Core reddedildi. ~%20-25 tasarruf. **ADR-019** yazıldı.
+  - **Plan 40 KVKK** — Microsoft Presidio (MIT, Docker yan-servis Türkçe spaCy `tr_core_news_trf`) + FuzzySharp (MIT, C# native fuzzy) + KVKK resmi xlsx referans + DikkatIQ AI Layer reuse. ~%25-30 tasarruf.
+  - **Plan 41 Form Builder** — SurveyJS Form Library 3.x (MIT) renderer partial reuse + signature_pad 5.1.1 (MIT) + honeypot/time-based AntiSpam + Cloudflare Turnstile opsiyonel. **ADR-020** yazıldı. ~%30-35 tasarruf.
+  - **Plan 42 Process Runtime** — Stateless backend (Plan 36 reuse) + vis-timeline 8.5.1 (Apache/MIT) Instance Detail 6-aspect UI + Ical.Net 5.2.2 (MIT, ical-org canonical) ICS feed + Scriban 7.2.0+ (BSD-2) result template + QuestPDF Pro + OpenXml + OfficeIMO + PDFsharp signature + Playwright opsiyonel. **ADR-021** yazıldı. ~%25 tasarruf.
+  - **Plan 34 SOP** — Tamim altyapısı %80 reuse (mevcut) + EasyMDE opsiyonel markdown editor. ~%15-20 tasarruf.
+  - **Reddedilenler:** Elsa 3.6, Camunda 8, Temporal, Workflow Core, Novu, iText AGPL, Aspose, DocX Xceed, EPPlus 7, Formbricks AGPL, LimeSurvey GPL/PHP, formio.js OSL-3.0, Survey Creator ticari, Bearer (C# yok), Privado (C# yok), OpenMetadata (overkill), Türk SaaS (proprietary abonelik), Wiki.js AGPL, Outline BSL, ProcessMaker AGPL/PHP, Flowable/Bonita/Camunda 7 JVM.
+  - **3 yeni ADR:** ADR-019 (Workflow Stateless), ADR-020 (Form Builder Hybrid SurveyJS), ADR-021 (Document rendering QuestPDF+OpenXml+OfficeIMO).
+  - **Aksiyon (Plan başlangıçlarında):** NuGet (`Stateless 5.20.1`, `FuzzySharp`, `QuestPDF 2026.5.0`, `DocumentFormat.OpenXml 3.5.1`, `OfficeIMO.Word 1.0.34`, `PDFsharp 6.2.0`, `Scriban >=7.2.0`, `Ical.Net 5.2.2`, `ZXing.Net`, opsiyonel `Microsoft.Playwright`) + JS assets (`wwwroot/lib/surveyjs/` UMD, `signature_pad`, `vis-timeline` standalone, opsiyonel `easymde`, `cookieconsent`) + KVKK referansları (`docs/kvkk-references/` gitignored telif) + Docker compose Presidio Analyzer+Anonymizer+Türkçe spaCy `tr_core_news_trf`.
+  - **Bütçe onayı bekliyor:** QuestPDF Professional ~$699/yıl 1 dev (BKM revenue >$1M, Community izin yok). Reddedilirse fallback: PDFsharp+MigraDoc (MIT, API eski-stil).
 - [ ] **[Plan 36 · Workflow Designer + Onay Akışları](plans/36-workflow-designer-onay-akislari.md)** ✅ **ONAYLANDI 2026-05-19** — sequential-workflow-designer (MIT, zero-dep) + custom WorkflowEngine. Tüm modüllerin onay zinciri tek engine. 30-40 saat, 4 faz.
   - **Faz A** (12-16h, W-01..W-08) — Core engine + designer UI + migration 62
   - **Faz B** (8-10h, W-09..W-13) — Hangfire job + bildirim + escalation + ICS feed

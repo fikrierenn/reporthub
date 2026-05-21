@@ -162,6 +162,32 @@ Mosaik.Modules.ProcessRuntime/                   (yeni csproj)
 
 **Reddetme:** Workflow = state machine, **Process Instance = vaka kimliği**. Workflow değişebilir (revize), aynı instance hâlâ var. Karıştırma yanlış soyut katman.
 
+### OSS reuse stack (2026-05-21 araştırma — `docs/RESEARCH_OSS_VNEXT_2026-05-21.md`)
+
+| Bileşen | OSS | Lisans | Faz | Tasarruf |
+|---|---|---|---|---|
+| State machine | **Stateless 5.20.1** (Apache-2.0, ~700 satır) | Apache-2.0 | Faz 1 (Plan 36 reuse) | %30 hookup (-3-5h) |
+| ProcessInstance entity + 6 aspect | **DIY** (Mosaik native) | İç | Faz 0 | 0 — OSS BPM engine reddedildi |
+| Timeline UI (Instance Detail 6 aspect) | **vis-timeline 8.5.1** (Apache/MIT, vanilla) | Apache/MIT | Faz 3 | ~%50 (-12-16h) groups API ile 6 aspect ayrı row |
+| ICS feed (Outlook/Google abone) | **Ical.Net 5.2.2** (MIT, ical-org canonical) | MIT | Faz 7 | ~%80 (-8-12h) RFC 5545 + RRULE + NodaTime TZ |
+| Result template (DSAR cevap PDF) | **QuestPDF 2026.5.0 Professional** (~$699/yıl) | Hybrid | Faz 5 | ~%70 (-4-6h) Fluent C# + watermark + QR ZXing.Net |
+| Result template (VERBİS taahhütname Word) | **DocumentFormat.OpenXml 3.5.1** (MIT, Microsoft) + placeholder helper | MIT | Faz 5 | ~%40 (-2-3h) placeholder regex replace |
+| Result template (İhbar soruşturma raporu Word) | **OfficeIMO.Word 1.0.34** (MIT, fluent OpenXml wrapper) | MIT | Faz 5 | ~%60 (-3-4h) cover+TOC+section |
+| Result template (Liquid sandbox) | **Scriban 7.2.0+** (BSD-2, AOT-safe) | BSD-2 | Faz 5 | ~%50 (-3-5h) — `>=7.2.0` pin (CVE-2024 fix) |
+| Digital signature | **PDFsharp 6.2 X509** (MIT) post-process | MIT | Faz 5 (opsiyonel) | QuestPDF native signing yok, PDFsharp kapatır |
+| KPI/chart PDF (Faz 6+) | **Playwright .NET** Razor→Chromium | MIT | Faz 8 (opsiyonel) | $0 |
+| Excel raporlar | **ClosedXML** (mevcut, MIT) | MIT | Faz 8 | 0 (korunsun) |
+| Notification | Plan 31 SMTP + Plan 37 inbox DIY (Novu reddedildi) | İç | Faz 4 | 0 (Novu = Node+Postgres+Redis+MongoDB+RabbitMQ ek altyapı) |
+| BPMN visual designer | ❌ **bpmn-js ERTELE** — Plan 42 polymorphic aspect modelini kısıtlar | — | — | — |
+| State machine v2 | ❌ **xstate OPSIYONEL** — Stateless ile fark az | — | — | — |
+| Process discovery | ❌ **Apromore ERTELE** — VISION §7.0.1 ileride ayrı plan | — | — | — |
+
+**Reddedilenler:** Elsa 3.6 (designer embed yok, ProcessInstance ile entity çakışma), Camunda 8 (multi-component + lisans), Temporal (Cassandra+ES SRE), Workflow Core (yarı aktif + designer yok), Novu (5 ek container), iText (AGPL), Aspose ($1175+/dev), DocX Xceed ($852+), Spire (free <500 sayfa), EPPlus 7 (Polyform Non-commercial), Wiki.js (AGPL), Outline (BSL), ProcessMaker (AGPL+PHP), Flowable/Bonita/Camunda 7 (JVM).
+
+**Yıllık lisans:** ~$699/yıl tek kalem (QuestPDF Pro 1 dev). Diğer hepsi MIT/Apache/BSD.
+
+**Net Plan 42 effort tasarrufu: ~%25** (~84h → ~64h).
+
 ### Lens kontrolü
 
 - 🔴 **Contrarian:** ProcessInstance + WorkflowInstance + FormSubmission = 3 tablo, gereksiz mi? **Cevap:** Her birinin life-cycle farklı. WorkflowInstance Plan 36 mevcut. FormSubmission Plan 41 mevcut. ProcessInstance bunları **iş anlamlı vaka** olarak birleştirir.
