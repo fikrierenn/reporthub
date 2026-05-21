@@ -88,6 +88,7 @@ namespace Mosaik.Modules.Forms
             {
                 e.HasKey(x => x.Id);
                 e.Property(x => x.FieldKey).HasMaxLength(80).IsRequired();
+                e.Property(x => x.ValueNumber).HasPrecision(18, 4);   // DECIMAL(18,4) — SQL migration ile eşleşir
                 e.HasOne(x => x.FormSubmission)
                     .WithMany(s => s.Values)
                     .HasForeignKey(x => x.FormSubmissionId)
