@@ -224,10 +224,10 @@ CLAUDE.md "Vanilla JS IIFE" diyor. Ama `_AppLayout.cshtml`'a htmx CDN eklenmiş.
 Hafta 0:    Onay + bütçe + aksiyon paketi
             - 3 plan onay (40/41/42 §10 5 madde her biri)
             - 4 ADR onay (018/019/020/021)
-            - QuestPDF Pro ~$699/yıl bütçe (BKM revenue >$1M)
+            - ~~QuestPDF Pro ~$699/yıl bütçe~~ REV 3: gerekmez (Gotenberg + MigraDoc hibrit $0)
             - Plan 32 SMTP caller 6 açık soru cevap
-            - NuGet + JS + KVKK referansları indir
-            - Docker Presidio Türkçe spaCy bake
+            - NuGet + JS + KVKK referansları indir (+ Gotenberg.Sharp.API.Client + PdfSharp-MigraDoc + QRCoder + Razor.Templating.Core)
+            - Docker Presidio Türkçe spaCy bake + Gotenberg 8.32 container
 
 Hafta 1-2:  Foundation + kritik path başlangıç (3 paralel hat)
             A: Plan 32 SMTP caller bitir (~8-12h) — Plan 35/40/42 unlocker
@@ -659,3 +659,4 @@ interface IMosaikModule {
 - **2026-05-20:** §7 eklendi — 7 platform araştırması (Backstage, Appsmith, NocoBase, n8n, Twenty CRM, Plane, FlowiseAI) + 6 stratejik vizyon katmanı (Unified Inbox, AI Danışman, Company Memory, Org Intelligence, Dynamic Dashboard, No-excuse). IMosaikModule evrim önerisi. Plan 37 (Unified Inbox) adayı tanımlandı.
 - **2026-05-21:** vNext kalbi üçlüden dörtlüye genişletildi (KVKK Process Backbone Plan 40 eklendi). Süreç omurgası fikri: `Process` central entity → 6 aspect derived (DataElement / Workflow / Form / SOP / Audit / Doküman) + EntityRelations polymorphic linker. §7.6.b yeni alt bölüm. BKM Kitap v7 KVKK envanter xlsx (361 süreç) Faz 1 seed kaynağı. AI Integrity Checker 8 pattern + VERBİS export + global reverse search ("ad-soyad nerede işleniyor?"). KVKK skill (`.claude/skills/kvkk-veri-envanteri/`) repo'ya port edildi (374 satır, claudskills.com export).
 - **2026-05-21 rev 2:** Kullanıcı netleştirmesi "bu süreçlerin ve kvkk kısımlarının tamamının işleyişi formları akışı mümkün olduğunca portal üstünden olmalı" sonrası. Plan 40 **dar tutuldu** — execution kapsam dışına çıkarıldı, Plan 42'ye devredildi. **Plan 41 Form Builder** (Hybrid v1 JSON + v2 builder UI, 54-70h) ve **Plan 42 Process Execution Runtime** (ProcessInstance + 6 aspect timeline + SLA timer + sonuç PDF/Word + KvkkProcessingActivity log, 64-84h) eklendi. vNext kalbi **altılı**: SOP + Comment + Workflow + KVKK + Form Builder + Process Execution Runtime. Toplam 11-13 hafta. Plan 41 = kritik path (Plan 42 prereq, Plan 40 form aspect typed bağlama). Portal **runtime execution platform** olarak konumlandı.
+- **2026-05-21 rev 3:** Kullanıcı "questpdf yerine bence repo vardır iyi bak" → ek deep research agent. **QuestPDF Pro reddedildi** (3 yıl $2097 maliyet + DSL öğrenme borcu + Razor reuse yok + digital signature native yok + vendor lock). **Gotenberg + PdfSharp/MigraDoc + QRCoder + Razor.Templating.Core hibrit stack kabul edildi.** ADR-021 rev 2 yazıldı. Yıllık lisans **$0**. vNext kalbi toplam lisans maliyeti: 0. Plan 42 Faz 5 effort 21h → 19h (-2h Razor template reuse). BKM Docker compose Plan 40 Presidio + Plan 42 Gotenberg birleşik <2Gi RAM toplam. Reddedilen ek alternatifler: Carbone (CCL), DinkToPdf (wkhtmltopdf arşiv), jsreport (LGPL), Spire.PDF Free (10 sayfa limit), HiQPdf Free (5 sayfa limit), PdfReport.Core (LGPL+iTextSharp dep), iText AGPL.

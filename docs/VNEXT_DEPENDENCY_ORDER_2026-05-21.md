@@ -96,7 +96,7 @@ Bekleyen kararlar:
 - [ ] **ADR-018 onay** (IMosaikModule capability evrim)
 - [ ] **ADR-019 onay** (Stateless workflow)
 - [ ] **ADR-020 onay** (SurveyJS Form Builder Hybrid)
-- [ ] **ADR-021 onay** (QuestPDF Pro + bütçe ~$699/yıl)
+- [ ] **ADR-021 onay rev 2** (Gotenberg + MigraDoc + QRCoder hibrit — $0 lisans, QuestPDF Pro reddedildi)
 - [ ] **Plan 32 SMTP caller** 6 açık soru cevap (Email Distribution scope)
 - [ ] **ReportType obsolete cleanup** karar (Migration 19?)
 
@@ -162,7 +162,7 @@ Aksiyon paketi:
 |---|---|---|---|---|
 | A | **Plan 42** Process Runtime | Faz 0-1 | 14-18h | Mosaik.Modules.ProcessRuntime scaffold + ProcessExecutionService + Workflow hookup (Plan 36 Stateless callback) |
 | B | **Plan 42** Process Runtime | Faz 2-3 | 16-20h | Public + Anonim başlatma + Inbox 4 sekme + Instance Detail 6 aspect timeline (vis-timeline) |
-| C | **Plan 42** Process Runtime | Faz 4-5 | 14-18h | SLA Timer Hangfire + Eskaltsiyon + Result Rendering (QuestPDF Pro + OpenXml + OfficeIMO) |
+| C | **Plan 42** Process Runtime | Faz 4-5 | 14-18h | SLA Timer Hangfire + Eskaltsiyon + Result Rendering (Gotenberg + MigraDoc + QRCoder + OpenXml + OfficeIMO) |
 
 ### Hafta 8-9 — Plan 42 finalize + Plan 40 KVKK closure
 
@@ -219,8 +219,7 @@ Aksiyon paketi:
 1. **Plan 41 Form Builder Faz 0-3 (~32-40h)** — Plan 42 başlamadan tamam olmalı. Kritik path.
    - **Önlem:** Hafta 1 başlamak şart, paralel Plan 32+36 yürümeli, gerekirse en az 3 hafta blok.
 
-2. **QuestPDF Pro lisans bütçesi $699/yıl** — Kullanıcı bütçe onayı. Reddedilirse PDFsharp+MigraDoc fallback (effort -2-3h ek).
-   - **Önlem:** ADR-021 onayında bütçe sorumlusu cevap versin. Plan 42 Faz 5'in başlamasını blokluyor.
+2. ~~**QuestPDF Pro lisans bütçesi $699/yıl**~~ **REV 3 ÇÖZÜLDÜ 2026-05-21:** Deep research ek agent → QuestPDF Pro reddedildi → **Gotenberg + MigraDoc + QRCoder + Razor.Templating.Core hibrit** kabul. $0 lisans + 3 yıl $2097 tasarruf + Razor reuse + digital signature native. ADR-021 rev 2. **Blocker yok.**
 
 3. **Plan 32 SMTP caller 6 açık soru** — Plan 35 Comment/Mention + Plan 40 digest + Plan 42 result email hepsi buna bekler.
    - **Önlem:** Plan 32 sorular Hafta 0'da kapansın.
@@ -244,7 +243,7 @@ Aksiyon paketi:
 **Hafta 0 (bugün/yarın):**
 
 1. **3 plan onayı:** Plan 40 (5 madde) + Plan 41 (5 madde) + Plan 42 (5 madde)
-2. **3 ADR onayı:** ADR-019 (Stateless) + ADR-020 (SurveyJS) + ADR-021 (QuestPDF Pro $699)
+2. **3 ADR onayı:** ADR-019 (Stateless) + ADR-020 (SurveyJS) + ADR-021 rev 2 (Gotenberg + MigraDoc hibrit — $0 lisans)
 3. **ADR-018 onayı:** IMosaikModule capability evrim
 4. **Plan 32 SMTP caller** 6 açık soru cevap
 5. **ReportType obsolete cleanup karar** (Migration 19 yazılsın mı)

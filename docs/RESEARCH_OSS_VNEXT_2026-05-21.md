@@ -44,17 +44,21 @@
 
 **ADR-020 yazılır** — "Form Builder Hybrid: SurveyJS Form Library renderer + DIY drag-drop builder UI".
 
-### Plan 42 Document Rendering (Faz 5)
+### Plan 42 Document Rendering (Faz 5) — rev 2 (2026-05-21 gece deep research)
+
+**Kullanıcı kararı:** "questpdf yerine bence repo vardır iyi bak" → ek deep research agent → **QuestPDF Pro reddedildi**, Gotenberg + MigraDoc hibrit stack kabul edildi. $699/yıl → $0, 3 yıl $2097 tasarruf.
 
 | Use case | Aday | Maliyet | Karar |
 |---|---|---|---|
-| DSAR cevap PDF formal letter | **QuestPDF Professional** | ~$699/yıl (BKM revenue >$1M, Community izin yok) | ✅ |
+| DSAR cevap PDF formal letter | **Gotenberg Docker + Razor view** | $0 (MIT + Apache 2.0) | ✅ |
 | VERBİS taahhütname Word | **DocumentFormat.OpenXml** + placeholder helper | $0 (MIT) | ✅ |
 | İhbar soruşturma raporu Word (cover+TOC+section) | **OfficeIMO.Word** v1.0.34 | $0 (MIT fluent OpenXml wrapper) | ✅ |
-| Sertifika PDF + QR code | **QuestPDF + ZXing.Net** | (Pro içinde) | ✅ |
-| Digital signature post-process | **PDFsharp X509** | $0 (MIT, QuestPDF eksiğini kapatır) | ✅ |
-| KPI/chart PDF (Plan 42 Faz 6+) | **Playwright .NET** Razor→Chromium | $0 (compute maliyeti) | ✅ |
+| Sertifika PDF + QR code | **Gotenberg + Razor + QRCoder 1.8.0** PNG data-URI | $0 (MIT) | ✅ |
+| Digital signature + bulk in-process + Gotenberg fallback | **PdfSharp + MigraDoc 6.2.4** (PKCS#7 native) | $0 (MIT) | ✅ |
+| Razor view → HTML string render | **RazorLight veya Razor.Templating.Core** | $0 (Apache 2.0) | ✅ |
+| KPI/chart PDF (Plan 42 Faz 6+) | **Playwright .NET** (Gotenberg yedek alternatif) | $0 (compute) | ✅ Opsiyonel |
 | Excel raporlar | **ClosedXML** (mevcut) | $0 | ✅ Korunsun |
+| **QuestPDF Professional** | Hybrid ~$699/yıl 1 dev | ❌ **REV 2 REDDEDİLDİ** | Razor reuse yok + DSL öğrenme borcu + digital signature yok + vendor lock + 3 yıl $2097 |
 | iText 7 | AGPL | ❌ Red | Closed-source Mosaik için yasak. |
 | Aspose.PDF/Words | Ticari $1175+/dev | ❌ Red | Aşırı pahalı. |
 | DocX Xceed | Ticari $852+ | ❌ Red | Free MIT alternatif var. |
@@ -62,8 +66,29 @@
 | EPPlus 7 | Polyform Non-commercial / $557+ | ❌ Red | ClosedXML zaten var. |
 | NPOI | Apache-2.0 | ❌ Red | ClosedXML kadar olgun değil. |
 | Clippit (Open-XML-PowerTools fork) | MIT | ❌ Red | OpenXML + placeholder helper yeterli, Clippit fazla karmaşık. |
+| **Carbone Community** | CCL kısıtlı | ❌ Red | "third parties" yasağı belirsiz, .NET SDK yok |
+| **DinkToPdf / wkhtmltopdf** | MIT wrapper / LGPL | ❌ Red | wkhtmltopdf 2023'te arşivlendi, CVE-2022-35583 SSRF açığı patch'siz |
+| **jsreport** | LGPL | ❌ Red | JS template engine, .NET SDK marjinal |
+| **PdfReport.Core (VahidN)** | LGPL-2.0 | ❌ Red | iTextSharp.LGPL bağımlı, bakım yavaş |
+| **OpenPDF** | LGPL/MPL | ❌ Red | Java-native, .NET portu marjinal |
+| **PhantomJS** | EOL 2018 | ❌ Red | — |
+| **HiQPdf Free** | Proprietary | ❌ Red | 5 sayfa limit |
+| **Spire.PDF Free** | Proprietary | ❌ Red | 10 sayfa limit |
 
-**ADR-021 yazılır** — "Document rendering stack — QuestPDF Pro + OpenXml + OfficeIMO + PDFsharp + ClosedXML".
+**Gotenberg avantajları:**
+- Docker MIT yan-servis (Plan 40 Presidio compose ile birleşir, +1 container <1Gi RAM)
+- Türkçe Noto font stack v8.30+ tam Unicode
+- Watermark + Header/Footer + Page numbering + PDF/A native
+- Razor template'leri Mosaik UI ile **aynı source-of-truth** (Tailwind + Türkçe + Chart.js reuse)
+- DSL öğrenme borcu yok
+- Vendor lock yok (MIT)
+
+**MigraDoc avantajları:**
+- In-process (HTTP overhead yok) — bulk 1000+ doc için ideal
+- Digital signature PKCS#7 native
+- Gotenberg down fallback path aynı kod
+
+**ADR-021 rev 2 yazıldı** — "Document rendering stack — Gotenberg + PdfSharp/MigraDoc + QRCoder + OpenXml + OfficeIMO + ClosedXML. QuestPDF Pro reddedildi."
 
 ### Plan 42 Process Runtime UI + ICS + Template
 
@@ -122,7 +147,7 @@
 | Plan 34 SOP | 38-60h | 30-50h (Tamim reuse %80 + EasyMDE opsiyonel) | **-8-10h ~%15-20** |
 | **Toplam vNext kalbi** | **236-319h** | **176-244h** | **~60-75h ~%23-25 tasarruf** |
 
-**Yıllık lisans maliyeti:** **~$699/yıl** (QuestPDF Professional 1 dev). Diğer hepsi MIT/Apache/BSD ücretsiz.
+**Yıllık lisans maliyeti (rev 2):** **$0**. QuestPDF Pro reddedildi → Gotenberg + MigraDoc + QRCoder hibrit. Tüm bileşenler MIT/Apache/BSD permissive. **3 yıl $2097 tasarruf.**
 
 ---
 
@@ -134,7 +159,10 @@
 |---|---|---|---|
 | `Stateless` | 5.20.1 | Apache-2.0 | Mosaik.Core / Plan 36 WorkflowEngine |
 | `FuzzySharp` | latest | MIT | Mosaik.Modules.Kvkk / Plan 40 Pattern 1 |
-| `QuestPDF` | 2026.5.0 | Hybrid (Pro $699/yr) | Mosaik.Modules.ProcessRuntime / Plan 42 Faz 5 |
+| `Gotenberg.Sharp.API.Client` | 3.0.0 | Apache 2.0 | Mosaik.Modules.ProcessRuntime / Plan 42 Faz 5 (Docker server MIT) |
+| `Razor.Templating.Core` | latest | Apache 2.0 | Mosaik.Modules.ProcessRuntime / Plan 42 Faz 5 (Razor → HTML string) |
+| `QRCoder` | 1.8.0 | MIT | Mosaik.Modules.ProcessRuntime / Plan 42 Faz 5 (QR code) |
+| ~~`QuestPDF`~~ | ~~2026.5.0~~ | ~~Hybrid ($699/yr)~~ | ❌ rev 2 reddedildi — Gotenberg + MigraDoc hibrit |
 | `DocumentFormat.OpenXml` | 3.5.1 | MIT | Mosaik.Modules.ProcessRuntime / Plan 42 |
 | `OfficeIMO.Word` | 1.0.34 | MIT | Mosaik.Modules.ProcessRuntime / Plan 42 |
 | `PDFsharp` | 6.2.0 | MIT | Mosaik.Modules.ProcessRuntime / Plan 42 (signature) |
@@ -161,6 +189,7 @@
 | **Microsoft Presidio Analyzer** | `mcr.microsoft.com/presidio-analyzer` | Plan 40 KVKK | dev + prod |
 | **Microsoft Presidio Anonymizer** | `mcr.microsoft.com/presidio-anonymizer` | Plan 40 KVKK + Plan 42 retention sweep | dev + prod |
 | **spaCy `tr_core_news_trf`** | Custom Dockerfile bake (HuggingFace download) | Presidio NlpEngine | dev + prod |
+| **Gotenberg 8.32** | `gotenberg/gotenberg:8.32` | Plan 42 Faz 5 PDF üretimi | dev + prod (RAM ~1Gi) |
 
 ---
 
@@ -205,7 +234,7 @@
    - Analyzer + Anonymizer servis, Türkçe spaCy `tr_core_news_trf` Dockerfile bake
    - Custom recognizer Python: `TcKimlikRecognizer.py` (11-hane + Mod10/Mod11), `IbanTrRecognizer.py` (`^TR\d{24}$` + checksum)
 5. **C# adapter:** `Mosaik.Core.AI/Privacy/PresidioClient.cs` HttpClient + DTO
-6. **QuestPDF Professional lisans satın al:** ~$699/yıl 1 dev (BKM revenue >$1M, Community izin yok) — kullanıcı bütçe onayı gerekir
+6. ~~QuestPDF Professional lisans satın al~~ → **REV 2: GEREKMEZ** ($0 stack). Gotenberg Docker container + NuGet `Gotenberg.Sharp.API.Client 3.0.0` + `PDFsharp-MigraDoc 6.2.4` + `QRCoder 1.8.0` + `Razor.Templating.Core`. **Lisans bütçesi yok.**
 7. **3 ADR yaz** (Plan implementation öncesi):
    - ADR-019: Workflow backend engine — Stateless + Hangfire
    - ADR-020: Form Builder Hybrid — SurveyJS Form Library renderer + DIY drag-drop builder
@@ -217,7 +246,9 @@
 
 | Risk | Önlem |
 |---|---|
-| **QuestPDF Professional lisans bütçesi** ~$699/yıl | Kullanıcı bütçe onayı gerekir. Alternatif PDFsharp+MigraDoc (MIT) — API daha eski-stil. |
+| ~~**QuestPDF Professional lisans bütçesi** ~$699/yıl~~ | **REV 2 ÇÖZÜLDÜ** — Gotenberg + MigraDoc hibrit stack, $0 lisans, Razor reuse |
+| **Gotenberg container down → PDF üretimi durur** | MigraDoc in-process fallback path aynı kod (bulk + signature ile birleşik) |
+| **Docker compose RAM yükü** | Plan 40 Presidio (~1Gi) + Gotenberg (~1Gi) = compose <2GB toplam BKM IT için kabul |
 | **Stateless tek bakıcı** | ~700 satır → gerekirse Mosaik.Core/Workflow/ altına internal copy + Apache-2.0 attribution |
 | **vis-timeline moment.js bağımlılığı** | dayjs migration future-proof değil; standalone bundle 1 dep kabul edilebilir |
 | **Scriban v7 breaking** | `>=7.2.0` lock; eski örnek kodları v6 syntax olabilir |
@@ -233,7 +264,7 @@
 
 ## 7. Sonuç
 
-Hazır OSS parçalar ile vNext altılı kalp **~60-75h tasarruf** edilir (~%23-25). Yıllık lisans maliyeti tek kalem: QuestPDF Pro ~$699/yıl. Tüm diğer paketler MIT/Apache/BSD ücretsiz + permissive.
+Hazır OSS parçalar ile vNext altılı kalp **~62-77h tasarruf** edilir (~%24-26 — Gotenberg Razor reuse +2h ek tasarruf). **Yıllık lisans maliyeti: $0** (rev 2). Tüm paketler MIT/Apache 2.0/BSD permissive. **3 yıl $2097 tasarruf** (QuestPDF Pro'ya karşı).
 
 **Sıralama** (kullanıcı onayı sonrası):
 1. NuGet + JS assets + KVKK referansları indir

@@ -1,158 +1,209 @@
-# ADR-021 — Document Rendering Stack: QuestPDF Pro + OpenXml + OfficeIMO + PDFsharp + ClosedXML
+# ADR-021 — Document Rendering Stack: Gotenberg + PdfSharp/MigraDoc + OfficeIMO + OpenXml + ClosedXML
 
-**Tarih:** 2026-05-21
-**Statü:** Önerildi (Plan 42 Faz 5 başlamadan onay + QuestPDF Professional lisans bütçesi)
+**Tarih:** 2026-05-21 (rev 2 — QuestPDF Pro reddedildi, Gotenberg + MigraDoc hibrit)
+**Statü:** Önerildi (Plan 42 Faz 5 başlamadan onay — bütçe gerekmez)
 **Karar verenler:** Fikri / Claude
-**Bağlam:** Plan 42 Process Execution Runtime Faz 5 Result Rendering; OSS araştırma `docs/RESEARCH_OSS_VNEXT_2026-05-21.md`
+**Bağlam:** Plan 42 Process Execution Runtime Faz 5 Result Rendering; OSS araştırma `docs/RESEARCH_OSS_VNEXT_2026-05-21.md` + ek paralel deep research (2026-05-21 gece).
 
 ---
 
 ## 1. Bağlam
 
-Plan 42 Process Execution Runtime Faz 5 (Result Rendering) — DSAR cevap mektubu, ihbar soruşturma raporu, aday red/kabul iletişim, sertifika PDF (QR code), VERBİS taahhütname, Kurul ihlal bildirim, vs.
+Plan 42 Faz 5 Result Rendering — DSAR cevap mektubu, ihbar soruşturma raporu, aday red/kabul, sertifika PDF (QR code), VERBİS taahhütname, KVKK Kurul ihlal bildirim.
 
-OSS araştırma .NET PDF/Word/Excel template engine ekosistemini tarayıp lisans + maliyet + .NET 10 uyumu + Türkçe karakter + complex template (table/image/header/footer/page break/watermark/digital signature) için karşılaştırma yaptı.
+**İlk öneri (rev 1):** QuestPDF Professional ~$699/yıl 1 dev (BKM revenue >$1M, Community izin yok).
 
-## 2. Karar
+**Kullanıcı kararı (2026-05-21):** "questpdf yerine bence repo vardır iyi bak" — ücretsiz OSS alternatif zorunlu.
 
-**Document rendering stack = QuestPDF Pro + DocumentFormat.OpenXml + OfficeIMO.Word + PDFsharp + ClosedXML + Playwright (opsiyonel).**
+Deep research (ek paralel agent) sonucu **Gotenberg + PdfSharp/MigraDoc hibrit stack** QuestPDF Pro'yu kapsam + lisans + maliyet + Mosaik stack uyum açısından yener.
 
-### 2.1 PDF — QuestPDF Professional (~$699/yıl 1 dev)
+## 2. Karar (rev 2)
 
-NuGet: `QuestPDF` 2026.5.0 (May 2026). Multi-target .NET 6/8/9/10.
+**Document rendering stack:**
 
-**Lisans modeli:**
-- Community MIT (free <$1M annual revenue)
-- Professional $699/dev/yıl (≤10 dev)
-- Enterprise (>10 dev quote-based)
+| Bileşen | Lisans | Rol | Maliyet |
+|---|---|---|---|
+| **Gotenberg 8.32** (Docker microservice) | **MIT** | Birincil HTML→PDF motoru (Razor view → headless Chromium) | $0 |
+| **Gotenberg.Sharp.API.Client 3.0.0** | **Apache 2.0** | .NET 10 fluent client (`AddGotenbergSharpClient`) | $0 |
+| **PdfSharp + MigraDoc 6.2.4** | **MIT** | Yedek + digital signature (PKCS#7 native) + bulk in-process | $0 |
+| **QRCoder 1.8.0** | **MIT** | QR code embed (sertifika) | $0 |
+| **RazorLight veya Razor.Templating.Core** | **Apache 2.0** | Razor view → HTML string (controller'sız render) | $0 |
+| **DocumentFormat.OpenXml 3.5.1** | MIT (Microsoft) | Word template placeholder VERBİS taahhütname | $0 |
+| **OfficeIMO.Word 1.0.34** | MIT | Karmaşık Word rapor (ihbar soruşturma cover+TOC+section) | $0 |
+| **ClosedXML** (mevcut) | MIT | Excel raporlar — korunsun | $0 |
+| **Microsoft.Playwright** (opsiyonel) | MIT | Gotenberg yerine in-process alternatif (BKM Docker yoksa) | $0 |
 
-**BKM durumu:** Revenue muhtemelen $1M üstü → **Professional zorunlu**.
+**Toplam yıllık maliyet: $0.** Tüm bileşenler permissive lisans (MIT/Apache 2.0).
 
-**Use cases:**
-- DSAR cevap mektubu (formal letter)
-- Sertifika PDF + QR code (ZXing.Net entegrasyonu)
-- VERBİS taahhütname görsel sürümü (Word'den dönüştürülürse)
-- Kurul ihlal bildirim görsel rapor (opsiyonel)
+### 2.1 Use case dağılımı
 
-**Özellikler:**
-- Fluent C# Designer.cs paradigması
-- Türkçe Unicode + RTL/bidi + ICU text shaping native
-- QR code embed (ZXing.Net)
-- Watermark built-in (background+header+content+footer+watermark stack)
-- TOC, hyperlink, bookmark, page numbering hep var
-- Digital signature **native YOK** — PDFsharp ile post-process
+| Use case | Birincil yol | Motor |
+|---|---|---|
+| DSAR cevap mektubu (formal letter) | Razor view → Gotenberg | Chromium HTML |
+| Sertifika + QR code | Razor + QRCoder PNG data-URI → Gotenberg | Chromium |
+| KVKK ihlal bildirim rapor (multi-page tablo) | Razor + Tailwind print CSS → Gotenberg | Chromium |
+| Aday red/kabul iletişim | Razor view → Gotenberg | Chromium |
+| VERBİS görsel rapor (Chart.js embed) | Razor + Chart.js JS execute → Gotenberg | Chromium |
+| Bulk job (1000+ aday red) | MigraDoc in-process | PdfSharp |
+| Digital signature **şart** DSAR | MigraDoc + PKCS#7 | PdfSharp |
+| Gotenberg container down fallback | MigraDoc | PdfSharp |
+| VERBİS taahhütname Word | OpenXml + placeholder helper | — |
+| İhbar soruşturma raporu Word (cover+TOC+section) | OfficeIMO.Word | — |
+| Excel raporlar | ClosedXML (mevcut) | — |
 
-### 2.2 Word — DocumentFormat.OpenXml 3.5.1 (MIT, Microsoft official) + placeholder helper
+## 3. QuestPDF Pro Reddetme Gerekçesi
 
-**Lisans:** MIT, $0.
+| Kriter | QuestPDF Pro (rev 1) | Gotenberg + MigraDoc (rev 2) |
+|---|---|---|
+| Yıllık lisans | **$699/yıl 1 dev** | **$0** |
+| 3 yıl maliyet | **$2097** | **$0** |
+| Lisans modeli | Hybrid commercial ($1M revenue threshold) | MIT + Apache 2.0 permissive |
+| Razor view reuse | **Yok** (Fluent C# DSL ayrı dil) | **Var** (Mosaik UI ile aynı template) |
+| Digital signature | **Yok** (PDFsharp ile post-process gerekli) | **Var** (MigraDoc PKCS#7 native) |
+| Tailwind/Chart.js render | Yok (manuel re-implementation) | **Var** (Chromium native) |
+| Plan 42 Faz 5 effort | 21h | **19h** (-2h) |
+| Vendor lock | Var ($1M revenue threshold ilerideki risk) | Yok |
+| BKM Docker compose entegrasyon | İlgisiz | **Plan 40 Presidio ile birleşir** (+1 container) |
+| Throughput | ~50 PDF/s in-process | ~20-40 PDF/s HTTP (Gotenberg pool) — BKM ölçeği için yeter |
 
-**Use cases:**
-- VERBİS taahhütname template (`{{key}}` placeholder)
-- Kurul ihlal bildirim taslağı (m.12/5 zorunlu format)
-- Aday red/kabul iletişim mektubu
-- Tedarikçi DPA template
+**Sonuç:** QuestPDF Pro net dezavantajlı. Kapsam (digital signature eksik), lisans ($699/yıl), öğrenme borcu (Fluent DSL), Razor reuse yoksunluğu (template duplication). **Reddedildi.**
 
-**Pattern:** Word template (.docx) admin'de hazırla → `{{TalepSahibi}}`, `{{VerbisRef}}`, `{{ResponseDate}}` placeholder'ları → runtime'da regex/SDK ile replace. Plan 42 Result Rendering için **kanonik yaklaşım**.
-
-**Helper:** Mosaik için ~200-300 satır C# (regex replace, image embed).
-
-### 2.3 Word karmaşık (cover + TOC + section) — OfficeIMO.Word 1.0.34 (MIT)
-
-**Lisans:** MIT, free for commercial usage with no limits.
-
-**Use case:** İhbar soruşturma raporu — kapak + İçindekiler + multi-section.
-
-**Pattern:** OpenXML SDK üzerinde fluent API — cover page, TOC, section/paragraph/comment.
-
-**Tek geliştirici (Evotec), aktif** (v1.0.34 Mart 2026), OpenXML kadar olgun değil ama free + maintained.
-
-### 2.4 Digital signature — PDFsharp 6.2 X509 (MIT) post-process
-
-**Lisans:** MIT.
-
-**Use case:** QuestPDF native signing YOK. PDFsharp X509 signature native — QuestPDF eksiğini kapatır.
-
-**Sınırlama:** PAdES desteği yok (stagnant). KVKK/eIDAS uyumu için yeterli değil. Türk KEP/E-İmza entegre gerekirse ayrı plan. Plan 42 v1 görsel imza alanı + sonradan KEP yeterli.
-
-### 2.5 Excel — ClosedXML korunsun (mevcut yatırım)
-
-**Lisans:** MIT, $0.
-
-**Mevcut kullanım:** Plan 17 Tamim export, Plan 40 KVKK xlsx import + VERBİS export.
-
-**Karar:** EPPlus 7 geçişi gereksiz (Polyform Non-commercial / $557+ ticari).
-
-### 2.6 HTML→PDF (opsiyonel, Plan 42 Faz 6+) — Playwright .NET (MIT)
-
-**Lisans:** MIT, $0 (compute maliyeti var).
-
-**Use case:** KPI dashboard PDF export, brand-heavy iletişim, Razor view → headless Chromium → PDF.
-
-**Dezavantaj:** Chromium ~250MB disk, Hangfire background worker queue zorunlu.
-
-**Plan 42 öncelik:** DÜŞÜK — DSAR/VERBİS için QuestPDF yeterli. Sadece "rapor PDF" (KPI/chart) için Plan 42 Faz 6+ konusu.
-
-## 3. Reddedilen Alternatifler
+## 4. Diğer Reddedilen Alternatifler (deep research)
 
 | Aday | Lisans | Reddetme gerekçesi |
 |---|---|---|
-| **iText 7** | AGPL veya Commercial $4K-15K/yıl/site | AGPL closed-source Mosaik için yasak. Commercial aşırı pahalı. |
+| **iText 7 / iTextSharp** | AGPL (modern), LGPL (5.5.13 son EOL 2018) | AGPL closed-source Mosaik için yasak. iText 5.5.13 EOL. |
 | **Aspose.PDF / Aspose.Words** | $1175+/dev başlangıç | Aşırı pahalı. |
-| **DocX Xceed** | Ticari $852+, non-commercial only legacy | Free MIT alternatifler var. |
-| **Spire.Doc / Spire.PDF** | Free <500 sayfa / 3 sheet limit | Üretim kullanılamaz. |
+| **DocX Xceed** | Ticari $852+ | Free MIT alternatif var. |
+| **Spire.PDF Free / HiQPdf Free** | Proprietary, free <5-10 sayfa | Üretim kullanılamaz. |
+| **Carbone Community** | CCL (kısıtlı) | "third parties" yasağı belirsiz, .NET SDK yok, REST + JS. |
+| **DinkToPdf / wkhtmltopdf** | MIT wrapper / LGPL | wkhtmltopdf 2023'te arşivlendi, CVE-2022-35583 SSRF açığı patch'siz. Production'da yasak. |
+| **jsreport** | LGPL | LGPL viral değil ama JS template engine, .NET SDK marjinal. |
+| **PdfReport.Core (VahidN)** | LGPL-2.0 | Niche fit VERBİS tablo rapor için ama bakım yavaş, iTextSharp.LGPL bağımlı. |
+| **OpenPDF** | LGPL/MPL | Java-native, .NET portu marjinal. |
+| **PhantomJS** | EOL 2018 | — |
 | **EPPlus 7** | Polyform Non-commercial / $557+/dev | ClosedXML zaten var. |
 | **NPOI** | Apache-2.0 | ClosedXML kadar olgun değil, API tutarsız. |
-| **Clippit (Open-XML-PowerTools fork)** | MIT | OpenXml + placeholder helper yeterli, Clippit fazla karmaşık (DocumentAssembler XML-driven). |
+| **Clippit (Open-XML-PowerTools fork)** | MIT | OpenXml + placeholder helper yeterli, Clippit fazla karmaşık. |
 
-## 4. Maliyet
+## 5. Implementation Sequence (Plan 42 Faz 5)
 
-**Yıllık lisans:** ~$699 (QuestPDF Professional 1 dev). Tek paid item.
+```yaml
+# docker-compose.yml (Plan 40 Presidio ile birleştir)
+services:
+  gotenberg:
+    image: gotenberg/gotenberg:8.32
+    ports: ["3000:3000"]
+    command:
+      - "gotenberg"
+      - "--api-timeout=60s"
+      - "--chromium-disable-javascript=false"
+    deploy:
+      resources:
+        limits: { memory: 1G }
+```
 
-**Diğer hepsi:** $0 (MIT/Apache lisanslar).
+```bash
+# NuGet
+dotnet add Mosaik package Gotenberg.Sharp.API.Client --version 3.0.0
+dotnet add Mosaik package PDFsharp-MigraDoc --version 6.2.4
+dotnet add Mosaik package QRCoder --version 1.8.0
+dotnet add Mosaik package Razor.Templating.Core
+dotnet add Mosaik package DocumentFormat.OpenXml --version 3.5.1
+dotnet add Mosaik package OfficeIMO.Word --version 1.0.34
+```
 
-**Kullanıcı bütçe onayı gerekir** QuestPDF Professional için. Reddedilirse alternatif: **PDFsharp + MigraDoc** (MIT, MigraDoc XML-vari API daha eski-stil, ama lisans sıfır + signature native var).
+```csharp
+// Program.cs
+builder.Services.AddGotenbergSharpClient(o =>
+    o.ServiceUrl = builder.Configuration["Gotenberg:Url"]);
 
-## 5. Stack Özet
+// Mosaik.Modules.ProcessRuntime/Services/PdfRenderer.cs
+public class PdfRenderer(
+    IGotenbergSharpClient gotenberg,
+    IRazorViewRenderer razor) : IPdfRenderer
+{
+    public async Task<byte[]> RenderAsync<TModel>(string viewPath, TModel model, CancellationToken ct)
+    {
+        var html = await razor.RenderToStringAsync(viewPath, model);
+        var req = new HtmlRequestBuilder()
+            .ContainsHtml(b => b.SetBody(html))
+            .ConfigureRequest(b => b
+                .SetMarginsTopBot(40, 40)
+                .AddCustomHeader(headerHtml)
+                .AddCustomFooter("Sayfa <span class=\"pageNumber\"></span> / <span class=\"totalPages\"></span>")
+                .SetPdfFormat(PdfFormats.A2B))
+            .Build();
+        return await gotenberg.HtmlToPdfAsync(req, ct).ToByteArrayAsync(ct);
+    }
+}
+
+// Bulk + signature path
+public class MigraDocRenderer(IQrCodeService qr) : IBulkPdfRenderer
+{
+    // MigraDoc Document → PdfSharp render → PKCS#7 sign
+}
+```
+
+**Faz 5 adımları:**
+1. **5.1** — Docker compose Gotenberg ekle (Plan 40 Presidio container ile birleştir) + NuGet paketleri
+2. **5.2** — `IPdfRenderer` abstraction + `GotenbergPdfRenderer` impl + RazorLight/Razor.Templating.Core entegrasyon
+3. **5.3** — Razor template'leri yaz (DSAR mektubu, sertifika+QR, KVKK rapor) — Mosaik UI ile aynı Tailwind reuse
+4. **5.4** — OpenXml SDK placeholder helper (`{{key}}` regex replace, image embed) — VERBİS Word
+5. **5.5** — OfficeIMO Word — ihbar soruşturma raporu (cover+TOC+section)
+6. **5.6** — MigraDoc fallback + digital signature path (PKCS#7) — opsiyonel ihtiyaca göre
+
+## 6. Stack Özet (rev 2)
 
 | Use case | Library | Maliyet |
 |---|---|---|
-| DSAR cevap PDF formal letter | **QuestPDF Professional** | ~$699/yıl |
-| VERBİS taahhütname Word | **OpenXml SDK** + placeholder helper | $0 |
-| İhbar soruşturma raporu Word (multi-section) | **OfficeIMO.Word** | $0 |
-| Sertifika PDF + QR | **QuestPDF + ZXing.Net** | (Pro içinde) |
+| DSAR cevap PDF formal letter | **Gotenberg + Razor view** | $0 |
+| VERBİS taahhütname Word | **OpenXml SDK + placeholder helper** | $0 |
+| İhbar soruşturma raporu Word | **OfficeIMO.Word** | $0 |
+| Sertifika PDF + QR | **Gotenberg + Razor + QRCoder** | $0 |
 | Kurul ihlal bildirim Word | **OpenXml SDK** template fill | $0 |
-| Aday red/kabul iletişim | **OpenXml SDK** veya **QuestPDF** | $0/içinde |
-| Digital signature | **PDFsharp X509** post-process | $0 |
+| Aday red/kabul iletişim | **Gotenberg + Razor** veya **OpenXml** | $0 |
+| Digital signature | **MigraDoc PKCS#7** in-process | $0 |
+| Bulk job (1000+ doc) | **MigraDoc** in-process | $0 |
 | Excel raporlar | **ClosedXML** (mevcut) | $0 |
-| KPI/chart PDF (Faz 6+) | **Playwright .NET** | $0 (compute) |
+| Gotenberg fallback | **MigraDoc** | $0 |
 
-## 6. Implementation Sequence (Plan 42 Faz 5)
+**Toplam yıllık maliyet: $0.** 3 yılda $2097 tasarruf (QuestPDF Pro'ya karşı).
 
-1. **5.1** — QuestPDF NuGet + lisans key config + `IPdfRenderer`/`IDocxRenderer` abstraction
-2. **5.2** — OpenXml SDK template placeholder helper (`{{key}}` regex replace, image embed)
-3. **5.3** — OfficeIMO opsiyonel — karmaşık rapor şablonu (ihbar raporu)
-4. **5.4** — PDFsharp opsiyonel — digital signature post-process
+## 7. Effort Etkisi
 
-## 7. Riskler
+| Adım | QuestPDF (rev 1) | Gotenberg + MigraDoc (rev 2) | Δ |
+|---|---|---|---|
+| Kurulum + DI | 1h | 2h (Docker compose + NuGet) | +1 |
+| Razor → HTML pipeline (RazorLight) | 0 (DSL native) | 3h | +3 |
+| Template (DSAR, sertifika, rapor) | 12h (Fluent DSL) | 6h (mevcut Razor + Tailwind reuse) | **−6** |
+| QR embed | 1h | 1h | 0 |
+| Digital signature | 4h (PDFsharp post-process) | 4h (MigraDoc path) | 0 |
+| Test (Türkçe, page break, watermark) | 3h | 3h | 0 |
+| **Toplam Plan 42 Faz 5** | **21h** | **19h** | **−2h** |
+
+**Bonus:** Razor template'leri Mosaik UI ile aynı source-of-truth — Tailwind reuse, single template. QuestPDF DSL ayrı dil öğrenme borcu yok.
+
+## 8. Riskler
 
 | Risk | Önlem |
 |---|---|
-| QuestPDF Professional lisans bütçesi $699/yıl | Kullanıcı bütçe onayı; reddedilirse PDFsharp+MigraDoc fallback |
-| QuestPDF $1M revenue limiti yıllar içinde değişir | Yıllık lisans yenileme + lisans sayfası takip |
-| PDFsharp PAdES yok (Türk KEP/E-İmza yetersiz) | Türk KEP entegre ayrı plan; v1 görsel imza yeterli |
-| OfficeIMO tek geliştirici bakım | Karmaşık rapor için sadece, basit template OpenXml SDK |
-| Scriban CVE-2024 sandbox escape (eski sürüm) | NuGet `>=7.2.0` pin (Plan 42 Faz 5 result template ayrı kullanım — ADR-021 kapsamı dışı, Plan 42 §5'te belirtilmiş) |
+| Gotenberg container down → PDF üretimi durur | MigraDoc fallback path her senaryo için hazır (bulk + signature path ile aynı kod) |
+| Docker compose RAM yükü | Plan 40 Presidio (+512Mi-1Gi) + Gotenberg (+1Gi) = compose <2GB toplam, BKM IT için kabul |
+| Chromium binary güvenlik patches | Gotenberg upstream Chromium tag — `8.32+` daima son LTS |
+| Razor view template `@inject` HtmlContext yoksunluğu (RazorLight) | Razor.Templating.Core daha yakın ASP.NET Core kontekst |
+| MigraDoc API "eski-stil" eleştirisi | Fluent değil DOM-stil ama doc-gen için yeterli + signature native + kullanım sınırlı (fallback) |
+| BKM ileride $1M revenue threshold geçince QuestPDF maliyeti yükselir | Geçerli değil — Gotenberg MIT, vendor lock yok |
 
-## 8. Sonuç
+## 9. ADR Sürümleri
 
-NuGet paketleri Plan 42 Faz 5 başlangıcında:
-- `QuestPDF` 2026.5.0 (+ Pro lisans key config)
-- `DocumentFormat.OpenXml` 3.5.1
-- `OfficeIMO.Word` 1.0.34 (opsiyonel)
-- `PDFsharp` 6.2.0 (opsiyonel signature)
-- `ZXing.Net` (QuestPDF entegrasyonu QR code)
-- `Microsoft.Playwright` (opsiyonel Faz 6+)
+- **2026-05-21 rev 1:** QuestPDF Pro + DocumentFormat.OpenXml + OfficeIMO + PDFsharp + ClosedXML. Yıllık lisans ~$699.
+- **2026-05-21 rev 2:** QuestPDF Pro **reddedildi**. Gotenberg + PdfSharp/MigraDoc + QRCoder + Razor.Templating.Core + DocumentFormat.OpenXml + OfficeIMO + ClosedXML. **Yıllık lisans $0**. 3 yıl $2097 tasarruf. Razor reuse + digital signature native + 2h ek tasarruf.
 
-`ClosedXML` mevcut, korunsun.
+## 10. Sonuç
 
-Plan 42 §9 cross-reference güncellendi — bu ADR'ye referans verildi.
+ADR-021 onaylandığında NuGet + Docker compose adımları Plan 42 Faz 5 başlangıcında. **Bütçe gerekmez** ($0 stack).
+
+Plan 42 §3 OSS reuse stack tablosu güncellendi (rev 2).
+
+Plan 42 toplam effort: 84h baseline → ~62-64h OSS reuse (önceden 64h, Gotenberg +2h tasarruf).
