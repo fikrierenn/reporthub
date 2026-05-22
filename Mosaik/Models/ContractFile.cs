@@ -27,7 +27,7 @@ namespace Mosaik.Models
 
         [Required]
         [MaxLength(500)]
-        public string FilePath { get; set; } = string.Empty;    // wwwroot-relative
+        public string FilePath { get; set; } = string.Empty;    // ContentRoot-relative (App_Data/contracts/...)
 
         public long FileSize { get; set; }
 
@@ -35,6 +35,9 @@ namespace Mosaik.Models
         public string MimeType { get; set; } = string.Empty;
 
         public int Version { get; set; } = 1;
+
+        // Plan 27 Faz C — PDF'den çıkarılan metin; FTS + ContentText LIKE arama için.
+        public string? ContentText { get; set; }
 
         // Plan 27 Faz B — AI auto-classification + executive summary (yükleme sonrası).
         [MaxLength(2000)]
@@ -54,5 +57,9 @@ namespace Mosaik.Models
 
         [BindNever, ValidateNever]
         public ICollection<ContractAiExtraction> AiExtractions { get; set; } = new List<ContractAiExtraction>();
+
+        // Plan 27 Faz C — versiyonlama.
+        [BindNever, ValidateNever]
+        public ICollection<DocumentVersion> DocumentVersions { get; set; } = new List<DocumentVersion>();
     }
 }

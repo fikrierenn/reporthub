@@ -41,9 +41,10 @@
     @* Upload formu — collapsible (Yeni Belge butonu tetikler). Default gizli, JS toggle. *@
     <form id="uploadForm" method="post" action="/Documents/Upload" enctype="multipart/form-data" class="hidden">
         @Html.AntiForgeryToken()
+        <input type="hidden" id="replaceFileId" name="replaceFileId" value="">
         <div class="form-section-card wide">
             <div class="form-section-head">
-                <h2>
+                <h2 id="uploadFormTitle">
                     <i class="fas fa-upload text-muted" aria-hidden="true"></i>
                     Belge Yükle
                 </h2>
@@ -58,7 +59,7 @@
                         <input class="inp" type="file" id="fileInput" name="file" accept=".pdf,.docx,.xlsx,.doc" required>
                         <p class="help-text">PDF / DOCX / XLSX, maks. 50 MB</p>
                     </div>
-                    <div class="field">
+                    <div class="field" id="contractSelField">
                         <label class="lab" for="contractSel">Sözleşme (opsiyonel)</label>
                         <select class="inp" id="contractSel" name="contractId">
                             <option value="">— Seçin —</option>
@@ -78,7 +79,7 @@
             <button type="button" class="btn ghost" onclick="toggleUpload(false)">İptal</button>
             <button type="submit" class="btn primary">
                 <i class="fas fa-upload text-[10px]" aria-hidden="true"></i>
-                Yükle
+                <span id="uploadBtnLabel">Yükle</span>
             </button>
         </div>
     </form>
@@ -225,6 +226,12 @@ else
                                     AI
                                 </a>
                             }
+                            <button type="button" class="btn sm ghost"
+                                    title="Yeni versiyon yükle"
+                                    data-version-file-id="@f.Id"
+                                    data-version-file-name="@f.FileName">
+                                <i class="fas fa-code-branch text-[9px]" aria-hidden="true"></i>
+                            </button>
                             <form method="post" action="/Documents/Delete" class="inline-form" onsubmit="return confirm('Bu belge silinsin mi?')">
                                 @Html.AntiForgeryToken()
                                 <input type="hidden" name="id" value="@f.Id">
@@ -268,15 +275,34 @@ else
 @section Scripts {
 <script>
 // Yeni Belge butonu — TopActions x-data scope'unun dışında olduğundan native JS toggle.
-window.toggleUpload = function (force) {
+window.toggleUpload = function (force, replaceId, replaceFileName) {
     var f = document.getElementById('uploadForm');
     if (!f) return;
     var shown = !f.classList.contains('hidden');
     var target = (typeof force === 'boolean') ? force : !shown;
     f.classList.toggle('hidden', !target);
+
+    // Versiyon modu
+    var hiddenId   = document.getElementById('replaceFileId');
+    var titleEl    = document.getElementById('uploadFormTitle');
+    var btnLabel   = document.getElementById('uploadBtnLabel');
+    var contractFld = document.getElementById('contractSelField');
+
+    if (target && replaceId) {
+        if (hiddenId)   hiddenId.value = replaceId;
+        if (titleEl)    titleEl.innerHTML = '<i class="fas fa-code-branch text-muted" aria-hidden="true"></i> Yeni Versiyon: ' + (replaceFileName || '');
+        if (btnLabel)   btnLabel.textContent = 'Versiyonu Yükle';
+        if (contractFld) contractFld.classList.add('hidden');
+    } else if (!target || !replaceId) {
+        if (hiddenId)   hiddenId.value = '';
+        if (titleEl)    titleEl.innerHTML = '<i class="fas fa-upload text-muted" aria-hidden="true"></i> Belge Yükle';
+        if (btnLabel)   btnLabel.textContent = 'Yükle';
+        if (contractFld) contractFld.classList.remove('hidden');
+    }
+
     if (target) {
         var fi = document.getElementById('fileInput');
-        if (fi) setTimeout(function () { fi.focus(); }, 50);
+        if (fi) { fi.value = ''; setTimeout(function () { fi.focus(); }, 50); }
     }
 };
 
@@ -308,6 +334,22 @@ window.toggleUpload = function (force) {
             return '';
         }).join('');
         body.scrollTop = body.scrollHeight;
+    }
+
+    // Versiyon butonları
+    function bindVersionButtons() {
+        document.querySelectorAll('[data-version-file-id]').forEach(function (btn) {
+            btn.addEventListener('click', function (e) {
+                var fid   = e.currentTarget.dataset.versionFileId;
+                var fname = e.currentTarget.dataset.versionFileName || '';
+                window.toggleUpload(true, fid, fname);
+            });
+        });
+    }
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', bindVersionButtons);
+    } else {
+        bindVersionButtons();
     }
 
     window.DocChat = {

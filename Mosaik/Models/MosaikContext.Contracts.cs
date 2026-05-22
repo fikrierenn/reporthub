@@ -117,6 +117,21 @@ namespace Mosaik.Models
                 e.HasIndex(t => t.PackageName);
                 e.HasIndex(t => t.IsActive);
             });
+
+            // Plan 27 Faz C — versiyonlama
+            modelBuilder.Entity<DocumentVersion>(e =>
+            {
+                e.HasKey(v => v.Id);
+                e.Property(v => v.FilePath).HasMaxLength(500).IsRequired();
+                e.Property(v => v.FileName).HasMaxLength(260).IsRequired();
+                e.Property(v => v.MimeType).HasMaxLength(100);
+                e.Property(v => v.ArchivedAt).HasDefaultValueSql("GETUTCDATE()");
+                e.HasOne(v => v.ContractFile)
+                    .WithMany(f => f.DocumentVersions)
+                    .HasForeignKey(v => v.ContractFileId)
+                    .OnDelete(DeleteBehavior.Cascade);
+                e.HasIndex(v => v.ContractFileId);
+            });
         }
     }
 }

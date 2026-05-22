@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Mosaik.Core.Logging;
 using Mosaik.Models;
 using Mosaik.Services;
 using Mosaik.Services.Ai;
@@ -16,6 +17,7 @@ namespace Mosaik.Controllers
         private readonly AiPipelineQueue _queue;
         private readonly IServiceScopeFactory _scopeFactory;
         private readonly IHostApplicationLifetime _lifetime;
+        private readonly IAuditLog _auditLog;
         private readonly ILogger<DocumentsController> _logger;
 
         private static readonly byte[] PdfMagic = new byte[] { 0x25, 0x50, 0x44, 0x46 };
@@ -28,6 +30,7 @@ namespace Mosaik.Controllers
             AiPipelineQueue queue,
             IServiceScopeFactory scopeFactory,
             IHostApplicationLifetime lifetime,
+            IAuditLog auditLog,
             ILogger<DocumentsController> logger)
         {
             _db = db;
@@ -36,6 +39,7 @@ namespace Mosaik.Controllers
             _queue = queue;
             _scopeFactory = scopeFactory;
             _lifetime = lifetime;
+            _auditLog = auditLog;
             _logger = logger;
         }
 
@@ -60,7 +64,8 @@ namespace Mosaik.Controllers
                 query = query.Where(f => f.ContractId == contractId);
 
             if (!string.IsNullOrWhiteSpace(q))
-                query = query.Where(f => f.FileName.Contains(q));
+                query = query.Where(f => f.FileName.Contains(q) ||
+                                        (f.ContentText != null && f.ContentText.Contains(q)));
 
             var files = await query.OrderByDescending(f => f.CreatedAt).Take(200).ToListAsync();
 
@@ -78,7 +83,7 @@ namespace Mosaik.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Upload(IFormFile? file, int? contractId, int? obligationId)
+        public async Task<IActionResult> Upload(IFormFile? file, int? contractId, int? obligationId, int? replaceFileId)
         {
             var firmas = FirmaIds;
             if (firmas.Count == 0) return Forbid();
@@ -116,20 +121,14 @@ namespace Mosaik.Controllers
             }
 
             // Plan 33 BUGFIX-3 (2026-05-15): wwwroot/uploads/contracts → ContentRoot/App_Data/contracts.
-            // wwwroot path UseStaticFiles ile auth'suz erişim açıyordu (firma sınırı bypass).
-            // App_Data altında private storage, dosya erişimi sadece Download endpoint'ten
-            // (auth + firma check + path traversal guard). ContractsController.UploadFile ile
-            // aynı path konvansiyonu — tutarlı.
-            var ext      = Path.GetExtension(file.FileName).ToLowerInvariant();
-            var safeName = $"{Guid.NewGuid():N}{ext}";
-            var uploadDir = Path.Combine(_env.ContentRootPath, "App_Data", "contracts",
-                firmaId.ToString());
+            var ext       = Path.GetExtension(file.FileName).ToLowerInvariant();
+            var safeName  = $"{Guid.NewGuid():N}{ext}";
+            var uploadDir = Path.Combine(_env.ContentRootPath, "App_Data", "contracts", firmaId.ToString());
             Directory.CreateDirectory(uploadDir);
 
-            var diskPath = Path.Combine(uploadDir, safeName);
-            // Defense-in-depth: path traversal guard
+            var diskPath     = Path.Combine(uploadDir, safeName);
             var resolvedPath = Path.GetFullPath(diskPath);
-            var rootPrefix = Path.GetFullPath(uploadDir);
+            var rootPrefix   = Path.GetFullPath(uploadDir);
             if (!resolvedPath.StartsWith(rootPrefix, StringComparison.OrdinalIgnoreCase))
             {
                 _logger.LogWarning("Document upload path traversal attempt blocked: {Resolved}", resolvedPath);
@@ -140,31 +139,109 @@ namespace Mosaik.Controllers
             using (var fs = System.IO.File.Create(diskPath))
                 await file.CopyToAsync(fs);
 
+            var newRelPath = Path.GetRelativePath(_env.ContentRootPath, diskPath).Replace('\\', '/');
+
+            // Plan 27 Faz C — versiyonlama: mevcut dosyanın üzerine yazma.
+            if (replaceFileId.HasValue)
+            {
+                var existing = await _db.ContractFiles
+                    .FirstOrDefaultAsync(f => f.Id == replaceFileId && firmas.Contains(f.FirmaId));
+                if (existing is null)
+                {
+                    TempData["Error"] = "Güncellenecek belge bulunamadı.";
+                    return RedirectToAction(nameof(Index));
+                }
+
+                // Mevcut versiyonu arşivle
+                var archived = new DocumentVersion
+                {
+                    ContractFileId = existing.Id,
+                    VersionNumber  = existing.Version,
+                    FilePath       = existing.FilePath,
+                    FileName       = existing.FileName,
+                    FileSize       = existing.FileSize,
+                    MimeType       = existing.MimeType,
+                    ArchivedAt     = DateTime.UtcNow,
+                    ArchivedById   = _currentUser.UserId ?? 0
+                };
+                _db.DocumentVersions.Add(archived);
+
+                // Yeni dosya bilgilerini güncelle
+                existing.FileName        = file.FileName;
+                existing.FilePath        = newRelPath;
+                existing.FileSize        = file.Length;
+                existing.MimeType        = file.ContentType;
+                existing.Version         += 1;
+                existing.ContentText     = null;  // AI pipeline yeniden dolduracak
+                existing.AiSummary       = null;
+                existing.AiTagsJson      = null;
+                existing.AiClassifiedAt  = null;
+                existing.UpdatedAt       = DateTime.UtcNow;
+
+                await _db.SaveChangesAsync();
+
+                await _auditLog.LogAsync(
+                    eventType:    "doc_version_upload",
+                    targetType:   "contract_file",
+                    targetKey:    existing.Id.ToString(),
+                    description:  $"Belge versiyonlandı: {existing.FileName} → v{existing.Version}",
+                    newValuesJson: System.Text.Json.JsonSerializer.Serialize(new
+                    {
+                        existing.Id,
+                        existing.FileName,
+                        Version = existing.Version,
+                        ArchivedVersion = archived.VersionNumber
+                    })
+                );
+
+                // PDF ise yeni versiyona extraction kuyruğa al
+                if (isPdf)
+                {
+                    var extraction = new ContractAiExtraction
+                    {
+                        FirmaId        = firmaId,
+                        ContractFileId = existing.Id,
+                        ContractId     = existing.ContractId,
+                        Status         = ExtractionStatus.Processing
+                    };
+                    _db.ContractAiExtractions.Add(extraction);
+                    await _db.SaveChangesAsync();
+                    await _queue.EnqueueAsync(extraction.Id);
+                    TempData["Success"] = $"'{file.FileName}' v{existing.Version} yüklendi, AI analizi kuyruğa alındı.";
+                }
+                else
+                {
+                    TempData["Success"] = $"'{file.FileName}' v{existing.Version} yüklendi.";
+                }
+
+                _ = Task.Run(async () => await RunDocumentInsightAsync(existing.Id), _lifetime.ApplicationStopping);
+                return RedirectToAction(nameof(Index), new { contractId = existing.ContractId });
+            }
+
+            // Normal yeni yükleme
             var cf = new ContractFile
             {
-                FirmaId     = firmaId,
-                ContractId  = contractId,
-                ObligationId= obligationId,
-                FileName    = file.FileName,
-                // ContractFile.FilePath ContentRoot'a göre relative — ContractsController ile aynı.
-                FilePath    = Path.GetRelativePath(_env.ContentRootPath, diskPath).Replace('\\', '/'),
-                FileSize    = file.Length,
-                MimeType    = file.ContentType,
-                Version     = 1
+                FirmaId      = firmaId,
+                ContractId   = contractId,
+                ObligationId = obligationId,
+                FileName     = file.FileName,
+                FilePath     = newRelPath,
+                FileSize     = file.Length,
+                MimeType     = file.ContentType,
+                Version      = 1
             };
 
             _db.ContractFiles.Add(cf);
             await _db.SaveChangesAsync();
 
-            // PDF ise AI extraction kaydı oluştur ve pipeline'a gönder
             if (isPdf)
             {
                 var extraction = new ContractAiExtraction
                 {
-                    FirmaId       = firmaId,
-                    ContractFileId= cf.Id,
-                    ContractId    = contractId,
-                    Status        = ExtractionStatus.Processing
+                    FirmaId        = firmaId,
+                    ContractFileId = cf.Id,
+                    ContractId     = contractId,
+                    Status         = ExtractionStatus.Processing
                 };
                 _db.ContractAiExtractions.Add(extraction);
                 await _db.SaveChangesAsync();
@@ -177,10 +254,6 @@ namespace Mosaik.Controllers
                 TempData["Success"] = $"'{file.FileName}' başarıyla yüklendi.";
             }
 
-            // Plan 27 Faz B-02 — auto-classify + summary fire-and-forget (PDF/DOCX dahil).
-            // Sözleşme extraction'ı zaten Stage 1 özetini üretiyor; bu sadece liste tooltip için
-            // hızlı bir özet + tag üretir. Hata fırlatmaz, kullanıcıyı bekletmez.
-            // Audit fix — ApplicationStopping CT (graceful shutdown).
             _ = Task.Run(async () => await RunDocumentInsightAsync(cf.Id), _lifetime.ApplicationStopping);
 
             return RedirectToAction(nameof(Index), new { contractId });
@@ -252,6 +325,20 @@ namespace Mosaik.Controllers
                 return NotFound();
             }
 
+            // Plan 27 Faz C — indirme audit logu
+            await _auditLog.LogAsync(
+                eventType:    "doc_download",
+                targetType:   "contract_file",
+                targetKey:    contractFile.Id.ToString(),
+                description:  $"Belge indirildi: {contractFile.FileName}",
+                newValuesJson: System.Text.Json.JsonSerializer.Serialize(new
+                {
+                    contractFile.Id,
+                    contractFile.FileName,
+                    contractFile.Version
+                })
+            );
+
             return PhysicalFile(fullPath, contractFile.MimeType, contractFile.FileName);
         }
 
@@ -282,8 +369,16 @@ namespace Mosaik.Controllers
                     return;
                 }
 
+                // Plan 27 Faz C — ContentText FTS için PDF metnini sakla (maks 50K karakter).
+                cf.ContentText = text.Length > 50_000 ? text[..50_000] : text;
+
                 var result = await insight.AnalyzeAsync(text, cf.FileName, CancellationToken.None);
-                if (result is null) return;
+                if (result is null)
+                {
+                    cf.UpdatedAt = DateTime.UtcNow;
+                    await db.SaveChangesAsync();
+                    return;
+                }
 
                 cf.AiSummary = result.Summary;
                 cf.AiTagsJson = result.TagsJson;
