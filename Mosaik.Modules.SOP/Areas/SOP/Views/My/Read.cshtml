@@ -1,0 +1,98 @@
+@model SopMyDetailsViewModel
+@{
+    ViewData["Title"] = Model.Document.Title;
+    var statusPill = Model.IsConfirmed ? ("Onaylandı", "ok")
+                     : Model.DaysRemaining < 0 ? ("Süresi geçti", "err")
+                     : Model.DaysRemaining <= 7 ? ($"{Model.DaysRemaining} gün kaldı", "warn")
+                     : ($"{Model.DaysRemaining} gün kaldı", "ok");
+}
+
+@section Breadcrumb {
+    <nav class="crumbs" aria-label="Sayfa konumu">
+        <a href="/">Ana Sayfa</a>
+        <a href="@Url.Action("Index")">Prosedürlerim</a>
+        <span aria-current="page">@Model.Document.Title</span>
+    </nav>
+}
+
+@section TopActions {
+    <a href="@Url.Action("Index")" class="btn">Geri Dön</a>
+}
+
+<div class="hero">
+    <h1><i class="fas fa-book-open" aria-hidden="true"></i> @Model.Document.Title</h1>
+    <p class="sub">
+        <span class="mono">v@(Model.Version.VersionNumber)</span>
+        @if (Model.Version.EffectiveDate.HasValue)
+        {
+            <span>Yürürlük: @Model.Version.EffectiveDate.Value.ToString("yyyy-MM-dd")</span>
+        }
+        <span class="pill @statusPill.Item2"><span class="dot @statusPill.Item2"></span>@statusPill.Item1</span>
+    </p>
+</div>
+
+@if (TempData["Message"] is string msg && !string.IsNullOrEmpty(msg))
+{
+    @await Html.PartialAsync("_AlertMessage", ("success", msg))
+}
+
+@if (!string.IsNullOrWhiteSpace(Model.Document.Description))
+{
+    <div class="form-section-card wide">
+        <div class="form-section-head"><h2 class="form-section-head__title">Özet</h2></div>
+        <div class="form-section-body">
+            <p>@Model.Document.Description</p>
+        </div>
+    </div>
+}
+
+<div class="form-section-card wide">
+    <div class="form-section-head">
+        <h2 class="form-section-head__title">İçerik</h2>
+        <p class="form-section-head__sub">Lütfen tam metni okuduğunuzdan emin olun.</p>
+    </div>
+    <div class="form-section-body">
+        <div class="prose">
+            @Html.Raw(Model.Version.ContentJson)
+        </div>
+    </div>
+</div>
+
+@if (Model.CanConfirm)
+{
+    <div class="form-section-card wide" x-data="{ checked: false }">
+        <div class="form-section-head">
+            <h2 class="form-section-head__title">Onay</h2>
+        </div>
+        <div class="form-section-body">
+            <form method="post" action="@Url.Action("Confirm", new { versionId = Model.Version.Id })">
+                @Html.AntiForgeryToken()
+                <div class="field">
+                    <label class="lab" style="display:flex; align-items:flex-start; gap:8px;">
+                        <input type="checkbox" x-model="checked" class="checkbox" />
+                        <span>Bu prosedürün tamamını okudum, içeriğini anladım ve uygulamayı kabul ediyorum.</span>
+                    </label>
+                </div>
+                <button type="submit" class="btn primary" :disabled="!checked"
+                        x-bind:class="{ 'opacity-50': !checked }">
+                    <i class="fas fa-check text-[10px]" aria-hidden="true"></i>
+                    Okudum + Onayladım
+                </button>
+            </form>
+        </div>
+    </div>
+}
+else if (Model.IsConfirmed)
+{
+    <div class="alert success" role="alert">
+        <i class="fas fa-circle-check" aria-hidden="true"></i>
+        @Model.Receipt!.ConfirmedAt!.Value.ToString("yyyy-MM-dd HH:mm") tarihinde onayladınız.
+    </div>
+}
+else
+{
+    <div class="alert" role="alert">
+        <i class="fas fa-circle-info" aria-hidden="true"></i>
+        Bu prosedür size atanmamış (önizleme).
+    </div>
+}

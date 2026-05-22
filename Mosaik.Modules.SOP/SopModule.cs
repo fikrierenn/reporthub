@@ -24,7 +24,7 @@ namespace Mosaik.Modules.SOP
             // Plan 34 Faz C registrations.
             services.AddScoped<Services.SopService>();
             services.AddScoped<Services.SopApprovalService>();
-            // Faz D: services.AddScoped<Services.SopReadReceiptService>();
+            services.AddScoped<Services.SopReadReceiptService>();
             // Faz F: services.AddScoped<Services.SopAiAdvisorService>();
             // Faz F: services.AddScoped<Services.SopRateLimitGuard>();
         }

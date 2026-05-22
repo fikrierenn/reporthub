@@ -1,0 +1,101 @@
+@model List<SopMyListItemViewModel>
+@{
+    ViewData["Title"] = "Prosedürlerim";
+    var onlyPending = (bool)(ViewBag.OnlyPending ?? false);
+}
+
+@section Breadcrumb {
+    <nav class="crumbs" aria-label="Sayfa konumu">
+        <a href="/">Ana Sayfa</a>
+        <span aria-current="page">Prosedürlerim</span>
+    </nav>
+}
+
+<div class="hero">
+    <h1><i class="fas fa-book-reader" aria-hidden="true"></i> Prosedürlerim</h1>
+    <p class="sub">
+        <span>Okumanız ve onaylamanız gereken prosedürler.</span>
+        <span class="mono">@Model.Count kayıt</span>
+    </p>
+</div>
+
+<div class="filter-bar" x-data="{ q: '' }">
+    <a href="@Url.Action("Index", new { onlyPending = false })"
+       class="btn @(!onlyPending ? "primary" : "ghost")">Tümü</a>
+    <a href="@Url.Action("Index", new { onlyPending = true })"
+       class="btn @(onlyPending ? "primary" : "ghost")">Bekleyen</a>
+</div>
+
+@if (TempData["Message"] is string msg && !string.IsNullOrEmpty(msg))
+{
+    @await Html.PartialAsync("_AlertMessage", ("success", msg))
+}
+
+@if (Model.Count == 0)
+{
+    <div class="empty-state">
+        <i class="fas fa-circle-check empty-state__icon" aria-hidden="true"></i>
+        <h3>Atanmış prosedür yok</h3>
+        <p>Şu an okumanız gereken bir prosedür yok. SOP yayınlandığında burada görünür.</p>
+    </div>
+}
+else
+{
+    <div class="paper">
+        <table class="dt">
+            <thead>
+                <tr>
+                    <th scope="col">Prosedür</th>
+                    <th scope="col">Versiyon</th>
+                    <th scope="col">Atama</th>
+                    <th scope="col">Kalan Süre</th>
+                    <th scope="col">Durum</th>
+                    <th scope="col" style="text-align:right;">İşlem</th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var i in Model)
+            {
+                <tr>
+                    <td><a href="@Url.Action("Read", new { versionId = i.VersionId })">@i.Title</a></td>
+                    <td><span class="mono">v@(i.VersionNumber)</span></td>
+                    <td><span class="ago">@i.AssignedAt.ToString("yyyy-MM-dd")</span></td>
+                    <td>
+                        @if (i.IsConfirmed)
+                        {
+                            <span class="text-muted">—</span>
+                        }
+                        else if (i.IsOverdue)
+                        {
+                            <span class="pill error"><span class="dot err"></span>@Math.Abs(i.DaysRemaining) gün geçti</span>
+                        }
+                        else
+                        {
+                            var pillClass = i.DaysRemaining <= 7 ? "warn" : "";
+                            var dotClass = i.DaysRemaining <= 7 ? "warn" : "ok";
+                            <span class="pill @pillClass"><span class="dot @dotClass"></span>@i.DaysRemaining gün</span>
+                        }
+                    </td>
+                    <td>
+                        @if (i.IsConfirmed)
+                        {
+                            <span class="status ok">Onaylandı</span>
+                        }
+                        else if (i.ReadAt != null)
+                        {
+                            <span class="status warn">Okundu</span>
+                        }
+                        else
+                        {
+                            <span class="status err">Bekliyor</span>
+                        }
+                    </td>
+                    <td style="text-align:right;">
+                        <a href="@Url.Action("Read", new { versionId = i.VersionId })" class="btn sm primary">Aç</a>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+}

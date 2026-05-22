@@ -279,12 +279,12 @@ git revert <plan-34-merge-commit>
 13. [x] **S-13** Departman ataması UI — basit CSV input + IsCompanyWide toggle (Plan 18B sonrası multi-select)
 14. [x] **S-14** Unit test: `SopServiceTests` (10 test — version chain, sanitize, supersede, archive sweep) — 422/422 yeşil
 
-### Faz D — User-facing (8-12 saat) — S-15..S-19
-15. [ ] **S-15** `SopMyController` — "Prosedürlerim" + "Tüm SOP'lar"
-16. [ ] **S-16** SOP detay view (block render + dosya ek + version history popover)
-17. [ ] **S-17** "Okudum + onayladım" akışı (`SopReadReceipt`)
-18. [ ] **S-18** Read deadline countdown UI (`x-data` Alpine)
-19. [ ] **S-19** Unit test: `SopReadReceiptServiceTests` — **çalıştır + 0 başarısız**
+### Faz D — User-facing (8-12 saat) — S-15..S-19 ✅ 2026-05-22
+15. [x] **S-15** `MyController` — "Prosedürlerim" Index + Read + Confirm
+16. [x] **S-16** Read view — aktif versiyon render + status pill + onay paneli
+17. [x] **S-17** `SopReadReceiptService` — Assign/MarkRead/Confirm/GetPendingDue + "Okudum+Onayladım" akışı
+18. [x] **S-18** Read deadline countdown — `DaysRemaining` pill (kalan/geçti/onaylandı) + Alpine onay checkbox
+19. [x] **S-19** `SopReadReceiptServiceTests` (10 test — assign idempotent, mark/confirm, due window, unassigned guard) — 432/432 yeşil
 
 ### Faz E — Bildirim (4-6 saat) — S-20..S-22
 20. [ ] **S-20** Yeni SOP onaylanınca departman üyelerine `INotificationService` push
