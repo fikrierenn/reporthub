@@ -1,0 +1,32 @@
+@model SopFormViewModel
+@{
+    ViewData["Title"] = "Yeni Prosedür";
+    var categories = ViewBag.Categories as List<Mosaik.Modules.SOP.Areas.SOP.Controllers.SelectListItemDto> ?? new();
+}
+
+@section Breadcrumb {
+    <nav class="crumbs" aria-label="Sayfa konumu">
+        <a href="/">Ana Sayfa</a>
+        <a href="@Url.Action("Index")">Prosedürler</a>
+        <span aria-current="page">Yeni Prosedür</span>
+    </nav>
+}
+
+@section TopActions {
+    <a href="@Url.Action("Index")" class="btn">İptal</a>
+}
+
+<div class="hero">
+    <h1>Yeni Prosedür</h1>
+    <p class="sub"><span>Master kayıt — versiyon ve içerik sonraki adımda eklenir.</span></p>
+</div>
+
+<form method="post" action="@Url.Action("Create")">
+    @Html.AntiForgeryToken()
+    @await Html.PartialAsync("_SopForm", Model, new ViewDataDictionary(ViewData) { { "Categories", categories } })
+
+    <div class="form-action-row wide">
+        <a href="@Url.Action("Index")" class="btn ghost">Geri Dön</a>
+        <button type="submit" class="btn primary">Kaydet</button>
+    </div>
+</form>

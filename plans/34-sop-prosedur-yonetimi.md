@@ -271,13 +271,13 @@ git revert <plan-34-merge-commit>
 7. [x] **S-07** `Database/02_SeedSopCategories.sql` (İK, Operasyon, IT, Finans, Kalite, Etik default kategoriler)
 8. [x] **S-08** `ConfigureModelBuilder` doldu — build 0/0, test 412/412 yeşil
 
-### Faz C — Admin CRUD (12-16 saat) — S-09..S-14
-9. [ ] **S-09** `SopService.cs` — Create/Update/NewVersion/SupersedeAndArchive
-10. [ ] **S-10** `SopController` admin endpoints + AntiForgery + Authorize
-11. [ ] **S-11** Admin views (Index, Edit, NewVersion form + Quill editor)
-12. [ ] **S-12** `SopApprovalService.cs` — 3-adımlı flow + `ApprovalRequest` entegrasyonu
-13. [ ] **S-13** Departman ataması UI (multi-select)
-14. [ ] **S-14** Unit test: `SopServiceTests` (version chain, supersede logic) — **çalıştır + 0 başarısız**
+### Faz C — Admin CRUD (12-16 saat) — S-09..S-14 ✅ 2026-05-22
+9. [x] **S-09** `SopService.cs` — Create/Update/NewVersion/MarkVersionApproved/ArchiveSuperseded
+10. [x] **S-10** `SopController` admin endpoints + AntiForgery + Authorize (admin,sop-editor)
+11. [x] **S-11** Admin views (Index, Create, Edit, Details, NewVersion + Quill editor + _SopForm partial)
+12. [x] **S-12** `SopApprovalService.cs` — 3-adımlı flow + `ApprovalRequest` direkt DB (modül izolasyonu, ADR-002)
+13. [x] **S-13** Departman ataması UI — basit CSV input + IsCompanyWide toggle (Plan 18B sonrası multi-select)
+14. [x] **S-14** Unit test: `SopServiceTests` (10 test — version chain, sanitize, supersede, archive sweep) — 422/422 yeşil
 
 ### Faz D — User-facing (8-12 saat) — S-15..S-19
 15. [ ] **S-15** `SopMyController` — "Prosedürlerim" + "Tüm SOP'lar"

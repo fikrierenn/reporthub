@@ -1,0 +1,120 @@
+@model SopDetailsViewModel
+@{
+    ViewData["Title"] = Model.Document.Title;
+}
+
+@section Breadcrumb {
+    <nav class="crumbs" aria-label="Sayfa konumu">
+        <a href="/">Ana Sayfa</a>
+        <a href="@Url.Action("Index")">Prosedürler</a>
+        <span aria-current="page">@Model.Document.Title</span>
+    </nav>
+}
+
+@section TopActions {
+    <a href="@Url.Action("NewVersion", new { id = Model.Document.Id })" class="btn primary">
+        <i class="fas fa-plus text-[10px]" aria-hidden="true"></i>
+        Yeni Versiyon
+    </a>
+    <a href="@Url.Action("Edit", new { id = Model.Document.Id })" class="btn">Düzenle</a>
+}
+
+<div class="hero">
+    <h1><i class="fas fa-book-open" aria-hidden="true"></i> @Model.Document.Title</h1>
+    <p class="sub">
+        @if (Model.ActiveVersion != null)
+        {
+            <span class="pill"><span class="dot ok"></span>v@(Model.ActiveVersion.VersionNumber) Aktif</span>
+        }
+        else
+        {
+            <span class="pill"><span class="dot warn"></span>Aktif versiyon yok</span>
+        }
+        <span>@(Model.Document.IsCompanyWide ? "Şirket Geneli" : Model.Document.DepartmentIds ?? "Departman atanmadı")</span>
+        <span class="mono">@Model.Document.ReadDeadlineDays gün okuma</span>
+    </p>
+</div>
+
+@if (TempData["Message"] is string msg && !string.IsNullOrEmpty(msg))
+{
+    @await Html.PartialAsync("_AlertMessage", ("success", msg))
+}
+
+@if (!string.IsNullOrWhiteSpace(Model.Document.Description))
+{
+    <div class="form-section-card wide">
+        <div class="form-section-head"><h2 class="form-section-head__title">Açıklama</h2></div>
+        <div class="form-section-body">
+            <p>@Model.Document.Description</p>
+        </div>
+    </div>
+}
+
+@if (Model.ActiveVersion != null)
+{
+    <div class="form-section-card wide">
+        <div class="form-section-head">
+            <h2 class="form-section-head__title">Aktif İçerik — v@(Model.ActiveVersion.VersionNumber)</h2>
+            <p class="form-section-head__sub">Yürürlük: @(Model.ActiveVersion.EffectiveDate?.ToString("yyyy-MM-dd") ?? "—")</p>
+        </div>
+        <div class="form-section-body">
+            <div class="prose">
+                @Html.Raw(Model.ActiveVersion.ContentJson)
+            </div>
+        </div>
+    </div>
+}
+
+<div class="form-section-card wide">
+    <div class="form-section-head">
+        <h2 class="form-section-head__title">Versiyon Geçmişi</h2>
+    </div>
+    <div class="form-section-body">
+        @if (Model.Versions.Count == 0)
+        {
+            <p class="text-muted">Henüz versiyon yok. <a href="@Url.Action("NewVersion", new { id = Model.Document.Id })">İlk versiyonu ekle</a>.</p>
+        }
+        else
+        {
+            <table class="dt">
+                <thead>
+                    <tr>
+                        <th scope="col">Versiyon</th>
+                        <th scope="col">Durum</th>
+                        <th scope="col">Yürürlük</th>
+                        <th scope="col">Oluşturulma</th>
+                        <th scope="col" style="text-align:right;">İşlem</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @foreach (var v in Model.Versions)
+                {
+                    var statusLabel = v.Status switch
+                    {
+                        0 => ("Taslak", "warn"),
+                        1 => ("Onayda", "warn"),
+                        2 => v.SupersededDate.HasValue ? ("Geçersiz", "err") : ("Yürürlükte", "ok"),
+                        3 => ("Arşiv", "err"),
+                        _ => ("—", "")
+                    };
+                    <tr>
+                        <td><span class="mono">v@(v.VersionNumber)</span></td>
+                        <td><span class="status @statusLabel.Item2">@statusLabel.Item1</span></td>
+                        <td>@(v.EffectiveDate?.ToString("yyyy-MM-dd") ?? "—")</td>
+                        <td>@v.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                        <td style="text-align:right;">
+                            @if (v.Status == 0)
+                            {
+                                <form method="post" action="@Url.Action("Submit", new { versionId = v.Id })" style="display:inline">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn sm primary">Onaya Gönder</button>
+                                </form>
+                            }
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        }
+    </div>
+</div>

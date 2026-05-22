@@ -1,0 +1,93 @@
+@inject Mosaik.Core.Html.IContentSanitizer Sanitizer
+@model SopVersionFormViewModel
+@{
+    var doc = ViewBag.Document as SopDocument;
+    ViewData["Title"] = $"Yeni Versiyon — {doc?.Title}";
+}
+
+@section Head {
+    <link href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.snow.css" rel="stylesheet">
+}
+
+@section Breadcrumb {
+    <nav class="crumbs" aria-label="Sayfa konumu">
+        <a href="/">Ana Sayfa</a>
+        <a href="@Url.Action("Index")">Prosedürler</a>
+        <a href="@Url.Action("Details", new { id = Model.SopDocumentId })">@doc?.Title</a>
+        <span aria-current="page">Yeni Versiyon</span>
+    </nav>
+}
+
+@section TopActions {
+    <a href="@Url.Action("Details", new { id = Model.SopDocumentId })" class="btn">İptal</a>
+}
+
+<div class="hero">
+    <h1>Yeni Versiyon — @doc?.Title</h1>
+    <p class="sub"><span>Taslak olarak kaydet, sonra "Onaya Gönder" ile flow başlat.</span></p>
+</div>
+
+<form method="post" action="@Url.Action("NewVersion")" id="sop-version-form">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="SopDocumentId" value="@Model.SopDocumentId" />
+
+    @if (!ViewData.ModelState.IsValid)
+    {
+        <div class="alert error" role="alert">
+            <ul style="margin:0; padding-left:18px;">
+            @foreach (var err in ViewData.ModelState.SelectMany(m => m.Value!.Errors).Select(e => e.ErrorMessage))
+            {
+                <li>@err</li>
+            }
+            </ul>
+        </div>
+    }
+
+    <div class="form-section-card wide">
+        <div class="form-section-head">
+            <h2 class="form-section-head__title">İçerik</h2>
+            <p class="form-section-head__sub">Quill rich-text — başlık, liste, link, bold/italic. Save sırasında HtmlSanitizer çalışır.</p>
+        </div>
+        <div class="form-section-body">
+            <div class="tamim-quill">
+                <div id="editor-container" class="tamim-quill__editor">@Html.Raw(Sanitizer.Sanitize(Model.ContentJson))</div>
+            </div>
+            <textarea id="ContentJson" name="ContentJson" hidden>@Model.ContentJson</textarea>
+        </div>
+    </div>
+
+    <div class="form-action-row wide">
+        <a href="@Url.Action("Details", new { id = Model.SopDocumentId })" class="btn ghost">Geri Dön</a>
+        <button type="submit" class="btn primary">Taslak Kaydet</button>
+    </div>
+</form>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js"></script>
+    <script>
+        (function () {
+            const editorEl = document.getElementById('editor-container');
+            const hiddenEl = document.getElementById('ContentJson');
+            if (!editorEl || !hiddenEl || typeof Quill === 'undefined') return;
+            const quill = new Quill('#editor-container', {
+                theme: 'snow',
+                modules: {
+                    toolbar: [
+                        [{ 'header': [2, 3, false] }],
+                        ['bold', 'italic', 'underline'],
+                        [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+                        ['link'],
+                        ['clean']
+                    ]
+                },
+                placeholder: 'Prosedürün tam metnini buraya yaz...'
+            });
+            const form = document.getElementById('sop-version-form');
+            if (form) {
+                form.addEventListener('submit', function () {
+                    hiddenEl.value = quill.root.innerHTML;
+                });
+            }
+        })();
+    </script>
+}

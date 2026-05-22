@@ -1,0 +1,88 @@
+@model SopFormViewModel
+@{
+    var categories = ViewData["Categories"] as List<Mosaik.Modules.SOP.Areas.SOP.Controllers.SelectListItemDto> ?? new();
+}
+
+@if (!ViewData.ModelState.IsValid)
+{
+    <div class="alert error" role="alert">
+        <ul style="margin:0; padding-left:18px;">
+        @foreach (var err in ViewData.ModelState.SelectMany(m => m.Value!.Errors).Select(e => e.ErrorMessage))
+        {
+            <li>@err</li>
+        }
+        </ul>
+    </div>
+}
+
+<div class="form-section-card wide">
+    <div class="form-section-head">
+        <h2 class="form-section-head__title">Prosedür Bilgileri</h2>
+    </div>
+    <div class="form-section-body">
+        <input type="hidden" name="FirmaId" value="@Model.FirmaId" />
+
+        <div class="field">
+            <label class="lab" for="Title">Başlık <span class="req">*</span></label>
+            <input type="text" id="Title" name="Title" value="@Model.Title" class="inp" maxlength="200" required />
+        </div>
+
+        <div class="field">
+            <label class="lab" for="Description">Açıklama</label>
+            <textarea id="Description" name="Description" class="inp" rows="3">@Model.Description</textarea>
+        </div>
+
+        <div class="form-row-2col">
+            <div class="field">
+                <label class="lab" for="Category">Kategori</label>
+                <select id="Category" name="Category" class="inp">
+                    <option value="">— Seçin —</option>
+                    @foreach (var c in categories)
+                    {
+                        <option value="@c.Code" selected="@(Model.Category == c.Code)">@c.Label</option>
+                    }
+                </select>
+            </div>
+            <div class="field">
+                <label class="lab" for="OwnerUserId">Sahip Kullanıcı (ID) <span class="req">*</span></label>
+                <input type="number" id="OwnerUserId" name="OwnerUserId" value="@Model.OwnerUserId" class="inp" min="1" required />
+            </div>
+        </div>
+
+        <div class="field">
+            <div class="tamim-urgent-toggle">
+                <input type="checkbox" id="IsCompanyWide" name="IsCompanyWide" value="true"
+                       @(Model.IsCompanyWide ? "checked" : "") class="checkbox" />
+                <label for="IsCompanyWide" class="lab">Şirket Geneli (tüm departmanlar)</label>
+            </div>
+        </div>
+
+        <div class="field">
+            <label class="lab" for="DepartmentIds">Departman ID'leri (CSV)</label>
+            <input type="text" id="DepartmentIds" name="DepartmentIds" value="@Model.DepartmentIds" class="inp" maxlength="500" placeholder="örn: 1,4,12" />
+            <p class="help-text">Şirket Geneli işaretliyse bu alan yok sayılır. Plan 18B HR sync sonrası multi-select gelir.</p>
+        </div>
+
+        <div class="form-row-2col">
+            <div class="field">
+                <label class="lab" for="ReadDeadlineDays">Okuma Süresi (gün)</label>
+                <input type="number" id="ReadDeadlineDays" name="ReadDeadlineDays" value="@Model.ReadDeadlineDays" class="inp" min="1" max="365" />
+            </div>
+            <div class="field">
+                <div class="tamim-urgent-toggle" style="margin-top:24px;">
+                    <input type="checkbox" id="RequiresIKApproval" name="RequiresIKApproval" value="true"
+                           @(Model.RequiresIKApproval ? "checked" : "") class="checkbox" />
+                    <label for="RequiresIKApproval" class="lab">İK onayı zorunlu (3-adımlı onay)</label>
+                </div>
+            </div>
+        </div>
+
+        <div class="field mb-0">
+            <div class="tamim-urgent-toggle">
+                <input type="checkbox" id="AiAdvisorEnabled" name="AiAdvisorEnabled" value="true"
+                       @(Model.AiAdvisorEnabled ? "checked" : "") class="checkbox" />
+                <label for="AiAdvisorEnabled" class="lab">AI Danışman drawer'ı aktif (Plan 34 Faz F)</label>
+            </div>
+        </div>
+    </div>
+</div>

@@ -21,12 +21,12 @@ namespace Mosaik.Modules.SOP
 
         public void ConfigureServices(IServiceCollection services)
         {
-            // Plan 34 Faz B+ servisleri (sonraki commit'lerde):
-            // services.AddScoped<Services.SopService>();
-            // services.AddScoped<Services.SopApprovalService>();
-            // services.AddScoped<Services.SopReadReceiptService>();
-            // services.AddScoped<Services.SopAiAdvisorService>();
-            // services.AddScoped<Services.SopRateLimitGuard>();
+            // Plan 34 Faz C registrations.
+            services.AddScoped<Services.SopService>();
+            services.AddScoped<Services.SopApprovalService>();
+            // Faz D: services.AddScoped<Services.SopReadReceiptService>();
+            // Faz F: services.AddScoped<Services.SopAiAdvisorService>();
+            // Faz F: services.AddScoped<Services.SopRateLimitGuard>();
         }
 
         public void ConfigureModelBuilder(ModelBuilder mb)

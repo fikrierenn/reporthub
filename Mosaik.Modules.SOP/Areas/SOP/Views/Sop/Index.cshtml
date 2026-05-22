@@ -1,0 +1,80 @@
+@model List<SopDocument>
+@{
+    ViewData["Title"] = "Prosedürler";
+    var catMap = ViewBag.CategoryMap as Dictionary<string, string> ?? new();
+}
+
+@section Breadcrumb {
+    <nav class="crumbs" aria-label="Sayfa konumu">
+        <a href="/">Ana Sayfa</a>
+        <span aria-current="page">Prosedürler</span>
+    </nav>
+}
+
+@section TopActions {
+    <a href="@Url.Action("Create", "Sop")" class="btn primary">
+        <i class="fas fa-plus text-[10px]" aria-hidden="true"></i>
+        Yeni Prosedür
+    </a>
+}
+
+<div class="hero">
+    <h1><i class="fas fa-book-open" aria-hidden="true"></i> Prosedürler</h1>
+    <p class="sub">
+        <span>Standart operasyon prosedürleri — versiyonlama, onay zinciri, okundu disiplini.</span>
+        <span class="mono">@Model.Count kayıt</span>
+    </p>
+</div>
+
+@if (TempData["Message"] is string msg && !string.IsNullOrEmpty(msg))
+{
+    @await Html.PartialAsync("_AlertMessage", ("success", msg))
+}
+
+@if (Model.Count == 0)
+{
+    <div class="empty-state">
+        <i class="fas fa-book-open empty-state__icon" aria-hidden="true"></i>
+        <h3>Henüz prosedür yok</h3>
+        <p>İlk prosedürü ekleyerek başlayın. Yazan → onay zinciri → departman ataması → okundu disiplini.</p>
+    </div>
+}
+else
+{
+    <div class="paper">
+        <table class="dt">
+            <thead>
+                <tr>
+                    <th scope="col">Başlık</th>
+                    <th scope="col">Kategori</th>
+                    <th scope="col">Departman</th>
+                    <th scope="col">Okuma Süresi</th>
+                    <th scope="col">Güncelleme</th>
+                    <th scope="col" style="text-align:right;">İşlem</th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var d in Model)
+            {
+                <tr>
+                    <td>
+                        <a href="@Url.Action("Details", new { id = d.Id })">@d.Title</a>
+                    </td>
+                    <td>
+                        @(d.Category != null && catMap.TryGetValue(d.Category, out var label) ? label : (d.Category ?? "—"))
+                    </td>
+                    <td>
+                        @(d.IsCompanyWide ? "Şirket Geneli" : (d.DepartmentIds ?? "—"))
+                    </td>
+                    <td><span class="mono">@d.ReadDeadlineDays gün</span></td>
+                    <td><span class="ago" title="@d.UpdatedAt.ToString("yyyy-MM-dd HH:mm")">@d.UpdatedAt.ToString("yyyy-MM-dd")</span></td>
+                    <td style="text-align:right;">
+                        <a href="@Url.Action("Edit", new { id = d.Id })" class="btn ghost sm">Düzenle</a>
+                        <a href="@Url.Action("Details", new { id = d.Id })" class="btn sm">Detay</a>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+}
