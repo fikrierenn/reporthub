@@ -265,11 +265,11 @@ git revert <plan-34-merge-commit>
 3. [x] **S-03** `Mosaik.csproj` ProjectReference ekle + build smoke (411/411 yeşil)
 4. [x] **S-04** `Database/71_SeedSopAppModule.sql` — AppModules.SOP kaydı (DisplayOrder=270, ModuleType=extension)
 
-### Faz B — Entity + Migration (4-6 saat) — S-05..S-08
-5. [ ] **S-05** 4 entity (`SopDocument`, `SopVersion`, `SopReadReceipt`, `SopApprovalSubmission`)
-6. [ ] **S-06** `Database/01_CreateSopTables.sql` (idempotent, FK + index)
-7. [ ] **S-07** `Database/02_SeedSopCategories.sql` (İK, Operasyon, IT, Finans, Kalite, Etik default kategoriler)
-8. [ ] **S-08** `ConfigureModelBuilder` (modül `IMosaikModule`) + `dotnet build` test
+### Faz B — Entity + Migration (4-6 saat) — S-05..S-08 ✅ 2026-05-22
+5. [x] **S-05** 4 entity (`SopDocument`, `SopVersion`, `SopReadReceipt`, `SopApprovalSubmission`)
+6. [x] **S-06** `Database/01_CreateSopTables.sql` (idempotent, FK + index + 5 CHECK constraint)
+7. [x] **S-07** `Database/02_SeedSopCategories.sql` (İK, Operasyon, IT, Finans, Kalite, Etik default kategoriler)
+8. [x] **S-08** `ConfigureModelBuilder` doldu — build 0/0, test 412/412 yeşil
 
 ### Faz C — Admin CRUD (12-16 saat) — S-09..S-14
 9. [ ] **S-09** `SopService.cs` — Create/Update/NewVersion/SupersedeAndArchive
