@@ -50,6 +50,10 @@ namespace Mosaik.Models
         // başarısız olursa kalan IsEnabled=true rows Priority asc sıralanır.
         public int Priority { get; set; } = 100;
 
+        // D-02-5 (2026-05-22): Günlük token bütçesi (null = sınırsız).
+        // Toplam (input + output) token aşımında bu provider atlanır, fallback devam eder.
+        public int? DailyTokenBudget { get; set; }
+
         // Son test sonucu (Admin UI'da göster)
         [MaxLength(500)]
         public string? LastTestMessage { get; set; }

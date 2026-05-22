@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Text;
 using System.Text.Json;
 using Mosaik.Core.Ai;
@@ -11,11 +12,15 @@ namespace Mosaik.Services
     //
     // Modül override: AiRequest.OverrideModel/MaxTokens/Temperature → o çağrıya özel,
     // global config bozulmaz.
+    // D-02-5 (2026-05-22): Per-provider günlük token bütçesi — s_dailyUsage in-process counter.
     public class AiSummaryProvider : IAiSummaryProvider
     {
         private readonly IAiSettingsProvider _settings;
         private readonly IHttpClientFactory _httpFactory;
         private readonly ILogger<AiSummaryProvider> _logger;
+
+        // key = AiSettings.Id (string), value = (UTC gün, kümülatif token)
+        private static readonly ConcurrentDictionary<string, (DateOnly Date, long Tokens)> s_dailyUsage = new();
 
         public AiSummaryProvider(
             IAiSettingsProvider settings,
@@ -38,6 +43,22 @@ namespace Mosaik.Services
 
             foreach (var cfg in configs)
             {
+                // D-02-5: Günlük token bütçesi kontrolü
+                if (cfg.DailyTokenBudget.HasValue)
+                {
+                    var today = DateOnly.FromDateTime(DateTime.UtcNow);
+                    var key = cfg.Id.ToString();
+                    if (s_dailyUsage.TryGetValue(key, out var usage) && usage.Date == today
+                        && usage.Tokens >= cfg.DailyTokenBudget.Value)
+                    {
+                        _logger.LogWarning(
+                            "AI provider {Provider}/{Model} (Id={Id}) günlük token bütçesi aşıldı ({Used}/{Budget}), atlanıyor.",
+                            cfg.Provider, cfg.Model, cfg.Id, usage.Tokens, cfg.DailyTokenBudget.Value);
+                        attempted.Add($"{cfg.Provider}/{cfg.Model}(budget)");
+                        continue;
+                    }
+                }
+
                 // Per-call override
                 var effective = cfg with
                 {
@@ -72,6 +93,20 @@ namespace Mosaik.Services
                     if (attempted.Count > 0)
                         _logger.LogInformation("AI fallback success on {Provider}/{Model} after {Failed} failure(s): {Attempted}",
                             cfg.Provider, effective.Model, attempted.Count, string.Join(", ", attempted));
+
+                    // D-02-5: Başarılı çağrı — günlük token sayacını güncelle
+                    if (cfg.DailyTokenBudget.HasValue)
+                    {
+                        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+                        var key = cfg.Id.ToString();
+                        var used = (long)(result.InputTokens + result.OutputTokens);
+                        s_dailyUsage.AddOrUpdate(key,
+                            (today, used),
+                            (_, old) => old.Date == today
+                                ? (today, old.Tokens + used)
+                                : (today, used));
+                    }
+
                     return result;
                 }
 

@@ -3,14 +3,13 @@ using Mosaik.Core.Ai;
 namespace Mosaik.Services.Ai
 {
     // Plan 16.5 Faz C — ILlmService implementasyonu.
-    // IAiSettingsProvider'dan aktif config'leri sırayla okur, başarı gelene kadar dener.
-    // AiSummaryProvider ile aynı fallback mantığını paylaşır; bu sınıf daha düşük seviyeli
-    // (extraction pipeline, Faz D).
-    public sealed class FallbackLlmService : ILlmService
+    // IAiSummaryProvider üzerinden proxy — fallback zinciri AiSummaryProvider'da yaşar.
+    // D-02-4 (2026-05-22): FallbackLlmService → LlmServiceAdapter rename.
+    public sealed class LlmServiceAdapter : ILlmService
     {
         private readonly IAiSummaryProvider _ai;
 
-        public FallbackLlmService(IAiSummaryProvider ai) => _ai = ai;
+        public LlmServiceAdapter(IAiSummaryProvider ai) => _ai = ai;
 
         public async Task<LlmResponse> GenerateAsync(LlmRequest request, CancellationToken ct = default)
         {

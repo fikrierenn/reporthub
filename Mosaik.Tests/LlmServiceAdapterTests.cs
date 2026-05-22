@@ -3,7 +3,7 @@ using Mosaik.Services.Ai;
 
 namespace Mosaik.Tests;
 
-public class FallbackLlmServiceTests
+public class LlmServiceAdapterTests
 {
     // ---- Fakes ----
 
@@ -20,7 +20,7 @@ public class FallbackLlmServiceTests
     {
         var inner = new FakeAiSummaryProvider(
             new AiSummaryResult(true, """{"ok":1}""", null, 100, 50, "gemini-2.0-flash"));
-        var sut = new FallbackLlmService(inner);
+        var sut = new LlmServiceAdapter(inner);
 
         var result = await sut.GenerateAsync(new LlmRequest("sys", "user"));
 
@@ -37,7 +37,7 @@ public class FallbackLlmServiceTests
     {
         var inner = new FakeAiSummaryProvider(
             new AiSummaryResult(false, null, "Tüm provider'lar başarısız.", 0, 0, null));
-        var sut = new FallbackLlmService(inner);
+        var sut = new LlmServiceAdapter(inner);
 
         var result = await sut.GenerateAsync(new LlmRequest("sys", "user"));
 
@@ -51,7 +51,7 @@ public class FallbackLlmServiceTests
     {
         string? capturedPurpose = null;
         var inner = new CapturingFakeProvider(req => { capturedPurpose = req.Purpose; });
-        var sut = new FallbackLlmService(inner);
+        var sut = new LlmServiceAdapter(inner);
 
         await sut.GenerateAsync(new LlmRequest("sys", "user", Purpose: "contract_extract"));
 
@@ -63,7 +63,7 @@ public class FallbackLlmServiceTests
     {
         bool? capturedRequireJson = null;
         var inner = new CapturingFakeProvider(req => { capturedRequireJson = req.RequireJson; });
-        var sut = new FallbackLlmService(inner);
+        var sut = new LlmServiceAdapter(inner);
 
         await sut.GenerateAsync(new LlmRequest("sys", "user", RequireJson: false));
 
@@ -78,7 +78,7 @@ public class FallbackLlmServiceTests
 
         CancellationToken? captured = null;
         var inner = new CapturingFakeProvider(_ => { }, ct => { captured = ct; });
-        var sut = new FallbackLlmService(inner);
+        var sut = new LlmServiceAdapter(inner);
 
         await sut.GenerateAsync(new LlmRequest("sys", "user"), cts.Token);
 

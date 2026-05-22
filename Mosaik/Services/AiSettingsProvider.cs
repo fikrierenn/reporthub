@@ -56,12 +56,14 @@ namespace Mosaik.Services
                         continue;
                     }
                     configs.Add(new AiConfig(
+                        Id: s.Id,
                         Provider: s.Provider,
                         ApiKey: plaintextKey,
                         Model: s.Model,
                         MaxTokens: s.MaxTokens,
                         Temperature: s.Temperature,
-                        BaseUrl: s.BaseUrl));
+                        BaseUrl: s.BaseUrl,
+                        DailyTokenBudget: s.DailyTokenBudget));
                 }
 
                 _cached = configs;

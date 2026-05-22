@@ -2,7 +2,7 @@ namespace Mosaik.Core.Ai
 {
     // Plan 16.5 Faz C — genel LLM metin üretici (provider-agnostic, fallback zinciri).
     // Extraction ve özet pipeline'ı her ikisi de bu interface'i kullanır.
-    // Implementasyon: Mosaik/Services/Ai/FallbackLlmService.cs (IAiSettingsProvider'dan config okur).
+    // Implementasyon: Mosaik/Services/Ai/LlmServiceAdapter.cs (IAiSummaryProvider proxy).
     public interface ILlmService
     {
         Task<LlmResponse> GenerateAsync(LlmRequest request, CancellationToken ct = default);
@@ -45,13 +45,16 @@ namespace Mosaik.Core.Ai
 
     // Active AI ayarları — DB'den okunur, runtime cache'lenir (1dk).
     // Provider değerleri: "groq", "grok", "openai", "openrouter", "gemini", "ollama"
+    // D-02-5 (2026-05-22): Id + DailyTokenBudget eklendi — günlük token sınırı.
     public sealed record AiConfig(
+        int Id,
         string Provider,
         string ApiKey,
         string Model,
         int MaxTokens,
         double Temperature,
-        string? BaseUrl);
+        string? BaseUrl,
+        int? DailyTokenBudget = null);
 
     // Modülden gelen tek istek nesnesi.
     //  - SystemPrompt + UserPrompt: zorunlu
