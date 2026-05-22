@@ -125,8 +125,8 @@ builder.Services.AddHostedService<Mosaik.Services.Ai.AiExtractionWorker>();
 builder.Services.AddHostedService<Mosaik.Services.WizardTempCleanupService>(); // N-3
 
 // Plan 25 AI Wizard — vision provider + extraction service (Faz 1).
-// Plan 25.1 hardening (file serving + queue migration) bekliyor.
-builder.Services.AddScoped<Mosaik.Core.Ai.IAiVisionProvider, Mosaik.Services.Ai.ZaiVisionProvider>();
+// D-03 (2026-05-22): ZaiVisionProvider → MultiProviderVisionProvider (zai+gemini+openai/grok fallback).
+builder.Services.AddScoped<Mosaik.Core.Ai.IAiVisionProvider, Mosaik.Services.Ai.MultiProviderVisionProvider>();
 builder.Services.AddScoped<Mosaik.Services.Ai.WizardExtractionService>();
 
 // Plan 16.6 — Modular Monolith. ModuleLoader Mosaik.Modules.* assembly'lerini
