@@ -159,6 +159,7 @@ Build: 0 hata 0 uyarı. Test: **337/337 geçti** (test-discipline.md kanıtland�
 - [ ] **LOW-F5 · AI günlük budget concurrent overshoot** — `Mosaik/Services/AiSummaryProvider.cs:47,103`. Check-and-add race; aynı provider'a paralel istekler bütçe aşılmadan içeri girip toplamda aşabilir. Fix: `Interlocked.Add` ile atomik check-and-add. Multi-instance issue zaten D-02-5 journal'da not (DB-backed counter sonraki iterasyon). ~30dk.
 - [ ] **LOW-F6 · CSP inline JS debt** — Inline `onclick="..."` 50+ oluşum (örn. `CreateDataSource.cshtml:75`, `Documents/Index.cshtml:21`). CSP `script-src 'self'` eklemek için bloklayıcı. Sweep + agent batch refactor. ~4-6h.
 - [ ] **LOW-F7 · Büyük dosya borcu** — `EditReportV2.cshtml` 1006 satır, `CreateReportV2.cshtml` 913 satır, `_AppLayout.cshtml` 444 satır. Reports modülü yeniden ele alındığında partial split. M-01 follow-up.
+- [ ] **LOW · Voice command (annyang) araştırma** — Web Speech API wrapper (2KB MIT), KVKK riski (ses cloud'a — Chrome→Google, Edge→Azure). Geri açma koşulu: Plan 40 Faz 6 DataElement envanter + provider DPA + opt-in. Alternatif: Whisper.cpp WASM yerel STT. Detay: `docs/RESEARCH_ANNYANG_2026-05-22.md`.
 
 ### IK / HR — Zirve `vw_PersonelDepartman` ile
 
