@@ -155,6 +155,11 @@ Build: 0 hata 0 uyarı. Test: **337/337 geçti** (test-discipline.md kanıtland�
 
 7+2 HIGH kapandı. Kalan 4 MEDIUM bağımsız + opsiyonel.
 
+**2026-05-22 dış inceleme follow-up (Plan 45 sonrası backlog):**
+- [ ] **LOW-F5 · AI günlük budget concurrent overshoot** — `Mosaik/Services/AiSummaryProvider.cs:47,103`. Check-and-add race; aynı provider'a paralel istekler bütçe aşılmadan içeri girip toplamda aşabilir. Fix: `Interlocked.Add` ile atomik check-and-add. Multi-instance issue zaten D-02-5 journal'da not (DB-backed counter sonraki iterasyon). ~30dk.
+- [ ] **LOW-F6 · CSP inline JS debt** — Inline `onclick="..."` 50+ oluşum (örn. `CreateDataSource.cshtml:75`, `Documents/Index.cshtml:21`). CSP `script-src 'self'` eklemek için bloklayıcı. Sweep + agent batch refactor. ~4-6h.
+- [ ] **LOW-F7 · Büyük dosya borcu** — `EditReportV2.cshtml` 1006 satır, `CreateReportV2.cshtml` 913 satır, `_AppLayout.cshtml` 444 satır. Reports modülü yeniden ele alındığında partial split. M-01 follow-up.
+
 ### IK / HR — Zirve `vw_PersonelDepartman` ile
 
 **Bağlam:** BKM Zirve `vw_PersonelDepartman` view 3 firma UNION (BKM_GENEL + BURSA_KÜLTÜR_MERKEZİ + ASİYE_BİNGÖLBALI), 4 seviye hiyerarşi (Lokasyon → AltLokasyon → Departman + Unvan), 272 aktif personel. IK DataSource zaten Mosaik'te kayıtlı. Detay: `memory/project_zirve_personel_discovery.md`.

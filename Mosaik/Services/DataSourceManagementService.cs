@@ -92,7 +92,7 @@ namespace Mosaik.Services
             var ds = await _context.DataSources.FindAsync(key);
             if (ds == null) return AdminOperationResult.Fail("Veri kaynagi bulunamadi.");
 
-            var oldSnap = new { ds.DataSourceKey, ds.Title, ds.ConnString, ds.IsActive };
+            var oldSnap = new { ds.DataSourceKey, ds.Title, ds.IsActive };
             _context.DataSources.Remove(ds);
             await _context.SaveChangesAsync();
 

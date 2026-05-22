@@ -136,8 +136,13 @@ namespace Mosaik.Services.Ai
             var text = await resp.Content.ReadAsStringAsync(ct);
 
             if (!resp.IsSuccessStatusCode)
+            {
+                _logger.LogError(
+                    "Gemini vision HTTP error. Status={Status} Model={Model} Body={Body}",
+                    (int)resp.StatusCode, model, Truncate(text, 400));
                 return new AiSummaryResult(false, null,
-                    $"Gemini vision HTTP {(int)resp.StatusCode}: {Truncate(text, 400)}");
+                    $"Gemini vision sağlayıcı hatası (HTTP {(int)resp.StatusCode}).");
+            }
 
             try
             {
@@ -191,8 +196,13 @@ namespace Mosaik.Services.Ai
             var text = await resp.Content.ReadAsStringAsync(ct);
 
             if (!resp.IsSuccessStatusCode)
+            {
+                _logger.LogError(
+                    "{Provider} vision HTTP error. Status={Status} Model={Model} Body={Body}",
+                    providerName, (int)resp.StatusCode, model, Truncate(text, 400));
                 return new AiSummaryResult(false, null,
-                    $"{providerName} vision HTTP {(int)resp.StatusCode}: {Truncate(text, 400)}");
+                    $"{providerName} vision sağlayıcı hatası (HTTP {(int)resp.StatusCode}).");
+            }
 
             try
             {
