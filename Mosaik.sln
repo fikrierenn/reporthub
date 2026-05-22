@@ -13,6 +13,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mosaik.Modules.Circular", "
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mosaik.Modules.Forms", "Mosaik.Modules.Forms\Mosaik.Modules.Forms.csproj", "{C1962545-84C8-4CDA-B239-96FAFFBDA478}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mosaik.Modules.SOP", "Mosaik.Modules.SOP\Mosaik.Modules.SOP.csproj", "{52E12253-5605-43DB-8BD1-AD075A1FC41D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -83,6 +85,18 @@ Global
 		{C1962545-84C8-4CDA-B239-96FAFFBDA478}.Release|x64.Build.0 = Release|Any CPU
 		{C1962545-84C8-4CDA-B239-96FAFFBDA478}.Release|x86.ActiveCfg = Release|Any CPU
 		{C1962545-84C8-4CDA-B239-96FAFFBDA478}.Release|x86.Build.0 = Release|Any CPU
+		{52E12253-5605-43DB-8BD1-AD075A1FC41D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{52E12253-5605-43DB-8BD1-AD075A1FC41D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{52E12253-5605-43DB-8BD1-AD075A1FC41D}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{52E12253-5605-43DB-8BD1-AD075A1FC41D}.Debug|x64.Build.0 = Debug|Any CPU
+		{52E12253-5605-43DB-8BD1-AD075A1FC41D}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{52E12253-5605-43DB-8BD1-AD075A1FC41D}.Debug|x86.Build.0 = Debug|Any CPU
+		{52E12253-5605-43DB-8BD1-AD075A1FC41D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{52E12253-5605-43DB-8BD1-AD075A1FC41D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{52E12253-5605-43DB-8BD1-AD075A1FC41D}.Release|x64.ActiveCfg = Release|Any CPU
+		{52E12253-5605-43DB-8BD1-AD075A1FC41D}.Release|x64.Build.0 = Release|Any CPU
+		{52E12253-5605-43DB-8BD1-AD075A1FC41D}.Release|x86.ActiveCfg = Release|Any CPU
+		{52E12253-5605-43DB-8BD1-AD075A1FC41D}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
