@@ -175,6 +175,7 @@ _Otomatik üretildi — `scripts/refresh-arch-map.sh` tarafından. Elle düzenle
 | orgchart | Organizasyon | structure | ✓ | core |  |
 | circular | Tamim & Sirküler | workspace | ✓ | extension | Mosaik.Modules.Tamim |
 | forms | Formlar |  | ✓ | extension | Mosaik.Modules.Forms |
+| sop | Prosedürler |  | ✓ | extension | Mosaik.Modules.SOP |
 <!-- AUTO:APPMODULES:END -->
 
 Not: `dashboards` modülü sidebar render'da SKIP edilir (Genel Bakış zaten `/Dashboard`).

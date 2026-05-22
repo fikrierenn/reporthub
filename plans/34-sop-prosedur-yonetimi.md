@@ -259,11 +259,11 @@ git revert <plan-34-merge-commit>
 
 ## 8. Adımlar / Fazlar
 
-### Faz A — Modül iskeleti (4-6 saat) — S-01..S-04
-1. [ ] **S-01** `Mosaik.Modules.SOP` csproj + sln ekleme
-2. [ ] **S-02** `SopModule : IMosaikModule` impl (Circular'dan template)
-3. [ ] **S-03** `Mosaik.csproj` ProjectReference ekle + build smoke
-4. [ ] **S-04** `Database/03_AddSopAppModule.sql` — AppModules.SOP kaydı, sidebar visible
+### Faz A — Modül iskeleti (4-6 saat) — S-01..S-04 ✅ 2026-05-22 (commit `2c700be`)
+1. [x] **S-01** `Mosaik.Modules.SOP` csproj + sln ekleme
+2. [x] **S-02** `SopModule : IMosaikModule` impl (Forms placeholder template)
+3. [x] **S-03** `Mosaik.csproj` ProjectReference ekle + build smoke (411/411 yeşil)
+4. [x] **S-04** `Database/71_SeedSopAppModule.sql` — AppModules.SOP kaydı (DisplayOrder=270, ModuleType=extension)
 
 ### Faz B — Entity + Migration (4-6 saat) — S-05..S-08
 5. [ ] **S-05** 4 entity (`SopDocument`, `SopVersion`, `SopReadReceipt`, `SopApprovalSubmission`)
