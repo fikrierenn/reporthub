@@ -122,7 +122,7 @@ namespace Mosaik.Controllers
                     {
                         dataSource.DataSourceKey,
                         dataSource.Title,
-                        dataSource.ConnString,
+                        ConnStringChanged = true, // Güvenlik: bağlantı dizesi log'a yazılmaz
                         dataSource.IsActive
                     })
                 });

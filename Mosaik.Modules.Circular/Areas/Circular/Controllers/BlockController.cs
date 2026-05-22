@@ -245,7 +245,8 @@ namespace Mosaik.Modules.Circular.Areas.Circular.Controllers
             var isPublished = block.CircularId.HasValue;
             if (!isAdmin && !isOwner && !isPublished) return Forbid();
 
-            var path = _dosya.GetAbsolutePath(file);
+            var path = _dosya.GetAbsolutePath(file); // null → path traversal
+            if (path == null) return NotFound();
             if (!System.IO.File.Exists(path)) return NotFound();
 
             return PhysicalFile(path, file.MimeType ?? "application/octet-stream", file.FileName);

@@ -86,10 +86,11 @@ namespace Mosaik.Modules.Circular.Services
             if (AllowedMimeByExt.TryGetValue(ext, out var allowedMimes) && !allowedMimes.Contains(contentType, StringComparer.OrdinalIgnoreCase))
                 return ServiceResult<BlockFile>.Failure($"Dosya türü uzantıyla uyumsuz (Content-Type: {contentType}).");
 
-            // Disk path: wwwroot/uploads/blocks/{yyyy}/{MM}/{guid}.{ext}
+            // Disk path: App_Data/blocks/{yyyy}/{MM}/{guid}.{ext}
+            // Plan 41 HIGH-1 fix: wwwroot → ContentRoot/App_Data (UseStaticFiles auth bypass önlendi)
             var now = DateTime.UtcNow;
-            var folderRel = Path.Combine("uploads", "blocks", now.ToString("yyyy"), now.ToString("MM"));
-            var folderAbs = Path.Combine(_env.WebRootPath ?? "wwwroot", folderRel);
+            var folderRel = Path.Combine("App_Data", "blocks", now.ToString("yyyy"), now.ToString("MM"));
+            var folderAbs = Path.Combine(_env.ContentRootPath, folderRel);
             Directory.CreateDirectory(folderAbs);
 
             var guidName = $"{Guid.NewGuid():N}.{ext}";
@@ -149,10 +150,18 @@ namespace Mosaik.Modules.Circular.Services
             return ServiceResult.Ok("Dosya silindi.");
         }
 
-        public string GetAbsolutePath(BlockFile file)
+        // null döner → path traversal tespit edildi (BlockController NotFound döner)
+        public string? GetAbsolutePath(BlockFile file)
         {
-            var root = _env.WebRootPath ?? "wwwroot";
-            return Path.Combine(root, file.FilePath.Replace('/', Path.DirectorySeparatorChar));
+            var allowedRoot = Path.GetFullPath(Path.Combine(_env.ContentRootPath, "App_Data", "blocks"));
+            var candidate   = Path.GetFullPath(Path.Combine(_env.ContentRootPath,
+                file.FilePath.Replace('/', Path.DirectorySeparatorChar)));
+            if (!candidate.StartsWith(allowedRoot, StringComparison.OrdinalIgnoreCase))
+            {
+                _logger.LogError("BlockFile {Id} FilePath outside allowed root: {FilePath}", file.Id, file.FilePath);
+                return null;
+            }
+            return candidate;
         }
 
         // Sanitize: path traversal + non-ASCII path char'ları temizle, sadece file adı bırak
