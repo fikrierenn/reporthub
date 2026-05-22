@@ -6,7 +6,7 @@
 > Tahmin etme. **Önce buraya bak.**
 
 Son elle güncelleme: **2026-05-12**
-Son otomatik refresh: <!-- AUTO:LAST_REFRESH --> 2026-05-21 <!-- /AUTO:LAST_REFRESH -->
+Son otomatik refresh: <!-- AUTO:LAST_REFRESH --> 2026-05-22 <!-- /AUTO:LAST_REFRESH -->
 
 > **Otomatik tazelenir.** `bash scripts/refresh-arch-map.sh` çalıştırılınca aşağıdaki marker'lı bölümler regenerate edilir:
 > AppModules live state (§ 7), Admin views listesi (§ 12), Controller routes (§ 13).
@@ -174,6 +174,7 @@ _Otomatik üretildi — `scripts/refresh-arch-map.sh` tarafından. Elle düzenle
 | obligations | Yükümlülükler | contracts | ✓ | core |  |
 | orgchart | Organizasyon | structure | ✓ | core |  |
 | circular | Tamim & Sirküler | workspace | ✓ | extension | Mosaik.Modules.Tamim |
+| forms | Formlar |  | ✓ | extension | Mosaik.Modules.Forms |
 <!-- AUTO:APPMODULES:END -->
 
 Not: `dashboards` modülü sidebar render'da SKIP edilir (Genel Bakış zaten `/Dashboard`).
