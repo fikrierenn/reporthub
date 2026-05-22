@@ -281,6 +281,9 @@ namespace Mosaik.Services.Ai
                     "Stage1 validation uyarıları: [{Warnings}] ExtractionId={Id}",
                     string.Join(" | ", validation.Warnings), extractionId);
 
+            // D-02-1 (2026-05-22): stage3 token sayacı (0 kalırsa Stage3 çalışmadı demek)
+            int stage3InputTokens = 0, stage3OutputTokens = 0;
+
             if (validation.NullFields.Count > 0 && !string.IsNullOrWhiteSpace(rawText))
             {
                 UpdateProgress(db, extraction, "ai_stage3");
@@ -293,6 +296,8 @@ namespace Mosaik.Services.Ai
                 var stage3 = await RunStage3RetryAsync(
                     ai, rawText, stage1Json!, validation.NullFields, extractionId, ct);
 
+                stage3InputTokens  = stage3.InputTokens;
+                stage3OutputTokens = stage3.OutputTokens;
                 stage1Json = stage3.Json;
                 extraction.ExtractionResultJson = stage1Json;
                 db.Entry(extraction).Property(x => x.ExtractionResultJson).IsModified = true;
@@ -363,8 +368,8 @@ namespace Mosaik.Services.Ai
             extraction.Stage2ResultText = stage2Result.IsSuccess ? stage2Result.RawJson : null;
             extraction.PromptVersion = ExtractionPrompts.PromptVersion;
             extraction.ModelUsed = stage1ModelUsed ?? "";
-            extraction.InputTokens = stage1InputTokens + stage2Result.InputTokens;
-            extraction.OutputTokens = stage1OutputTokens + stage2Result.OutputTokens;
+            extraction.InputTokens  = stage1InputTokens  + stage3InputTokens  + stage2Result.InputTokens;
+            extraction.OutputTokens = stage1OutputTokens + stage3OutputTokens + stage2Result.OutputTokens;
             extraction.ProcessedAt = DateTime.UtcNow;
             UpdateProgress(db, extraction, "done");
             extraction.ErrorMessage = stage2Result.IsSuccess

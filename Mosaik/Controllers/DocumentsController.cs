@@ -387,6 +387,23 @@ namespace Mosaik.Controllers
                 await db.SaveChangesAsync();
                 _logger.LogInformation("Insight tamam: FileId={Id}, summary={SL} char, tokens={In}+{Out}",
                     contractFileId, result.Summary?.Length ?? 0, result.InputTokens, result.OutputTokens);
+
+                // D-02-3 (2026-05-22): AI insight audit logu
+                var auditLog = sp.GetRequiredService<IAuditLog>();
+                await auditLog.LogAsync(
+                    eventType:    "ai_doc_insight",
+                    targetType:   "contract_file",
+                    targetKey:    contractFileId.ToString(),
+                    description:  $"AI belge analizi tamamlandı: {cf.FileName}",
+                    newValuesJson: System.Text.Json.JsonSerializer.Serialize(new
+                    {
+                        cf.Id,
+                        cf.FileName,
+                        result.InputTokens,
+                        result.OutputTokens,
+                        SummaryLength = result.Summary?.Length ?? 0
+                    })
+                );
             }
             catch (Exception ex)
             {

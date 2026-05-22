@@ -128,6 +128,16 @@ namespace Mosaik.Services
 
             if (!resp.IsSuccessStatusCode)
             {
+                // D-02-2 (2026-05-22): 429 Rate Limit — Retry-After kadar bekle, sonra fallback devam eder.
+                if ((int)resp.StatusCode == 429)
+                {
+                    int waitSec = 10;
+                    if (resp.Headers.TryGetValues("Retry-After", out var raVals) &&
+                        int.TryParse(raVals.FirstOrDefault(), out var ra))
+                        waitSec = Math.Clamp(ra, 5, 60);
+                    _logger.LogWarning("{Provider} rate limit (429). {Sec}s beklenip fallback devam edecek.", cfg.Provider, waitSec);
+                    await Task.Delay(TimeSpan.FromSeconds(waitSec), ct);
+                }
                 return new AiSummaryResult(false, null,
                     $"{cfg.Provider} HTTP {(int)resp.StatusCode}: {Truncate(text, 400)}");
             }

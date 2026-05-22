@@ -55,6 +55,22 @@ namespace Mosaik.Controllers
             if (!result.IsSuccess)
                 return Json(new { ok = false, error = result.Error });
 
+            // D-02-3 (2026-05-22): AI belge chat audit logu
+            await _auditLog.LogAsync(
+                eventType:    "ai_doc_chat",
+                targetType:   "contract_file",
+                targetKey:    fileId.ToString(),
+                description:  $"AI belge sorusu: {file.FileName}",
+                newValuesJson: System.Text.Json.JsonSerializer.Serialize(new
+                {
+                    fileId,
+                    file.FileName,
+                    QuestionLength = question.Length,
+                    result.InputTokens,
+                    result.OutputTokens
+                })
+            );
+
             return Json(new { ok = true, answer = result.Answer, tokensIn = result.InputTokens, tokensOut = result.OutputTokens });
         }
 

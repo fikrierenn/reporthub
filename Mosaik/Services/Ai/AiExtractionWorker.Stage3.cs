@@ -8,7 +8,13 @@ namespace Mosaik.Services.Ai
 {
     public sealed partial class AiExtractionWorker
     {
-        public sealed record Stage3Outcome(string Json, IReadOnlyList<string> FailedFields, IReadOnlyList<string> SkippedFields);
+        // D-02-1 (2026-05-22): InputTokens/OutputTokens eklendi — worker toplamına dahil edilecek.
+        public sealed record Stage3Outcome(
+            string Json,
+            IReadOnlyList<string> FailedFields,
+            IReadOnlyList<string> SkippedFields,
+            int InputTokens = 0,
+            int OutputTokens = 0);
 
         private async Task<Stage3Outcome> RunStage3RetryAsync(
             IAiSummaryProvider ai,
@@ -26,6 +32,7 @@ namespace Mosaik.Services.Ai
             var skipped = nullFields.Skip(3).ToList();
             var failed = new List<string>();
             int patchedCount = 0;
+            int totalIn = 0, totalOut = 0;
 
             foreach (var field in fields)
             {
@@ -97,6 +104,8 @@ namespace Mosaik.Services.Ai
                         current[kv.Key] = kv.Value?.DeepClone();
                     }
 
+                    totalIn  += result.InputTokens;
+                    totalOut += result.OutputTokens;
                     patchedCount++;
                     _logger.LogInformation(
                         "Stage3 field={Field} patch uygulandı. ExtractionId={Id}", field, extractionId);
@@ -125,7 +134,7 @@ namespace Mosaik.Services.Ai
                     string.Join(",", fields), string.Join(",", skipped), extractionId);
 
             var json = patchedCount > 0 ? current.ToJsonString() : stage1Json;
-            return new Stage3Outcome(json, failed, skipped);
+            return new Stage3Outcome(json, failed, skipped, totalIn, totalOut);
         }
 
         private static string StripJsonMarkdown(string raw)
