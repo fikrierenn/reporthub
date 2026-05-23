@@ -228,4 +228,122 @@ public class SopServiceTests
 
         Assert.False(result.IsSuccess);
     }
+
+    // ---------- Plan 34.1: Soft/Hard Delete + Restore ----------
+
+    [Fact]
+    public async Task SoftDelete_ActiveDocument_SetsInactiveAndLogsAudit()
+    {
+        var (db, svc, audit) = NewService(nameof(SoftDelete_ActiveDocument_SetsInactiveAndLogsAudit));
+        await using var _ = db;
+        var createResult = await svc.CreateAsync(SampleInput(), createdBy: 10);
+        var doc = createResult.Data!;
+
+        var result = await svc.SoftDeleteAsync(doc.Id, deletedBy: 10);
+
+        Assert.True(result.IsSuccess);
+        var refreshed = await db.SopDocuments.FindAsync(doc.Id);
+        Assert.False(refreshed!.IsActive);
+        Assert.Contains("sop_archived", audit.Events);
+    }
+
+    [Fact]
+    public async Task SoftDelete_AlreadyArchived_IdempotentOk()
+    {
+        var (db, svc, _) = NewService(nameof(SoftDelete_AlreadyArchived_IdempotentOk));
+        await using var _2 = db;
+        var doc = (await svc.CreateAsync(SampleInput(), 10)).Data!;
+        await svc.SoftDeleteAsync(doc.Id, 10);
+
+        var second = await svc.SoftDeleteAsync(doc.Id, 10);
+
+        Assert.True(second.IsSuccess);
+        Assert.Contains("arşivlenmiş", second.Message);
+    }
+
+    [Fact]
+    public async Task SoftDelete_NonexistentDocument_Fails()
+    {
+        var (db, svc, _) = NewService(nameof(SoftDelete_NonexistentDocument_Fails));
+        await using var _ = db;
+
+        var result = await svc.SoftDeleteAsync(id: 9999, deletedBy: 10);
+
+        Assert.False(result.IsSuccess);
+        Assert.Contains("bulunamadı", result.Message);
+    }
+
+    [Fact]
+    public async Task Restore_ArchivedDocument_SetsActiveAndLogsAudit()
+    {
+        var (db, svc, audit) = NewService(nameof(Restore_ArchivedDocument_SetsActiveAndLogsAudit));
+        await using var _ = db;
+        var doc = (await svc.CreateAsync(SampleInput(), 10)).Data!;
+        await svc.SoftDeleteAsync(doc.Id, 10);
+
+        var result = await svc.RestoreAsync(doc.Id, restoredBy: 10);
+
+        Assert.True(result.IsSuccess);
+        var refreshed = await db.SopDocuments.FindAsync(doc.Id);
+        Assert.True(refreshed!.IsActive);
+        Assert.Contains("sop_restored", audit.Events);
+    }
+
+    [Fact]
+    public async Task Restore_AlreadyActive_IdempotentOk()
+    {
+        var (db, svc, _) = NewService(nameof(Restore_AlreadyActive_IdempotentOk));
+        await using var _ = db;
+        var doc = (await svc.CreateAsync(SampleInput(), 10)).Data!;
+
+        var result = await svc.RestoreAsync(doc.Id, 10);
+
+        Assert.True(result.IsSuccess);
+        Assert.Contains("aktif", result.Message);
+    }
+
+    [Fact]
+    public async Task HardDelete_DraftOnlyDocument_RemovesEntity()
+    {
+        var (db, svc, audit) = NewService(nameof(HardDelete_DraftOnlyDocument_RemovesEntity));
+        await using var _ = db;
+        var doc = (await svc.CreateAsync(SampleInput(), 10)).Data!;
+        await svc.NewVersionAsync(doc.Id, "<p>içerik</p>", createdBy: 10);
+
+        var result = await svc.HardDeleteAsync(doc.Id, deletedBy: 10);
+
+        Assert.True(result.IsSuccess);
+        Assert.Null(await db.SopDocuments.FindAsync(doc.Id));
+        Assert.Contains("sop_hard_deleted", audit.Events);
+    }
+
+    [Fact]
+    public async Task HardDelete_DocumentWithApprovedVersion_Blocked()
+    {
+        var (db, svc, _) = NewService(nameof(HardDelete_DocumentWithApprovedVersion_Blocked));
+        await using var _ = db;
+        var doc = (await svc.CreateAsync(SampleInput(), 10)).Data!;
+        var v = (await svc.NewVersionAsync(doc.Id, "<p>içerik</p>", 10)).Data!;
+        // Draft (0) → Pending (1) → Approved (2) — service guard zinciri.
+        v.Status = 1;
+        await db.SaveChangesAsync();
+        await svc.MarkVersionApprovedAsync(v.Id);
+
+        var result = await svc.HardDeleteAsync(doc.Id, 10);
+
+        Assert.False(result.IsSuccess);
+        Assert.Contains("kalıcı silinemez", result.Message);
+        Assert.NotNull(await db.SopDocuments.FindAsync(doc.Id));                // hala duruyor
+    }
+
+    [Fact]
+    public async Task HardDelete_NonexistentDocument_Fails()
+    {
+        var (db, svc, _) = NewService(nameof(HardDelete_NonexistentDocument_Fails));
+        await using var _ = db;
+
+        var result = await svc.HardDeleteAsync(id: 9999, deletedBy: 10);
+
+        Assert.False(result.IsSuccess);
+    }
 }
