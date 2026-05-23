@@ -6,7 +6,7 @@
 > Tahmin etme. **Önce buraya bak.**
 
 Son elle güncelleme: **2026-05-12**
-Son otomatik refresh: <!-- AUTO:LAST_REFRESH --> 2026-05-23 <!-- /AUTO:LAST_REFRESH -->
+Son otomatik refresh: <!-- AUTO:LAST_REFRESH --> 2026-05-24 <!-- /AUTO:LAST_REFRESH -->
 
 > **Otomatik tazelenir.** `bash scripts/refresh-arch-map.sh` çalıştırılınca aşağıdaki marker'lı bölümler regenerate edilir:
 > AppModules live state (§ 7), Admin views listesi (§ 12), Controller routes (§ 13).
@@ -173,7 +173,7 @@ _Otomatik üretildi — `scripts/refresh-arch-map.sh` tarafından. Elle düzenle
 | contracts | Sözleşmeler | contracts | ✓ | core |  |
 | obligations | Yükümlülükler | contracts | ✓ | core |  |
 | orgchart | Organizasyon | structure | ✓ | core |  |
-| circular | Tamim & Sirküler | workspace | ✓ | extension | Mosaik.Modules.Tamim |
+| circular | Tamim & Sirküler | workspace | ✓ | extension | Mosaik.Modules.Circular |
 | forms | Formlar |  | ✓ | extension | Mosaik.Modules.Forms |
 | sop | Prosedürler |  | ✓ | extension | Mosaik.Modules.SOP |
 <!-- AUTO:APPMODULES:END -->
