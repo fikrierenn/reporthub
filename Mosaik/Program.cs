@@ -92,6 +92,36 @@ builder.Services.AddScoped<Mosaik.Services.IOrgChartService, Mosaik.Services.Org
 // Plan 17 Faz H — cross-modül bildirim
 builder.Services.AddScoped<Mosaik.Core.Notification.INotificationService, Mosaik.Services.NotificationService>();
 
+// Plan 34 Faz E S-20 — modüllerin User entity'sine erişmeden aktif kullanıcı ID listesi alması için
+builder.Services.AddScoped<Mosaik.Core.Users.IActiveUserDirectory, Mosaik.Services.ActiveUserDirectoryService>();
+
+// Plan 34.1 Faz 1 A-06 — SOP RAG embedder (e5-base ONNX). Singleton: ONNX session reuse.
+builder.Services.AddSingleton<Mosaik.Core.AI.Embed.IMosaikEmbedder>(sp =>
+{
+    var logger = sp.GetRequiredService<ILogger<Mosaik.Services.Ai.E5Embedder>>();
+    var env = sp.GetRequiredService<IWebHostEnvironment>();
+    return new Mosaik.Services.Ai.E5Embedder(logger, env.ContentRootPath);
+});
+
+// Plan 34.1 Faz 2 A-13 — SOP RAG LLM runner (LLamaSharp + Qwen 2.5 3B). Singleton.
+builder.Services.AddSingleton<Mosaik.Core.AI.Local.ILlmRunner>(sp =>
+{
+    var logger = sp.GetRequiredService<ILogger<Mosaik.Services.Ai.LlamaSharpRunner>>();
+    var env = sp.GetRequiredService<IWebHostEnvironment>();
+    return new Mosaik.Services.Ai.LlamaSharpRunner(logger, env.ContentRootPath);
+});
+
+// Plan 34.1 Faz 2 A-16 — Uygulama startup'ında AI modellerini arka planda warm-up.
+builder.Services.AddHostedService<Mosaik.Services.Ai.ModelWarmupHostedService>();
+
+// Plan 34.2 — AI Skill Catalog (App_Data/ai-skills/*.md domain expertise).
+builder.Services.AddSingleton<Mosaik.Core.AI.Skills.ISkillCatalog>(sp =>
+{
+    var logger = sp.GetRequiredService<ILogger<Mosaik.Services.Ai.MarkdownSkillCatalog>>();
+    var env = sp.GetRequiredService<IWebHostEnvironment>();
+    return new Mosaik.Services.Ai.MarkdownSkillCatalog(logger, env.ContentRootPath);
+});
+
 // Plan 38 — Living Org Map + Decision Memory (VISION §7)
 builder.Services.AddScoped<Mosaik.Core.Intelligence.IEntityRelationService, Mosaik.Services.Intelligence.EntityRelationService>();
 builder.Services.AddScoped<Mosaik.Core.Intelligence.IDecisionLogService, Mosaik.Services.Intelligence.DecisionLogService>();
@@ -268,5 +298,28 @@ RecurringJob.AddOrUpdate<Mosaik.Services.Workflow.WorkflowStepProcessor>(
     recurringJobId: "workflow-step-processor",
     methodCall: job => job.ExecuteAsync(CancellationToken.None),
     cronExpression: "*/30 * * * *");
+
+// Plan 34 Faz E S-21 — SOP okuma hatırlatması (her gün 09:00 Europe/Istanbul).
+// 7 gün kala in-app push (count=0→1), 1 gün kala son uyarı (count=1→2).
+RecurringJob.AddOrUpdate<Mosaik.Modules.SOP.Services.SopReadReminderJob>(
+    recurringJobId: "sop-read-reminder-daily",
+    methodCall: job => job.ExecuteAsync(CancellationToken.None),
+    cronExpression: "0 9 * * *",
+    options: new RecurringJobOptions
+    {
+        TimeZone = TimeZoneInfo.FindSystemTimeZoneById(
+            OperatingSystem.IsWindows() ? "Turkey Standard Time" : "Europe/Istanbul")
+    });
+
+// Plan 34.1 Faz 6 A-28 — SOP AI conversation 1-yıl KVKK retention cleanup (her gün 03:00 Europe/Istanbul).
+RecurringJob.AddOrUpdate<Mosaik.Modules.SOP.Services.SopAiHistoryCleanupJob>(
+    recurringJobId: "sop-ai-history-cleanup",
+    methodCall: job => job.ExecuteAsync(CancellationToken.None),
+    cronExpression: "0 3 * * *",
+    options: new RecurringJobOptions
+    {
+        TimeZone = TimeZoneInfo.FindSystemTimeZoneById(
+            OperatingSystem.IsWindows() ? "Turkey Standard Time" : "Europe/Istanbul")
+    });
 
 app.Run();

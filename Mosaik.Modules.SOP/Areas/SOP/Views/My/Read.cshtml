@@ -16,6 +16,17 @@
 }
 
 @section TopActions {
+    <a href="@Url.Action("Print", new { versionId = Model.Version.Id })"
+       target="_blank"
+       class="btn"
+       title="Yazdır / PDF kaydet">
+        <i class="fas fa-print" aria-hidden="true"></i> Yazdır / PDF
+    </a>
+    <a href="@Url.Action("Index", "Advisor", new { area = "SOP", sopId = Model.Document.Id })"
+       class="btn"
+       title="Bu prosedür hakkında AI'ya soru sor">
+        <i class="fas fa-robot" aria-hidden="true"></i> AI'ya Sor
+    </a>
     <a href="@Url.Action("Index")" class="btn">Geri Dön</a>
 }
 

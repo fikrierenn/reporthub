@@ -1,6 +1,8 @@
 @{
     ViewData["Title"] = "Prosedürler";
     Layout = "_AppLayout";
+    var pendingCount = (int)(ViewBag.PendingCount ?? 0);
+    var isAdminOrEditor = (bool)(ViewBag.IsAdminOrEditor ?? false);
 }
 
 @section Breadcrumb {
@@ -12,11 +14,110 @@
 
 <div class="hero">
     <h1><i class="fas fa-book-open" aria-hidden="true"></i> Prosedürler</h1>
-    <p class="sub"><span>Şirket prosedürleri ve standart operasyon kılavuzları (SOP).</span></p>
+    <p class="sub">
+        <span>Şirket prosedürleri ve standart operasyon kılavuzları (SOP).</span>
+        @if (pendingCount > 0)
+        {
+            <span class="pill error"><span class="dot err"></span>@pendingCount bekleyen okuma</span>
+        }
+    </p>
 </div>
 
-<div class="empty-state">
-    <i class="fas fa-book-open empty-state__icon" aria-hidden="true"></i>
-    <h3>SOP modülü hazırlanıyor</h3>
-    <p>Plan 34 Faz B-F ile versiyonlama, onay akışı, okundu disiplini ve AI Danışman özellikleri eklenecek.</p>
+<div class="grid-2col" style="gap:16px; margin-top:16px;">
+
+    <a href="@Url.Action("Index", "My", new { area = "SOP" })"
+       class="form-section-card"
+       style="text-decoration:none; color:inherit; transition:transform 0.15s;"
+       onmouseover="this.style.transform='translateY(-2px)';"
+       onmouseout="this.style.transform='';">
+        <div class="form-section-card__body" style="padding:24px;">
+            <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
+                <i class="fas fa-book-reader" aria-hidden="true" style="font-size:28px; color:var(--accent);"></i>
+                <h2 style="margin:0; font-size:18px;">Prosedürlerim</h2>
+                @if (pendingCount > 0)
+                {
+                    <span class="pill error" style="margin-left:auto;">@pendingCount</span>
+                }
+            </div>
+            <p class="text-muted" style="margin:0;">
+                Size atanan prosedürleri okuyun, "okudum + onayladım" işaretleyin.
+                Okuma süresi dolmadan tamamlayın.
+            </p>
+        </div>
+    </a>
+
+    <a href="@Url.Action("Index", "Advisor", new { area = "SOP" })"
+       class="form-section-card"
+       style="text-decoration:none; color:inherit; transition:transform 0.15s;"
+       onmouseover="this.style.transform='translateY(-2px)';"
+       onmouseout="this.style.transform='';">
+        <div class="form-section-card__body" style="padding:24px;">
+            <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
+                <i class="fas fa-robot" aria-hidden="true" style="font-size:28px; color:var(--accent);"></i>
+                <h2 style="margin:0; font-size:18px;">AI Danışman</h2>
+                <span class="pill" style="margin-left:auto;">Yeni</span>
+            </div>
+            <p class="text-muted" style="margin:0;">
+                Tüm onaylı prosedürler üzerinden çapraz arama ve yorumlama.
+                Soru sorun, AI ilgili SOP'ları bulup cevaplar.
+            </p>
+        </div>
+    </a>
+
+    @if (isAdminOrEditor)
+    {
+        <a href="@Url.Action("Index", "Sop", new { area = "SOP" })"
+           class="form-section-card"
+           style="text-decoration:none; color:inherit; transition:transform 0.15s;"
+           onmouseover="this.style.transform='translateY(-2px)';"
+           onmouseout="this.style.transform='';">
+            <div class="form-section-card__body" style="padding:24px;">
+                <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
+                    <i class="fas fa-pen-to-square" aria-hidden="true" style="font-size:28px; color:var(--accent);"></i>
+                    <h2 style="margin:0; font-size:18px;">SOP Yönetimi</h2>
+                </div>
+                <p class="text-muted" style="margin:0;">
+                    Yeni prosedür oluştur, versiyon ekle, onaya gönder, arşivle.
+                    Departman ataması ve okuma takibi yap.
+                </p>
+            </div>
+        </a>
+
+        @if (User.IsInRole("admin"))
+        {
+            <a href="@Url.Action("FeedbackReview", "Advisor", new { area = "SOP", type = "down" })"
+               class="form-section-card"
+               style="text-decoration:none; color:inherit; transition:transform 0.15s;"
+               onmouseover="this.style.transform='translateY(-2px)';"
+               onmouseout="this.style.transform='';">
+                <div class="form-section-card__body" style="padding:24px;">
+                    <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
+                        <i class="fas fa-flag" aria-hidden="true" style="font-size:28px; color:var(--accent);"></i>
+                        <h2 style="margin:0; font-size:18px;">AI Feedback İnceleme</h2>
+                    </div>
+                    <p class="text-muted" style="margin:0;">
+                        Kullanıcıların AI cevaplarına verdiği olumlu/olumsuz geri bildirim listesi.
+                        İçerik iyileştirme sinyali.
+                    </p>
+                </div>
+            </a>
+
+            <a href="@Url.Action("Index", "Skills", new { area = "SOP" })"
+               class="form-section-card"
+               style="text-decoration:none; color:inherit; transition:transform 0.15s;"
+               onmouseover="this.style.transform='translateY(-2px)';"
+               onmouseout="this.style.transform='';">
+                <div class="form-section-card__body" style="padding:24px;">
+                    <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
+                        <i class="fas fa-brain" aria-hidden="true" style="font-size:28px; color:var(--accent);"></i>
+                        <h2 style="margin:0; font-size:18px;">AI Skill Kataloğu</h2>
+                    </div>
+                    <p class="text-muted" style="margin:0;">
+                        SOP RAG Advisor için yüklü domain expertise skill'leri.
+                        Markdown frontmatter, kategori bazlı otomatik match.
+                    </p>
+                </div>
+            </a>
+        }
+    }
 </div>

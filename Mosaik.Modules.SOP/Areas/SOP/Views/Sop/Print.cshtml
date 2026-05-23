@@ -1,0 +1,191 @@
+@inject Mosaik.Core.Html.IContentSanitizer Sanitizer
+@model SopMyDetailsViewModel
+@{
+    Layout = null;
+    var doc = Model.Document;
+    var version = Model.Version;
+    var tr = new System.Globalization.CultureInfo("tr-TR");
+}
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>@doc.Title — v@(version.VersionNumber)</title>
+    <style>
+        @@page { size: A4; margin: 18mm 16mm; }
+        * { box-sizing: border-box; }
+        body {
+            font-family: Georgia, 'Times New Roman', serif;
+            font-size: 11.5pt;
+            color: #111;
+            line-height: 1.55;
+            margin: 0;
+            padding: 0;
+        }
+        .toolbar {
+            background: #f5f5f5;
+            border-bottom: 1px solid #ddd;
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-size: 12px;
+        }
+        .toolbar .actions { display: flex; gap: 8px; }
+        .toolbar button, .toolbar a {
+            padding: 6px 14px; border: 1px solid #ccc; background: #fff;
+            border-radius: 6px; cursor: pointer; font-size: 12px;
+            text-decoration: none; color: #333;
+        }
+        .toolbar button.primary { background: #dc2626; color: #fff; border-color: #dc2626; }
+        .doc { max-width: 720px; margin: 24px auto; padding: 0 30px; }
+        @@media print {
+            .toolbar { display: none; }
+            .doc { margin: 0; max-width: none; padding: 0; }
+        }
+
+        .head-row {
+            display: flex; justify-content: space-between; align-items: flex-start;
+            border-bottom: 2px solid #111; padding-bottom: 12px; margin-bottom: 16px;
+        }
+        .head-row .meta-label { font-family: 'Courier New', monospace; font-size: 10pt; color: #555; }
+        .head-row .date { text-align: right; font-size: 10.5pt; color: #444; }
+        h1.title { font-size: 18pt; font-weight: 700; margin: 0 0 4px; letter-spacing: -.01em; }
+        .sub-meta { font-size: 10pt; color: #555; }
+
+        .info-table {
+            width: 100%; border-collapse: collapse; margin: 14px 0;
+            font-size: 10pt;
+        }
+        .info-table td {
+            border: 1px solid #ddd; padding: 6px 10px;
+        }
+        .info-table td.label { background: #f5f5f5; font-weight: 600; width: 30%; }
+
+        .content {
+            font-size: 11pt; line-height: 1.6;
+        }
+        .content h2, .content h3 { font-weight: 700; margin: 14px 0 6px; }
+        .content h2 { font-size: 13.5pt; }
+        .content h3 { font-size: 12pt; }
+        .content p { margin: 0 0 8px; }
+        .content ul, .content ol { margin: 6px 0 10px; padding-left: 24px; }
+        .content li { margin-bottom: 3px; }
+        .content strong { font-weight: 700; }
+        .content em { font-style: italic; }
+
+        footer {
+            margin-top: 30px; padding-top: 10px; border-top: 1px solid #ccc;
+            font-size: 9pt; color: #777; text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+<div class="toolbar">
+    <div><strong>@doc.Title</strong> — yazdırma görünümü</div>
+    <div class="actions">
+        <button class="primary" onclick="window.print()">🖨 Yazdır / PDF kaydet</button>
+        <a href="javascript:history.back()">Geri</a>
+    </div>
+</div>
+
+<div class="doc">
+
+    <div class="head-row">
+        <div>
+            <div class="meta-label">PROSEDÜR</div>
+            <h1 class="title">@doc.Title</h1>
+            <div class="sub-meta">
+                Versiyon @version.VersionNumber
+                @if (!string.IsNullOrEmpty(doc.Category))
+                {
+                    <text>· @doc.Category</text>
+                }
+            </div>
+        </div>
+        <div class="date">
+            @if (version.EffectiveDate.HasValue)
+            {
+                <div>Yürürlük: @version.EffectiveDate.Value.ToString("dd MMMM yyyy", tr)</div>
+            }
+            <div>Yazdırma: @DateTime.Now.ToString("dd.MM.yyyy HH:mm")</div>
+        </div>
+    </div>
+
+    <table class="info-table">
+        @if (!string.IsNullOrEmpty(doc.DocumentNumber))
+        {
+            <tr><td class="label">Doküman No</td><td>@doc.DocumentNumber</td></tr>
+        }
+        @if (!string.IsNullOrEmpty(doc.RevisionNumber))
+        {
+            <tr><td class="label">Versiyon</td><td>@doc.RevisionNumber</td></tr>
+        }
+        @if (doc.PublishDate.HasValue)
+        {
+            <tr><td class="label">Yayın Tarihi</td><td>@doc.PublishDate.Value.ToString("dd.MM.yyyy")</td></tr>
+        }
+        @if (doc.EffectiveDate.HasValue)
+        {
+            <tr><td class="label">Yürürlük Tarihi</td><td>@doc.EffectiveDate.Value.ToString("dd.MM.yyyy")</td></tr>
+        }
+        @if (doc.RevisionDate.HasValue)
+        {
+            <tr><td class="label">Son Revizyon</td><td>@doc.RevisionDate.Value.ToString("dd.MM.yyyy")</td></tr>
+        }
+        @if (!string.IsNullOrEmpty(doc.PreparedBy))
+        {
+            <tr><td class="label">Hazırlayan</td><td>@doc.PreparedBy</td></tr>
+        }
+        @if (!string.IsNullOrEmpty(doc.ApprovedBy))
+        {
+            <tr><td class="label">Onaylayan</td><td>@doc.ApprovedBy</td></tr>
+        }
+        @if (!string.IsNullOrEmpty(doc.ReviewFrequency))
+        {
+            <tr><td class="label">Gözden Geçirme Sıklığı</td><td>@doc.ReviewFrequency</td></tr>
+        }
+        @if (!string.IsNullOrEmpty(doc.Classification))
+        {
+            <tr><td class="label">Sınıflandırma</td><td>@doc.Classification</td></tr>
+        }
+        @if (!string.IsNullOrEmpty(doc.Description))
+        {
+            <tr><td class="label">Açıklama</td><td>@doc.Description</td></tr>
+        }
+        <tr>
+            <td class="label">Kapsam</td>
+            <td>
+                @if (doc.IsCompanyWide)
+                {
+                    <text>Şirket Geneli</text>
+                }
+                else if (!string.IsNullOrEmpty(doc.DepartmentIds))
+                {
+                    <text>Departman: @doc.DepartmentIds</text>
+                }
+                else
+                {
+                    <text>—</text>
+                }
+            </td>
+        </tr>
+        <tr>
+            <td class="label">Okuma Süresi</td>
+            <td>@doc.ReadDeadlineDays gün</td>
+        </tr>
+    </table>
+
+    <div class="content">
+        @Html.Raw(Sanitizer.Sanitize(version.ContentJson ?? string.Empty))
+    </div>
+
+    <footer>
+        BKMKitap · Prosedür Yönetim Sistemi · @doc.Title v@(version.VersionNumber)
+    </footer>
+</div>
+
+</body>
+</html>

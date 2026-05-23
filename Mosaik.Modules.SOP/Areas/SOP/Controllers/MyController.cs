@@ -50,6 +50,21 @@ namespace Mosaik.Modules.SOP.Areas.SOP.Controllers
             });
         }
 
+        // Yazdırma görünümü — kullanıcı kendi okuma sayfasından da PDF üretebilir.
+        [HttpGet]
+        public async Task<IActionResult> Print(int versionId)
+        {
+            var version = await _sop.GetVersionAsync(versionId);
+            if (version?.SopDocument == null) return NotFound();
+            var receipt = await _receipts.GetByVersionUserAsync(versionId, CurrentUserId);
+            return View("~/Areas/SOP/Views/Sop/Print.cshtml", new SopMyDetailsViewModel
+            {
+                Document = version.SopDocument,
+                Version = version,
+                Receipt = receipt
+            });
+        }
+
         // "Okudum + onayladım" POST.
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> Confirm(int versionId)

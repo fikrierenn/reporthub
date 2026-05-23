@@ -1,0 +1,112 @@
+@inject Mosaik.Core.Html.IContentSanitizer Sanitizer
+@model SopVersionFormViewModel
+@{
+    var doc = ViewBag.Document as SopDocument;
+    var versionId = (int)(ViewBag.VersionId ?? 0);
+    var versionNumber = (int)(ViewBag.VersionNumber ?? 0);
+    ViewData["Title"] = $"v{versionNumber} Düzenle — {doc?.Title}";
+}
+
+@section Breadcrumb {
+    <nav class="crumbs" aria-label="Sayfa konumu">
+        <a href="/">Ana Sayfa</a>
+        <a href="@Url.Action("Index")">Prosedürler</a>
+        <a href="@Url.Action("Details", new { id = Model.SopDocumentId })">@doc?.Title</a>
+        <span aria-current="page">v@(versionNumber) Düzenle</span>
+    </nav>
+}
+
+@section TopActions {
+    <a href="@Url.Action("Details", new { id = Model.SopDocumentId })" class="btn">İptal</a>
+}
+
+<div class="hero">
+    <h1>v@(versionNumber) Düzenle — @doc?.Title</h1>
+    <p class="sub">
+        <span>Draft içeriği düzenle. Kaydet sonra "Onaya Gönder" ile flow başlat.</span>
+        <span class="pill warn"><span class="dot warn"></span>Taslak</span>
+    </p>
+</div>
+
+<form method="post" action="@Url.Action("EditVersion", new { versionId = versionId })" id="sop-version-form">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="SopDocumentId" value="@Model.SopDocumentId" />
+
+    @if (!ViewData.ModelState.IsValid)
+    {
+        <div class="alert error" role="alert">
+            <ul style="margin:0; padding-left:18px;">
+            @foreach (var err in ViewData.ModelState.SelectMany(m => m.Value!.Errors).Select(e => e.ErrorMessage))
+            {
+                <li>@err</li>
+            }
+            </ul>
+        </div>
+    }
+
+    <div class="form-section-card wide">
+        <div class="form-section-head" style="display:flex; align-items:center; justify-content:space-between;">
+            <div>
+                <h2 class="form-section-head__title">İçerik</h2>
+                <p class="form-section-head__sub">Word-benzeri zengin editor: tablo, görsel, font, find/replace, paste from Word. Save sırasında HtmlSanitizer çalışır.</p>
+            </div>
+            <button type="button"
+                    class="btn ghost sm"
+                    onclick="loadPrdTemplate()"
+                    title="BKM PRD kurumsal SOP iskeletini editöre yükle (mevcut içeriği ezer)">
+                <i class="fas fa-file-import" aria-hidden="true"></i> BKM PRD Template Yükle
+            </button>
+        </div>
+        <div class="form-section-body">
+            <textarea id="ContentJson" name="ContentJson" style="min-height:600px;">@Html.Raw(Sanitizer.Sanitize(Model.ContentJson))</textarea>
+        </div>
+    </div>
+
+    <div class="form-action-row wide">
+        <a href="@Url.Action("Details", new { id = Model.SopDocumentId })" class="btn ghost">Geri Dön</a>
+        <button type="submit" class="btn primary">Kaydet</button>
+    </div>
+</form>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/tinymce@7.4.1/tinymce.min.js" referrerpolicy="origin"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tinymce@7.4.1/langs/tr.js"></script>
+    <script src="~/assets/js/sop-prd-template.js" asp-append-version="true"></script>
+    <script>
+        (function () {
+            if (typeof tinymce === 'undefined') return;
+            tinymce.init({
+                selector: '#ContentJson',
+                license_key: 'gpl',
+                language: 'tr',
+                height: 700,
+                menubar: 'file edit view insert format tools table help',
+                plugins: [
+                    'advlist', 'autolink', 'lists', 'link', 'image', 'charmap',
+                    'preview', 'anchor', 'searchreplace', 'visualblocks',
+                    'code', 'fullscreen', 'insertdatetime', 'media', 'table',
+                    'help', 'wordcount', 'pagebreak', 'nonbreaking', 'visualchars',
+                    'emoticons'
+                ],
+                toolbar: 'undo redo | blocks fontfamily fontsize | ' +
+                    'bold italic underline strikethrough | forecolor backcolor | ' +
+                    'alignleft aligncenter alignright alignjustify | ' +
+                    'bullist numlist outdent indent | ' +
+                    'link image media table | ' +
+                    'searchreplace pagebreak charmap | ' +
+                    'removeformat code preview fullscreen | help',
+                content_style: 'body { font-family: -apple-system, "Segoe UI", Arial, sans-serif; font-size: 11pt; line-height: 1.6; }',
+                paste_data_images: true,
+                image_caption: true,
+                table_default_styles: { 'border-collapse': 'collapse', 'width': '100%' },
+                table_default_attributes: { 'border': '1' },
+                branding: false,
+                promotion: false,
+                resize: true,
+                statusbar: true,
+                browser_spellcheck: true,
+                contextmenu: 'link image table'
+            });
+        })();
+    </script>
+}
