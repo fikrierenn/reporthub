@@ -130,7 +130,8 @@
                         ["forms"]       = "fas fa-clipboard-list"
                     };
 
-                    // ModuleKey → controller-route URL mapping. Default: PascalCase ModuleKey.
+                    // ModuleKey → URL kök mapping. Modül route'ları MapAreaControllerRoute
+                    // pattern: "{Area}/{controller=Home}/{action=Index}". HomeController'a düşer.
                     string ModuleUrl(string key) => key switch
                     {
                         "reports"     => "/Reports",
@@ -142,8 +143,9 @@
                         "calendar"    => "/Calendar",
                         "compliance"  => "/Compliance",
                         "ai"          => "/Ai",
-                        "circular"    => "/Circular/Circular",
-                        "forms"       => "/Forms",
+                        "circular"    => "/Circular",   // Area root → HomeController.Index
+                        "forms"       => "/Forms",      // Area root → HomeController.Index
+                        "sop"         => "/SOP",        // Area root (all-caps) → HomeController.Index
                         _             => "/" + char.ToUpper(key[0]) + key.Substring(1)
                     };
 
