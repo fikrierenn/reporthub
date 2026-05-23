@@ -113,11 +113,11 @@ Build: 0 hata 0 uyarı. Test: **337/337 geçti** (test-discipline.md kanıtland�
 
 - [ ] **[Plan 48 · Executable SOP](plans/48-executable-sop.md)** 🔬 **ARAŞTIRMA TASLAĞI 2026-05-25** — Doküman → Canlı süreç paradigm. Yöneticinin yazdığı doğal dil prosedür → Qwen parse → Stateless State/Transition + Hangfire SLA timer + Task auto-register. **Prosedür yazmak = süreci canlıya almak**. Plan 34 + 36 prereq. 60-90h, 6 faz. Tahmini: 2026 Q3.
 
-- [ ] **[Plan 49 · Zero-UI Operations](plans/49-zero-ui-ops.md)** 🔬 **ARAŞTIRMA TASLAĞI 2026-05-25** — Arayüzsüz akış paradigm. Mosaik widget basılı-tut + konuş + foto → Whisper TR + Qwen intent + Vision → form auto-fill + workflow trigger. **1 saniyede konuş, süreç başlar**. Plan 46 + 41 + 44 prereq. 80-120h, 7 faz. Tahmini: 2026 Q4.
+- [ ] **[Plan 49 · Zero-UI Operations](plans/49-zero-ui-ops.md)** ✅ **ONAYLANDI 2026-05-25 revize v2** — Arayüzsüz akış paradigm. Mosaik widget basılı-tut + konuş + foto → Whisper TR + Qwen intent + Vision → form auto-fill + workflow trigger. **1 saniyede konuş, süreç başlar**. Plan 46 + 41 + 44 prereq. 80-120h, 7 faz. Tahmini: 2026 Q4.
 
-- [ ] **[Plan 50 · Shadow Organization Graph](plans/50-shadow-org-graph.md)** 🔬 **ARAŞTIRMA TASLAĞI 2026-05-25** — Gerçek iş ağı paradigm. @mention + workflow + comment log → observed shadow graph + anomaly detect (resmi vs gerçek). AI önerisi "bilgi merkezi Y'ye danışıl". KVKK aggregate-only constraint. Plan 35 + 36 + 38 prereq. 40-60h, 5 faz. Tahmini: 2027 Q1.
+- [ ] **[Plan 50 · Shadow Organization Graph](plans/50-shadow-org-graph.md)** ✅ **ONAYLANDI 2026-05-25 revize v2** — Gerçek iş ağı paradigm. @mention + workflow + comment log → observed shadow graph + anomaly detect (resmi vs gerçek). AI önerisi "bilgi merkezi Y'ye danışıl". KVKK aggregate-only constraint. Plan 35 + 36 + 38 prereq. 40-60h, 5 faz. Tahmini: 2027 Q1.
 
-- [ ] **[Plan 51 · Differential Privacy Reporting](plans/51-differential-privacy-reporting.md)** 🔬 **ARAŞTIRMA TASLAĞI 2026-05-25** — Aktif veri bağışıklığı paradigm. App-side privacy filter: aynı SP 3 ayrı sanitize output (genel müdür raw / analist aggregate+Laplace noise / misafir mask). Presidio + Qwen sensitive column sniff. Plan 14 + 44 + 40 prereq. 50-80h, 6 faz. Tahmini: 2027 Q2.
+- [ ] **[Plan 51 · Differential Privacy Reporting](plans/51-differential-privacy-reporting.md)** ✅ **ONAYLANDI 2026-05-25 revize v2** — Aktif veri bağışıklığı paradigm. App-side privacy filter: aynı SP 3 ayrı sanitize output (genel müdür raw / analist aggregate+Laplace noise / misafir mask). Presidio + Qwen sensitive column sniff. Plan 14 + 44 + 40 prereq. 50-80h, 6 faz. Tahmini: 2027 Q2.
 
 - [ ] **KVKK skill import** ✅ 2026-05-21 — `.claude/skills/kvkk-veri-envanteri/SKILL.md` (374 satır, claudskills.com export). Plan 40 Faz 5 AI Integrity Checker prompt kaynağı. Commit `36d590e`.
 

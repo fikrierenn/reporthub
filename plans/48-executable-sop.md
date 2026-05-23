@@ -1,6 +1,6 @@
 # Plan 48 — Executable SOP (Doküman → Canlı Süreç)
 
-**Durum:** 🔬 ARAŞTIRMA TASLAĞI 2026-05-25 — kullanıcı strategic input (radikal paradigm 1)
+**Durum:** ⏳ ARAŞTIRMA TASLAĞI 2026-05-25 — onay bekliyor (radikal paradigm 1, henüz strategic review yapılmadı)
 **Tier:** 3 (yeni paradigma + AI parse + workflow auto-gen + cross-modül)
 **Effort:** 60-90h (6 faz, 5-7 hafta) — tahmini, deep dive sonrası netleşir
 **Aciliyet:** 🟣 Plan 36 (Workflow Designer) ✅ + Plan 34 SOP ✅ sonrası — vNext kalbinin **üst katmanı**

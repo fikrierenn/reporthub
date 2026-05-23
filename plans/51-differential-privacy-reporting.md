@@ -1,6 +1,6 @@
 # Plan 51 — Differential Privacy Reporting (Aktif Veri Bağışıklığı)
 
-**Durum:** 🔬 ARAŞTIRMA TASLAĞI 2026-05-25 — kullanıcı strategic input (radikal paradigm 4)
+**Durum:** ✅ **ONAYLANDI 2026-05-25** — revize v2 (epsilon budget mimari zırh + 5 açık soru kapatma)
 **Tier:** 3 (yeni paradigma + KVKK kritik + reporting pipeline değişiklik + matematiksel hassas)
 **Effort:** 50-80h (6 faz, 4-6 hafta) — tahmini
 **Aciliyet:** 🟣 Plan 44 (RAG Guard) ✅ + Plan 14 (UserDataScope) ✅ olgun production sonrası
@@ -195,10 +195,141 @@ Plan 14 UserDataScope + Plan 44 RAG Guard production stabil + Plan 40 KVKK Presi
 
 ---
 
-## 8. Açık Sorular
+## 8. Açık Sorular — KAPATILDI 2026-05-25 (revize v2 kararları)
 
-1. **DB-side RLS vs App-side filter?** — Önerim: App-side. SP refactor maliyeti çok yüksek, App-side merkezileşme.
-2. **Default strategy hassas kolon detect edildiğinde?** — Önerim: mask (görünür ama anonimize), aggregate kullanıcı talep ederse.
-3. **DP epsilon parametresi nasıl seçilir?** — Önerim: ε=1.0 default (orta); admin SP-bazlı override.
-4. **Export (Excel/PDF) — sanitize aynı mı yoksa daha sıkı mı?** — Önerim: **DAHA SIKI** (export dış paylaşım riski).
-5. **Cache invalidate stratejisi?** — Önerim: ReportingPrivacyPolicies UPDATE → ReportCache.InvalidateAll() + audit.
+### Mimari Zırh — Epsilon Budget Saldırı Koruması (CRITICAL)
+
+**Risk:** Differential Privacy noise stratejisi tekrarlanan sorgularla kırılabilir. Saldırgan aynı SP'yi 1000 kez çağırırsa Laplace noise ortalaması sıfıra yaklaşır → gerçek değer ifşa olur. (Noise averaging attack)
+
+**Zorunlu mitigation:**
+
+```csharp
+// PrivacyAwareResultProcessor
+public async Task<DataTable[]> SanitizeAsync(DataTable[] tables, UserClaims claims, string spName, string paramsHash)
+{
+    // 1. Per-user query cache (aynı SP + aynı param → aynı sanitized output)
+    var cacheKey = $"dp:{claims.UserId}:{spName}:{paramsHash}";
+    if (_cache.TryGet(cacheKey, out DataTable[] cached))
+        return cached;  // Tekrar noise hesaplamaz — saldırı engelleme
+
+    // 2. Per-user rate limit (saatlik max 50 unique SP call)
+    var limit = await _rateLimit.CheckAsync(claims.UserId, "dp_sanitize_hourly");
+    if (limit.Exceeded)
+    {
+        await _audit.LogAsync("dp_rate_limit_exceeded", claims.UserId);
+        throw new RateLimitException("Saatlik gizlilik sorgu limiti aşıldı.");
+    }
+
+    // 3. Privacy budget tracking (ε accumulated)
+    // Aynı kullanıcı + aynı kolon kombinasyonu için epsilon harcaması toplanır
+    // Toplam ε > 5.0 → admin'e alert, yeni sorgu mask'la geçer (aggregate yerine)
+
+    var result = ApplyStrategies(tables, claims, spName);
+    _cache.Set(cacheKey, result, TimeSpan.FromHours(1));
+    return result;
+}
+```
+
+**Sonuç:** Aynı user aynı sorguda hep aynı noise — averaging attack engelleme. Audit log her sanitize event.
+
+### 1. DB-side RLS vs App-side filter?
+
+**Karar:** **App-side (Uygulama Seviyesi).**
+
+**Gerekçe:**
+- Mevcut 200+ SP'yi RLS uygulamak imkansız (her SP yeniden yazılır + test)
+- `StoredProcedureExecutor` tek noktada merkezi filtreleme = pragmatik
+- Yeni SP eklendiğinde policy unutulamaz (default-deny rule)
+- Reporting pipeline single source of truth
+
+DB-side RLS v2'de (Plan 51.1) tamamlayıcı katman olarak değerlendirilir.
+
+### 2. Hassas kolon tespit edildiğinde default strateji?
+
+**Karar:** **Mask Varsayılan.**
+
+```csharp
+PrivacyStrategy DefaultStrategy(SensitiveColumnType type) => type switch
+{
+    SensitiveColumnType.TCKN          => MaskStrategy.Pattern("***********"),
+    SensitiveColumnType.Name          => MaskStrategy.FirstLetter,
+    SensitiveColumnType.Email         => MaskStrategy.PreserveDomain,
+    SensitiveColumnType.Phone         => MaskStrategy.LastFour,
+    SensitiveColumnType.IBAN          => MaskStrategy.Pattern("TR** **** **** **** **** XXXX"),
+    SensitiveColumnType.Salary        => MaskStrategy.AllAsterisk,  // user explicit aggregate ister
+    SensitiveColumnType.HealthData    => MaskStrategy.AllAsterisk,
+    _                                  => MaskStrategy.AllAsterisk
+};
+```
+
+- Default refleks: maske (görünür ama anonim)
+- Aggregate (Laplace noise) admin explicit opt-in per column policy
+- Hash strategy TCKN gibi join-key alanlar için (deterministic SHA256)
+
+### 3. DP epsilon (ε) parametresi nasıl seçilir?
+
+**Karar:** **Default ε = 1.0 (Orta seviye gürültü).**
+
+- ε=1.0 differential privacy literature standard (orta gizli)
+- MathNet.Numerics `Laplace(0, sensitivity/epsilon)` distribution
+- Admin per-SP per-column override:
+  - ε=0.5 (daha gizli, daha gürültülü) — yüksek hassas maaş
+  - ε=1.0 default
+  - ε=2.0 (daha az gürültü) — aggregate report yöneticisi için
+- ε budget tracking (mimari zırh) global per-user
+
+### 4. Export (Excel/PDF) sanitize aynı mı sıkı mı?
+
+**Karar:** **EVET, DAHA SIKI.**
+
+- Ekran ortalama+varyans gösterirken → Excel/PDF dışa aktarımda **tamamen NULL** olabilir
+- Export dış paylaşım riski (mail, USB, paylaşımlı klasör) — defense-in-depth
+- `PrivacyPolicy.ExportStrategy` ayrı kolon:
+  ```sql
+  ALTER TABLE ReportingPrivacyPolicies ADD
+      ExportStrategy NVARCHAR(50) NULL,            -- null=Strategy ile aynı, else override
+      ExportStrategyParams NVARCHAR(MAX) NULL;
+  ```
+- Export endpoint **aynı `PrivacyAwareResultProcessor`** pipeline ama `ExportStrategy` öncelik
+
+### 5. Cache invalidate stratejisi?
+
+**Karar:** **ReportingPrivacyPolicies UPDATE → `ReportCache.InvalidateAll()` + audit.**
+
+```csharp
+// PrivacyPolicyController.Update
+[HttpPost]
+public async Task<IActionResult> Update(int id, PrivacyPolicyDto dto)
+{
+    await _repo.UpdateAsync(id, dto);
+    _reportCache.InvalidateAll();              // global flush
+    _privacyCache.InvalidateUser(allUsers);    // per-user DP cache flush
+
+    await _audit.LogAsync("privacy_policy_changed", new {
+        policy_id = id,
+        old_strategy = old.Strategy,
+        new_strategy = dto.Strategy,
+        cache_invalidated = true
+    });
+
+    return Ok();
+}
+```
+
+- Policy değişikliği rare olay → full cache flush kabul (BKM ölçek)
+- Audit log compliance kanıt: "policy değişti, eski cache silindi"
+
+---
+
+## 9. Onay + Revize Notu
+
+**ONAYLANDI 2026-05-25** — Kullanıcı strategic review (matematiksel gizlilik + güvenlik mimarı lens):
+
+- **Mimari Zırh:** Epsilon Budget Saldırı Koruması — per-user query cache (deterministic noise) + rate limit + ε accumulation tracking — averaging attack engelleme
+- 5 açık soru cevaplandı + plan'a karar olarak gömüldü (§8)
+- App-side filter (RLS v2 tamamlayıcı)
+- Mask default, aggregate opt-in
+- ε=1.0 default + admin override per-SP-column
+- Export DAHA SIKI (ayrı ExportStrategy kolon)
+- Cache invalidate `ReportCache.InvalidateAll()` + audit
+- **Implementasyon:** Plan 14 UserDataScope + Plan 44 RAG Guard ✅ + Plan 40 KVKK Presidio ✅ production sonrası

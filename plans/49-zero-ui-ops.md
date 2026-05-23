@@ -1,6 +1,6 @@
 # Plan 49 — Zero-UI Operations (Arayüzsüz Kurumsal Akış)
 
-**Durum:** 🔬 ARAŞTIRMA TASLAĞI 2026-05-25 — kullanıcı strategic input (radikal paradigm 2)
+**Durum:** ✅ **ONAYLANDI 2026-05-25** — revize v2 (biometrik veri mimari zırh + 5 açık soru kapatma)
 **Tier:** 3 (yeni paradigma + speech-to-text + computer vision + KVKK + cross-modül)
 **Effort:** 80-120h (7 faz, 6-8 hafta) — tahmini, deep dive sonrası netleşir
 **Aciliyet:** 🟣 Plan 46 (PWA) ✅ + Plan 41 (Form Builder) ✅ + Plan 44 (RAG Guard) ✅ sonrası
@@ -148,10 +148,98 @@ Plan 46 PWA production + Plan 44 RAG Guard ✅ + Plan 41 v2 builder UI sonrası.
 
 ---
 
-## 8. Açık Sorular
+## 8. Açık Sorular — KAPATILDI 2026-05-25 (revize v2 kararları)
 
-1. **Whisper local mi cloud mu?** — Önerim: local-first KVKK için, OpenAI Whisper cloud fallback opt-in (admin).
-2. **Confidence gate'leri kim tunable?** — Önerim: admin per-form-type (hasar bildirim hassas → düşük threshold).
-3. **Şive/aksan handling?** — Önerim: V1 standart TR; bölgesel aksan v2 (Adana/Karadeniz fine-tune).
-4. **Multimodal (ses + foto + GPS aynı anda)?** — Önerim: V1 ses+foto; GPS Plan 49.1 opsiyonel (saha tracking KVKK ekstra dikkat).
-5. **Push button vs always-listening?** — Önerim: **kesinlikle push-to-talk** (always-listening KVKK + pil felaketi).
+### Mimari Zırh — Biometrik Veri Koruması (CRITICAL)
+
+Ses kaydı KVKK 6698 kapsamında **biometrik veri** sayılabilir (ses parmak izi unique identifier). Kayıt diske düşerse ihlal.
+
+**Zorunlu kural:** Ses dosyası **asla** kalıcı diske yazılmaz. Pipeline:
+
+```csharp
+// CaptureController.Submit (POST audio/foto)
+public async Task<IActionResult> Submit(IFormFile audio, IFormFile[] photos)
+{
+    using var audioStream = audio.OpenReadStream();  // RAM stream
+    var transcript = await _whisper.TranscribeAsync(audioStream, CancellationToken);
+    // audioStream RAM'de dispose — ham ses HİÇ disk'e yazılmaz
+
+    var intent = await _qwen.ParseIntentAsync(transcript);
+    // ... pipeline
+
+    // Audit log SADECE transcript metni + intent JSON saklar, ham ses YOK
+    await _audit.LogAsync("zeroui_voice_processed", new {
+        transcript_hash = SHA256(transcript),  // referans için
+        confidence,
+        action_taken
+    });
+}
+```
+
+`MediaRecorder` API client tarafında da blob temp → POST sonrası tarayıcı bellek silinir (yerel cache yok).
+
+### 1. Whisper local mı cloud mu?
+
+**Karar:** **Lokal-First (Whisper-Tiny-TR/Small ONNX).**
+- KVKK ses verisi cloud'a gönderilemez (yurt dışı aktarım rejimi 2024)
+- `Whisper.NET` (MIT) + `tiny-tr` ONNX (~75MB) `App_Data/models/whisper-tiny-tr/`
+- ONNX session singleton (Plan 34.1 E5Embedder pattern reuse)
+- Cloud fallback (OpenAI Whisper API) **REDDEDİLDİ** — KVKK risk
+
+### 2. Confidence gate'leri kim tunable?
+
+**Karar:** **Admin Per-Form-Type Configuration.**
+
+`FormDefinition` entity'sine yeni kolon:
+```sql
+ALTER TABLE dbo.FormDefinitions ADD
+    ZeroUiConfidenceThreshold DECIMAL(3,2) NULL DEFAULT 0.75;
+```
+
+Örnekler:
+- "Hasar Bildirim Formu" → 0.60 (yanlış doldurma az risk, kabul kolay)
+- "Harcama İade Formu" → 0.85 (finansal, strict)
+- "İş Güvenliği Olay Bildirimi" → 0.90 (yasal raporlama, maksimum doğruluk)
+
+Admin Form Builder UI'da slider + "Düşük confidence durumunda kullanıcıya geri sor" toggle.
+
+### 3. Şive/aksan handling?
+
+**Karar:** **v1 Standard Türkçe + Saha Gürültü Preprocessing.**
+- v1: standart TR Whisper modeli (İstanbul aksanı baseline)
+- Gürültü filtreleme client-side (WebAudio API noise suppression) — depo gürültü için kritik
+- v2 (Plan 49.1): bölgesel aksan fine-tune (Adana/Karadeniz/Ege) — kullanıcı feedback datası birikince LoRA
+
+### 4. Multimodal (ses + foto + GPS) birleşik mi?
+
+**Karar:** **v1 Sadece Ses + Fotoğraf.**
+- GPS = saha tracking + workplace surveillance riski
+- KVKK ek aydınlatma + çalışan açık rıza zorunlu
+- v2 (Plan 49.1) opsiyonel: yalnızca form'a "lokasyon" alanı eklendiğinde, kullanıcı manuel onayla pin atar (always-tracking YOK)
+
+### 5. Push button vs always-listening?
+
+**Karar:** **Kesinlikle Push-To-Talk (Bas-Konuş).**
+
+- Always-listening REDDEDİLDİ:
+  - KVKK + iş yeri gözetimi yasal sınır ihlali
+  - Mobile pil 1 saatte bitirir
+  - Yanlış tetiklenme (background konuşmalar) → yanlış süreç
+- Push-to-talk: kullanıcı butona basılı tutar, bırakınca pipeline başlar
+- Mikrofon permission `getUserMedia` modal her oturum başında
+- `MediaRecorder.start()` sadece basılı tutma anında, `stop()` bırakılınca
+
+---
+
+## 9. Onay + Revize Notu
+
+**ONAYLANDI 2026-05-25** — Kullanıcı strategic review (saha + KVKK + UX lens):
+
+- **Mimari Zırh:** Ses dosyası in-memory only + on-the-fly silme + KVKK biometrik veri koruma
+- 5 açık soru cevaplandı + plan'a karar olarak gömüldü (§8)
+- Whisper.NET lokal-first + cloud fallback REDDEDİLDİ
+- Per-form-type confidence threshold (FormDefinition yeni kolon)
+- v1 standard TR + v2 bölgesel aksan
+- v1 sadece ses+foto, GPS v2 opsiyonel manuel
+- Push-to-talk only (always-listening yasak)
+- **Implementasyon:** Plan 46 PWA ✅ + Plan 41 Form ✅ + Plan 44 RAG Guard ✅ sonrası
