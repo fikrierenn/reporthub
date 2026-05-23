@@ -685,7 +685,57 @@ vNext kalbinin 11 haftalık plan'ı operasyonel temel. Üzerine **Mosaik'i piyas
 
 ---
 
-## 10. Cross-reference
+## 10. Radikal Paradigmalar — 2026-05-25 (Enterprise OS Vizyonu)
+
+vNext kalbi + 4 strategic extension (Plan 44-47) Mosaik'i "saha-uyumlu + KVKK-emniyetli + adoption-hızlandırıcı + canlı kurumsal beyin" seviyesine taşır. Üzerine **dünya'da var olmayan, devrimsel "Enterprise Operating System"** kategorisi için 4 radikal paradigma araştırma taslağı yazıldı.
+
+Bu paradigmalar **vNext kalbi production'da 6+ ay olgun olunca aktif olur** (data + skill catalog + güven inşası gerek). Erken implement = LLM hata maliyeti yüksek + KVKK risk.
+
+### 10.1 [Plan 48 — Executable SOP](../plans/48-executable-sop.md) (Doküman → Canlı Süreç)
+
+**Paradigm:** Dokümantasyon = kod. Yöneticinin yazdığı doğal dil prosedürü → arka planda Stateless State/Transition + Hangfire SLA timer + Task assignment auto-register. Form Builder/Workflow Designer manuel UI'a gerek kalmaz — **prosedür yazmak = süreci canlıya almak**.
+
+**Effort:** 60-90h | **Bağımlılık:** Plan 34 SOP ✅ + Plan 36 Workflow ✅ | **Tahmini:** 2026 Q3
+
+### 10.2 [Plan 49 — Zero-UI Operations](../plans/49-zero-ui-ops.md) (Arayüzsüz Akış)
+
+**Paradigm:** Çalışan portala girmesin. Mosaik widget basılı tut → konuş + fotoğraf çek → Whisper TR ASR + Qwen intent + Vision provider → form auto-fill + workflow trigger + task assign. **1 saniyede konuş, süreç başlar — sıfır arayüz etkileşimi**.
+
+**Effort:** 80-120h | **Bağımlılık:** Plan 46 PWA ✅ + Plan 41 Form ✅ + Plan 44 RAG Guard ✅ | **Tahmini:** 2026 Q4
+
+### 10.3 [Plan 50 — Shadow Organization Graph](../plans/50-shadow-org-graph.md) (Gerçek İş Ağı)
+
+**Paradigm:** Resmi Org Chart yalan. Onay logları + @mention + comment thread + workflow bypass pattern → **observed shadow graph**. Resmi vs gerçek bilgi merkezi karşılaştırma. AI önerisi: "X konusunda kritik kararlarda gerçek bilgi merkezi Y'ye danışıl, %15-20 verimlilik artışı".
+
+**Effort:** 40-60h | **Bağımlılık:** Plan 35 Comment ✅ + Plan 36 Workflow ✅ + Plan 38 EntityRelations ✅ | **Tahmini:** 2027 Q1
+
+### 10.4 [Plan 51 — Differential Privacy Reporting](../plans/51-differential-privacy-reporting.md) (Aktif Veri Bağışıklığı)
+
+**Paradigm:** SP sonucunu user'a olduğu gibi gösterme. App-side privacy filter: aynı SP **3 ayrı sanitize output** (genel müdür raw, analist aggregate+Laplace noise, misafir mask). 50+ DB yetki tablosu yerine **centralized policy + AI sensitive column sniff** (Presidio + Qwen). **App-side defense-in-depth**.
+
+**Effort:** 50-80h | **Bağımlılık:** Plan 14 UserDataScope + Plan 44 RAG Guard ✅ + Plan 40 Presidio ✅ | **Tahmini:** 2027 Q2
+
+### Toplam Radikal Paradigm
+
+| Plan | Paradigm | Effort | Tahmini |
+|---|---|---|---|
+| 48 Executable SOP | Doküman → Kod | 60-90h | 2026 Q3 |
+| 49 Zero-UI Ops | Arayüzsüz akış | 80-120h | 2026 Q4 |
+| 50 Shadow Graph | Gerçek hiyerarşi | 40-60h | 2027 Q1 |
+| 51 DP Reporting | Aktif gizlilik | 50-80h | 2027 Q2 |
+
+**Toplam:** ~230-350h (12-16 hafta). vNext kalbi + Plan 44-47 sonrası **yıl boyu** dağıtık geliştirme.
+
+**Stratejik konum:** Bu 4 paradigm Mosaik'i:
+- Salesforce/Microsoft 365/Notion/Monday.com seviyesinden **bir kategori üste** taşır
+- "Kurumsal İşletim Sistemi" (Enterprise OS) tanımı
+- Kendi kendini yazan + kendi kendini yöneten + kendi kendini koruyan **canlı kurumsal organizma**
+
+**Pre-implementation şart:** Her plan için POC + 5-lens deep tradeoff + KVKK/DPO ön onay + ADR. Bu plan dosyaları **araştırma taslakları** — Tier 3 implementation öncesi deep dive.
+
+---
+
+## 11. Cross-reference
 
 - **Implementasyon planları:** [`plans/`](../plans/) (Tier 3 işler için zorunlu, [ADR-010](ADR/010-plan-first-tier-system.md))
   - Plan 16 — vNext modül roadmap (modül listesi + port stratejisi, bu vizyonun **implementasyon havalandırması**)
@@ -699,7 +749,7 @@ vNext kalbinin 11 haftalık plan'ı operasyonel temel. Üzerine **Mosaik'i piyas
 
 ---
 
-## 11. Bu belge nasıl güncellenir
+## 12. Bu belge nasıl güncellenir
 
 **Kim güncelleyebilir:** Kullanıcı + Claude oturumlarında stratejik karar alındığında.
 

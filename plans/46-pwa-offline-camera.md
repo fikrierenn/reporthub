@@ -1,6 +1,6 @@
 # Plan 46 — PWA Offline-First + Native Camera/Barcode
 
-**Durum:** ⏳ TASLAK 2026-05-25 — onay bekliyor
+**Durum:** ✅ **ONAYLANDI 2026-05-25** — revize v2 (3 tarayıcı kısıtlama + 5 açık soru kapatma)
 **Tier:** 3 (cross-cutting + JS arch + new tech)
 **Tetik:** Kullanıcı strategic input 2026-05-25 — "depo/mağaza saha personeli portalı kullanamıyor"
 **Effort:** 50-70h (5 faz, 4-5 hafta)
@@ -59,6 +59,48 @@ BKM Kitap perakende + lojistik (depo) operasyonu. Saha personeli profilleri:
 ---
 
 ## 3. Mimari
+
+### 3.0 Tarayıcı Kısıtlama Prereq (revize v2 — CRITICAL)
+
+**A) HTTPS / Secure Context — ZORUNLU bariyer**
+
+Modern mobile browser'lar `getUserMedia` (kamera) + Service Worker API'lerini **yalnızca Secure Context** (HTTPS veya localhost) altında çalıştırır. Saha deployment `http://mosaik.bkm.local` ile yapılırsa kamera açılmaz + PWA install çalışmaz.
+
+**Prereq:** Saha deployment **geçerli SSL sertifikası + HTTPS (TLS)** zorunlu. INSTALL.md güncelle: BKM iç CA imzalı sertifika veya Let's Encrypt subdomain.
+
+**B) iOS Safari PWA + Web Push — A2HS koşulu**
+
+iOS 16.4+ Web Push destekli, ama kullanıcı bildirim almak için PWA'ı **önce "Ana Ekrana Ekle" (Add to Home Screen)** yapmak zorunda. Tarayıcı sekmesi içinden push subscribe **tetiklenmez** (Apple kuralı).
+
+**Çözüm:** iOS Safari detect → zarif görsel rehber pop-up "Bildirimleri açmak için bu PWA'ı önce Ana Ekrana Ekle":
+
+```
+1. Paylaş butonuna bas (📤)
+2. "Ana Ekrana Ekle" seç
+3. Ana ekrandan Mosaik'i aç
+4. Bildirimleri etkinleştir
+```
+
+iOS env: BKM saha cihazları envanteri kontrol — eski iOS varsa upgrade veya Android öncelik.
+
+**C) Camera Cleanup — Pil tüketimi koruma**
+
+`MediaStream` düzgün sonlandırılmazsa kamera arka planda çalışmaya devam eder, cihaz ısınır, pil 1 saatte tükenir. **stopStream zorunlu:**
+
+```javascript
+function stopStream(stream) {
+  if (stream) {
+    stream.getTracks().forEach(track => track.stop());
+  }
+}
+
+// Modal kapatma + iptal + barkod okuma sonrası HER path'te çağrılır
+// finally block + visibilitychange event (kullanıcı tab değiştirir) ekstra koruma
+```
+
+`navigator.permissions.query({name:'camera'})` ile aktif permission monitoring + admin debug paneli.
+
+---
 
 ### 3.1 PWA Skeleton
 
@@ -309,10 +351,29 @@ Plan 46 v2 scope adayı (Faz 6+).
 
 ---
 
-## 10. Açık Sorular
+## 10. Açık Sorular — KAPATILDI 2026-05-25 (revize v2 kararları)
 
-1. **iOS Safari push support eksik — workaround?** — Servis Worker push iOS 16.4+ destekli (sınırlı). BKM cihaz envanteri kontrol.
-2. **Barcode scanner alternatifler: ZXing vs Quagga vs html5-qrcode?** — Önerim ZXing-js (en geniş format destek, aktif maintain).
-3. **Conflict default policy?** — duplicate flag + admin review (Strateji A) yoksa user UI (B)?
-4. **PWA + KVKK aydınlatma — push subscribe modal nerede?** — Önerim: ilk login sonrası soft-ask (red edilirse rahatsız etme).
-5. **Camera kayıt depolanmasın stratejisi nasıl enforce?** — Snapshot canvas → form upload only, video stream sakla yasak (kod review).
+1. **iOS Safari push desteği eksikliği için workaround?**
+   **Karar:** iOS 16.4+ standart PWA push API destekliyor (A2HS koşuluyla). **Native wrapper YOK.** Saha cihazları iOS 16.4+ olması sağlanacak. iOS Safari detect → A2HS rehber pop-up (§3.0 B).
+
+2. **Barkod kütüphanesi tercihi?**
+   **Karar:** **`@zxing/library` (ZXing-js).** EAN-13 + QR + Code128 + DataMatrix + PDF417 — en geniş format. QuaggaJS sadece 1D + bakım yavaş. html5-qrcode wrapper ama esneklik düşük. ZXing core engine bize Mosaik wrapper yazma esnekliği veriyor. Apache 2.0 lisans.
+
+3. **Conflict (Çakışma) varsayılan politikası?**
+   **Karar:** **Strateji A — Server Accept + Duplicate Flag.** Depo/saha personeli offline sayım sync ettiğinde reddetmek yerine kabul. Server duplicate kabul + audit `ImportedOffline: true` flag (FormResponse kolonu) + Admin Inbox inceleme uyarısı. Saha personeline karmaşık çakışma UI YOK. Admin sonradan merge/delete.
+
+4. **PWA + KVKK Push subscribe izni ne zaman?**
+   **Karar:** **Soft-Ask (Giriş Sonrası Banner).** Login sonrası ana ekranda dismissible banner: "Yeni prosedürler ve acil duyurulardan haberdar olmak için bildirimleri açmak ister misiniz?" Onay → tarayıcı push permission tetiklenir. Red → bir daha rahatsız etme (localStorage flag, opt-in re-prompt admin ayarı).
+
+5. **Kamera görüntüleri kaydedilmemesi nasıl enforce?**
+   **Karar:** **In-Memory Canvas Extraction.** Video stream sunucuya **asla** gönderilmez. QR okunduğu anda veya fotoğraf upload anında `canvas.toBlob()` → in-memory PNG/JPEG → form submit payload (Blob veya Base64). Video frame'ler RAM'de bırakılır + `stopStream` zorunlu. **KVKK aydınlatma metnine teknik taahhüt olarak eklenir.** Kod review checklist: `MediaRecorder` API YASAK (sadece snapshot, kayıt değil).
+
+---
+
+## 11. Onay + Revize Notu
+
+**ONAYLANDI 2026-05-25** — Kullanıcı strategic review:
+- 3 tarayıcı kısıtlama plan'a eklendi: HTTPS prereq + iOS A2HS A2HS + camera stopStream cleanup (§3.0)
+- 5 açık soru cevaplandı + plan'a karar olarak gömüldü
+- Implementation Plan 41 Faz 0-3 tamamlandığında başlar
+- Saha SSL sertifika INSTALL.md prereq olarak eklenecek (deployment guide)

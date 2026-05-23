@@ -1,6 +1,6 @@
 # Plan 45 — Excel-to-Process AI Adaptation Engine
 
-**Durum:** ⏳ TASLAK 2026-05-25 — onay bekliyor
+**Durum:** ✅ **ONAYLANDI 2026-05-25** — revize v2 (3 teknik kör nokta + 5 açık soru kapatma)
 **Tier:** 3 (yeni modül + AI + schema autogen + UX)
 **Tetik:** Kullanıcı strategic input 2026-05-25 — "Excel düşman değil giriş kapısı"
 **Effort:** 40-60h (5 faz, 3-4 hafta)
@@ -132,10 +132,41 @@ public DetectedField InferHeuristic(string header, IReadOnlyList<string> samples
 }
 ```
 
-### 3.5 SQL Schema Autogen
+### 3.5 SQL Schema Autogen (revize v2 — güvenlik + veri kaybı koruma)
+
+**DDL Injection Koruma (CRITICAL — slug sanitization):**
+
+```csharp
+// SqlSchemaGenerator.SanitizeSlug
+string cleanSlug = Regex.Replace(
+    sheetName.ToLower(new CultureInfo("tr-TR")),
+    @"[^a-z0-9_]",
+    "");
+if (cleanSlug.Length > 50) cleanSlug = cleanSlug.Substring(0, 50);
+// Empty veya numerik-başlangıç → safe default
+if (string.IsNullOrEmpty(cleanSlug) || char.IsDigit(cleanSlug[0]))
+    cleanSlug = "form_" + Guid.NewGuid().ToString("N").Substring(0, 8);
+// SQL reserved word check (USER, TABLE, ORDER, vs.) → suffix _f
+if (SqlReservedWords.Contains(cleanSlug))
+    cleanSlug = cleanSlug + "_f";
+```
+
+ASP.NET Core DB user'ının DDL yetkisi var (CREATE TABLE) — kullanıcı sheet adı `"DROP TABLE Users; --"` girerse string concat ile felaket. Whitelist regex zorunlu.
+
+**Type-Tolerant String Fallback (CRITICAL — data loss koruma):**
+
+Sayısal/tarih kolonlar autogen aşamasında `NVARCHAR(MAX)` olarak yaratılır. AI ilk 10 satıra bakıp `INT` derse bile 100. satırda `"15A"` → `CastException` → tüm import ölür. Çözüm:
+
+```csharp
+// İlk pass: TÜM kolonlar NVARCHAR(MAX), import kesinlikle başarılı
+// İkinci pass (post-import analysis): "Bu kolondaki 10K satırın tümü int parse oluyor.
+//   Kolonu INT'e dönüştürmek ister misin?" → admin onaylı `ALTER TABLE`
+// Confidence + tahmin admin UI'da görünür, downgrade asla otomatik değil
+```
+
+**Output örneği (revize):**
 
 ```sql
--- Output örneği (depo hasar takip Excel'inden)
 CREATE TABLE dbo.FormResponse_depo_hasar_takip (
     Id INT IDENTITY(1,1) PRIMARY KEY,
     FormDefinitionId INT NOT NULL,
@@ -143,23 +174,41 @@ CREATE TABLE dbo.FormResponse_depo_hasar_takip (
     SubmittedBy INT NULL,
     SubmittedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
 
-    -- Excel'den autogen
-    tarih DATETIME2 NULL,
-    urun_kodu NVARCHAR(50) NULL,
-    miktar INT NULL,
-    hasar_tipi NVARCHAR(100) NULL,
-    aciklama NVARCHAR(2000) NULL,
-    fotograf NVARCHAR(500) NULL,
+    -- Excel'den autogen — v1 string-first, post-import upgrade
+    tarih NVARCHAR(MAX) NULL,
+    urun_kodu NVARCHAR(MAX) NULL,
+    miktar NVARCHAR(MAX) NULL,
+    hasar_tipi NVARCHAR(MAX) NULL,
+    aciklama NVARCHAR(MAX) NULL,
+    fotograf NVARCHAR(500) NULL,             -- dosya path zaten string
 
-    -- Provenance
+    -- Provenance + offline marker
     ImportedFromExcelHash NVARCHAR(64) NULL,
     OriginalExcelRowNumber INT NULL,
-
-    INDEX IX_FormResponse_depo_hasar_takip_FirmaId (FirmaId, SubmittedAt DESC)
+    ImportedOffline BIT NOT NULL DEFAULT 0
 );
+
+-- Mosaik global standard: FirmaId composite index (Plan 14 pattern)
+CREATE NONCLUSTERED INDEX IX_FormResponse_depo_hasar_takip_FirmaId
+    ON dbo.FormResponse_depo_hasar_takip (FirmaId, SubmittedAt DESC);
 ```
 
-**Naming:** Excel sheet adı → snake_case slug → table suffix. Conflict varsa `_2`, `_3` suffix.
+**Index + Disk Bloat (Mosaik standardı):**
+- Clustered index `Id` (default, Mosaik global pattern)
+- Non-clustered `(FirmaId, SubmittedAt DESC)` zorunlu — multi-tenant scope query
+- Eski/kullanılmayan FormDefinition arşiv edildiğinde admin `DROP TABLE FormResponse_{slug}` opsiyonu (audit log)
+- Yüzlerce dinamik tablo DB metadata bloat → monthly `sp_helpdb` review job (Plan 47 advisor adayı)
+
+**Naming:** Excel sheet adı → snake_case slug → table suffix. Conflict varsa `_2`, `_3` suffix + SQL reserved word check.
+
+### 3.6 Schema Drift Koruma (form edit sonrası)
+
+Admin Plan 41 Form Builder ile FormDefinition'ı sonradan düzenlerse SurveyJS field eklenir/silinir:
+
+- **Field eklendi:** `ALTER TABLE FormResponse_{slug} ADD {col} NVARCHAR(MAX) NULL` otomatik
+- **Field silindi:** SQL kolon **silinmez** (veri kaybı yasak). Sadece SurveyJS template'ten kaldır, kolon NULL kalır (geçmiş veri korunur)
+- **Field rename:** Önce yeni kolon ekle + data migrate + eski deprecated flag. Plan 45.1 iş.
+- **Field type change:** Type-tolerant fallback aktif — kolonu ALTER TABLE etmiyoruz, app-level cast.
 
 ### 3.6 Confidence Scoring
 
@@ -296,10 +345,29 @@ Yabancı geliştirici: "Niye Excel? Excel zaten ETL/BI'de var (Power Query, Tabl
 
 ---
 
-## 10. Açık Sorular
+## 10. Açık Sorular — KAPATILDI 2026-05-25 (revize v2 kararları)
 
-1. **AI vs heuristic default'u nedir?** — Önerim: Qwen ilk pass, low confidence → heuristic fallback augment.
-2. **Schema autogen otomatik mi admin manuel mi?** — Önerim: User onayı zorunlu, "DB'ye CREATE TABLE uygula" buton + diff göster.
-3. **Excel formula evaluate edilsin mi?** — Önerim: HAYIR. ClosedXML formula skip, "değer" sütununu al, formula audit raporu opsiyonel.
-4. **Multi-sheet Excel?** — v1 single sheet. v2 (Plan 45.1) çoklu sheet → Form Group.
-5. **Kullanıcı sonradan SurveyJS edit ederse Excel-Database mapping kırılır mı?** — Mapping document'leri sakla; field rename detect; auto-migrate veya warn.
+1. **AI vs Heuristic önceliği ne olmalı?**
+   **Karar:** **Hibrit (AI First + Heuristic Backup).** İlk pass Qwen yapar. Per-kolon confidence kontrol. `< 0.7` veya LLM çevrimdışı → `InferHeuristic` (Regex) devreye. İki motor çelişirse sarı highlight (Medium Confidence) + manuel onay.
+
+2. **Schema Autogen otomatik mi admin onaylı mı?**
+   **Karar:** **Kesinlikle Admin Manuel Onaylı.** Arka planda DDL script üretilir, Review ekranında salt-okunur SQL editörde gösterilir. Admin "Şemayı Veritabanına Uygula" butonu olmadan DB'de hiçbir tablo yaratılmaz. DDL injection + slug sanitization Faz 4'te zorunlu.
+
+3. **Excel formülleri evaluate edilsin mi?**
+   **Karar:** **HAYIR. Sadece Cached Value.** ClosedXML formula execute YASAK — sunucu kilitlenir (özellikle TR formüller `DÜŞEYARA`/`EĞER`). Hücre `CachedValue` alınır. Formula tespit edilirse Review ekranında uyarı: "Bu kolon Excel'de formül içeriyordu. Portalda dinamik hesaplama için Hesaplanan Alan (AST Formula Parser) tanımlayabilirsiniz." Plan 45.2 adayı (hesaplanan alan parser).
+
+4. **Multi-Sheet (Çok Sayfalı) Excel?**
+   **Karar:** **v1 Sadece Tek Sayfa (Sheet 1).** Birden fazla sheet varsa upload ekranında dropdown: "Çalışma kitabında N sayfa bulundu. Hangisini aktarmak istersiniz?" v2 (Plan 45.1) çoklu sheet → Form Group dönüşümü.
+
+5. **SurveyJS edit edildiğinde Schema Drift nasıl çözülür?**
+   **Karar:** **Safe ALTER TABLE & Warning.** Yeni field eklenirse otomatik `ALTER TABLE ADD {col} NVARCHAR(MAX) NULL`. Field silinirse SQL kolonu **silinmez** (veri kaybı yasak), sadece SurveyJS template'ten kaldırılır. Rename → yeni kolon + data migrate + eski deprecated (Plan 45.1).
+
+---
+
+## 11. Onay + Revize Notu
+
+**ONAYLANDI 2026-05-25** — Kullanıcı strategic review:
+- 3 teknik kör nokta plan'a eklendi: DDL injection sanitization + type-tolerant string-first + index/disk bloat
+- 5 açık soru cevaplandı + plan'a karar olarak gömüldü
+- §3.5 SQL Schema Autogen genişletildi + §3.6 Schema Drift bölümü eklendi
+- Implementation Plan 41 Faz 0-3 tamamlandığında başlar

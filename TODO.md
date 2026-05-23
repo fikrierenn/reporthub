@@ -103,11 +103,21 @@ Build: 0 hata 0 uyarı. Test: **337/337 geçti** (test-discipline.md kanıtland�
 
 - [ ] **[Plan 44 · RAG Chunk-Level Permission Guard](plans/44-rag-permission-guard.md)** ⏳ **TASLAK 2026-05-25 — 🔴 HOT-FIX** — Onay bekliyor. SOP RAG canlı, `SopChunkRetriever` sadece FirmaId scope; Documents Plan 27 Faz E bağlanmadan ÖNCE chunk-level `SecurityLevel/AllowedRoleIds/AllowedDepartmentIds/AllowedUserIds` + `IRagAccessPolicy` Core abstraction zorunlu. KVKK m.12 + ticari sır leak koruma. 12-18h, 4 faz, ~1 hafta.
 
-- [ ] **[Plan 45 · Excel-to-Process AI Parser](plans/45-excel-to-process-ai-parser.md)** ⏳ **TASLAK 2026-05-25** — Onay bekliyor. Excel upload → Qwen schema inference → SurveyJS template + SQL table autogen + historical import. Departman 3 hafta yazılım bekleme → 5dk AI işlemi. Plan 41 Faz 0-3 prereq. ClosedXML + Plan 40 Presidio scan reuse. 40-60h, 5 faz, 3-4 hafta.
+- [ ] **[Plan 45 · Excel-to-Process AI Parser](plans/45-excel-to-process-ai-parser.md)** ✅ **ONAYLANDI 2026-05-25 revize v2** — Onay bekliyor. Excel upload → Qwen schema inference → SurveyJS template + SQL table autogen + historical import. Departman 3 hafta yazılım bekleme → 5dk AI işlemi. Plan 41 Faz 0-3 prereq. ClosedXML + Plan 40 Presidio scan reuse. 40-60h, 5 faz, 3-4 hafta.
 
-- [ ] **[Plan 46 · PWA Offline-First + Native Camera/Barcode](plans/46-pwa-offline-camera.md)** ⏳ **TASLAK 2026-05-25** — Onay bekliyor. Workbox 7 service worker + IndexedDB sync queue + ZXing-js barcode + getUserMedia camera + Web Push. BKM depo/mağaza saha personeli için kritik. Plan 41 Faz 0-3 prereq + Plan 17 Faz H NotificationService genişlet. 50-70h, 5 faz, 4-5 hafta.
+- [ ] **[Plan 46 · PWA Offline-First + Native Camera/Barcode](plans/46-pwa-offline-camera.md)** ✅ **ONAYLANDI 2026-05-25 revize v2** — Onay bekliyor. Workbox 7 service worker + IndexedDB sync queue + ZXing-js barcode + getUserMedia camera + Web Push. BKM depo/mağaza saha personeli için kritik. Plan 41 Faz 0-3 prereq + Plan 17 Faz H NotificationService genişlet. 50-70h, 5 faz, 4-5 hafta.
 
 - [ ] **[Plan 47 · Auto-Tuning Process Optimization Advisor](plans/47-auto-tuning-process-advisor.md)** ⏳ **TASLAK 2026-05-25** — Onay bekliyor. Daily Hangfire job → 5 pattern detector (approval bypass / bottleneck / dead-end / duplicate / volume spike) → Qwen narrative + heuristic impact → Admin Inbox → Accept + workflow auto-edit + 30-gün post-accept impact tracking. **VISION §7 kuzey yıldızı — Operational Intelligence**. Plan 36+42 prereq. 25-35h, 5 faz, 2-3 hafta.
+
+### Radikal Paradigmalar (VISION §10) — vNext + Plan 44-47 sonrası ~6+ ay olgun olunca
+
+- [ ] **[Plan 48 · Executable SOP](plans/48-executable-sop.md)** 🔬 **ARAŞTIRMA TASLAĞI 2026-05-25** — Doküman → Canlı süreç paradigm. Yöneticinin yazdığı doğal dil prosedür → Qwen parse → Stateless State/Transition + Hangfire SLA timer + Task auto-register. **Prosedür yazmak = süreci canlıya almak**. Plan 34 + 36 prereq. 60-90h, 6 faz. Tahmini: 2026 Q3.
+
+- [ ] **[Plan 49 · Zero-UI Operations](plans/49-zero-ui-ops.md)** 🔬 **ARAŞTIRMA TASLAĞI 2026-05-25** — Arayüzsüz akış paradigm. Mosaik widget basılı-tut + konuş + foto → Whisper TR + Qwen intent + Vision → form auto-fill + workflow trigger. **1 saniyede konuş, süreç başlar**. Plan 46 + 41 + 44 prereq. 80-120h, 7 faz. Tahmini: 2026 Q4.
+
+- [ ] **[Plan 50 · Shadow Organization Graph](plans/50-shadow-org-graph.md)** 🔬 **ARAŞTIRMA TASLAĞI 2026-05-25** — Gerçek iş ağı paradigm. @mention + workflow + comment log → observed shadow graph + anomaly detect (resmi vs gerçek). AI önerisi "bilgi merkezi Y'ye danışıl". KVKK aggregate-only constraint. Plan 35 + 36 + 38 prereq. 40-60h, 5 faz. Tahmini: 2027 Q1.
+
+- [ ] **[Plan 51 · Differential Privacy Reporting](plans/51-differential-privacy-reporting.md)** 🔬 **ARAŞTIRMA TASLAĞI 2026-05-25** — Aktif veri bağışıklığı paradigm. App-side privacy filter: aynı SP 3 ayrı sanitize output (genel müdür raw / analist aggregate+Laplace noise / misafir mask). Presidio + Qwen sensitive column sniff. Plan 14 + 44 + 40 prereq. 50-80h, 6 faz. Tahmini: 2027 Q2.
 
 - [ ] **KVKK skill import** ✅ 2026-05-21 — `.claude/skills/kvkk-veri-envanteri/SKILL.md` (374 satır, claudskills.com export). Plan 40 Faz 5 AI Integrity Checker prompt kaynağı. Commit `36d590e`.
 
