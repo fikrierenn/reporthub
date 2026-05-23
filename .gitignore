@@ -62,3 +62,10 @@ Thumbs.db
 
 # Tesseract dil dosyaları (büyük binary — ayrıca indir)
 Mosaik/tessdata/*.traineddata
+
+# Plan 34.1 SOP AI Advisor — model dosyaları (GGUF/ONNX/LoRA, BKM proxy pre-bundle)
+# README.md'ler tracked, model binary'leri (.gguf .onnx) ignored.
+Mosaik/App_Data/models/**/*.gguf
+Mosaik/App_Data/models/**/*.onnx
+Mosaik/App_Data/models/**/*.bin
+Mosaik/App_Data/models/**/*.safetensors
