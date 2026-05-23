@@ -13,8 +13,8 @@ Mosaik **modüler şirket içi portal**. "Rapor portali" olarak başladı, son 3
 **Hedef kullanıcı:** BKM Kitap operasyonu (~200-300 kişi tahmini). Cross-DB (DerinSIS / BKMDATA / BKM_GENEL / EncoreMerkez) entegrasyonu ile günlük operasyonel veriyi tek arayüzde toplar.
 
 **İki olgunluk ölçüsü:**
-- **Mevcut özellik seti:** ~%75 olgun (CLAUDE.md kaydı). Rapor + dashboard + sözleşme + tamim + orgchart canlı kullanıma hazır.
-- **vNext "iç portal" vaadi:** ~%40-50 ilerleme. 10 modül planlanmış (TODO.md "MAJOR VISION"), 3'ü tamam (Reports, Dashboard, Tamim), 1'i kısmen (Documents), 6'sı henüz yok.
+- **Mevcut özellik seti:** ~%80 olgun (2026-05-25 revize). Rapor + dashboard + sözleşme + tamim + orgchart + SOP (Plan 34+34.1 ✅) + Workflow engine canlı kullanıma hazır.
+- **vNext "iç portal" vaadi:** ~%55-60 ilerleme (2026-05-25 revize). 10 modül planlanmış, **5 tam** (Reports, Dashboard, Tamim/Circular, OrgChart, **SOP** ✅ 2026-05-23), **2 yarım** (Documents Plan 27 Faz B, Workflow engine var designer eksik — Plan 36), **3 yok** (Comment/Mention Plan 35, Form Builder Plan 41, KVKK/ProcessRuntime Plan 40+42).
 
 Bu iki ölçüyü karıştırma — "Mosaik %75 hazır" demek **mevcut iddiası** için doğru, **vNext iddiası** için yanıltıcı.
 
@@ -102,22 +102,23 @@ Tamim'e, dokümana, sözleşmeye, organizasyon kaydına yorum yapılabilsin. `@u
 - **Bağımlılık:** `INotificationService` (mevcut), Plan 31 SMTP caller (Plan 32 bekliyor)
 - **Karar:** Tek ekonomik iş. SOP'un altında değil, paralelinde gider.
 
-### 3. Form / Anket Builder (Plan yok) — **BÜYÜK AMA DEĞERLİ**
+### 3. Form / Anket Builder ([Plan 41](../plans/41-form-builder.md) TASLAK) — **BÜYÜK AMA DEĞERLİ — HIBRİT**
 
-İK için memnuniyet anketi, eğitim sonu değerlendirme, çıkış mülakatı. Müşteri için memnuniyet, ürün geri bildirim. Operasyon için olay bildirimi, ekipman arıza talebi.
+İK için memnuniyet anketi, eğitim sonu değerlendirme, çıkış mülakatı. Müşteri için memnuniyet, ürün geri bildirim. Operasyon için olay bildirimi, ekipman arıza talebi. KVKK için DSAR/İhbar/Rıza formları.
 
-- **Effort:** 6-8 hafta (own) veya 2-3 hafta (integrate)
-- **Açık kaynak alternatifler:** LimeSurvey, Formbricks self-hosted
-- **Karar gerekli:** Own vs integrate. Önerim: **integrate** — Mosaik'in core competence'i form builder değil, kullanım
+- **Effort:** 54-70h (8 faz, 4-5 hafta) — Plan 41 taslak 2026-05-21
+- **Karar:** **Kendi modül (`Mosaik.Modules.Forms`) + SurveyJS renderer reuse** (ADR-020). LimeSurvey GPL/PHP + Formbricks AGPL reddedildi (lisans + dil + integrate maliyet). v1 JSON config server-side render + admin CRUD; v2 drag-drop builder UI ileride.
+- **Bağımlılık:** Plan 38 ✅, Plan 36, Documents
+- **Plan 42 prereq:** KRİTİK PATH. ProcessExecution runtime form input bekliyor.
 
-### 4. Workflow Designer + Onay Akışları (Plan yok) — **GENERİC ENGINE**
+### 4. Workflow Designer + Onay Akışları ([Plan 36](../plans/36-workflow-designer.md) ONAYLANDI) — **GENERİC ENGINE — STATELESS BACKBONE**
 
-`IWorkflow` altyapısı zaten `Mosaik.Core`'da. Üzerine bir designer UI + chain configuration + assignment + reminder.
+`IWorkflow` altyapısı zaten `Mosaik.Core`'da. Plan 36 onaylandı — Stateless 5.20.1 (Apache-2.0, ~700 satır FSM) backend + Hangfire reminder + designer UI canvas. Elsa/Camunda/Temporal/Workflow Core reddedildi (overkill, ~%20-25 tasarruf).
 
 - **Effort:** 3-4 hafta generic engine + 1 hafta her modüle entegrasyon
 - **Etki:** Bu modül var olduktan sonra SOP onayı, sözleşme onayı, satın alma onayı, izin talebi onayı **hepsi aynı engine'i** kullanır
-- **Bağımlılık:** Yok (Core abstraction hazır)
-- **Karar:** 2'den sonra **en yüksek leverage olan iş** — geri kalan tüm modüllerin bağımlılığı
+- **Bağımlılık:** Plan 38 ✅ (EntityRelations + DecisionLog)
+- **Karar:** 2'den sonra **en yüksek leverage olan iş** — geri kalan tüm modüllerin bağımlılığı. **ADR-019** yazıldı.
 
 ### 5. Duyuru / Announcement Feed (Plan yok) — **TAMIM'E TYPE EKLE, AYRI MODÜL YAPMA**
 

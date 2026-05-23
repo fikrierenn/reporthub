@@ -132,7 +132,7 @@ Bunları silersen V2 form submit kırılır.
 - **Mosaik DB:** `Server=BT-FIKRI\SQLEXPRESS;Database=Mosaik`. sqlcli profil `mosaik` default.
 - **MCP allowlist:** master, DerinSIS*, BKMDATA, EncoreMerkez, BKM. **Mosaik DB MCP allowlist'te değil** — sqlcli kullan, MCP `mcp__sqlserver__*` çağırma.
 
-Son migration numarası (2026-05-12): **56** (`56_AppModulesGroupKey.sql`).
+Son migration numarası (2026-05-25): **72** (`72_RenameTamimModuleToCircular.sql`). Host scripts 00-72. Modül scriptleri ayrı: `Mosaik.Modules.SOP/Database/01..09` + `Mosaik.Modules.Forms/Database/*`.
 
 ---
 
@@ -192,7 +192,15 @@ Not: `dashboards` modülü sidebar render'da SKIP edilir (Genel Bakış zaten `/
 | 25.1 Faz 1 | Inline style refactor | ⏳ Devam — ~640 admin module'de |
 | 31 | Email/SMTP altyapısı | ✅ Tamamlandı (2026-05-12) |
 | 32 | Scheduled Reports + Email Distribution | 📝 Taslak — 6 açık soru, kullanıcı onayı bekliyor |
-| 33 | Admin views standardizasyon | 📝 Taslak — V1 Builder silindi (kullanıcı kararı), 14 view kaldı |
+| 33 | Modül Tamamlama Roadmap | 📝 vNext öncesi modül tamamlama + bugfix sweep (Plan 33 dosyası gerçek scope) |
+| 34 | SOP / Prosedür Yönetimi | ✅ **TAMAMLANDI 2026-05-23** (Faz A-E + 34.1 RAG advisor Faz 0-6+8) |
+| 34.1 | SOP RAG Advisor | ✅ Faz 7 LoRA opsiyonel/erteli |
+| 35 | Comment / Mention | 📝 Plan aday — Plan 32 SMTP bekliyor |
+| 36 | Workflow Designer | ✅ ONAYLANDI — Stateless 5.20 backend + Hangfire reminder (ADR-019) |
+| 38 | EntityRelations + DecisionLog | ✅ ONAYLANDI 2026-05-21 |
+| 40 | KVKK Veri Envanteri | 📝 Taslak rev 2 |
+| 41 | Form Builder | 📝 Taslak KRİTİK PATH (ADR-020) |
+| 42 | Process Execution Runtime | 📝 Taslak BİRLEŞTİRİCİ (ADR-021) |
 
 Tüm plan'lar: `plans/NN-<slug>.md` (aktif), `plans/archive/` (tamamlanan).
 

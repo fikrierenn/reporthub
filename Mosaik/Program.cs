@@ -161,7 +161,7 @@ builder.Services.AddScoped<Mosaik.Services.Ai.WizardExtractionService>();
 
 // Plan 16.6 — Modular Monolith. ModuleLoader Mosaik.Modules.* assembly'lerini
 // tarar, IMosaikModule implementasyonlarını DI + ModelBuilder + endpoint'lere
-// register eder. Şu an modül yok — Plan 17+ Tamim ilk modül olacak.
+// register eder. Aktif modüller (2026-05-25): Circular, SOP, Forms.
 Mosaik.Core.Module.ModuleLoader.RegisterAll(builder.Services);
 
 // Add Entity Framework

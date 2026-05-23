@@ -128,7 +128,7 @@ Build: 0 hata 0 uyarı. Test: **337/337 geçti** (test-discipline.md kanıtland�
 - KPI / OKR modülü — Reports zaten karşılar
 - Mesajlaşma — Slack/Teams varken marjinal
 - Duyuru ayrı modül — Tamim'e `Type` enum yeterli (2-3 gün)
-- Form Builder kendi üretim — open-source integrate (LimeSurvey / Formbricks)
+- ~~Form Builder kendi üretim — open-source integrate (LimeSurvey / Formbricks)~~ **REVİZE 2026-05-21:** Plan 41 ile değişti — SurveyJS renderer reuse + kendi modül (`Mosaik.Modules.Forms`). LimeSurvey GPL/PHP + Formbricks AGPL reddedildi. ADR-020.
 - [x] **Plan 16.5 Faz C+D** ✅ — ILlmService + FallbackLlmService + IAiExtractionService + IAiSuggestionService + PromptBase. 337 test. commit d2fd745 + 1b195d4.
 - [x] **Plan 17 (Tamim)** ✅ — Tüm fazlar tamamlandı. Faz H Bildirim: NotificationService + NotificationsController + sidebar badge + migration 41 + Circular wiring mevcut.
 - [x] **Security altyapısı (3 katman)** ✅ 2026-05-13 — `.claude/agents/security-reviewer.md` + `.claude/skills/mosaik-security/SKILL.md` + `.claude/commands/security-check.md`. CLAUDE.md §2 + security-principles.md güncel. Tetik: yeni POST/SQL/email/JS fetch yazılırken proaktif, `/security-check` ile denetim.
