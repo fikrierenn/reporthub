@@ -101,13 +101,13 @@ Build: 0 hata 0 uyarı. Test: **337/337 geçti** (test-discipline.md kanıtland�
   - **Faz 8** (4-6h) — Process Owner Dashboard + Admin Tüm Instance'lar + Excel export
   - **Faz 9** (6-8h) — E2E entegrasyon test (DSAR/İhbar/Aday/İhlal/Review uçtan uca)
 
-- [ ] **[Plan 44 · RAG Chunk-Level Permission Guard](plans/44-rag-permission-guard.md)** ⏳ **TASLAK 2026-05-25 — 🔴 HOT-FIX** — Onay bekliyor. SOP RAG canlı, `SopChunkRetriever` sadece FirmaId scope; Documents Plan 27 Faz E bağlanmadan ÖNCE chunk-level `SecurityLevel/AllowedRoleIds/AllowedDepartmentIds/AllowedUserIds` + `IRagAccessPolicy` Core abstraction zorunlu. KVKK m.12 + ticari sır leak koruma. 12-18h, 4 faz, ~1 hafta.
+- [ ] **[Plan 44 · RAG Chunk-Level Permission Guard](plans/44-rag-permission-guard.md)** ✅ **ONAYLANDI 2026-05-25 revize v2 — 🔴 HOT-FIX** — Onay bekliyor. SOP RAG canlı, `SopChunkRetriever` sadece FirmaId scope; Documents Plan 27 Faz E bağlanmadan ÖNCE chunk-level `SecurityLevel/AllowedRoleIds/AllowedDepartmentIds/AllowedUserIds` + `IRagAccessPolicy` Core abstraction zorunlu. KVKK m.12 + ticari sır leak koruma. 12-18h, 4 faz, ~1 hafta.
 
 - [ ] **[Plan 45 · Excel-to-Process AI Parser](plans/45-excel-to-process-ai-parser.md)** ✅ **ONAYLANDI 2026-05-25 revize v2** — Onay bekliyor. Excel upload → Qwen schema inference → SurveyJS template + SQL table autogen + historical import. Departman 3 hafta yazılım bekleme → 5dk AI işlemi. Plan 41 Faz 0-3 prereq. ClosedXML + Plan 40 Presidio scan reuse. 40-60h, 5 faz, 3-4 hafta.
 
 - [ ] **[Plan 46 · PWA Offline-First + Native Camera/Barcode](plans/46-pwa-offline-camera.md)** ✅ **ONAYLANDI 2026-05-25 revize v2** — Onay bekliyor. Workbox 7 service worker + IndexedDB sync queue + ZXing-js barcode + getUserMedia camera + Web Push. BKM depo/mağaza saha personeli için kritik. Plan 41 Faz 0-3 prereq + Plan 17 Faz H NotificationService genişlet. 50-70h, 5 faz, 4-5 hafta.
 
-- [ ] **[Plan 47 · Auto-Tuning Process Optimization Advisor](plans/47-auto-tuning-process-advisor.md)** ⏳ **TASLAK 2026-05-25** — Onay bekliyor. Daily Hangfire job → 5 pattern detector (approval bypass / bottleneck / dead-end / duplicate / volume spike) → Qwen narrative + heuristic impact → Admin Inbox → Accept + workflow auto-edit + 30-gün post-accept impact tracking. **VISION §7 kuzey yıldızı — Operational Intelligence**. Plan 36+42 prereq. 25-35h, 5 faz, 2-3 hafta.
+- [ ] **[Plan 47 · Auto-Tuning Process Optimization Advisor](plans/47-auto-tuning-process-advisor.md)** ✅ **ONAYLANDI 2026-05-25 revize v2** — Onay bekliyor. Daily Hangfire job → 5 pattern detector (approval bypass / bottleneck / dead-end / duplicate / volume spike) → Qwen narrative + heuristic impact → Admin Inbox → Accept + workflow auto-edit + 30-gün post-accept impact tracking. **VISION §7 kuzey yıldızı — Operational Intelligence**. Plan 36+42 prereq. 25-35h, 5 faz, 2-3 hafta.
 
 ### Radikal Paradigmalar (VISION §10) — vNext + Plan 44-47 sonrası ~6+ ay olgun olunca
 

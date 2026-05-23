@@ -1,6 +1,6 @@
 # Plan 47 — Auto-Tuning Process Optimization Advisor
 
-**Durum:** ⏳ TASLAK 2026-05-25 — onay bekliyor
+**Durum:** ✅ **ONAYLANDI 2026-05-25** — revize v2 (2 mimari zırh + 5 açık soru kapatma)
 **Tier:** 3 (AI + workflow event sourcing + cross-modül + yönetim UX)
 **Tetik:** Kullanıcı strategic input 2026-05-25 — "kendi verisini okuyarak operasyonu iyileştiren canlı beyin"
 **Effort:** 25-35h (5 faz, 2-3 hafta)
@@ -176,17 +176,58 @@ public sealed class ApprovalBypassDetector : IPatternDetector
 └─ Accept onayı: 2-step confirm + audit + workflow template auto-edit preview
 ```
 
-### 3.6 Accept akışı
+### 3.6 Accept akışı (revize v2 — Immutable Versioning)
 
+**Mimari Zırh A — Immutable Version Control (CRITICAL):**
+
+Risk: Accept sırasında aktif WorkflowTemplate v1.0 silinirse, mid-flight yarı yolda 20 aktif WorkflowInstance crash + DB lock. **Zero-crash garanti şart.**
+
+Çözüm (Plan 36'da kurduğumuz pattern):
 ```
-User clicks "Kabul Et" →
-  Confirmation modal: "Bu öneri uygulandığında workflow template şu şekilde değişir: [diff]"
-  →
-  WorkflowTemplate.Update(rule injection)
-  → AuditLog event "process_suggestion_accepted"
-  → ProcessOptimizationSuggestion.Status = Accepted, ReviewedBy + Notes
-  → İlerideki vakalarda yeni rule uygulanır (yarın 02:00 sonra effect)
+Admin "Kabul Et" tıklar →
+  WorkflowTemplate v1.0 KORUNUR (mid-flight instance'lar bunu kullanmaya devam eder)
+  ↓
+  Otomatik v1.1 taslak oluşturulur (kural enjekte edilmiş)
+  ↓
+  Admin "Aktifleştir" tıklar (insan-in-the-loop staging — Mimari Zırh B)
+  ↓
+  WorkflowTemplate.ActiveVersion = "1.1" (atomik UPDATE)
+  ↓
+  Yeni başlayan WorkflowInstance → v1.1 referans
+  Eski mid-flight WorkflowInstance → v1.0 referans (tamamlanana kadar)
+  ↓
+  ProcessOptimizationSuggestion.Status = Accepted, AcceptedVersionId = v1.1
+  Audit log: process_suggestion_accepted + template_version_created
 ```
+
+**Cron + Effect:** Yeni rule yarın 02:00 değil, **Activate anında effect** (yeni instance'lardan itibaren).
+
+**Mimari Zırh B — Data Quorum Eşiği (CRITICAL):**
+
+Risk: 5-10 kez çalışmış yeni workflow'da pattern detect → false anomaly → kötü öneri → güven kaybı.
+
+Çözüm (`IPatternDetector` öncesi sert gate):
+```csharp
+public abstract class PatternDetectorBase : IPatternDetector
+{
+    protected const int MIN_COMPLETED_INSTANCES = 50;
+    protected const int MIN_COMPLETED_INSTANCES_PREFERRED = 100;
+
+    public IEnumerable<RawSuggestion> Detect(WorkflowMetrics metrics)
+    {
+        if (metrics.CompletedInstanceCount30Days < MIN_COMPLETED_INSTANCES)
+        {
+            // Audit: skipped, quorum yetersiz
+            yield break;
+        }
+        yield return DetectImpl(metrics);
+    }
+}
+```
+
+- N < 50 → analiz YOK (skip + audit)
+- 50 ≤ N < 100 → analiz yapılır ama Confidence cap = 70 (Medium severity max)
+- N ≥ 100 → tam confidence + High/Critical mümkün
 
 ---
 
@@ -313,10 +354,83 @@ Plan 47 expansion adayı (Plan 47.1, daha sonra).
 
 ---
 
-## 10. Açık Sorular
+## 10. Açık Sorular — KAPATILDI 2026-05-25 (revize v2 kararları)
 
-1. **LLM zorunlu mu, yoksa heuristic-only mode?** — Önerim: hibrit + LLM opt-in. Production LLM kapalı default; admin "AI önerileri aç" toggle.
-2. **Severity threshold default ne?** — Önerim: Medium+ visible (Info noise yüksek). Admin filter ile Info görünür.
-3. **Accept auto-apply mi staging mi?** — Önerim: staging — accept sonrası template "Pending Activation" status, 24h preview window, sonra apply.
-4. **Cross-firma benchmark ileride mi?** — BKM tek-tenant ama gelecek SaaS dönüşümde "benzer şirketler bu pattern'i kabul etti" sosyal kanıt değerli. Plan 47.2 adayı.
-5. **Hallucinate olursa user feedback nasıl toplanır?** — Reject reason çoktan seçmeli (yanlış evidence / yanlış impact / iyi öneri ama zaman değil); LoRA fine-tune data (Plan 34.1 Faz 7 pattern reuse).
+### 1. LLM zorunlu mu, heuristic-only mode?
+
+**Karar:** **Hibrit + LLM Opt-in.**
+
+- **Çekirdek tespit + impact hesabı:** %100 heuristic (SQL aggregation + formula) — `%0 hallucination + tam matematiksel tutarlılık`
+- **LLM rolü:** Yalnızca ham veriyi **insancıl Türkçe anlatıya** çevirir (narrative generation)
+- LLM kapalı/çevrimdışı → otomatik **static template fallback**:
+  ```
+  "{step.Name} adımı son {days} günde {count} kez çalıştı. {approve_rate}% onay oranı,
+   ortalama {avg_duration}. Bu adımı kaldırarak haftalık {hours_saved}h tasarruf önerilir."
+  ```
+- Admin Settings: `EnableAiNarrative: true/false` toggle (production default = true, çevrimdışı durumunda graceful degrade)
+
+### 2. Severity threshold default ne?
+
+**Karar:** **Medium+ varsayılan filtre** (Medium, High, Critical visible).
+
+- Ana arayüzde default filter `≥ Medium`
+- Info/Low görmek için "Düşük öncelikli önerileri göster" checkbox
+- **Gerekçe:** Yöneticide **alert fatigue** (uyarı yorgunluğu) engelle. Info noise düşük değer.
+- Email digest: sadece Medium+ (günde 1 mail max)
+
+### 3. Accept auto-apply mi staging mi?
+
+**Karar:** **Staging — Pending Activation (insan-in-the-loop, Mimari Zırh A).**
+
+```
+Accept tıklandığında:
+  1. Yeni WorkflowTemplate v.X+1 taslak oluştur (rule enjekte edilmiş)
+  2. Görsel diff/preview Admin'e gösterilir (yan yana mevcut vs yeni)
+  3. Admin "Aktifleştir (Activate)" butonu ile değişiklik canlıya alınır
+  4. v.X+1 aktif, v.X mid-flight instance'larca kullanılmaya devam
+```
+
+24h auto-apply YOK — admin onayı zorunlu (maksimum güvenlik). İstersek Plan 47.1 "trusted auto-apply" admin opt-in.
+
+### 4. Cross-firma benchmark ileride mi?
+
+**Karar:** **v1'de Kapsam Dışı (Future SaaS).**
+
+- BKM tek-tenant — şu an sosyal kanıt yok ("benzer şirketler kabul etti")
+- DB şema **FirmaId** bazlı, mimari genişlemeye hazır
+- Plan 47.2 adayı (SaaS aşamasında federated benchmark)
+
+### 5. Hallucinate olursa user feedback nasıl toplanır?
+
+**Karar:** **Yapılandırılmış Reject/Defer Anketi → LoRA Fine-Tune Data.**
+
+Admin "Reddet" veya "Ertele" tıkladığında pop-up:
+
+```
+[ ] İstatistik/öneri mantıksız veya hatalı (AI Hallucination)
+[ ] İstatistik doğru fakat mevzuat/şirket politikası gereği bu adım zorunlu (SOX/Compliance)
+[ ] İyi fikir fakat zamanlama uygun değil (Deferred)
+[ ] Diğer (manuel not)
+
+Açıklama (opsiyonel): _____________
+```
+
+- `ProcessOptimizationSuggestion` entity'sine `RejectReasonCategory` byte + `ReviewerNotes` text
+- **Fine-tune data:** Kabul edilen + reddedilen örnekler → Plan 34.1 Faz 7 LoRA pattern reuse
+  - Pozitif örnek: (workflow_metric → narrative → Accepted)
+  - Negatif örnek: (workflow_metric → narrative → Rejected:Hallucination)
+- Heuristic kuralları **ince ayar:** "X pattern N kez reject → threshold yükselt" auto-tune (Plan 47.1)
+
+---
+
+## 11. Onay + Revize Notu
+
+**ONAYLANDI 2026-05-25** — Kullanıcı strategic review (yazılım mimarı + AI mühendis lens):
+
+- **Mimari Zırh A:** Immutable Version Control — Accept asla aktif template'i ezme, v+1 taslak oluştur, Activate ile geçiş. Zero-crash garanti mid-flight instance'lara.
+- **Mimari Zırh B:** Data Quorum Eşiği — N<50 instance → analiz yok, 50≤N<100 → Confidence cap 70, N≥100 → tam confidence.
+- 5 açık soru cevaplandı + plan'a karar olarak gömüldü (§10)
+- §3.6 Accept akışı revize: Immutable versioning + insan-in-the-loop staging
+- LLM rolü daraldı: sadece narrative generation (heuristic core), template fallback graceful degrade
+- Reject feedback fine-tune data (Plan 34.1 Faz 7 LoRA pattern reuse)
+- **Implementasyon:** Plan 36 (Workflow log + immutable versioning) ✅ + Plan 42 (Process Runtime instance data) sonrası
