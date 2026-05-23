@@ -25,14 +25,28 @@ namespace Mosaik.Modules.SOP
             services.AddScoped<Services.SopService>();
             services.AddScoped<Services.SopApprovalService>();
             services.AddScoped<Services.SopReadReceiptService>();
-            // Faz F: services.AddScoped<Services.SopAiAdvisorService>();
-            // Faz F: services.AddScoped<Services.SopRateLimitGuard>();
+            // Plan 34 Faz E S-21 — günlük okuma hatırlatma cron.
+            services.AddScoped<Services.SopReadReminderJob>();
+            // Plan 34.1 Faz 1 — RAG pipeline (indexer + retriever).
+            services.AddScoped<Services.SopIndexer>();
+            services.AddScoped<Services.SopChunkRetriever>();
+            // Plan 34.1 Faz 2 — RAG advisor.
+            services.AddScoped<Services.SopRagAdvisorService>();
+            // Plan 34.1 Faz 3 — Rate limit guard.
+            services.AddScoped<Services.SopRateLimitGuard>();
+            // Plan 34.1 Faz 6 — KVKK retention cleanup (daily).
+            services.AddScoped<Services.SopAiHistoryCleanupJob>();
+            // Plan 34.1 Save-time AI Enrichment — SOP save sonrası otomatik review.
+            services.AddScoped<Services.SopEnrichmentService>();
         }
 
         public void ConfigureModelBuilder(ModelBuilder mb)
         {
+            // DB tabloları migration'larda çoğul yaratıldı (SopDocuments, SopVersions, vb.)
+            // EF default convention entity adına (tekil) eşler — explicit ToTable şart.
             mb.Entity<SopDocument>(e =>
             {
+                e.ToTable("SopDocuments");
                 e.HasKey(x => x.Id);
                 e.Property(x => x.Title).HasMaxLength(200).IsRequired();
                 e.Property(x => x.Category).HasMaxLength(80);
@@ -43,6 +57,7 @@ namespace Mosaik.Modules.SOP
 
             mb.Entity<SopVersion>(e =>
             {
+                e.ToTable("SopVersions");
                 e.HasKey(x => x.Id);
                 e.Property(x => x.ContentJson).IsRequired();
                 e.HasOne(x => x.SopDocument)
@@ -55,6 +70,7 @@ namespace Mosaik.Modules.SOP
 
             mb.Entity<SopReadReceipt>(e =>
             {
+                e.ToTable("SopReadReceipts");
                 e.HasKey(x => x.Id);
                 e.HasOne(x => x.SopVersion)
                     .WithMany(v => v.ReadReceipts)
@@ -66,6 +82,7 @@ namespace Mosaik.Modules.SOP
 
             mb.Entity<SopApprovalSubmission>(e =>
             {
+                e.ToTable("SopApprovalSubmissions");
                 e.HasKey(x => x.Id);
                 e.HasOne(x => x.SopVersion)
                     .WithMany(v => v.ApprovalSubmissions)
@@ -73,6 +90,38 @@ namespace Mosaik.Modules.SOP
                     .OnDelete(DeleteBehavior.Cascade);
                 e.HasIndex(x => x.SopVersionId);
                 e.HasIndex(x => x.ApprovalRequestId);
+            });
+
+            // Plan 34.1 Faz 1 A-07 — RAG chunk + embedding.
+            mb.Entity<SopChunk>(e =>
+            {
+                e.ToTable("SopChunks");
+                e.HasKey(x => x.Id);
+                e.HasOne(x => x.SopVersion)
+                    .WithMany()
+                    .HasForeignKey(x => x.SopVersionId)
+                    .OnDelete(DeleteBehavior.Cascade);
+                e.HasIndex(x => new { x.SopVersionId, x.ChunkOrder });
+            });
+
+            // Plan 34.1 Faz 2 A-12 — RAG advisor soru-cevap.
+            mb.Entity<SopAiConversation>(e =>
+            {
+                e.ToTable("SopAiConversations");
+                e.HasKey(x => x.Id);
+                e.HasIndex(x => new { x.UserId, x.CreatedAt });
+            });
+
+            // Plan 34.1 Save-time AI Enrichment — review report.
+            mb.Entity<SopEnrichmentReport>(e =>
+            {
+                e.ToTable("SopEnrichmentReports");
+                e.HasKey(x => x.Id);
+                e.HasOne(x => x.SopVersion)
+                    .WithMany()
+                    .HasForeignKey(x => x.SopVersionId)
+                    .OnDelete(DeleteBehavior.Cascade);
+                e.HasIndex(x => new { x.SopVersionId, x.CreatedAt });
             });
         }
 

@@ -23,7 +23,11 @@
 
 <form method="post" action="@Url.Action("Create")">
     @Html.AntiForgeryToken()
-    @await Html.PartialAsync("_SopForm", Model, new ViewDataDictionary(ViewData) { { "Categories", categories } })
+    @{
+        var sopFormViewData = new ViewDataDictionary(ViewData);
+        sopFormViewData["Categories"] = categories;
+    }
+    @await Html.PartialAsync("_SopForm", Model, sopFormViewData)
 
     <div class="form-action-row wide">
         <a href="@Url.Action("Index")" class="btn ghost">Geri Dön</a>

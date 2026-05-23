@@ -25,7 +25,11 @@
 <form method="post" action="@Url.Action("Edit", new { id = Model.Id })">
     @Html.AntiForgeryToken()
     <input type="hidden" name="Id" value="@Model.Id" />
-    @await Html.PartialAsync("_SopForm", Model, new ViewDataDictionary(ViewData) { { "Categories", categories } })
+    @{
+        var sopFormViewData = new ViewDataDictionary(ViewData);
+        sopFormViewData["Categories"] = categories;
+    }
+    @await Html.PartialAsync("_SopForm", Model, sopFormViewData)
 
     <div class="form-action-row wide">
         <a href="@Url.Action("Details", new { id = Model.Id })" class="btn ghost">Geri Dön</a>

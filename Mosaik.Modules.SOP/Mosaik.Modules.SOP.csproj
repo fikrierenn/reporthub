@@ -13,6 +13,8 @@
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.1" />
     <PackageReference Include="HtmlSanitizer" Version="9.0.892" />
+    <PackageReference Include="PdfPig" Version="0.1.9" />
+    <PackageReference Include="Hangfire.Core" Version="1.8.18" />
     <ProjectReference Include="..\Mosaik.Core\Mosaik.Core.csproj" />
   </ItemGroup>
 

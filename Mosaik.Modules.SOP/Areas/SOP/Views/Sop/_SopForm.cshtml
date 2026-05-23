@@ -86,3 +86,64 @@
         </div>
     </div>
 </div>
+
+<!-- Plan 34.1: PRD kurumsal başlık alanları -->
+<div class="form-section-card wide">
+    <div class="form-section-head">
+        <h2 class="form-section-head__title">Doküman Künyesi (Kurumsal Başlık)</h2>
+        <p class="form-section-head__sub">PRD template uyumlu — print + detay sayfasında üst tabloda görünür.</p>
+    </div>
+    <div class="form-section-body">
+        <div class="form-row-2col">
+            <div class="field">
+                <label class="lab" for="DocumentNumber">Doküman No</label>
+                <input type="text" id="DocumentNumber" name="DocumentNumber" value="@Model.DocumentNumber" class="inp" maxlength="50" placeholder="örn. PRD-CRM-001" />
+            </div>
+            <div class="field">
+                <label class="lab" for="RevisionNumber">Versiyon / Revizyon</label>
+                <input type="text" id="RevisionNumber" name="RevisionNumber" value="@Model.RevisionNumber" class="inp" maxlength="50" placeholder="örn. v1.0 veya Rev.0" />
+            </div>
+        </div>
+
+        <div class="form-row-2col">
+            <div class="field">
+                <label class="lab" for="PublishDate">Yayın Tarihi</label>
+                <input type="date" id="PublishDate" name="PublishDate"
+                       value="@(Model.PublishDate?.ToString("yyyy-MM-dd"))" class="inp" />
+            </div>
+            <div class="field">
+                <label class="lab" for="EffectiveDate">Yürürlük Tarihi</label>
+                <input type="date" id="EffectiveDate" name="EffectiveDate"
+                       value="@(Model.EffectiveDate?.ToString("yyyy-MM-dd"))" class="inp" />
+            </div>
+        </div>
+
+        <div class="field">
+            <label class="lab" for="RevisionDate">Son Revizyon Tarihi</label>
+            <input type="date" id="RevisionDate" name="RevisionDate"
+                   value="@(Model.RevisionDate?.ToString("yyyy-MM-dd"))" class="inp" />
+        </div>
+
+        <div class="form-row-2col">
+            <div class="field">
+                <label class="lab" for="PreparedBy">Hazırlayan</label>
+                <input type="text" id="PreparedBy" name="PreparedBy" value="@Model.PreparedBy" class="inp" maxlength="200" placeholder="örn. KVKK Uyum Sorumlusu (DPO)" />
+            </div>
+            <div class="field">
+                <label class="lab" for="ApprovedBy">Onaylayan</label>
+                <input type="text" id="ApprovedBy" name="ApprovedBy" value="@Model.ApprovedBy" class="inp" maxlength="200" placeholder="örn. Genel Müdür" />
+            </div>
+        </div>
+
+        <div class="form-row-2col">
+            <div class="field">
+                <label class="lab" for="ReviewFrequency">Gözden Geçirme Sıklığı</label>
+                <input type="text" id="ReviewFrequency" name="ReviewFrequency" value="@Model.ReviewFrequency" class="inp" maxlength="100" placeholder="örn. Yıllık (Mart)" />
+            </div>
+            <div class="field">
+                <label class="lab" for="Classification">Sınıflandırma</label>
+                <input type="text" id="Classification" name="Classification" value="@Model.Classification" class="inp" maxlength="100" placeholder="örn. Şirket İçi - Kontrollü Dağıtım" />
+            </div>
+        </div>
+    </div>
+</div>

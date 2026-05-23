@@ -31,5 +31,22 @@ namespace Mosaik.Modules.SOP.ViewModels
 
         public bool RequiresIKApproval { get; set; } = true;
         public bool AiAdvisorEnabled { get; set; } = true;
+
+        // Kurumsal başlık alanları (PRD template uyumlu)
+        [MaxLength(50)]
+        public string? DocumentNumber { get; set; }
+        [MaxLength(50)]
+        public string? RevisionNumber { get; set; }
+        public DateTime? PublishDate { get; set; }
+        public DateTime? RevisionDate { get; set; }
+        public DateTime? EffectiveDate { get; set; }
+        [MaxLength(200)]
+        public string? PreparedBy { get; set; }
+        [MaxLength(200)]
+        public string? ApprovedBy { get; set; }
+        [MaxLength(100)]
+        public string? ReviewFrequency { get; set; }
+        [MaxLength(100)]
+        public string? Classification { get; set; }
     }
 }

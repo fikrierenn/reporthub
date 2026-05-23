@@ -5,9 +5,6 @@
     ViewData["Title"] = $"Yeni Versiyon — {doc?.Title}";
 }
 
-@section Head {
-    <link href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.snow.css" rel="stylesheet">
-}
 
 @section Breadcrumb {
     <nav class="crumbs" aria-label="Sayfa konumu">
@@ -19,12 +16,36 @@
 }
 
 @section TopActions {
+    <form method="post"
+          action="@Url.Action("ImportPdf", new { id = Model.SopDocumentId })"
+          enctype="multipart/form-data"
+          style="display:inline-flex; gap:6px; align-items:center;"
+          x-data="{ name: '' }">
+        @Html.AntiForgeryToken()
+        <label class="btn ghost" style="cursor:pointer;">
+            <i class="fas fa-file-pdf" aria-hidden="true"></i>
+            <span x-text="name || 'PDF Seç'"></span>
+            <input type="file"
+                   name="pdfFile"
+                   accept="application/pdf"
+                   x-on:change="name = $event.target.files[0]?.name || ''"
+                   style="display:none;" />
+        </label>
+        <button type="submit"
+                class="btn"
+                x-bind:disabled="!name"
+                title="PDF yükle → otomatik Draft + TinyMCE editörde aç">
+            <i class="fas fa-upload" aria-hidden="true"></i> İçe Aktar
+        </button>
+    </form>
     <a href="@Url.Action("Details", new { id = Model.SopDocumentId })" class="btn">İptal</a>
 }
 
 <div class="hero">
     <h1>Yeni Versiyon — @doc?.Title</h1>
-    <p class="sub"><span>Taslak olarak kaydet, sonra "Onaya Gönder" ile flow başlat.</span></p>
+    <p class="sub">
+        <span>Boş editörde yaz <strong>veya</strong> "PDF Seç" ile mevcut PDF'i içe aktar.</span>
+    </p>
 </div>
 
 <form method="post" action="@Url.Action("NewVersion")" id="sop-version-form">
@@ -44,15 +65,20 @@
     }
 
     <div class="form-section-card wide">
-        <div class="form-section-head">
-            <h2 class="form-section-head__title">İçerik</h2>
-            <p class="form-section-head__sub">Quill rich-text — başlık, liste, link, bold/italic. Save sırasında HtmlSanitizer çalışır.</p>
+        <div class="form-section-head" style="display:flex; align-items:center; justify-content:space-between;">
+            <div>
+                <h2 class="form-section-head__title">İçerik</h2>
+                <p class="form-section-head__sub">Word-benzeri zengin editor: tablo, görsel, font, find/replace, paste from Word. Save sırasında HtmlSanitizer çalışır.</p>
+            </div>
+            <button type="button"
+                    class="btn ghost sm"
+                    onclick="loadPrdTemplate()"
+                    title="BKM PRD kurumsal SOP iskeletini editöre yükle (16 bölüm + 5 tablo)">
+                <i class="fas fa-file-import" aria-hidden="true"></i> BKM PRD Template Yükle
+            </button>
         </div>
         <div class="form-section-body">
-            <div class="tamim-quill">
-                <div id="editor-container" class="tamim-quill__editor">@Html.Raw(Sanitizer.Sanitize(Model.ContentJson))</div>
-            </div>
-            <textarea id="ContentJson" name="ContentJson" hidden>@Model.ContentJson</textarea>
+            <textarea id="ContentJson" name="ContentJson" style="min-height:600px;">@Html.Raw(Sanitizer.Sanitize(Model.ContentJson))</textarea>
         </div>
     </div>
 
@@ -63,31 +89,44 @@
 </form>
 
 @section Scripts {
-    <script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tinymce@7.4.1/tinymce.min.js" referrerpolicy="origin"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tinymce@7.4.1/langs/tr.js"></script>
+    <script src="~/assets/js/sop-prd-template.js" asp-append-version="true"></script>
     <script>
         (function () {
-            const editorEl = document.getElementById('editor-container');
-            const hiddenEl = document.getElementById('ContentJson');
-            if (!editorEl || !hiddenEl || typeof Quill === 'undefined') return;
-            const quill = new Quill('#editor-container', {
-                theme: 'snow',
-                modules: {
-                    toolbar: [
-                        [{ 'header': [2, 3, false] }],
-                        ['bold', 'italic', 'underline'],
-                        [{ 'list': 'ordered' }, { 'list': 'bullet' }],
-                        ['link'],
-                        ['clean']
-                    ]
-                },
-                placeholder: 'Prosedürün tam metnini buraya yaz...'
+            if (typeof tinymce === 'undefined') return;
+            tinymce.init({
+                selector: '#ContentJson',
+                license_key: 'gpl',
+                language: 'tr',
+                height: 700,
+                menubar: 'file edit view insert format tools table help',
+                plugins: [
+                    'advlist', 'autolink', 'lists', 'link', 'image', 'charmap',
+                    'preview', 'anchor', 'searchreplace', 'visualblocks',
+                    'code', 'fullscreen', 'insertdatetime', 'media', 'table',
+                    'help', 'wordcount', 'pagebreak', 'nonbreaking', 'visualchars',
+                    'emoticons'
+                ],
+                toolbar: 'undo redo | blocks fontfamily fontsize | ' +
+                    'bold italic underline strikethrough | forecolor backcolor | ' +
+                    'alignleft aligncenter alignright alignjustify | ' +
+                    'bullist numlist outdent indent | ' +
+                    'link image media table | ' +
+                    'searchreplace pagebreak charmap | ' +
+                    'removeformat code preview fullscreen | help',
+                content_style: 'body { font-family: -apple-system, "Segoe UI", Arial, sans-serif; font-size: 11pt; line-height: 1.6; }',
+                paste_data_images: true,
+                image_caption: true,
+                table_default_styles: { 'border-collapse': 'collapse', 'width': '100%' },
+                table_default_attributes: { 'border': '1' },
+                branding: false,
+                promotion: false,
+                resize: true,
+                statusbar: true,
+                browser_spellcheck: true,
+                contextmenu: 'link image table'
             });
-            const form = document.getElementById('sop-version-form');
-            if (form) {
-                form.addEventListener('submit', function () {
-                    hiddenEl.value = quill.root.innerHTML;
-                });
-            }
         })();
     </script>
 }

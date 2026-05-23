@@ -31,6 +31,20 @@
     @await Html.PartialAsync("_AlertMessage", ("success", msg))
 }
 
+@{
+    var showArchived = (bool)(ViewBag.ShowArchived ?? false);
+}
+<div class="filter-bar">
+    <a href="@Url.Action("Index", new { showArchived = false })"
+       class="btn @(!showArchived ? "primary" : "ghost") sm">
+        <i class="fas fa-check-circle" aria-hidden="true"></i> Aktif
+    </a>
+    <a href="@Url.Action("Index", new { showArchived = true })"
+       class="btn @(showArchived ? "primary" : "ghost") sm">
+        <i class="fas fa-box-archive" aria-hidden="true"></i> Arşivlenmiş
+    </a>
+</div>
+
 @if (Model.Count == 0)
 {
     <div class="empty-state">

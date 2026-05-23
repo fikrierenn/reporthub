@@ -62,6 +62,15 @@ namespace Mosaik.Modules.SOP.Services
                 ReadDeadlineDays = input.ReadDeadlineDays,
                 RequiresIKApproval = input.RequiresIKApproval,
                 AiAdvisorEnabled = input.AiAdvisorEnabled,
+                DocumentNumber = input.DocumentNumber,
+                RevisionNumber = input.RevisionNumber,
+                PublishDate = input.PublishDate,
+                RevisionDate = input.RevisionDate,
+                EffectiveDate = input.EffectiveDate,
+                PreparedBy = input.PreparedBy,
+                ApprovedBy = input.ApprovedBy,
+                ReviewFrequency = input.ReviewFrequency,
+                Classification = input.Classification,
                 CreatedBy = createdBy
             };
 
@@ -94,6 +103,15 @@ namespace Mosaik.Modules.SOP.Services
             entity.ReadDeadlineDays = input.ReadDeadlineDays;
             entity.RequiresIKApproval = input.RequiresIKApproval;
             entity.AiAdvisorEnabled = input.AiAdvisorEnabled;
+            entity.DocumentNumber = input.DocumentNumber;
+            entity.RevisionNumber = input.RevisionNumber;
+            entity.PublishDate = input.PublishDate;
+            entity.RevisionDate = input.RevisionDate;
+            entity.EffectiveDate = input.EffectiveDate;
+            entity.PreparedBy = input.PreparedBy;
+            entity.ApprovedBy = input.ApprovedBy;
+            entity.ReviewFrequency = input.ReviewFrequency;
+            entity.Classification = input.Classification;
             entity.UpdatedAt = DateTime.UtcNow;
 
             await _db.SaveChangesAsync();
@@ -142,6 +160,100 @@ namespace Mosaik.Modules.SOP.Services
                 description: $"SOP v{version.VersionNumber} taslak oluşturuldu (Doc {sopDocumentId}).");
 
             return ServiceResult<SopVersion>.Ok(version, $"Versiyon {version.VersionNumber} oluşturuldu.");
+        }
+
+        // Plan 34.1: Soft delete — IsActive=false. Index listede gizlenir.
+        // Hard delete istenirse ayrı endpoint (Approved versiyon varsa block).
+        public async Task<ServiceResult> SoftDeleteAsync(int id, int deletedBy)
+        {
+            var entity = await Documents.FindAsync(id);
+            if (entity == null) return ServiceResult.Failure("SOP bulunamadı.");
+            if (!entity.IsActive) return ServiceResult.Ok("Zaten arşivlenmiş.");
+
+            entity.IsActive = false;
+            entity.UpdatedAt = DateTime.UtcNow;
+            await _db.SaveChangesAsync();
+
+            await _audit.LogAsync(
+                eventType: "sop_archived",
+                targetType: "sop_document",
+                targetKey: id.ToString(),
+                description: $"SOP arşivlendi (soft delete): {entity.Title}");
+
+            return ServiceResult.Ok("SOP arşivlendi.");
+        }
+
+        public async Task<ServiceResult> RestoreAsync(int id, int restoredBy)
+        {
+            var entity = await Documents.FindAsync(id);
+            if (entity == null) return ServiceResult.Failure("SOP bulunamadı.");
+            if (entity.IsActive) return ServiceResult.Ok("Zaten aktif.");
+
+            entity.IsActive = true;
+            entity.UpdatedAt = DateTime.UtcNow;
+            await _db.SaveChangesAsync();
+
+            await _audit.LogAsync(
+                eventType: "sop_restored",
+                targetType: "sop_document",
+                targetKey: id.ToString(),
+                description: $"SOP geri yüklendi: {entity.Title}");
+
+            return ServiceResult.Ok("SOP geri yüklendi.");
+        }
+
+        // Hard delete — sadece hiç Approved versiyonu olmayan SOP'lar için izin.
+        // Approved versiyon = okundu kaydı + audit history, kayıp KVKK riski.
+        public async Task<ServiceResult> HardDeleteAsync(int id, int deletedBy)
+        {
+            var entity = await Documents
+                .Include(d => d.Versions)
+                .FirstOrDefaultAsync(d => d.Id == id);
+            if (entity == null) return ServiceResult.Failure("SOP bulunamadı.");
+
+            var hasApproved = entity.Versions.Any(v => v.Status == 2 || v.Status == 3);
+            if (hasApproved)
+                return ServiceResult.Failure("Approved/Archived versiyonu olan SOP kalıcı silinemez. Arşivle.");
+
+            var title = entity.Title;
+            Documents.Remove(entity);
+            await _db.SaveChangesAsync();
+
+            await _audit.LogAsync(
+                eventType: "sop_hard_deleted",
+                targetType: "sop_document",
+                targetKey: id.ToString(),
+                description: $"SOP kalıcı silindi (Draft-only): {title}");
+
+            return ServiceResult.Ok("SOP kalıcı silindi.");
+        }
+
+        // Plan 34.1: Draft versiyon içeriğini güncelle (TinyMCE editor save).
+        // Sadece Status=Draft (0) versiyonlar düzenlenebilir — Pending/Approved/Archived değişmez.
+        public async Task<ServiceResult<SopVersion>> UpdateVersionContentAsync(int versionId, string contentJson, int updatedBy)
+        {
+            var version = await Versions.FindAsync(versionId);
+            if (version == null) return ServiceResult<SopVersion>.Failure("Versiyon bulunamadı.");
+            if (version.Status != 0)
+                return ServiceResult<SopVersion>.Failure("Sadece Draft versiyon düzenlenebilir.");
+            if (string.IsNullOrWhiteSpace(contentJson))
+                return ServiceResult<SopVersion>.Failure("İçerik boş olamaz.");
+
+            var sanitized = SopContentSanitizer.Sanitize(contentJson);
+            version.ContentJson = sanitized;
+            version.PlainTextContent = SopContentSanitizer.ExtractPlainText(sanitized);
+            // SopDocument.UpdatedAt'i de yenile (Index sıralaması için).
+            var doc = await Documents.FindAsync(version.SopDocumentId);
+            if (doc != null) doc.UpdatedAt = DateTime.UtcNow;
+            await _db.SaveChangesAsync();
+
+            await _audit.LogAsync(
+                eventType: "sop_version_edited",
+                targetType: "sop_version",
+                targetKey: version.Id.ToString(),
+                description: $"SOP v{version.VersionNumber} Draft içeriği güncellendi.");
+
+            return ServiceResult<SopVersion>.Ok(version, "Versiyon güncellendi.");
         }
 
         // ApprovalRequest tüm step'leri Approved olunca SopApprovalService tarafından çağrılır.
@@ -227,5 +339,14 @@ namespace Mosaik.Modules.SOP.Services
         int OwnerUserId,
         int ReadDeadlineDays,
         bool RequiresIKApproval,
-        bool AiAdvisorEnabled);
+        bool AiAdvisorEnabled,
+        string? DocumentNumber = null,
+        string? RevisionNumber = null,
+        DateTime? PublishDate = null,
+        DateTime? RevisionDate = null,
+        DateTime? EffectiveDate = null,
+        string? PreparedBy = null,
+        string? ApprovedBy = null,
+        string? ReviewFrequency = null,
+        string? Classification = null);
 }
