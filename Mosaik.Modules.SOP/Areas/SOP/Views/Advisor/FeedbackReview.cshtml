@@ -1,0 +1,77 @@
+@model List<SopAdvisorFeedbackRow>
+@{
+    ViewData["Title"] = "AI Cevap Feedback İnceleme";
+    // Lookup sopAiFeedback: 1 ThumbsUp | 2 ThumbsDown
+    byte type = (byte)(ViewBag.Type ?? (byte)2);
+    var isDown = type == 2;
+}
+
+@section Breadcrumb {
+    <nav class="crumbs" aria-label="Sayfa konumu">
+        <a href="/">Ana Sayfa</a>
+        <a href="@Url.Action("Index", "Advisor", new { area = "SOP" })">AI Danışman</a>
+        <span aria-current="page">Feedback İnceleme</span>
+    </nav>
+}
+
+@section TopActions {
+    <a href="@Url.Action("Index")" class="btn">Geri Dön</a>
+}
+
+<div class="hero">
+    <h1><i class="fas fa-flag" aria-hidden="true"></i> AI Cevap Feedback İnceleme</h1>
+    <p class="sub">
+        <span>Kullanıcı geri bildirimi olan son 100 AI cevabı.</span>
+        <span class="mono">@Model.Count kayıt</span>
+    </p>
+</div>
+
+<div class="filter-bar">
+    <a href="@Url.Action("FeedbackReview", new { type = "down" })"
+       class="btn @(isDown ? "primary" : "ghost")">
+        <i class="fas fa-thumbs-down" aria-hidden="true"></i> Olumsuz
+    </a>
+    <a href="@Url.Action("FeedbackReview", new { type = "up" })"
+       class="btn @(!isDown ? "primary" : "ghost")">
+        <i class="fas fa-thumbs-up" aria-hidden="true"></i> Olumlu
+    </a>
+</div>
+
+@if (Model.Count == 0)
+{
+    <div class="empty-state">
+        <i class="fas fa-circle-check empty-state__icon" aria-hidden="true"></i>
+        <h3>Feedback yok</h3>
+        <p>Bu kategoride kullanıcı geri bildirimi yok.</p>
+    </div>
+}
+else
+{
+    <div style="background:var(--paper); border:1px solid var(--border); border-radius:8px; overflow:hidden;">
+        <table class="dt">
+            <thead>
+                <tr>
+                    <th scope="col">Tarih</th>
+                    <th scope="col">User</th>
+                    <th scope="col">Soru</th>
+                    <th scope="col">AI Cevabı</th>
+                    <th scope="col">Not</th>
+                    <th scope="col">Kaynak</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var row in Model)
+                {
+                    <tr>
+                        <td><span class="ago">@(row.FeedbackAt?.ToString("yyyy-MM-dd HH:mm") ?? row.CreatedAt.ToString("yyyy-MM-dd HH:mm"))</span></td>
+                        <td><span class="mono">@row.UserId</span></td>
+                        <td>@row.Question</td>
+                        <td style="max-width:400px;">@(row.Answer.Length > 200 ? row.Answer.Substring(0, 200) + "..." : row.Answer)</td>
+                        <td>@(string.IsNullOrEmpty(row.FeedbackNote) ? "—" : row.FeedbackNote)</td>
+                        <td><span class="mono text-xs">@(row.SourceVersionIds ?? "—")</span></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

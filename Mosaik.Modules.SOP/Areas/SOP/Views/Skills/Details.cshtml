@@ -1,0 +1,83 @@
+@using Mosaik.Core.AI.Skills
+@model Skill
+@{
+    ViewData["Title"] = $"Skill — {Model.Manifest.Name}";
+}
+
+@section Breadcrumb {
+    <nav class="crumbs" aria-label="Sayfa konumu">
+        <a href="/">Ana Sayfa</a>
+        <a href="@Url.Action("Index", "Home", new { area = "SOP" })">Prosedürler</a>
+        <a href="@Url.Action("Index")">AI Skill Kataloğu</a>
+        <span aria-current="page">@Model.Manifest.Name</span>
+    </nav>
+}
+
+@section TopActions {
+    <a href="@Url.Action("Index")" class="btn">Geri Dön</a>
+}
+
+<div class="hero">
+    <h1><i class="fas fa-brain" aria-hidden="true"></i> @Model.Manifest.Name</h1>
+    <p class="sub">
+        <span class="mono">@Model.Manifest.Id</span>
+        @if (!string.IsNullOrEmpty(Model.Manifest.Category))
+        {
+            <span class="pill">@Model.Manifest.Category</span>
+        }
+        <span class="mono">@Model.Manifest.TokenEstimate.ToString("N0") token</span>
+    </p>
+</div>
+
+<div class="form-section-card wide">
+    <div class="form-section-head">
+        <h2 class="form-section-head__title">Metadata</h2>
+    </div>
+    <div class="form-section-body" style="padding:0;">
+        <table class="info-table" style="width:100%; border-collapse:collapse;">
+            <tr>
+                <td class="label" style="background:var(--bg-soft); font-weight:600; padding:8px 14px; width:25%; border-bottom:1px solid var(--border);">Açıklama</td>
+                <td style="padding:8px 14px; border-bottom:1px solid var(--border);">@Model.Manifest.Description</td>
+            </tr>
+            <tr>
+                <td class="label" style="background:var(--bg-soft); font-weight:600; padding:8px 14px; border-bottom:1px solid var(--border);">Dosya Yolu</td>
+                <td style="padding:8px 14px; border-bottom:1px solid var(--border);"><span class="mono text-xs">@Model.Manifest.FilePath</span></td>
+            </tr>
+            <tr>
+                <td class="label" style="background:var(--bg-soft); font-weight:600; padding:8px 14px; border-bottom:1px solid var(--border);">Tag (@Model.Manifest.Tags.Length)</td>
+                <td style="padding:8px 14px; border-bottom:1px solid var(--border);">
+                    @foreach (var t in Model.Manifest.Tags)
+                    {
+                        <span class="pill" style="margin:2px;">@t</span>
+                    }
+                </td>
+            </tr>
+            <tr>
+                <td class="label" style="background:var(--bg-soft); font-weight:600; padding:8px 14px;">Zincir Skill (@Model.Manifest.Chains.Length)</td>
+                <td style="padding:8px 14px;">
+                    @if (Model.Manifest.Chains.Length == 0)
+                    {
+                        <span class="text-muted">—</span>
+                    }
+                    else
+                    {
+                        @foreach (var c in Model.Manifest.Chains)
+                        {
+                            <span class="pill" style="margin:2px;">@c</span>
+                        }
+                    }
+                </td>
+            </tr>
+        </table>
+    </div>
+</div>
+
+<div class="form-section-card wide" style="margin-top:16px;">
+    <div class="form-section-head">
+        <h2 class="form-section-head__title">İçerik (Markdown)</h2>
+        <p class="form-section-head__sub">LLM'e inject edilen domain expertise metni (frontmatter strip edilmiş).</p>
+    </div>
+    <div class="form-section-body">
+        <pre style="white-space:pre-wrap; max-height:600px; overflow-y:auto; font-family:Consolas, monospace; font-size:12px; background:var(--bg-soft); padding:12px; border-radius:4px;">@Model.MarkdownContent</pre>
+    </div>
+</div>

@@ -1,0 +1,181 @@
+@model SopAdvisorViewModel
+@{
+    ViewData["Title"] = "Prosedür AI Danışmanı";
+    var antiforgery = Xsrf.GetAndStoreTokens(Context).RequestToken;
+}
+@inject Microsoft.AspNetCore.Antiforgery.IAntiforgery Xsrf
+
+@section Breadcrumb {
+    <nav class="crumbs" aria-label="Sayfa konumu">
+        <a href="/">Ana Sayfa</a>
+        <a href="@Url.Action("Index", "My", new { area = "SOP" })">Prosedürlerim</a>
+        <span aria-current="page">AI Danışman</span>
+    </nav>
+}
+
+<div class="hero">
+    <h1><i class="fas fa-robot" aria-hidden="true"></i> Prosedür AI Danışmanı</h1>
+    <p class="sub">
+        <span>Tüm onaylı prosedürler üzerinden çapraz arama + yorumlama yapan AI danışman.</span>
+        @if (Model.IsAdmin)
+        {
+            <span class="pill"><span class="dot ok"></span>Admin (rate limit yok)</span>
+        }
+        else
+        {
+            <span class="mono">Kalan: @Model.RemainingQuota / 20 (saat)</span>
+        }
+    </p>
+</div>
+
+<!-- A-22 KVKK banner üst -->
+<div class="alert warn" role="alert" style="margin-bottom:16px;">
+    <i class="fas fa-shield-halved" aria-hidden="true"></i>
+    <strong>KVKK uyarısı:</strong> Sorularınız AI hizmet sağlayıcısına işlenmek üzere gönderilir.
+    <strong>Kişisel veri (TC, isim, telefon, adres) yazmayınız.</strong>
+    Cevaplar 1 yıl saklanır (audit), sonra silinir.
+</div>
+
+<div x-data="sopAdvisor(@Json.Serialize(new {
+        antiforgery = antiforgery,
+        sopHint = Model.SopHint,
+        history = Model.History.Select(h => new {
+            id = h.Id,
+            question = h.Question,
+            answer = h.Answer,
+            createdAt = h.CreatedAt.ToString("yyyy-MM-ddTHH:mm:ssZ"),
+            feedback = (int)h.Feedback
+        })
+    }))">
+
+    <!-- Soru formu -->
+    <form @@submit.prevent="ask()" class="form-section-card" style="margin-bottom:16px;">
+        <div class="form-section-card__body">
+            @if (!string.IsNullOrEmpty(Model.SopHint))
+            {
+                <p class="text-muted text-sm" style="margin-bottom:8px;">
+                    <i class="fas fa-link" aria-hidden="true"></i>
+                    Bağlam: <strong>@Model.SopHint</strong>
+                </p>
+            }
+            <div class="field">
+                <label class="lab" for="advisor-question">Sorunuz</label>
+                <textarea id="advisor-question"
+                          class="inp"
+                          rows="3"
+                          x-model="question"
+                          x-bind:disabled="loading"
+                          placeholder="Örn: Yıllık izin nasıl talep edilir? Fazla mesai onayını kim verir?"
+                          maxlength="1000"></textarea>
+                <p class="help-text">
+                    <span x-text="question.length"></span> / 1000 karakter
+                </p>
+            </div>
+            <div class="action-row" style="padding-top:8px;">
+                <span class="text-muted text-sm" x-show="!loading && lastError" x-text="lastError" style="color:var(--danger);"></span>
+                <span class="text-muted text-sm" x-show="loading">
+                    <i class="fas fa-spinner fa-spin" aria-hidden="true"></i>
+                    AI düşünüyor... (10-30 saniye sürebilir)
+                </span>
+                <button type="submit"
+                        class="btn primary"
+                        x-bind:disabled="loading || !question.trim()">
+                    <i class="fas fa-paper-plane" aria-hidden="true"></i>
+                    Sor
+                </button>
+            </div>
+        </div>
+    </form>
+
+    <!-- Son cevap (yeni soru sonrası) -->
+    <template x-if="latestAnswer">
+        <div class="form-section-card" style="margin-bottom:16px;">
+            <div class="form-section-card__header">
+                <strong>AI Cevabı</strong>
+                <span class="mono text-sm" x-show="latestAnswer.noHits" style="color:var(--warning);">
+                    Kaynak bulunamadı
+                </span>
+            </div>
+            <div class="form-section-card__body">
+                <p x-text="latestAnswer.answer" style="white-space:pre-wrap;"></p>
+
+                <!-- A-23 Kaynaklar listesi -->
+                <template x-if="latestAnswer.sources && latestAnswer.sources.length > 0">
+                    <div style="margin-top:16px; padding-top:12px; border-top:1px solid var(--border);">
+                        <strong class="text-sm">Kaynaklar:</strong>
+                        <ul style="list-style:none; padding:0; margin:8px 0 0;">
+                            <template x-for="s in latestAnswer.sources" x-bind:key="s.sopVersionId">
+                                <li style="padding:4px 0;">
+                                    <a x-bind:href="'/SOP/My/Read/' + s.sopVersionId" class="link">
+                                        <i class="fas fa-file-lines" aria-hidden="true"></i>
+                                        <span x-text="s.title"></span>
+                                        <span class="mono text-xs">v<span x-text="s.versionNumber"></span></span>
+                                    </a>
+                                    <span class="pill" style="margin-left:8px;">
+                                        skor: <span x-text="s.score"></span>
+                                    </span>
+                                </li>
+                            </template>
+                        </ul>
+                    </div>
+                </template>
+
+                <!-- A-26 Thumbs-up/down feedback -->
+                <div x-show="latestAnswer.conversationId" style="margin-top:16px; display:flex; gap:8px; align-items:center;">
+                    <span class="text-sm text-muted">Bu cevap yardımcı oldu mu?</span>
+                    <button type="button"
+                            class="btn sm"
+                            x-bind:class="latestAnswer.feedback === 1 ? 'primary' : 'ghost'"
+                            x-on:click="sendFeedback(latestAnswer, 1)"
+                            title="Faydalı">
+                        <i class="fas fa-thumbs-up" aria-hidden="true"></i>
+                    </button>
+                    <button type="button"
+                            class="btn sm"
+                            x-bind:class="latestAnswer.feedback === 2 ? 'danger' : 'ghost'"
+                            x-on:click="sendFeedback(latestAnswer, 2)"
+                            title="Faydalı değil">
+                        <i class="fas fa-thumbs-down" aria-hidden="true"></i>
+                    </button>
+                    <span class="text-sm text-muted" x-show="latestAnswer.feedback > 0">Kaydedildi</span>
+                </div>
+
+                <!-- A-22 Disclaimer alt -->
+                <p class="help-text" style="margin-top:16px; font-style:italic;">
+                    <i class="fas fa-circle-info" aria-hidden="true"></i>
+                    AI önerisi — kesin karar için yöneticinize veya prosedür sahibine danışın.
+                </p>
+            </div>
+        </div>
+    </template>
+
+    <!-- Son 10 soru-cevap geçmişi -->
+    <template x-if="history.length > 0">
+        <div class="form-section-card">
+            <div class="form-section-card__header">
+                <strong>Geçmiş (son 10 soru)</strong>
+            </div>
+            <div class="form-section-card__body">
+                <template x-for="item in history" x-bind:key="item.id">
+                    <div style="padding:12px 0; border-bottom:1px solid var(--border);">
+                        <p class="text-sm" style="color:var(--text-muted);">
+                            <span x-text="new Date(item.createdAt).toLocaleString('tr-TR')"></span>
+                            <span x-show="item.feedback === 1" class="pill" style="margin-left:8px;">
+                                <i class="fas fa-thumbs-up" aria-hidden="true"></i>
+                            </span>
+                            <span x-show="item.feedback === 2" class="pill error" style="margin-left:8px;">
+                                <i class="fas fa-thumbs-down" aria-hidden="true"></i>
+                            </span>
+                        </p>
+                        <p style="font-weight:600; margin:4px 0;" x-text="item.question"></p>
+                        <p style="white-space:pre-wrap; color:var(--text-muted);" x-text="item.answer"></p>
+                    </div>
+                </template>
+            </div>
+        </div>
+    </template>
+</div>
+
+@section Scripts {
+    <script src="~/assets/js/sop-advisor.js" asp-append-version="true"></script>
+}

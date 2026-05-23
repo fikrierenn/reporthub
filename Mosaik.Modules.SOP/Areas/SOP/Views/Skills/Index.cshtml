@@ -1,0 +1,108 @@
+@using Mosaik.Core.AI.Skills
+@model IReadOnlyList<SkillManifest>
+@{
+    ViewData["Title"] = "AI Skill Kataloğu";
+}
+
+@section Breadcrumb {
+    <nav class="crumbs" aria-label="Sayfa konumu">
+        <a href="/">Ana Sayfa</a>
+        <a href="@Url.Action("Index", "Home", new { area = "SOP" })">Prosedürler</a>
+        <span aria-current="page">AI Skill Kataloğu</span>
+    </nav>
+}
+
+@section TopActions {
+    <form method="post" action="@Url.Action("Reload")" style="display:inline" onsubmit="return confirm('Skill kataloğu yeniden yüklensin mi? Tüm cache temizlenir.');">
+        @Html.AntiForgeryToken()
+        <button type="submit" class="btn primary" title="App_Data/ai-skills/*.md yeniden taranır">
+            <i class="fas fa-rotate" aria-hidden="true"></i> Yeniden Yükle
+        </button>
+    </form>
+    <a href="@Url.Action("Index", "Home", new { area = "SOP" })" class="btn">Geri Dön</a>
+}
+
+<div class="hero">
+    <h1><i class="fas fa-brain" aria-hidden="true"></i> AI Skill Kataloğu</h1>
+    <p class="sub">
+        <span>SOP RAG Advisor için yüklü domain expertise skill'leri.</span>
+        <span class="mono">@Model.Count skill</span>
+    </p>
+</div>
+
+@if (TempData["Message"] is string msg && !string.IsNullOrEmpty(msg))
+{
+    @await Html.PartialAsync("_AlertMessage", ("success", msg))
+}
+
+<div class="alert info" role="alert" style="margin-bottom:16px;">
+    <i class="fas fa-circle-info" aria-hidden="true"></i>
+    Skill dosyaları <code>Mosaik/App_Data/ai-skills/*.md</code> altında. Yeni skill markdown ekledikten sonra "Yeniden Yükle" buton.
+</div>
+
+@if (Model.Count == 0)
+{
+    <div class="empty-state">
+        <i class="fas fa-folder-open empty-state__icon" aria-hidden="true"></i>
+        <h3>Yüklü skill yok</h3>
+        <p>App_Data/ai-skills/ klasörü boş veya frontmatter parse hatası. README'ye bakın.</p>
+    </div>
+}
+else
+{
+    <div style="background:var(--paper); border:1px solid var(--border); border-radius:8px; overflow:hidden;">
+        <table class="dt">
+            <thead>
+                <tr>
+                    <th scope="col">Skill</th>
+                    <th scope="col">Kategori</th>
+                    <th scope="col">Tag</th>
+                    <th scope="col">Token Est.</th>
+                    <th scope="col">Zincir</th>
+                    <th scope="col" style="text-align:right;">İşlem</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var s in Model)
+                {
+                    <tr>
+                        <td>
+                            <strong>@s.Name</strong>
+                            <br>
+                            <span class="mono text-xs text-muted">@s.Id</span>
+                        </td>
+                        <td>
+                            @if (!string.IsNullOrEmpty(s.Category))
+                            {
+                                <span class="pill">@s.Category</span>
+                            }
+                            else
+                            {
+                                <span class="text-muted">—</span>
+                            }
+                        </td>
+                        <td>
+                            <span class="text-xs text-muted">@s.Tags.Length tag</span>
+                            @if (s.Tags.Length > 0)
+                            {
+                                <br>
+                                <span class="mono text-xs">@string.Join(", ", s.Tags.Take(5))@(s.Tags.Length > 5 ? "..." : "")</span>
+                            }
+                        </td>
+                        <td>
+                            <span class="mono">@(s.TokenEstimate > 0 ? s.TokenEstimate.ToString("N0") : "—")</span>
+                        </td>
+                        <td>
+                            <span class="text-xs text-muted">@s.Chains.Length</span>
+                        </td>
+                        <td style="text-align:right;">
+                            <a href="@Url.Action("Details", new { id = s.Id })" class="btn ghost sm">
+                                <i class="fas fa-eye" aria-hidden="true"></i> Görüntüle
+                            </a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
