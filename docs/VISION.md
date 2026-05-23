@@ -298,7 +298,7 @@ Hafta 12+:  Plan 41 v2 drag-drop builder UI, Documents çakışma çözüm, VISI
 - KPI / OKR modülü — Reports zaten karşılar, OKR culture fit yok
 - Mesajlaşma — Slack/Teams varken marjinal
 - Duyuru ayrı modül — Tamim'e `Type` enum yeterli
-- Form Builder kendi üretim — open-source entegre et
+- ~~Form Builder kendi üretim — open-source entegre et~~ **REVİZE 2026-05-21:** Plan 41 ile değişti (SurveyJS hibrit + kendi modül, LimeSurvey/Formbricks reddedildi, ADR-020)
 
 ---
 
@@ -639,19 +639,67 @@ interface IMosaikModule {
 
 ---
 
-## 8. Cross-reference
+## 9. Strategic Extension Layers — 2026-05-25 (CEO + Saha + KVKK lens)
+
+vNext kalbinin 11 haftalık plan'ı operasyonel temel. Üzerine **Mosaik'i piyasadaki binlerce standart portaldan ayıracak** 4 strategic katman tasarlandı (kullanıcı strategic input 2026-05-25). Her biri ayrı plan, gerçek BKM risk + fırsat.
+
+### 9.1 [Plan 44 — RAG Chunk-Level Permission Guard](../plans/44-rag-permission-guard.md) 🔴 HOT-FIX
+
+**Lens:** KVKK denetçi
+**Risk:** SOP RAG canlı, `SopChunkRetriever` sadece FirmaId scope. Documents Plan 27 Faz E RAG'a bağlandığında: yönetim kurulu kararı / maaş politikası chunk'ları düşük yetkili user sorusuna sızabilir. KVKK m.12 + ticari sır.
+**Çözüm:** Chunk-level `SecurityLevel + AllowedRoleIds + AllowedDepartmentIds + AllowedUserIds`. SQL-side WHERE filter, LLM hiç görmesin. `IRagAccessPolicy` Core abstraction (SOP/Documents/Contracts reuse).
+**Effort:** 12-18h | **Bağımlılık:** SOP canlı (acil) | **Blocker:** Documents/Contracts RAG bağlanmadan ÖNCE
+
+### 9.2 [Plan 45 — Excel-to-Process AI Adaptation Engine](../plans/45-excel-to-process-ai-parser.md)
+
+**Lens:** Operasyonel hız
+**Risk:** Her departman onlarca takip Excel'i; yazılımcı bekleme 2-3 hafta. Mosaik adoption düşük, Excel ölmüyor.
+**Çözüm:** Excel upload → Qwen schema inference → SurveyJS template autogen + SQL table autogen + historical import. 3 hafta → 5 dakika.
+**Effort:** 40-60h | **Prereq:** Plan 41 Faz 0-3 ✅ | **Reuse:** ClosedXML (OSS), Plan 40 Faz 5 Presidio scan
+
+### 9.3 [Plan 46 — PWA Offline-First + Native Camera/Barcode](../plans/46-pwa-offline-camera.md)
+
+**Lens:** Saha operasyon
+**Risk:** Depo/mağaza saha personeli portalı kullanamaz. Sinyalsiz koridor + el-yazımı barkod + sayım data kaybı. BKM perakende + lojistik için kritik.
+**Çözüm:** PWA (Workbox 7) + IndexedDB sync queue + ZXing-js barcode + getUserMedia camera + Web Push. SurveyJS custom barcode widget.
+**Effort:** 50-70h | **Prereq:** Plan 41 Faz 0-3 ✅ | **OSS:** Workbox + idb + ZXing-js + WebPush.NET
+
+### 9.4 [Plan 47 — Auto-Tuning Process Optimization Advisor](../plans/47-auto-tuning-process-advisor.md)
+
+**Lens:** CEO / yönetim
+**Fırsat:** Mevcut "Friction Heatmap" pasif (yönetici dashboard'a bakacak). Proaktif öneri = "kendi verisini okuyan canlı kurumsal beyin" = standart portal'dan kopuş.
+**Çözüm:** Daily Hangfire job → 5 pattern detector (approval bypass / bottleneck / dead-end / duplicate / volume spike) → Qwen narrative + heuristic impact → Admin Inbox → Accept/Reject + workflow auto-edit + post-accept tracking.
+**Effort:** 25-35h | **Prereq:** Plan 36 Faz B+C log + Plan 42 instance data | **VISION §7 ile uyumlu** (Operational Intelligence kuzey yıldızı)
+
+### Toplam Strategic Extension
+
+| Plan | Aciliyet | Effort | Sıra |
+|---|---|---|---|
+| 44 RAG Guard | 🔴 HOT-FIX | 12-18h | Plan 27 Faz E öncesi (~Hafta 3-4) |
+| 47 Auto-Tuning | 🟡 Differentiator | 25-35h | Plan 36+42 sonrası (~Hafta 10+) |
+| 45 Excel Parser | 🟢 Adoption | 40-60h | Plan 41 Faz 4+ (~Hafta 6-9) |
+| 46 PWA + Camera | 🟢 Saha | 50-70h | Plan 41 Faz 4+ (~Hafta 7-11) |
+
+**Toplam ekstra effort:** ~130-180h (3-4 hafta paralel + 2 ek sprint).
+**Stratejik etki:** Mosaik "intranet portal"dan **"canlı kurumsal beyin + saha-uyumlu + adoption-hızlandırıcı + KVKK-emniyetli"** seviyesine taşınır.
+
+---
+
+## 10. Cross-reference
 
 - **Implementasyon planları:** [`plans/`](../plans/) (Tier 3 işler için zorunlu, [ADR-010](ADR/010-plan-first-tier-system.md))
   - Plan 16 — vNext modül roadmap (modül listesi + port stratejisi, bu vizyonun **implementasyon havalandırması**)
   - Plan 16.5 — Mosaik.Core shared kit (cross-modül abstraction)
   - Plan 16.6 — [ADR-002](ADR/002-modular-monolith.md) modüler monolit
+  - **Plan 44-47** — Strategic extension layers (RAG Guard, Excel Parser, PWA, Auto-Tuning)
 - **Aktif sprint:** [`TODO.md`](../TODO.md) → "EN ÜST ÖNCELİK" bölümü
-- **Mimari kararlar:** [`docs/ADR/`](ADR/) — 13 ADR, ADR-001 ile ADR-013 arası
+- **Mimari kararlar:** [`docs/ADR/`](ADR/) — ADR-001 ile ADR-022 arası
 - **Mevcut özellikler haritası:** [`docs/ARCHITECTURE_MAP.md`](ARCHITECTURE_MAP.md) (auto-refresh)
+- **Çelişki audit:** [`docs/CONTRADICTIONS_2026-05-25.md`](CONTRADICTIONS_2026-05-25.md) (19 bulgu)
 
 ---
 
-## 8. Bu belge nasıl güncellenir
+## 11. Bu belge nasıl güncellenir
 
 **Kim güncelleyebilir:** Kullanıcı + Claude oturumlarında stratejik karar alındığında.
 
