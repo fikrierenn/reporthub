@@ -286,20 +286,21 @@ git revert <plan-34-merge-commit>
 18. [x] **S-18** Read deadline countdown — `DaysRemaining` pill (kalan/geçti/onaylandı) + Alpine onay checkbox
 19. [x] **S-19** `SopReadReceiptServiceTests` (10 test — assign idempotent, mark/confirm, due window, unassigned guard) — 432/432 yeşil
 
-### Faz E — Bildirim (4-6 saat) — S-20..S-22
-20. [ ] **S-20** Yeni SOP onaylanınca departman üyelerine `INotificationService` push
-21. [ ] **S-21** Reminder background job (7 gün kala + 1 gün kala) — Hangfire RecurringJob
-22. [ ] **S-22** Email caller (Plan 31 SMTP — Plan 32 caller hazır olursa entegre, değilse skip)
+### Faz E — Bildirim (4-6 saat) — S-20..S-22 ✅ 2026-05-24
+20. [x] **S-20** Yeni SOP onaylanınca atanmış kullanıcılara `INotificationService` push — `IActiveUserDirectory` abstraction (Mosaik.Core.Users) + `SopApprovalService.DispatchPublishedAsync`. IsCompanyWide=true → assign + bulk notify, IsCompanyWide=false → Plan 18B beklemede audit skip. 3 yeni test (435/435 yeşil).
+21. [x] **S-21** Reminder background job (7 gün kala + 1 gün kala) — `SopReadReminderJob` + Hangfire RecurringJob "sop-read-reminder-daily" 09:00 Europe/Istanbul. ReminderSentCount 0→1 (7-gün), 1→2 (1-gün son uyarı). 5 yeni test.
+22. [x] **S-22** Email caller (Plan 31/32) — `IEmailService.SendAsync` 1-gün son uyarısında entegre. `IActiveUserDirectory.GetUserEmailsAsync` lookup. IsEnabled=false ise sessiz skip, per-user try (failure izolasyon). 2 yeni test (442/442 yeşil).
 
-### Faz F — AI Danışman (10-14 saat) — S-23..S-30
-23. [ ] **S-23** `SopAiConversation` entity (UserFeedback enum + FeedbackNote dahil) + `Database/05_CreateSopAiConversation.sql`
-24. [ ] **S-24** `SopVersion.PlainTextContent` derive logic (ContentJson → plain text, save sırasında cache)
-25. [ ] **S-25** `SopAiAdvisorService` (`ILlmService` FallbackLlmService chain + system prompt + 30K char context guard + audit `sop_ai_question_asked`)
-26. [ ] **S-26** `SopRateLimitGuard` (kullanıcı başına 20 soru/saat, admin bypass, `SopAiConversation` count'tan)
-27. [ ] **S-27** `_SopAiAdvisorDrawer.cshtml` (Alpine drawer + KVKK uyarı banner + disclaimer + son 10 soru-cevap history)
-28. [ ] **S-28** Feedback UI (thumbs-up/down butonu cevap altında) + endpoint `POST /Sop/Ai/Feedback/{conversationId}`
-29. [ ] **S-29** History retention Hangfire RecurringJob (günlük, `CreatedAt < NOW() - 1 year` sil)
-30. [ ] **S-30** Unit test: `SopAiAdvisorServiceTests` (rate limit, prompt build, context truncation, feedback save, retention job) — **çalıştır + 0 başarısız** (test-discipline.md)
+### Faz F — AI Danışman (10-14 saat) — S-23..S-30 ❌ İPTAL (2026-05-24)
+> **Scope değişti:** Kullanıcı kararı — single-SOP MVP yetersiz, cross-SOP RAG advisor istendi. Bu fazın orijinal scope'u [Plan 34.1 SOP RAG Advisor](34.1-sop-rag-advisor.md) ile değişti. S-23..S-30 adımları iptal.
+23. [-] ~~S-23 SopAiConversation entity~~ — Plan 34.1 A-12
+24. [-] ~~S-24 PlainTextContent derive~~ — Faz B'de zaten yapıldı (SopService.NewVersionAsync)
+25. [-] ~~S-25 SopAiAdvisorService~~ — Plan 34.1 A-14 (RAG + cross-SOP)
+26. [-] ~~S-26 SopRateLimitGuard~~ — Plan 34.1 A-18
+27. [-] ~~S-27 Drawer~~ — Plan 34.1 A-20..A-24 (ayrı sayfa, drawer değil)
+28. [-] ~~S-28 Feedback~~ — Plan 34.1 A-25..A-27
+29. [-] ~~S-29 Retention~~ — Plan 34.1 A-28..A-29
+30. [-] ~~S-30 Unit test~~ — Plan 34.1 A-35..A-38
 
 ### Faz G — BKM SOP migrate (4-8 saat, OPSİYONEL) — S-31
 31. [ ] **S-31** 27 Word dokümanını ilk versiyon olarak import (manuel veya basit Pandoc script)
