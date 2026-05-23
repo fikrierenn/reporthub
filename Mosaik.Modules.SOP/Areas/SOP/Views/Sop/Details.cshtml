@@ -1,6 +1,9 @@
 @model SopDetailsViewModel
+@using System.Text.Json
 @{
     ViewData["Title"] = Model.Document.Title;
+    var versionStatusMap = (ViewBag.VersionStatusMap as Dictionary<string, string>) ?? new Dictionary<string, string>();
+    var enrichmentStatusMap = (ViewBag.EnrichmentStatusMap as Dictionary<string, string>) ?? new Dictionary<string, string>();
 }
 
 @section Breadcrumb {
@@ -16,7 +19,76 @@
         <i class="fas fa-plus text-[10px]" aria-hidden="true"></i>
         Yeni Versiyon
     </a>
-    <a href="@Url.Action("Edit", new { id = Model.Document.Id })" class="btn">Düzenle</a>
+    <form method="post"
+          action="@Url.Action("ImportPdf", new { id = Model.Document.Id })"
+          enctype="multipart/form-data"
+          style="display:inline-flex; gap:6px; align-items:center;"
+          x-data="{ name: '' }">
+        @Html.AntiForgeryToken()
+        <label class="btn ghost" style="cursor:pointer;">
+            <i class="fas fa-file-pdf" aria-hidden="true"></i>
+            <span x-text="name || 'PDF Seç'"></span>
+            <input type="file"
+                   name="pdfFile"
+                   accept="application/pdf"
+                   x-on:change="name = $event.target.files[0]?.name || ''"
+                   style="display:none;" />
+        </label>
+        <button type="submit"
+                class="btn"
+                x-bind:disabled="!name"
+                title="Seçilen PDF'i Draft versiyon olarak içe aktar">
+            <i class="fas fa-upload" aria-hidden="true"></i> İçe Aktar
+        </button>
+    </form>
+    <a href="@Url.Action("Edit", new { id = Model.Document.Id })"
+       class="btn"
+       title="Başlık, kategori, departman, okuma süresi vs.">
+        <i class="fas fa-cog" aria-hidden="true"></i> Bilgileri Düzenle
+    </a>
+    <a href="@Url.Action("Index", "Advisor", new { area = "SOP", sopId = Model.Document.Id })"
+       class="btn"
+       title="Bu prosedür hakkında AI'ya soru sor">
+        <i class="fas fa-robot" aria-hidden="true"></i> AI'ya Sor
+    </a>
+    @{
+        var canHardDelete = !Model.Versions.Any(v => v.Status == 2 || v.Status == 3);
+    }
+    @if (Model.Document.IsActive)
+    {
+        <form method="post"
+              action="@Url.Action("Delete", new { id = Model.Document.Id })"
+              style="display:inline"
+              onsubmit="return confirm('SOP arşivlensin mi? Listede görünmez ama veri korunur, sonra geri yükleyebilirsiniz.');">
+            @Html.AntiForgeryToken()
+            <button type="submit" class="btn danger" title="Arşivle (soft delete)">
+                <i class="fas fa-box-archive" aria-hidden="true"></i> Arşivle
+            </button>
+        </form>
+    }
+    else
+    {
+        <form method="post"
+              action="@Url.Action("Restore", new { id = Model.Document.Id })"
+              style="display:inline">
+            @Html.AntiForgeryToken()
+            <button type="submit" class="btn primary" title="Arşivden çıkar">
+                <i class="fas fa-rotate-left" aria-hidden="true"></i> Geri Yükle
+            </button>
+        </form>
+    }
+    @if (canHardDelete)
+    {
+        <form method="post"
+              action="@Url.Action("HardDelete", new { id = Model.Document.Id })"
+              style="display:inline"
+              onsubmit="return confirm('KALICI silinsin mi? Tüm Draft versiyonlar + chunk + AI conversation kaynakları silinecek. Bu işlem geri alınamaz.');">
+            @Html.AntiForgeryToken()
+            <button type="submit" class="btn danger" title="Kalıcı sil (sadece Draft-only SOP)">
+                <i class="fas fa-trash" aria-hidden="true"></i> Kalıcı Sil
+            </button>
+        </form>
+    }
 }
 
 <div class="hero">
@@ -40,6 +112,105 @@
     @await Html.PartialAsync("_AlertMessage", ("success", msg))
 }
 
+@{
+    var d = Model.Document;
+    bool hasGovernance = !string.IsNullOrEmpty(d.DocumentNumber) || !string.IsNullOrEmpty(d.RevisionNumber)
+        || d.PublishDate.HasValue || d.EffectiveDate.HasValue || d.RevisionDate.HasValue
+        || !string.IsNullOrEmpty(d.PreparedBy) || !string.IsNullOrEmpty(d.ApprovedBy)
+        || !string.IsNullOrEmpty(d.ReviewFrequency) || !string.IsNullOrEmpty(d.Classification);
+}
+@if (hasGovernance)
+{
+    <div class="form-section-card wide" style="margin-bottom:16px;">
+        <div class="form-section-head">
+            <h2 class="form-section-head__title">Doküman Künyesi</h2>
+        </div>
+        <div class="form-section-body" style="padding:0;">
+            <table class="info-table" style="width:100%; border-collapse:collapse;">
+                @if (!string.IsNullOrEmpty(d.DocumentNumber))
+                {
+                    <tr>
+                        <td class="label" style="background:var(--bg-soft); font-weight:600; padding:8px 14px; width:30%; border-bottom:1px solid var(--border);">Doküman No</td>
+                        <td style="padding:8px 14px; border-bottom:1px solid var(--border);"><span class="mono">@d.DocumentNumber</span></td>
+                    </tr>
+                }
+                @if (!string.IsNullOrEmpty(d.RevisionNumber))
+                {
+                    <tr>
+                        <td class="label" style="background:var(--bg-soft); font-weight:600; padding:8px 14px; border-bottom:1px solid var(--border);">Versiyon</td>
+                        <td style="padding:8px 14px; border-bottom:1px solid var(--border);">@d.RevisionNumber</td>
+                    </tr>
+                }
+                @if (d.PublishDate.HasValue)
+                {
+                    <tr>
+                        <td class="label" style="background:var(--bg-soft); font-weight:600; padding:8px 14px; border-bottom:1px solid var(--border);">Yayın Tarihi</td>
+                        <td style="padding:8px 14px; border-bottom:1px solid var(--border);">@d.PublishDate.Value.ToString("dd.MM.yyyy")</td>
+                    </tr>
+                }
+                @if (d.EffectiveDate.HasValue)
+                {
+                    <tr>
+                        <td class="label" style="background:var(--bg-soft); font-weight:600; padding:8px 14px; border-bottom:1px solid var(--border);">Yürürlük Tarihi</td>
+                        <td style="padding:8px 14px; border-bottom:1px solid var(--border);">@d.EffectiveDate.Value.ToString("dd.MM.yyyy")</td>
+                    </tr>
+                }
+                @if (d.RevisionDate.HasValue)
+                {
+                    <tr>
+                        <td class="label" style="background:var(--bg-soft); font-weight:600; padding:8px 14px; border-bottom:1px solid var(--border);">Son Revizyon</td>
+                        <td style="padding:8px 14px; border-bottom:1px solid var(--border);">@d.RevisionDate.Value.ToString("dd.MM.yyyy")</td>
+                    </tr>
+                }
+                @if (!string.IsNullOrEmpty(d.PreparedBy))
+                {
+                    <tr>
+                        <td class="label" style="background:var(--bg-soft); font-weight:600; padding:8px 14px; border-bottom:1px solid var(--border);">Hazırlayan</td>
+                        <td style="padding:8px 14px; border-bottom:1px solid var(--border);">@d.PreparedBy</td>
+                    </tr>
+                }
+                @if (!string.IsNullOrEmpty(d.ApprovedBy))
+                {
+                    <tr>
+                        <td class="label" style="background:var(--bg-soft); font-weight:600; padding:8px 14px; border-bottom:1px solid var(--border);">Onaylayan</td>
+                        <td style="padding:8px 14px; border-bottom:1px solid var(--border);">@d.ApprovedBy</td>
+                    </tr>
+                }
+                @if (!string.IsNullOrEmpty(d.ReviewFrequency))
+                {
+                    <tr>
+                        <td class="label" style="background:var(--bg-soft); font-weight:600; padding:8px 14px; border-bottom:1px solid var(--border);">Gözden Geçirme</td>
+                        <td style="padding:8px 14px; border-bottom:1px solid var(--border);">@d.ReviewFrequency</td>
+                    </tr>
+                }
+                @if (!string.IsNullOrEmpty(d.Classification))
+                {
+                    <tr>
+                        <td class="label" style="background:var(--bg-soft); font-weight:600; padding:8px 14px;">Sınıflandırma</td>
+                        <td style="padding:8px 14px;">@d.Classification</td>
+                    </tr>
+                }
+            </table>
+        </div>
+    </div>
+}
+
+@{
+    var draftVersion = Model.Versions.FirstOrDefault(v => v.Status == 0);
+}
+@if (draftVersion != null)
+{
+    <div class="alert warn" role="alert" style="margin-bottom:16px; display:flex; align-items:center; justify-content:space-between;">
+        <span>
+            <i class="fas fa-pen-to-square" aria-hidden="true"></i>
+            <strong>Devam eden Taslak v@(draftVersion.VersionNumber)</strong> — içeriği TinyMCE editörde düzenle veya onaya gönder.
+        </span>
+        <a href="@Url.Action("EditVersion", new { versionId = draftVersion.Id })" class="btn primary sm">
+            <i class="fas fa-pen" aria-hidden="true"></i> İçeriği Düzenle
+        </a>
+    </div>
+}
+
 @if (!string.IsNullOrWhiteSpace(Model.Document.Description))
 {
     <div class="form-section-card wide">
@@ -50,12 +221,255 @@
     </div>
 }
 
+@* Plan 34.1 Save-time AI Enrichment — AI İnceleme bölümü *@
+@if (Model.LatestEnrichmentReport is { } report)
+{
+    // Label lookup'tan; renk class status değerine bağlı.
+    var statusText = enrichmentStatusMap.TryGetValue(report.Status.ToString(), out var lbl) ? lbl : "—";
+    var statusCls = report.Status switch
+    {
+        0 => "warn",                                                            // Pending
+        1 => "ok",                                                              // Completed
+        2 => "err",                                                             // Failed
+        3 => "ok",                                                              // Accepted
+        _ => ""
+    };
+
+    string severity = "yellow";
+    string summary = "";
+    var missingSections = new List<(string sec, string sev, string note)>();
+    var angloJargon = new List<(string term, string suggestion)>();
+    var kvkkIssues = new List<(string issue, string sev)>();
+    var retentionSuggestions = new List<(string docType, string suggested, string basis)>();
+    var legalGaps = new List<string>();
+    var suggestedTags = new List<string>();
+    string? suggestedCategory = null;
+    int? overallScore = null;
+
+    if (report.Status == 1 || report.Status == 3)
+    {
+        try
+        {
+            using var jdoc = JsonDocument.Parse(report.ReportJson);
+            var root = jdoc.RootElement;
+            if (root.TryGetProperty("severity", out var sev) && sev.ValueKind == JsonValueKind.String)
+                severity = sev.GetString() ?? "yellow";
+            if (root.TryGetProperty("summary", out var sumP) && sumP.ValueKind == JsonValueKind.String)
+                summary = sumP.GetString() ?? "";
+            if (root.TryGetProperty("overall_score", out var sc) && sc.ValueKind == JsonValueKind.Number)
+                overallScore = sc.GetInt32();
+            if (root.TryGetProperty("suggested_category", out var cat) && cat.ValueKind == JsonValueKind.String)
+                suggestedCategory = cat.GetString();
+            if (root.TryGetProperty("suggested_tags", out var tags) && tags.ValueKind == JsonValueKind.Array)
+                foreach (var t in tags.EnumerateArray())
+                    if (t.ValueKind == JsonValueKind.String) suggestedTags.Add(t.GetString() ?? "");
+            if (root.TryGetProperty("missing_sections", out var ms) && ms.ValueKind == JsonValueKind.Array)
+                foreach (var m in ms.EnumerateArray())
+                    missingSections.Add((
+                        m.TryGetProperty("section", out var s) ? s.GetString() ?? "" : "",
+                        m.TryGetProperty("severity", out var sv) ? sv.GetString() ?? "" : "",
+                        m.TryGetProperty("note", out var n) ? n.GetString() ?? "" : ""));
+            if (root.TryGetProperty("anglo_jargon", out var aj) && aj.ValueKind == JsonValueKind.Array)
+                foreach (var a in aj.EnumerateArray())
+                    angloJargon.Add((
+                        a.TryGetProperty("term", out var tt) ? tt.GetString() ?? "" : "",
+                        a.TryGetProperty("suggestion", out var sg) ? sg.GetString() ?? "" : ""));
+            if (root.TryGetProperty("kvkk_issues", out var ki) && ki.ValueKind == JsonValueKind.Array)
+                foreach (var k in ki.EnumerateArray())
+                    kvkkIssues.Add((
+                        k.TryGetProperty("issue", out var iss) ? iss.GetString() ?? "" : "",
+                        k.TryGetProperty("severity", out var sv2) ? sv2.GetString() ?? "" : ""));
+            if (root.TryGetProperty("retention_suggestions", out var rs) && rs.ValueKind == JsonValueKind.Array)
+                foreach (var r in rs.EnumerateArray())
+                    retentionSuggestions.Add((
+                        r.TryGetProperty("doc_type", out var dt) ? dt.GetString() ?? "" : "",
+                        r.TryGetProperty("suggested", out var su) ? su.GetString() ?? "" : "",
+                        r.TryGetProperty("basis", out var bs) ? bs.GetString() ?? "" : ""));
+            if (root.TryGetProperty("legal_basis_gaps", out var lg) && lg.ValueKind == JsonValueKind.Array)
+                foreach (var g in lg.EnumerateArray())
+                    if (g.ValueKind == JsonValueKind.String) legalGaps.Add(g.GetString() ?? "");
+        }
+        catch { /* malformed json — UI'da default değerler kalır */ }
+    }
+
+    string sevClass = severity switch
+    {
+        "red" => "err",
+        "orange" => "warn",
+        "yellow" => "warn",
+        "green" => "ok",
+        _ => ""
+    };
+
+    <div class="form-section-card wide" style="margin-bottom:16px;">
+        <div class="form-section-head" style="display:flex; align-items:center; justify-content:space-between;">
+            <div>
+                <h2 class="form-section-head__title">
+                    <i class="fas fa-robot" aria-hidden="true"></i>
+                    AI İnceleme — v@(Model.LatestEnrichmentVersionNumber ?? 0)
+                    <span class="status @statusCls" style="margin-left:8px;">@statusText</span>
+                    @if (report.Status == 1 || report.Status == 3)
+                    {
+                        <span class="status @sevClass" style="margin-left:6px;">Önem: @severity</span>
+                        if (overallScore.HasValue)
+                        {
+                            <span class="mono" style="margin-left:6px;">Skor: @overallScore/10</span>
+                        }
+                    }
+                </h2>
+                <p class="form-section-head__sub">
+                    Skill catalog inject: <span class="mono">@(report.InjectedSkillIds ?? "—")</span>
+                    · @report.CreatedAt.ToString("yyyy-MM-dd HH:mm")
+                </p>
+            </div>
+            <div style="display:flex; gap:6px;">
+                @if (report.Status == 1)
+                {
+                    <form method="post" action="@Url.Action("AcceptEnrichment", new { reportId = report.Id })" style="display:inline">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn primary sm" title="Önerilen etiket + kategori master'a yansıtılır">
+                            <i class="fas fa-check" aria-hidden="true"></i> Önerileri Kabul Et
+                        </button>
+                    </form>
+                }
+                @if (report.Status != 0 && Model.Versions.Any(v => v.Status == 0 || v.Status == 2))
+                {
+                    var targetVersionId = Model.Versions.FirstOrDefault(v => v.Status == 2)?.Id
+                        ?? Model.Versions.FirstOrDefault(v => v.Status == 0)?.Id;
+                    if (targetVersionId.HasValue)
+                    {
+                        <form method="post" action="@Url.Action("RerunEnrichment", new { versionId = targetVersionId.Value })" style="display:inline">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn sm" title="AI taramayı tekrar başlat">
+                                <i class="fas fa-rotate" aria-hidden="true"></i> Yeniden Tara
+                            </button>
+                        </form>
+                    }
+                }
+            </div>
+        </div>
+        <div class="form-section-body">
+            @if (report.Status == 0)
+            {
+                <p class="text-muted">
+                    <i class="fas fa-spinner fa-spin" aria-hidden="true"></i>
+                    AI yaklaşık 10-30 saniyede inceler. Sayfayı yenileyin.
+                </p>
+            }
+            else if (report.Status == 2)
+            {
+                <div class="alert err" role="alert">
+                    <strong>Hata:</strong> @report.FailureReason
+                </div>
+            }
+            else
+            {
+                @if (!string.IsNullOrWhiteSpace(summary))
+                {
+                    <p><strong>Özet:</strong> @summary</p>
+                }
+
+                @if (suggestedTags.Count > 0 || !string.IsNullOrEmpty(suggestedCategory))
+                {
+                    <div style="margin-top:10px;">
+                        <strong>Öneriler:</strong>
+                        @if (!string.IsNullOrEmpty(suggestedCategory))
+                        {
+                            <span class="pill" style="margin-left:6px;">Kategori: @suggestedCategory</span>
+                        }
+                        @foreach (var t in suggestedTags)
+                        {
+                            <span class="pill" style="margin-left:4px;">#@t</span>
+                        }
+                    </div>
+                }
+
+                @if (missingSections.Count > 0)
+                {
+                    <h3 style="margin-top:14px; font-size:13px;">Eksik / Zayıf Bölümler</h3>
+                    <ul style="margin:4px 0 0 18px;">
+                        @foreach (var m in missingSections)
+                        {
+                            var sevCls = m.sev == "red" ? "err" : (m.sev == "orange" ? "warn" : "");
+                            <li>
+                                <span class="status @sevCls" style="font-size:10px;">@m.sev</span>
+                                <strong>@m.sec</strong> — @m.note
+                            </li>
+                        }
+                    </ul>
+                }
+
+                @if (angloJargon.Count > 0)
+                {
+                    <h3 style="margin-top:14px; font-size:13px;">Anglo Jargon Tespiti</h3>
+                    <ul style="margin:4px 0 0 18px;">
+                        @foreach (var a in angloJargon)
+                        {
+                            <li><span class="mono">@a.term</span> → <strong>@a.suggestion</strong></li>
+                        }
+                    </ul>
+                }
+
+                @if (kvkkIssues.Count > 0)
+                {
+                    <h3 style="margin-top:14px; font-size:13px;">KVKK Bulguları</h3>
+                    <ul style="margin:4px 0 0 18px;">
+                        @foreach (var k in kvkkIssues)
+                        {
+                            var sevCls = k.sev == "red" ? "err" : (k.sev == "orange" ? "warn" : "");
+                            <li><span class="status @sevCls" style="font-size:10px;">@k.sev</span> @k.issue</li>
+                        }
+                    </ul>
+                }
+
+                @if (retentionSuggestions.Count > 0)
+                {
+                    <h3 style="margin-top:14px; font-size:13px;">Saklama Süresi Önerileri</h3>
+                    <ul style="margin:4px 0 0 18px;">
+                        @foreach (var r in retentionSuggestions)
+                        {
+                            <li><strong>@r.docType:</strong> @r.suggested <span class="text-muted">(@r.basis)</span></li>
+                        }
+                    </ul>
+                }
+
+                @if (legalGaps.Count > 0)
+                {
+                    <h3 style="margin-top:14px; font-size:13px;">Yasal Dayanak Eksiği</h3>
+                    <ul style="margin:4px 0 0 18px;">
+                        @foreach (var g in legalGaps)
+                        {
+                            <li>@g</li>
+                        }
+                    </ul>
+                }
+
+                @if (report.Status == 3 && report.AcceptedAt.HasValue)
+                {
+                    <p class="text-muted" style="margin-top:12px; font-size:11px;">
+                        <i class="fas fa-check-circle ok" aria-hidden="true"></i>
+                        Öneriler @report.AcceptedAt.Value.ToString("yyyy-MM-dd HH:mm") tarihinde kabul edildi.
+                    </p>
+                }
+            }
+        </div>
+    </div>
+}
+
 @if (Model.ActiveVersion != null)
 {
     <div class="form-section-card wide">
-        <div class="form-section-head">
-            <h2 class="form-section-head__title">Aktif İçerik — v@(Model.ActiveVersion.VersionNumber)</h2>
-            <p class="form-section-head__sub">Yürürlük: @(Model.ActiveVersion.EffectiveDate?.ToString("yyyy-MM-dd") ?? "—")</p>
+        <div class="form-section-head" style="display:flex; align-items:center; justify-content:space-between;">
+            <div>
+                <h2 class="form-section-head__title">Aktif İçerik — v@(Model.ActiveVersion.VersionNumber)</h2>
+                <p class="form-section-head__sub">Yürürlük: @(Model.ActiveVersion.EffectiveDate?.ToString("yyyy-MM-dd") ?? "—") · Approved içerik immutable, yeni versiyon ile değiştirilir.</p>
+            </div>
+            @if (draftVersion == null)
+            {
+                <a href="@Url.Action("NewVersion", new { id = Model.Document.Id })" class="btn primary sm" title="İçeriği değiştirmek için yeni Draft versiyon başlat">
+                    <i class="fas fa-pen-to-square" aria-hidden="true"></i> Yeni Versiyon Yaz
+                </a>
+            }
         </div>
         <div class="form-section-body">
             <div class="prose">
@@ -89,22 +503,37 @@
                 <tbody>
                 @foreach (var v in Model.Versions)
                 {
-                    var statusLabel = v.Status switch
+                    // Label lookup'tan; Approved + SupersededDate kombosu "Geçersiz" özel durum.
+                    var vStatusText = (v.Status == 2 && v.SupersededDate.HasValue)
+                        ? "Geçersiz"
+                        : versionStatusMap.TryGetValue(v.Status.ToString(), out var vlbl) ? vlbl : "—";
+                    var vStatusCls = v.Status switch
                     {
-                        0 => ("Taslak", "warn"),
-                        1 => ("Onayda", "warn"),
-                        2 => v.SupersededDate.HasValue ? ("Geçersiz", "err") : ("Yürürlükte", "ok"),
-                        3 => ("Arşiv", "err"),
-                        _ => ("—", "")
+                        0 => "warn",
+                        1 => "warn",
+                        2 => v.SupersededDate.HasValue ? "err" : "ok",
+                        3 => "err",
+                        _ => ""
                     };
                     <tr>
                         <td><span class="mono">v@(v.VersionNumber)</span></td>
-                        <td><span class="status @statusLabel.Item2">@statusLabel.Item1</span></td>
+                        <td><span class="status @vStatusCls">@vStatusText</span></td>
                         <td>@(v.EffectiveDate?.ToString("yyyy-MM-dd") ?? "—")</td>
                         <td>@v.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td>
                         <td style="text-align:right;">
+                            <a href="@Url.Action("Print", new { versionId = v.Id })"
+                               target="_blank"
+                               class="btn ghost sm"
+                               title="Yazdır / PDF kaydet">
+                                <i class="fas fa-print" aria-hidden="true"></i>
+                            </a>
                             @if (v.Status == 0)
                             {
+                                <a href="@Url.Action("EditVersion", new { versionId = v.Id })"
+                                   class="btn ghost sm"
+                                   title="İçeriği TinyMCE editörde düzenle">
+                                    <i class="fas fa-pen" aria-hidden="true"></i> Düzenle
+                                </a>
                                 <form method="post" action="@Url.Action("Submit", new { versionId = v.Id })" style="display:inline">
                                     @Html.AntiForgeryToken()
                                     <button type="submit" class="btn sm primary">Onaya Gönder</button>
