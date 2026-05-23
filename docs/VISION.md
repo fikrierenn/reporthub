@@ -58,23 +58,37 @@ Multi-DB allowlist (DerinSIS, BKMDATA, EncoreMerkez vs) + şube/firma bazlı eri
 
 AI extraction güçlü ama **paylaşım + permission UX'i belirsiz**. Doküman yükledikten sonra kim görür, kim indirir, versiyon kontrolü var mı, link paylaşılır mı — bunlar [Plan 27 (documents AI roadmap)](../plans/27-documents-ai-roadmap.md) içinde mi yoksa [Plan 19 (documents-v2)](../plans/) içinde mi anlaşılmıyor. **İki plan aktif, biri reset edilmeli ya da birleştirilmeli.** Aksi halde documents modülü iki yöne çekiliyor.
 
-### Calendar %50 — entegrasyonsuz takvim Google Calendar yanında ölü
+### Calendar %75 — unified event source (ADR-016 sonrası)
 
-Var, çalışıyor ([`CalendarController.cs`](../Mosaik/Controllers/CalendarController.cs) 5.4KB), ama **diğer modüllerle entegrasyonu net değil**. Sözleşme son tarih, yükümlülük due date, tamim deadline, doğum günü, resmi tatil (Plan 22 — Holidays Important Dates Reminder, aktif backlog) — bunlar otomatik takvime yansıyor mu? Aksi halde "ikinci takvim" oluyor, Google Calendar varken kimse bakmaz. **Karar:** Calendar'ı **unified event source** olarak konumlandır (her modül CalendarEvent yazsın) veya tamamen sil.
+[`CalendarController.cs`](../Mosaik/Controllers/CalendarController.cs) + `vw_CalendarUnified` view + ADR-016 (IMosaikModule opt-in event provider). Plan 33 C-02 ✅ ile **diğer modüllerden takvime yansıma** çalışıyor: Contracts due date + Compliance deadline + Holidays + Birthday + Circular published date.
+**Eksik:** Drag-drop event create UI, recurring event UX. Plan 22 Holidays/Birthdays/Important Dates altyapısı var, UI optimizasyonu kaldı.
 
-### Compliance %50 — Contract ile sınırı belirsiz
+### Compliance %60 — Contract ile sınır netleşti
 
-[`ComplianceTemplate`](../Mosaik/Models/) model var, ComplianceController 5KB, ama [Plan 25.1 (contract security hardening)](../plans/) tek planı. **Compliance ile Contract sınırı net değil** — sözleşme tipinin compliance gereği mi, ayrı bir takvim/checklist mi? KVKK, ISO 27001 gibi şirket içi uyum dosyaları burada mı yaşayacak? Karar yok.
+[`ComplianceTemplate`](../Mosaik/Models/) + ComplianceController + `vw_ObligationDueWithCompliance`. Plan 25 (Sözleşme) Faz B+C tamam, Compliance template KVKK/ISO 27001 dosyaları için kullanılabilir hale geldi. Compliance = template definitions + due date schedule; Contract = imzalı belge instance. Sınır net.
+**Eksik:** UI tarafı az (5KB controller), Compliance dashboard yok. Plan 25 Faz D adayı.
 
-### Approval altyapısı vs UI — generic engine yarıda
+### Approval altyapısı — **DAĞINIK, Plan 36 birleştirici**
 
-[`ApprovalService`](../Mosaik/Services/) + `ApprovalRequest` + `IWorkflow` interface mevcut. Ama **kullanım sahası neresi?** Sözleşme onayında otomatik mi, manuel mi? Tamim onayında? İK izin talebinde? Generic workflow engine yarısına kadar yapılmış, **designer UI yok**.
+3 paralel motor (CONTRADICTIONS C-2):
+- `Mosaik.Services.ApprovalService` (host) — generic `ApprovalRequest`/`ApprovalStep`
+- `SopApprovalService` (SOP modülü) — host inject etmiyor, DbContext duplicate logic
+- `WorkflowEngine` (`Mosaik.Core`) — Plan 36 ONAYLANDI, Stateless 5.20 + Hangfire + designer UI Faz A-C [x]
 
-**Üst düzey karar:** Ya engine'i tamamla + her modüle entegre et (Tier 3, 4-6 hafta), ya her modüle özel approval yaz (her modülde tekrar, daha pratik, daha çirkin). Şu an ikisini de yapmamış görünüyor — **en kötü senaryo**.
+**Karar (Plan 36):** Tek engine. Stateless backend + Hangfire reminder + visual designer. ADR-019 yazıldı.
+**Mevcut borç:** SOP duplicate logic Plan 36 implement tamamlanınca `IApprovalService` Core abstraction'a refactor (ADR-024 adayı). `IApprovalService` interface henüz repo'da yok — sadece ADR-002'de geçiyor.
 
-### Notification %40 — Plan 31/32 takılı, gerçek mail atılmıyor
+### Notification %70 — Caller var, SMTP default kapalı
 
-Plan 17 Faz H bitti, sidebar badge var, ama **sadece tamim ile entegre**. Sözleşme yükümlülük due-date hatırlatması notification atıyor mu? Plan 31 SMTP altyapısı var ama **caller yok** (Plan 32 caller olacaktı, Plan 32 takıldı). **Gerçek mail hâlâ atılmıyor.** Email + Notification + Reminder üçlüsü bir sonraki büyük iş — bittiğinde sözleşme/yükümlülük modülünün gerçek değeri ortaya çıkar.
+Mail caller'lar canlı:
+- `DailyReminderJob` (Hangfire 09:00 TR) — Compliance/Obligation due-date reminder
+- `SopReadReminderJob` (Hangfire 09:00 TR, Plan 34) — SOP okuma 7-gün/1-gün hatırlatma
+- `WorkflowNotifier` (Plan 36 Faz B) — workflow step assignment notification
+- Plan 17 Faz H — Tamim notification + sidebar badge
+
+**Config:** `SmtpSettings.Enabled: false` default → prod'da mail göndermek için ayar gerekiyor.
+**Plan 31:** SMTP altyapı ✅. **Plan 32:** Scheduled Reports + Email Distribution onay bekliyor (6 açık soru).
+**Sonuç:** Mail caller'lar yazıldı, config aktif edilince mail gider. "Hiç mail atılmıyor" stale.
 
 ### AI generation / chat — extraction güçlü, generation yok
 
@@ -84,14 +98,14 @@ Extraction (PDF → data) güçlü. Ama [`DocumentChatService`](../Mosaik/Servic
 
 ## 4. Yok olan vNext modülleri — değer sıralı
 
-### 1. SOP / Prosedür Yönetimi (Plan yok) — **EN HIZLI KAZANIM**
+### 1. SOP / Prosedür Yönetimi ✅ TAMAMLANDI 2026-05-23 — **EN HIZLI KAZANIM**
 
-BKM'nin 27 İK prosedürü + 44 form şu anda Word'de. Mosaik'e taşıyıp **version control + onay akışı + okundu disiplini** koyduğunda bugün BKM'de gerçek kullanılır. Tamim altyapısı (Block-based content, dosya ek, notification) %80 reuse edilebilir.
+BKM'nin 27 İK prosedürü + 44 form için **version control + onay akışı + okundu disiplini** altyapısı canlı:
+- [Plan 34](../plans/34-sop-prosedur-yonetimi.md) Faz A-E ✅ (modül + entity + admin CRUD + user-facing + bildirim)
+- [Plan 34.1](../plans/34.1-sop-rag-advisor.md) Faz 0-6 + 8 ✅ (cross-SOP RAG advisor + AI enrichment + ADR-022)
+- 516/516 test geçiyor, Mosaik.Modules.SOP modüler monolith.
 
-- **Effort:** 2-3 hafta
-- **ROI:** Yatırım 1 ay içinde geri döner — prosedürler zaten yazılı, sadece taşınacak
-- **Bağımlılık:** Tamim altyapısı (mevcut), Workflow Designer (sıradaki #4 ile zincirleme)
-- **Karar:** Bu sıradaki en mantıklı iş. ROI değerlendirme ihtiyacı yok.
+**Kalan:** Plan 34 Faz G (BKM 27 SOP içerik migration, manuel yükleme yeterli — opsiyonel). Plan 34.1 Faz 7 (LoRA fine-tune, kullanıcı feedback datası birikince).
 
 ### 2. Comment / Mention sistemi (Plan yok) — **CROSS-CUTTING, KÜÇÜK, YÜKSEK DEĞER**
 
