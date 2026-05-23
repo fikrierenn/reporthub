@@ -26,7 +26,8 @@ namespace Mosaik.Modules.SOP.Entities
         public DateTime? EffectiveDate { get; set; }                // onay tarihi
         public DateTime? SupersededDate { get; set; }               // yeni versiyon onaylanınca set
 
-        public byte Status { get; set; }                            // 0 Draft 1 Pending 2 Approved 3 Archived
+        // Lookup typeCode "sopVersionStatus": 0 Draft | 1 Pending | 2 Approved | 3 Archived
+        public byte Status { get; set; }
 
         [Required]
         public int CreatedBy { get; set; }
