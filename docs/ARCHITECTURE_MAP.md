@@ -6,7 +6,7 @@
 > Tahmin etme. **Önce buraya bak.**
 
 Son elle güncelleme: **2026-05-12**
-Son otomatik refresh: <!-- AUTO:LAST_REFRESH --> 2026-05-24 <!-- /AUTO:LAST_REFRESH -->
+Son otomatik refresh: <!-- AUTO:LAST_REFRESH --> 2026-05-26 <!-- /AUTO:LAST_REFRESH -->
 
 > **Otomatik tazelenir.** `bash scripts/refresh-arch-map.sh` çalıştırılınca aşağıdaki marker'lı bölümler regenerate edilir:
 > AppModules live state (§ 7), Admin views listesi (§ 12), Controller routes (§ 13).
