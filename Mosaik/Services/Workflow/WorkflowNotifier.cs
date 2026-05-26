@@ -1,30 +1,30 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Mosaik.Core.Email;
-using Mosaik.Core.Notification;
+using Mosaik.Core.Messaging;
 using Mosaik.Models;
 using Mosaik.Models.Workflow;
 
 namespace Mosaik.Services.Workflow
 {
     // Plan 36 W-10 — workflow step bildirim katmanı.
-    // StepEntered → atanan kullanıcıya in-app notification + email (Plan 31 SMTP caller).
-    // Step properties.assignee = "user:42" veya "role:mali" pattern destekler.
+    // StepEntered → atanan kullanıcıya in-app notification + email (IMessenger ile birleşik).
     public class WorkflowNotifier
     {
         private readonly MosaikContext _db;
-        private readonly INotificationService _notifications;
-        private readonly IEmailService _email;
+        private readonly IMessenger _messenger;
+        private readonly SmtpSettings _smtpSettings;
         private readonly ILogger<WorkflowNotifier> _logger;
 
         public WorkflowNotifier(
             MosaikContext db,
-            INotificationService notifications,
-            IEmailService email,
+            IMessenger messenger,
+            IOptions<SmtpSettings> smtpOptions,
             ILogger<WorkflowNotifier> logger)
         {
             _db = db;
-            _notifications = notifications;
-            _email = email;
+            _messenger = messenger;
+            _smtpSettings = smtpOptions.Value;
             _logger = logger;
         }
 
@@ -53,58 +53,32 @@ namespace Mosaik.Services.Workflow
             }
 
             var title = $"Onayınız bekleniyor: {step.Name ?? step.Id}";
-            var message = $"{instance.EntityType} #{instance.EntityId} için workflow adımı sizde.";
             var targetUrl = $"/Workflow/Instance/{instance.Id}";
             var externalKey = $"workflow_step:{instance.Id}:{stepId}";
+            var htmlEmail = BuildStepEmail(step, instance, targetUrl);
 
-            await _notifications.CreateBulkIfNotExistsAsync(
-                externalKey,
-                assigneeUserIds,
-                entityType: "workflow_instance",
-                entityId: instance.Id,
-                title: title,
-                message: message,
-                targetUrl: targetUrl,
-                notificationType: "workflow_step",
-                createdBy: "workflow");
-
-            // Email gönder (SMTP enabled ise). Idempotency: notification servisi zaten
-            // "if-not-exists" — bu çağrı her StepEntered tetiklendiğinde mail at YOK,
-            // sadece yeni-eklenen userIds icin. Şimdilik basit: tüm assignee'ye mail at.
-            // (Çoklu retrigger durumu engine seviyesinde — StepEntered idempotent değil
-            // ama Engine.AdvanceAsync zaten tek-yön zincirde tetikler.)
-            await SendStepEmailAsync(assigneeUserIds, title, instance, step, targetUrl, ct);
+            await _messenger.SendBulkAsync(assigneeUserIds, new MessengerPayload(
+                Title: title,
+                Body: $"{instance.EntityType} #{instance.EntityId} için workflow adımı sizde.",
+                HtmlEmail: htmlEmail,
+                EntityType: "workflow_instance",
+                EntityId: instance.Id,
+                TargetUrl: targetUrl,
+                NotificationType: "workflow_step",
+                ExternalKey: externalKey
+            ), ct);
         }
 
-        private async Task SendStepEmailAsync(
-            List<int> userIds,
-            string subject,
-            WorkflowInstance instance,
-            WorkflowDefinitionStep step,
-            string targetUrl,
-            CancellationToken ct)
+        private string BuildStepEmail(WorkflowDefinitionStep step, WorkflowInstance instance, string targetUrl)
         {
-            if (!_email.IsEnabled) return;
-
-            var emails = await _db.Users.AsNoTracking()
-                .Where(u => userIds.Contains(u.UserId)
-                         && u.IsActive
-                         && u.Email != null
-                         && u.Email != "")
-                .Select(u => u.Email!)
-                .ToListAsync(ct);
-            if (emails.Count == 0)
-            {
-                _logger.LogDebug("WorkflowNotifier email: hicbir assignee'nin email'i yok. InstanceId={Id}", instance.Id);
-                return;
-            }
-
             var stepName = System.Net.WebUtility.HtmlEncode(step.Name ?? step.Id);
             var entityRef = System.Net.WebUtility.HtmlEncode($"{instance.EntityType} #{instance.EntityId}");
-            var baseUrl = _settingsBaseUrl();
+            var baseUrl = !string.IsNullOrWhiteSpace(_smtpSettings.AppUrl)
+                ? _smtpSettings.AppUrl.TrimEnd('/')
+                : "http://localhost:5197";
             var fullUrl = $"{baseUrl}{targetUrl}";
 
-            var htmlBody = $@"<!DOCTYPE html>
+            return $@"<!DOCTYPE html>
 <html lang=""tr""><head><meta charset=""utf-8""></head>
 <body style=""font-family:Segoe UI,Arial,sans-serif;background:#f6f7fb;padding:24px;color:#111;"">
   <div style=""max-width:560px;margin:0 auto;background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:24px;"">
@@ -119,25 +93,8 @@ namespace Mosaik.Services.Workflow
     </p>
   </div>
 </body></html>";
-
-            var result = await _email.SendBulkAsync(emails, $"[Mosaik] {subject}", htmlBody, ct);
-            if (!result.AllSucceeded)
-            {
-                _logger.LogWarning(
-                    "WorkflowNotifier email: bazi alici(lara) gonderilemedi. InstanceId={Id} StepId={StepId} Sent={Sent} Failed={Failed}",
-                    instance.Id, step.Id, result.Sent, result.Failures.Count);
-            }
         }
 
-        private string _settingsBaseUrl()
-        {
-            // SmtpSettings.BaseUrl yoksa relative URL email'de kirik link uretir.
-            // Plan 32 sonrasi env-driven configure edilecek. Sadece path donmek
-            // alici icin yetersiz — varsayilan: localhost:5197 (dev).
-            return Environment.GetEnvironmentVariable("MOSAIK_BASE_URL") ?? "http://localhost:5197";
-        }
-
-        // Step.properties.assigneeUserId | assigneeUserIds | assigneeRole okur.
         private async Task<List<int>> ResolveAssigneesAsync(WorkflowDefinitionStep step, int firmaId, CancellationToken ct)
         {
             var ids = new HashSet<int>();
