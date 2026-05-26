@@ -157,4 +157,135 @@ public class SopChunkRetrieverTests
         Assert.Single(hits);
         Assert.Equal("Firma1", hits[0].SopTitle);
     }
+
+    // Plan 44 Faz 4 — Permission-aware retrieval scenario tests.
+
+    private static async Task SeedPermissionedChunkAsync(
+        TestContext db, int firmaId, string title, float[] emb,
+        byte securityLevel = SopChunk.Internal,
+        string? allowedRoles = null,
+        string? allowedDepts = null,
+        string? allowedUsers = null)
+    {
+        var doc = new SopDocument
+        {
+            FirmaId = firmaId, Title = title, OwnerUserId = 10, IsActive = true, CreatedBy = 10,
+            SecurityLevel = securityLevel
+        };
+        db.SopDocuments.Add(doc);
+        await db.SaveChangesAsync();
+
+        var version = new SopVersion { SopDocumentId = doc.Id, VersionNumber = 1, ContentJson = "<p>x</p>", Status = 2, CreatedBy = 10 };
+        db.SopVersions.Add(version);
+        await db.SaveChangesAsync();
+
+        db.SopChunks.Add(new SopChunk
+        {
+            SopVersionId = version.Id, ChunkOrder = 0, Content = $"Chunk: {title}",
+            EmbeddingJson = JsonSerializer.Serialize(Normalize(emb)),
+            SecurityLevel = securityLevel,
+            AllowedRoleIds = allowedRoles,
+            AllowedDepartmentIds = allowedDepts,
+            AllowedUserIds = allowedUsers
+        });
+        await db.SaveChangesAsync();
+    }
+
+    private static RagUserContext UserCtx(int userId, int firmaId, byte clearance, params string[] roles) =>
+        new(userId, firmaId, clearance, roles, Array.Empty<int>());
+
+    [Fact]
+    public async Task Search_AdminClearance_SeesRestrictedChunk()
+    {
+        var (db, retriever) = NewRetriever(nameof(Search_AdminClearance_SeesRestrictedChunk));
+        await using var _ = db;
+
+        await SeedPermissionedChunkAsync(db, firmaId: 1, "Gizli SOP", new float[] { 1, 0, 0 },
+            securityLevel: SopChunk.Restricted);   // level=3
+
+        var query = Normalize(new float[] { 1, 0, 0 });
+        var adminCtx = UserCtx(1, firmaId: 1, clearance: 3, "admin");
+
+        var hits = await retriever.SearchAsync(query, adminCtx, topK: 5, minScore: 0.0);
+
+        Assert.Single(hits);
+        Assert.Equal("Gizli SOP", hits[0].SopTitle);
+    }
+
+    [Fact]
+    public async Task Search_UserClearance_BlockedFromConfidentialChunk()
+    {
+        var (db, retriever) = NewRetriever(nameof(Search_UserClearance_BlockedFromConfidentialChunk));
+        await using var _ = db;
+
+        await SeedPermissionedChunkAsync(db, firmaId: 1, "Gizli SOP", new float[] { 1, 0, 0 },
+            securityLevel: SopChunk.Confidential);  // level=2
+
+        var query = Normalize(new float[] { 1, 0, 0 });
+        var depoCtx = UserCtx(42, firmaId: 1, clearance: 1, "depo");  // clearance=1 < 2
+
+        var hits = await retriever.SearchAsync(query, depoCtx, topK: 5, minScore: 0.0);
+
+        Assert.Empty(hits);
+    }
+
+    [Fact]
+    public async Task Search_RoleWhitelist_HrRoleAllowed_DepoRoleBlocked()
+    {
+        var (db, retriever) = NewRetriever(nameof(Search_RoleWhitelist_HrRoleAllowed_DepoRoleBlocked));
+        await using var _ = db;
+
+        await SeedPermissionedChunkAsync(db, firmaId: 1, "İK Prosedürü", new float[] { 1, 0, 0 },
+            securityLevel: SopChunk.Internal, allowedRoles: "hr,manager");
+
+        var query = Normalize(new float[] { 1, 0, 0 });
+
+        var hrCtx = UserCtx(1, firmaId: 1, clearance: 2, "hr");
+        var depoCtx = UserCtx(2, firmaId: 1, clearance: 1, "depo");
+
+        var hrHits = await retriever.SearchAsync(query, hrCtx, topK: 5, minScore: 0.0);
+        var depoHits = await retriever.SearchAsync(query, depoCtx, topK: 5, minScore: 0.0);
+
+        Assert.Single(hrHits);
+        Assert.Empty(depoHits);
+    }
+
+    [Fact]
+    public async Task Search_NullWhitelist_EveryoneCanAccess()
+    {
+        var (db, retriever) = NewRetriever(nameof(Search_NullWhitelist_EveryoneCanAccess));
+        await using var _ = db;
+
+        // null whitelist = no restriction
+        await SeedPermissionedChunkAsync(db, firmaId: 1, "Herkese Açık SOP", new float[] { 1, 0, 0 },
+            securityLevel: SopChunk.Internal, allowedRoles: null, allowedDepts: null, allowedUsers: null);
+
+        var query = Normalize(new float[] { 1, 0, 0 });
+        var anyUser = UserCtx(99, firmaId: 1, clearance: 1, "depo");
+
+        var hits = await retriever.SearchAsync(query, anyUser, topK: 5, minScore: 0.0);
+
+        Assert.Single(hits);
+    }
+
+    [Fact]
+    public async Task Search_UserWhitelist_ExplicitUserAllowed_OtherBlocked()
+    {
+        var (db, retriever) = NewRetriever(nameof(Search_UserWhitelist_ExplicitUserAllowed_OtherBlocked));
+        await using var _ = db;
+
+        await SeedPermissionedChunkAsync(db, firmaId: 1, "Kişisel SOP", new float[] { 1, 0, 0 },
+            securityLevel: SopChunk.Internal, allowedUsers: "5,17");
+
+        var query = Normalize(new float[] { 1, 0, 0 });
+
+        var allowedCtx = UserCtx(5, firmaId: 1, clearance: 1, "user");
+        var blockedCtx = UserCtx(99, firmaId: 1, clearance: 1, "user");
+
+        var allowedHits = await retriever.SearchAsync(query, allowedCtx, topK: 5, minScore: 0.0);
+        var blockedHits = await retriever.SearchAsync(query, blockedCtx, topK: 5, minScore: 0.0);
+
+        Assert.Single(allowedHits);
+        Assert.Empty(blockedHits);
+    }
 }
