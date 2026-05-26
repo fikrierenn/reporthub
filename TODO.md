@@ -50,7 +50,7 @@ Build: 0 hata 0 uyarı. Test: **337/337 geçti** (test-discipline.md kanıtland�
 #### Plan 33 Faz 4 — Büyük borç (opsiyonel, ~38-52 saat)
 
 - [ ] **D-01** Documents Plan 27 Faz C (20-28h) — versioning + FTS + metadata + permission + audit
-- [ ] **D-02** AI altyapı iyileştirme (8-10h) — audit log + token bütçe + rate limiting + FallbackLlmService cleanup **(SOP öncesi önerilir)**
+- [x] **D-02** ✅ AI altyapı iyileştirme — audit log + token bütçe + rate limiting + LlmServiceAdapter rename. commit `2c04ebc` + `ed5a68a` (2026-05-22)
 - [ ] **D-03** Vision çoklaştırma (4-6h) — Gemini + OpenAI vision fallback
 - [ ] **D-04** Test coverage (6-8h) — Documents/Wizard/multi-firma integration
 - [ ] **D-05** Plan 16.7 Tag Sistemi Faz A (8-10h) — bağımsız (AI önerici 16.5 Faz C bekliyor)
@@ -131,11 +131,11 @@ Build: 0 hata 0 uyarı. Test: **337/337 geçti** (test-discipline.md kanıtland�
   - **3 yeni ADR:** ADR-019 (Workflow Stateless), ADR-020 (Form Builder Hybrid SurveyJS), ADR-021 (Document rendering QuestPDF+OpenXml+OfficeIMO).
   - **Aksiyon (Plan başlangıçlarında):** NuGet (`Stateless 5.20.1`, `FuzzySharp`, `QuestPDF 2026.5.0`, `DocumentFormat.OpenXml 3.5.1`, `OfficeIMO.Word 1.0.34`, `PDFsharp 6.2.0`, `Scriban >=7.2.0`, `Ical.Net 5.2.2`, `ZXing.Net`, opsiyonel `Microsoft.Playwright`) + JS assets (`wwwroot/lib/surveyjs/` UMD, `signature_pad`, `vis-timeline` standalone, opsiyonel `easymde`, `cookieconsent`) + KVKK referansları (`docs/kvkk-references/` gitignored telif) + Docker compose Presidio Analyzer+Anonymizer+Türkçe spaCy `tr_core_news_trf`.
   - **Bütçe onayı:** ~~QuestPDF Professional ~$699/yıl~~ **REV 3 REDDEDİLDİ 2026-05-21 (deep research ek agent).** Yerine **Gotenberg Docker (MIT) + Gotenberg.Sharp.API.Client (Apache 2.0) + PdfSharp/MigraDoc 6.2.4 (MIT) + QRCoder 1.8.0 (MIT) + Razor.Templating.Core (Apache 2.0)** hibrit stack — **$0 yıllık lisans + 3 yıl $2097 tasarruf**. ADR-021 rev 2. Razor view reuse Mosaik UI ile aynı Tailwind print CSS + digital signature native (MigraDoc PKCS#7) + Gotenberg fallback MigraDoc in-process. BKM Docker compose Plan 40 Presidio + Plan 42 Gotenberg <2Gi RAM toplam. Reddedilen ek alternatifler: Carbone CCL (third parties yasağı), DinkToPdf (wkhtmltopdf 2023 arşivlendi + CVE patch'siz), jsreport LGPL+JS SDK, Spire.PDF Free (10 sayfa limit), HiQPdf Free (5 sayfa limit), PdfReport.Core (LGPL + iTextSharp dep + bakım yavaş), iText AGPL.
-- [ ] **[Plan 36 · Workflow Designer + Onay Akışları](plans/36-workflow-designer-onay-akislari.md)** ✅ **ONAYLANDI 2026-05-19** — sequential-workflow-designer (MIT, zero-dep) + custom WorkflowEngine. Tüm modüllerin onay zinciri tek engine. 30-40 saat, 4 faz.
-  - **Faz A** (12-16h, W-01..W-08) — Core engine + designer UI + migration 62
-  - **Faz B** (8-10h, W-09..W-13) — Hangfire job + bildirim + escalation + ICS feed
-  - **Faz C** (6-8h, W-14..W-17) — Obligations + Contracts entegrasyonu + "bekleyen onaylarım" widget
-  - **Faz D** (4-6h, W-18..W-19) — SOP entegrasyonu (Plan 34 sonrası)
+- [x] **[Plan 36 · Workflow Designer + Onay Akışları](plans/36-workflow-designer-onay-akislari.md)** — Faz A+B+C ✅ TAMAMLANDI 2026-05-21 (W-01..W-17). Faz D (W-18..W-19, SOP entegrasyon) açık.
+  - [x] **Faz A** ✅ W-01..W-08 — Core engine + designer UI
+  - [x] **Faz B** ✅ W-09..W-13 — Hangfire job + bildirim + escalation + ICS feed
+  - [x] **Faz C** ✅ W-14..W-17 — Obligations + Contracts entegrasyon + widget
+  - [ ] **Faz D** (4-6h, W-18..W-19) — SOP entegrasyonu (Plan 34 sonrası)
 
 **Paralel ikincil iş:**
 
@@ -172,6 +172,12 @@ Build: 0 hata 0 uyarı. Test: **337/337 geçti** (test-discipline.md kanıtland�
 - [ ] **MEDIUM · `Database/56_AppModulesGroupKey.sql` CHECK constraint** — whitelist DB-level enforce. Yeni migration. ~10dk.
 
 7+2 HIGH kapandı. Kalan 4 MEDIUM bağımsız + opsiyonel.
+
+**2026-05-26 WorkflowInboxService fix (commit bu oturumda):**
+- [x] **CRITICAL-W1 · WorkflowInboxService FirmaId leak + N+1** ✅ 2026-05-26 — FirmaId filtresi eklendi, N+1 batch preview ile çözüldü, CountPendingForUserAsync ayrı implementasyon.
+- [x] **HIGH-W2 · WorkflowController.Respond try/catch** ✅ 2026-05-26 — AdvanceAsync başarısız olsa audit log artık yazılıyor.
+- [x] **HIGH-W3 · ResolveFirmaId() hardcoded 1** ✅ 2026-05-26 — ICurrentUserService.FirmaIds[0] kullanıyor.
+- [x] **HIGH-S1 · SopChunkRetriever magic number** ✅ 2026-05-26 — SopVersion.Approved sabit kullanıyor (SopService 3 yer dahil).
 
 **2026-05-22 dış inceleme follow-up (Plan 45 sonrası backlog):**
 - [ ] **LOW-F5 · AI günlük budget concurrent overshoot** — `Mosaik/Services/AiSummaryProvider.cs:47,103`. Check-and-add race; aynı provider'a paralel istekler bütçe aşılmadan içeri girip toplamda aşabilir. Fix: `Interlocked.Add` ile atomik check-and-add. Multi-instance issue zaten D-02-5 journal'da not (DB-backed counter sonraki iterasyon). ~30dk.
