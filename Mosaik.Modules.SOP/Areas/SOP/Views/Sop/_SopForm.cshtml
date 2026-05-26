@@ -87,6 +87,52 @@
     </div>
 </div>
 
+<!-- Plan 44: Erişim Kapsamı (RAG chunk-level permission) -->
+<div class="form-section-card wide">
+    <div class="form-section-head">
+        <h2 class="form-section-head__title">Erişim Kapsamı (RAG Güvenlik)</h2>
+        <p class="form-section-head__sub">
+            Güvenlik seviyesi ve whitelist'ler AI Danışman chunk retrieval'ını sınırlar.
+            Değişiklik kaydedildiğinde chunk'lara otomatik yansır (~1-2 sn).
+        </p>
+    </div>
+    <div class="form-section-body">
+        <div class="field">
+            <label class="lab" for="SecurityLevel">Güvenlik Seviyesi</label>
+            <select id="SecurityLevel" name="SecurityLevel" class="inp">
+                <option value="0" selected="@(Model.SecurityLevel == 0)">0 — Herkese Açık (Public)</option>
+                <option value="1" selected="@(Model.SecurityLevel == 1)">1 — Şirket İçi (Internal) — varsayılan</option>
+                <option value="2" selected="@(Model.SecurityLevel == 2)">2 — Gizli (Confidential)</option>
+                <option value="3" selected="@(Model.SecurityLevel == 3)">3 — Kısıtlı (Restricted)</option>
+            </select>
+            <p class="help-text">Kullanıcının güvenlik kademesi bu değerden küçükse chunk retrieval'dan çıkar.</p>
+        </div>
+
+        <div class="field">
+            <label class="lab" for="AllowedRoleIds">İzinli Roller (CSV)</label>
+            <input type="text" id="AllowedRoleIds" name="AllowedRoleIds"
+                   value="@Model.AllowedRoleIds" class="inp" maxlength="500"
+                   placeholder="örn: admin,hr,manager — boş bırakılırsa tüm roller erişebilir" />
+            <p class="help-text">Rol adları virgülle ayrılır. Boş = kısıtlama yok.</p>
+        </div>
+
+        <div class="form-row-2col">
+            <div class="field">
+                <label class="lab" for="AllowedDepartmentIds">İzinli Departman ID'leri (CSV)</label>
+                <input type="text" id="AllowedDepartmentIds" name="AllowedDepartmentIds"
+                       value="@Model.AllowedDepartmentIds" class="inp" maxlength="500"
+                       placeholder="örn: 1,4,12 — boş bırakılırsa kısıtlama yok" />
+            </div>
+            <div class="field">
+                <label class="lab" for="AllowedUserIds">İzinli Kullanıcı ID'leri (CSV)</label>
+                <input type="text" id="AllowedUserIds" name="AllowedUserIds"
+                       value="@Model.AllowedUserIds" class="inp" maxlength="500"
+                       placeholder="örn: 5,17,42 — boş bırakılırsa kısıtlama yok" />
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Plan 34.1: PRD kurumsal başlık alanları -->
 <div class="form-section-card wide">
     <div class="form-section-head">

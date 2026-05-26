@@ -108,7 +108,11 @@ namespace Mosaik.Modules.SOP.Areas.SOP.Controllers
                 PreparedBy = doc.PreparedBy,
                 ApprovedBy = doc.ApprovedBy,
                 ReviewFrequency = doc.ReviewFrequency,
-                Classification = doc.Classification
+                Classification = doc.Classification,
+                SecurityLevel = doc.SecurityLevel,
+                AllowedRoleIds = doc.AllowedRoleIds,
+                AllowedDepartmentIds = doc.AllowedDepartmentIds,
+                AllowedUserIds = doc.AllowedUserIds
             });
         }
 
@@ -131,8 +135,24 @@ namespace Mosaik.Modules.SOP.Areas.SOP.Controllers
                 return View(model);
             }
 
+            // Plan 44 — Chunk permission senkronizasyonu (eventual consistency).
+            EnqueueChunkPermissionSync(id);
+
             TempData["Message"] = result.Message;
             return RedirectToAction(nameof(Details), new { id });
+        }
+
+        private static void EnqueueChunkPermissionSync(int sopDocumentId)
+        {
+            try
+            {
+                Hangfire.BackgroundJob.Enqueue<Mosaik.Modules.SOP.Services.ChunkPermissionSyncJob>(
+                    j => j.SyncAsync(sopDocumentId, "sop", CancellationToken.None));
+            }
+            catch (Exception)
+            {
+                // Hangfire yoksa (test/seeding ortamı) sessiz geç. Sync sonraki edit'te çalışır.
+            }
         }
 
         public async Task<IActionResult> Details(int id)
@@ -615,7 +635,11 @@ namespace Mosaik.Modules.SOP.Areas.SOP.Controllers
                 PreparedBy: m.PreparedBy,
                 ApprovedBy: m.ApprovedBy,
                 ReviewFrequency: m.ReviewFrequency,
-                Classification: m.Classification);
+                Classification: m.Classification,
+                SecurityLevel: m.SecurityLevel,
+                AllowedRoleIds: m.AllowedRoleIds,
+                AllowedDepartmentIds: m.AllowedDepartmentIds,
+                AllowedUserIds: m.AllowedUserIds);
     }
 
     public sealed record SelectListItemDto(string Code, string Label);

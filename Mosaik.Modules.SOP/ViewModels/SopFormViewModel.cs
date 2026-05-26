@@ -48,5 +48,18 @@ namespace Mosaik.Modules.SOP.ViewModels
         public string? ReviewFrequency { get; set; }
         [MaxLength(100)]
         public string? Classification { get; set; }
+
+        // Plan 44 — Erişim Kapsamı (chunk permission kaynak)
+        [Range(0, 3, ErrorMessage = "Güvenlik seviyesi 0-3 arası.")]
+        public byte SecurityLevel { get; set; } = 1;               // Internal default
+
+        [MaxLength(500)]
+        public string? AllowedRoleIds { get; set; }                 // CSV rol adı (boş = herkes)
+
+        [MaxLength(500)]
+        public string? AllowedDepartmentIds { get; set; }           // CSV dept ID (boş = herkes)
+
+        [MaxLength(500)]
+        public string? AllowedUserIds { get; set; }                 // CSV userId (boş = herkes)
     }
 }

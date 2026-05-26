@@ -54,6 +54,16 @@ namespace Mosaik.Modules.SOP.Entities
         [MaxLength(100)]
         public string? Classification { get; set; }                 // örn. "Şirket İçi - Kontrollü Dağıtım"
 
+        // Plan 44 — Chunk-level permission kaynak (ChunkPermissionSyncJob bu kolonları chunk'lara yazar).
+        // SecurityLevel: 0=Public, 1=Internal(default), 2=Confidential, 3=Restricted
+        public byte SecurityLevel { get; set; } = 1;               // Internal default
+        [MaxLength(500)]
+        public string? AllowedRoleIds { get; set; }                 // CSV rol adı; null=herkes
+        [MaxLength(500)]
+        public string? AllowedDepartmentIds { get; set; }           // CSV dept ID; null=herkes
+        [MaxLength(500)]
+        public string? AllowedUserIds { get; set; }                 // CSV userId; null=herkes
+
         [Required]
         public int CreatedBy { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

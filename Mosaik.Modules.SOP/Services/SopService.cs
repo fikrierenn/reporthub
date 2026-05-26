@@ -112,6 +112,11 @@ namespace Mosaik.Modules.SOP.Services
             entity.ApprovedBy = input.ApprovedBy;
             entity.ReviewFrequency = input.ReviewFrequency;
             entity.Classification = input.Classification;
+            // Plan 44 — permission kaynak güncelle → ChunkPermissionSyncJob eventual sync
+            entity.SecurityLevel = input.SecurityLevel;
+            entity.AllowedRoleIds = NullIfEmpty(input.AllowedRoleIds);
+            entity.AllowedDepartmentIds = NullIfEmpty(input.AllowedDepartmentIds);
+            entity.AllowedUserIds = NullIfEmpty(input.AllowedUserIds);
             entity.UpdatedAt = DateTime.UtcNow;
 
             await _db.SaveChangesAsync();
@@ -315,6 +320,9 @@ namespace Mosaik.Modules.SOP.Services
             return staleVersions.Count;
         }
 
+        private static string? NullIfEmpty(string? s) =>
+            string.IsNullOrWhiteSpace(s) ? null : s.Trim();
+
         private static ServiceResult Validate(SopDocumentInput input)
         {
             if (input.FirmaId <= 0) return ServiceResult.Failure("Firma seçimi zorunlu.");
@@ -348,5 +356,10 @@ namespace Mosaik.Modules.SOP.Services
         string? PreparedBy = null,
         string? ApprovedBy = null,
         string? ReviewFrequency = null,
-        string? Classification = null);
+        string? Classification = null,
+        // Plan 44 — Erişim Kapsamı
+        byte SecurityLevel = 1,
+        string? AllowedRoleIds = null,
+        string? AllowedDepartmentIds = null,
+        string? AllowedUserIds = null);
 }
