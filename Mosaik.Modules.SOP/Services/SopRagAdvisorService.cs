@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Mosaik.Core.AI.Embed;
 using Mosaik.Core.AI.Local;
+using Mosaik.Core.AI.Rag;
 using Mosaik.Core.AI.Skills;
 using Mosaik.Core.Domain;
 using Mosaik.Core.Logging;
@@ -70,14 +71,16 @@ namespace Mosaik.Modules.SOP.Services
         }
 
         public async Task<ServiceResult<SopAdvisorAnswer>> AskAsync(
-            int userId,
-            int? firmaId,
+            RagUserContext userCtx,
             bool isAdmin,
             string question,
             CancellationToken ct = default)
         {
             if (string.IsNullOrWhiteSpace(question))
                 return ServiceResult<SopAdvisorAnswer>.Failure("Soru boş olamaz.");
+
+            int userId = userCtx.UserId;
+            int? firmaId = userCtx.FirmaId > 0 ? userCtx.FirmaId : null;
 
             // A-18 rate limit
             var quota = await _rateLimit.CheckAsync(userId, isAdmin, ct);
@@ -114,8 +117,8 @@ namespace Mosaik.Modules.SOP.Services
                 return ServiceResult<SopAdvisorAnswer>.Failure("Soru analiz edilemedi.");
             }
 
-            // 2) Retrieval
-            var hits = await _retriever.SearchAsync(queryEmb, topK: 4, minScore: 0.5, firmaId, ct);
+            // 2) Retrieval — plan 44: RagUserContext ile permission-aware retrieval
+            var hits = await _retriever.SearchAsync(queryEmb, userCtx, topK: 4, minScore: 0.5, ct);
 
             if (hits.Count == 0)
             {

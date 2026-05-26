@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
 using Mosaik.Core.AI.Embed;
 using Mosaik.Core.AI.Local;
+using Mosaik.Core.AI.Rag;
 using Mosaik.Core.AI.Skills;
 using Mosaik.Core.Logging;
 using Mosaik.Modules.SOP.Entities;
@@ -100,12 +101,18 @@ public class SopRagAdvisorServiceTests
         var audit = new FakeAudit();
         var emb = new FakeEmbedder();
         var llm = new FakeLlm();
-        var retriever = new SopChunkRetriever(db, NullLogger<SopChunkRetriever>.Instance);
+        var retriever = new SopChunkRetriever(db, new DefaultRagAccessPolicy(), NullLogger<SopChunkRetriever>.Instance);
         var rateLimit = new SopRateLimitGuard(db);
         var skills = new EmptySkillCatalog();
         var svc = new SopRagAdvisorService(db, emb, llm, retriever, rateLimit, skills, audit, NullLogger<SopRagAdvisorService>.Instance);
         return (db, svc, audit, emb, llm);
     }
+
+    private static RagUserContext Ctx(int userId, int firmaId, bool isAdmin = false) =>
+        new(userId, firmaId,
+            SecurityClearance: isAdmin ? (byte)3 : (byte)1,
+            RoleNames: isAdmin ? new[] { "admin" } : Array.Empty<string>(),
+            DepartmentIds: Array.Empty<int>());
 
     private static async Task SeedChunkAsync(TestContext db, int firmaId, string title, float[] emb)
     {
@@ -148,7 +155,7 @@ public class SopRagAdvisorServiceTests
         var (db, svc, _, _, _) = NewService(nameof(Ask_EmptyQuestion_ReturnsFailure));
         await using var _ = db;
 
-        var result = await svc.AskAsync(userId: 1, firmaId: 1, isAdmin: false, question: "  ");
+        var result = await svc.AskAsync(userCtx: Ctx(1, 1), isAdmin: false, question: "  ");
 
         Assert.False(result.IsSuccess);
         Assert.Contains("boş", result.Message);
@@ -161,7 +168,7 @@ public class SopRagAdvisorServiceTests
         await using var _ = db;
 
         emb.IsReady = false;
-        var result = await svc.AskAsync(userId: 1, firmaId: 1, isAdmin: false, question: "İzin nasıl alınır?");
+        var result = await svc.AskAsync(userCtx: Ctx(1, 1), isAdmin: false, question: "İzin nasıl alınır?");
 
         Assert.False(result.IsSuccess);
         Assert.Contains("AI", result.Message);
@@ -174,7 +181,7 @@ public class SopRagAdvisorServiceTests
         await using var _ = db;
 
         llm.IsReady = false;
-        var result = await svc.AskAsync(userId: 1, firmaId: 1, isAdmin: false, question: "İzin nasıl alınır?");
+        var result = await svc.AskAsync(userCtx: Ctx(1, 1), isAdmin: false, question: "İzin nasıl alınır?");
 
         Assert.False(result.IsSuccess);
     }
@@ -186,7 +193,7 @@ public class SopRagAdvisorServiceTests
         await using var _ = db;
 
         // Hit yok — DB'de hiç chunk yok.
-        var result = await svc.AskAsync(userId: 99, firmaId: 1, isAdmin: false, question: "Yıllık izin maksimum kaç gün?");
+        var result = await svc.AskAsync(userCtx: Ctx(99, 1), isAdmin: false, question: "Yıllık izin maksimum kaç gün?");
 
         Assert.True(result.IsSuccess);
         Assert.True(result.Data!.NoHits);
@@ -211,7 +218,7 @@ public class SopRagAdvisorServiceTests
         emb.FixedEmbedding = FakeEmbedder.Normalize(new float[] { 1, 0, 0 });
         llm.Answer = "Yıllık izin 14 gündür.";
 
-        var result = await svc.AskAsync(userId: 99, firmaId: 1, isAdmin: false, question: "Yıllık izin maksimum kaç gün?");
+        var result = await svc.AskAsync(userCtx: Ctx(99, 1), isAdmin: false, question: "Yıllık izin maksimum kaç gün?");
 
         Assert.True(result.IsSuccess);
         Assert.False(result.Data!.NoHits);
@@ -237,7 +244,7 @@ public class SopRagAdvisorServiceTests
         await SeedChunkAsync(db, firmaId: 1, title: "X", emb: new float[] { 1, 0, 0 });
         llm.ShouldFail = true;
 
-        var result = await svc.AskAsync(userId: 1, firmaId: 1, isAdmin: false, question: "Soru");
+        var result = await svc.AskAsync(userCtx: Ctx(1, 1), isAdmin: false, question: "Soru");
 
         Assert.False(result.IsSuccess);
         Assert.Empty(await db.SopAiConversations.ToListAsync());
@@ -267,7 +274,7 @@ public class SopRagAdvisorServiceTests
             new SopChunk { SopVersionId = v2.Id, ChunkOrder = 0, Content = "B1", EmbeddingJson = emb1 });
         await db.SaveChangesAsync();
 
-        var result = await svc.AskAsync(userId: 1, firmaId: 1, isAdmin: false, question: "X");
+        var result = await svc.AskAsync(userCtx: Ctx(1, 1), isAdmin: false, question: "X");
 
         Assert.True(result.IsSuccess);
         // 3 chunk hit ama 2 unique SOP
@@ -296,7 +303,7 @@ public class SopRagAdvisorServiceTests
         }
         await db.SaveChangesAsync();
 
-        var result = await svc.AskAsync(userId: 7, firmaId: 1, isAdmin: false, question: "Yeni soru");
+        var result = await svc.AskAsync(userCtx: Ctx(7, 1), isAdmin: false, question: "Yeni soru");
 
         Assert.False(result.IsSuccess);
         Assert.Contains("sınır", result.Message, StringComparison.OrdinalIgnoreCase);
@@ -387,7 +394,7 @@ public class SopRagAdvisorServiceTests
         await db.SaveChangesAsync();
 
         // Admin → bypass. Hit yok → NoHits fallback, LLM yine çağrılmaz ama rate limit duvarı geçer.
-        var result = await svc.AskAsync(userId: 7, firmaId: 1, isAdmin: true, question: "Yeni soru");
+        var result = await svc.AskAsync(userCtx: Ctx(7, 1, isAdmin: true), isAdmin: true, question: "Yeni soru");
 
         Assert.True(result.IsSuccess);
         Assert.True(result.Data!.NoHits);

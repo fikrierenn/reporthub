@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
+using Mosaik.Core.AI.Rag;
 using Mosaik.Modules.SOP.Entities;
 using Mosaik.Modules.SOP.Services;
 
@@ -32,7 +33,7 @@ public class SopChunkRetrieverTests
             .UseInMemoryDatabase(name + "_" + Guid.NewGuid())
             .Options;
         var db = new TestContext(options);
-        var retriever = new SopChunkRetriever(db, NullLogger<SopChunkRetriever>.Instance);
+        var retriever = new SopChunkRetriever(db, new DefaultRagAccessPolicy(), NullLogger<SopChunkRetriever>.Instance);
         return (db, retriever);
     }
 

@@ -138,6 +138,9 @@ builder.Services.AddScoped<Mosaik.Core.Workflow.IWorkflowService, Mosaik.Service
 builder.Services.Configure<Mosaik.Core.Email.SmtpSettings>(builder.Configuration.GetSection("SmtpSettings"));
 builder.Services.AddScoped<Mosaik.Core.Email.IEmailService, Mosaik.Services.Email.SmtpEmailService>();
 builder.Services.AddScoped<Mosaik.Core.Messaging.IMessenger, Mosaik.Services.Messaging.MessengerService>();
+// Plan 44 — RAG Chunk-Level Permission Guard
+builder.Services.AddScoped<Mosaik.Core.AI.Rag.IRagAccessPolicy, Mosaik.Core.AI.Rag.DefaultRagAccessPolicy>();
+builder.Services.AddTransient<Mosaik.Services.Ai.ChunkPermissionSyncJob>();
 // Faz C2 (gelecek): UserDataFilterInjector + ReportsController.Index
 // Registry'ye refactor (DRY). Şu an mevcut inline mantık çalışmaya devam ediyor.
 

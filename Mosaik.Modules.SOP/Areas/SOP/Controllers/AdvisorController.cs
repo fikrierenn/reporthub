@@ -2,6 +2,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Mosaik.Core.AI.Rag;
 using Mosaik.Modules.SOP.Entities;
 using Mosaik.Modules.SOP.Services;
 using Mosaik.Modules.SOP.ViewModels;
@@ -121,9 +122,19 @@ namespace Mosaik.Modules.SOP.Areas.SOP.Controllers
             if (string.IsNullOrWhiteSpace(question))
                 return Json(new { success = false, error = "Soru boş olamaz." });
 
+            var roleNames = User.Claims
+                .Where(c => c.Type == ClaimTypes.Role)
+                .Select(c => c.Value)
+                .ToList();
+            var userCtx = new RagUserContext(
+                UserId: CurrentUserId,
+                FirmaId: CurrentFirmaId,
+                SecurityClearance: RagUserContext.ClearanceFromRoles(roleNames),
+                RoleNames: roleNames,
+                DepartmentIds: Array.Empty<int>());   // dept claims henüz yok — Faz 3'te
+
             var result = await _advisor.AskAsync(
-                userId: CurrentUserId,
-                firmaId: CurrentFirmaId == 0 ? null : CurrentFirmaId,
+                userCtx: userCtx,
                 isAdmin: IsAdmin,
                 question: question.Trim());
 
