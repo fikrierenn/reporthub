@@ -29,6 +29,11 @@ namespace Mosaik.Modules.SOP.Entities
         // Lookup typeCode "sopVersionStatus": 0 Draft | 1 Pending | 2 Approved | 3 Archived
         public byte Status { get; set; }
 
+        public const byte Draft    = 0;
+        public const byte Pending  = 1;
+        public const byte Approved = 2;
+        public const byte Archived = 3;
+
         [Required]
         public int CreatedBy { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

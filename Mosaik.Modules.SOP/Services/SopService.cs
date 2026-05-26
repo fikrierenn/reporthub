@@ -40,7 +40,7 @@ namespace Mosaik.Modules.SOP.Services
 
         public Task<SopVersion?> GetActiveVersionAsync(int sopDocumentId) =>
             Versions.AsNoTracking()
-                .Where(v => v.SopDocumentId == sopDocumentId && v.Status == 2)  // Approved
+                .Where(v => v.SopDocumentId == sopDocumentId && v.Status == SopVersion.Approved)
                 .OrderByDescending(v => v.EffectiveDate)
                 .FirstOrDefaultAsync();
 
@@ -211,7 +211,7 @@ namespace Mosaik.Modules.SOP.Services
                 .FirstOrDefaultAsync(d => d.Id == id);
             if (entity == null) return ServiceResult.Failure("SOP bulunamadı.");
 
-            var hasApproved = entity.Versions.Any(v => v.Status == 2 || v.Status == 3);
+            var hasApproved = entity.Versions.Any(v => v.Status == SopVersion.Approved || v.Status == SopVersion.Archived);
             if (hasApproved)
                 return ServiceResult.Failure("Approved/Archived versiyonu olan SOP kalıcı silinemez. Arşivle.");
 
@@ -263,8 +263,8 @@ namespace Mosaik.Modules.SOP.Services
         {
             var version = await Versions.FindAsync(versionId);
             if (version == null) return ServiceResult.Failure("Versiyon bulunamadı.");
-            if (version.Status == 2) return ServiceResult.Ok("Zaten Approved.");
-            if (version.Status != 1) return ServiceResult.Failure("Sadece Pending versiyon Approved olabilir.");
+            if (version.Status == SopVersion.Approved) return ServiceResult.Ok("Zaten Approved.");
+            if (version.Status != SopVersion.Pending) return ServiceResult.Failure("Sadece Pending versiyon Approved olabilir.");
 
             var now = DateTime.UtcNow;
             version.Status = 2;

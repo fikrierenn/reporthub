@@ -41,7 +41,7 @@ namespace Mosaik.Modules.SOP.Services
             var query = _db.Set<SopChunk>()
                 .AsNoTracking()
                 .Where(c => c.SopVersion != null
-                         && c.SopVersion.Status == 2                       // Approved
+                         && c.SopVersion.Status == SopVersion.Approved
                          && c.SopVersion.SopDocument != null
                          && c.SopVersion.SopDocument.IsActive);
             if (firmaId is not null and not 0)
