@@ -137,6 +137,7 @@ builder.Services.AddScoped<Mosaik.Core.Workflow.IWorkflowService, Mosaik.Service
 // Plan 31 — Email (SMTP)
 builder.Services.Configure<Mosaik.Core.Email.SmtpSettings>(builder.Configuration.GetSection("SmtpSettings"));
 builder.Services.AddScoped<Mosaik.Core.Email.IEmailService, Mosaik.Services.Email.SmtpEmailService>();
+builder.Services.AddScoped<Mosaik.Core.Messaging.IMessenger, Mosaik.Services.Messaging.MessengerService>();
 // Faz C2 (gelecek): UserDataFilterInjector + ReportsController.Index
 // Registry'ye refactor (DRY). Şu an mevcut inline mantık çalışmaya devam ediyor.
 
