@@ -2,6 +2,7 @@ using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Mosaik.Core.Workflow;
 using Mosaik.Models;
+using Mosaik.Models.Workflow;
 using Mosaik.ViewModels.Workflow;
 
 namespace Mosaik.Services.Workflow
@@ -19,30 +20,54 @@ namespace Mosaik.Services.Workflow
         }
 
         // Aktif step'i userId'ye atanmış instance'ları döner. limit null → hepsi.
+        // firmaIds boşsa sonuç boş döner (güvenli fail).
         public async Task<List<InboxItem>> GetPendingForUserAsync(
             int userId,
             ISet<string> userRoles,
+            IReadOnlyList<int> firmaIds,
             int? limit = null,
             CancellationToken ct = default)
         {
+            if (firmaIds.Count == 0) return new();
+
             var active = await _db.WorkflowInstances.AsNoTracking()
-                .Where(i => i.Status == WorkflowInstanceStatus.Active && i.CurrentStepId != null)
+                .Where(i => firmaIds.Contains(i.FirmaId)
+                         && i.Status == WorkflowInstanceStatus.Active
+                         && i.CurrentStepId != null)
                 .Include(i => i.Template)
                 .ToListAsync(ct);
 
-            var items = new List<InboxItem>();
+            // In-memory assignment filter (WorkflowDefinition.Parse gerektirir).
+            var matched = new List<WorkflowInstance>();
             foreach (var instance in active)
             {
                 if (instance.Template is null) continue;
                 var definition = WorkflowDefinition.Parse(instance.Template.DefinitionJson);
                 var step = definition?.Steps.FirstOrDefault(s => s.Id == instance.CurrentStepId);
                 if (step is null) continue;
-
                 if (!IsAssignedToUser(step, userId, userRoles)) continue;
+                matched.Add(instance);
+                if (limit.HasValue && matched.Count >= limit.Value) break;
+            }
 
-                var (title, url, _) = await ResolveEntityPreviewAsync(instance.EntityType, instance.EntityId, ct);
-                var startedByName = await ResolveUserNameAsync(instance.StartedBy, ct);
+            if (matched.Count == 0) return new();
 
+            // Batch: tüm StartedBy kullanıcı adlarını tek sorguda al.
+            var userIds = matched.Select(i => i.StartedBy).Where(id => id > 0).Distinct().ToList();
+            var userNames = await ResolveUserNamesAsync(userIds, ct);
+
+            // Batch: entity preview'ları tip bazında tek sorguda al.
+            var previews = await ResolveBatchEntityPreviewsAsync(matched, ct);
+
+            var items = new List<InboxItem>(matched.Count);
+            foreach (var instance in matched)
+            {
+                if (instance.Template is null) continue;
+                var definition = WorkflowDefinition.Parse(instance.Template.DefinitionJson);
+                var step = definition?.Steps.FirstOrDefault(s => s.Id == instance.CurrentStepId);
+                if (step is null) continue;
+
+                previews.TryGetValue((instance.EntityType, instance.EntityId), out var preview);
                 items.Add(new InboxItem
                 {
                     InstanceId = instance.Id,
@@ -51,14 +76,51 @@ namespace Mosaik.Services.Workflow
                     EntityType = instance.EntityType,
                     EntityId = instance.EntityId,
                     StartedAt = instance.StartedAt,
-                    EntityTitle = title,
-                    EntityUrl = url,
-                    StartedByName = startedByName
+                    EntityTitle = preview.Title ?? $"{instance.EntityType} #{instance.EntityId}",
+                    EntityUrl = preview.Url ?? string.Empty,
+                    StartedByName = userNames.GetValueOrDefault(instance.StartedBy, string.Empty)
                 });
-
-                if (limit.HasValue && items.Count >= limit.Value) break;
             }
             return items;
+        }
+
+        private async Task<Dictionary<(string, int), (string? Title, string? Url)>> ResolveBatchEntityPreviewsAsync(
+            IReadOnlyList<WorkflowInstance> instances,
+            CancellationToken ct)
+        {
+            var result = new Dictionary<(string, int), (string?, string?)>();
+
+            var contractIds = instances
+                .Where(i => i.EntityType.Equals("contract", StringComparison.OrdinalIgnoreCase))
+                .Select(i => i.EntityId).Distinct().ToList();
+            if (contractIds.Count > 0)
+            {
+                var rows = await _db.Contracts.AsNoTracking()
+                    .Where(c => contractIds.Contains(c.Id))
+                    .Select(c => new { c.Id, c.Title })
+                    .ToListAsync(ct);
+                foreach (var r in rows)
+                    result[("contract", r.Id)] = (r.Title, $"/Contracts/Details/{r.Id}");
+            }
+
+            var circularIds = instances
+                .Where(i => i.EntityType.Equals("circular", StringComparison.OrdinalIgnoreCase)
+                         || i.EntityType.Equals("tamim", StringComparison.OrdinalIgnoreCase))
+                .Select(i => i.EntityId).Distinct().ToList();
+            if (circularIds.Count > 0)
+            {
+                var rows = await _db.Set<Mosaik.Modules.Circular.Models.Circular>().AsNoTracking()
+                    .Where(c => circularIds.Contains(c.Id))
+                    .Select(c => new { c.Id, c.Title })
+                    .ToListAsync(ct);
+                foreach (var r in rows)
+                {
+                    result[("circular", r.Id)] = (r.Title, $"/Circular/Circular/Details/{r.Id}");
+                    result[("tamim", r.Id)] = (r.Title, $"/Circular/Circular/Details/{r.Id}");
+                }
+            }
+
+            return result;
         }
 
         // Entity tipine göre title + URL + kısa özet döner. Bilinmeyen tip → ham EntityType #EntityId.
@@ -198,13 +260,32 @@ namespace Mosaik.Services.Workflow
             return rows.ToDictionary(r => r.UserId, r => r.Name);
         }
 
+        // DB-side firmaId filter + status filter → in-memory assignment check. Entity preview yok.
         public async Task<int> CountPendingForUserAsync(
             int userId,
             ISet<string> userRoles,
+            IReadOnlyList<int> firmaIds,
             CancellationToken ct = default)
         {
-            var items = await GetPendingForUserAsync(userId, userRoles, limit: null, ct);
-            return items.Count;
+            if (firmaIds.Count == 0) return 0;
+
+            var active = await _db.WorkflowInstances.AsNoTracking()
+                .Where(i => firmaIds.Contains(i.FirmaId)
+                         && i.Status == WorkflowInstanceStatus.Active
+                         && i.CurrentStepId != null)
+                .Include(i => i.Template)
+                .ToListAsync(ct);
+
+            int count = 0;
+            foreach (var instance in active)
+            {
+                if (instance.Template is null) continue;
+                var definition = WorkflowDefinition.Parse(instance.Template.DefinitionJson);
+                var step = definition?.Steps.FirstOrDefault(s => s.Id == instance.CurrentStepId);
+                if (step is null) continue;
+                if (IsAssignedToUser(step, userId, userRoles)) count++;
+            }
+            return count;
         }
 
         // Step.properties.assigneeUserId | assigneeUserIds | assigneeRole assignee check.

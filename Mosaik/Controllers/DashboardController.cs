@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Mosaik.Models;
 using Mosaik.Modules.Circular.Services;
+using Mosaik.Services;
 using Mosaik.Services.Workflow;
 using Mosaik.ViewModels;
 using System.Security.Claims;
@@ -15,17 +16,20 @@ namespace Mosaik.Controllers
         private readonly MosaikContext _context;
         private readonly CircularService _tamim;
         private readonly WorkflowInboxService _workflowInbox;
+        private readonly ICurrentUserService _currentUser;
         private readonly ILogger<DashboardController> _logger;
 
         public DashboardController(
             MosaikContext context,
             CircularService tamim,
             WorkflowInboxService workflowInbox,
+            ICurrentUserService currentUser,
             ILogger<DashboardController> logger)
         {
             _context = context;
             _tamim = tamim;
             _workflowInbox = workflowInbox;
+            _currentUser = currentUser;
             _logger = logger;
         }
 
@@ -336,7 +340,7 @@ namespace Mosaik.Controllers
                 if (int.TryParse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value, out var uid))
                 {
                     var userRoleSet = roles.ToHashSet(StringComparer.OrdinalIgnoreCase);
-                    var pending = await _workflowInbox.GetPendingForUserAsync(uid, userRoleSet);
+                    var pending = await _workflowInbox.GetPendingForUserAsync(uid, userRoleSet, _currentUser.FirmaIds);
                     model.WorkflowPendingCount = pending.Count;
                     model.WorkflowPreview = pending.Take(3).ToList();
                 }

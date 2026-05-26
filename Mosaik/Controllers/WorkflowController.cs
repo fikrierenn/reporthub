@@ -2,6 +2,7 @@ using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Mosaik.Core.Domain;
 using Mosaik.Core.Workflow;
 using Mosaik.Models;
 using Mosaik.Services;
@@ -20,19 +21,24 @@ namespace Mosaik.Controllers
         private readonly IWorkflowService _engine;
         private readonly WorkflowInboxService _inbox;
         private readonly AuditLogService _auditLog;
+        private readonly ICurrentUserService _currentUser;
         private readonly ILogger<WorkflowController> _logger;
+
+        private IReadOnlyList<int> FirmaIds => _currentUser.FirmaIds;
 
         public WorkflowController(
             MosaikContext db,
             IWorkflowService engine,
             WorkflowInboxService inbox,
             AuditLogService auditLog,
+            ICurrentUserService currentUser,
             ILogger<WorkflowController> logger)
         {
             _db = db;
             _engine = engine;
             _inbox = inbox;
             _auditLog = auditLog;
+            _currentUser = currentUser;
             _logger = logger;
         }
 
@@ -48,7 +54,7 @@ namespace Mosaik.Controllers
         public async Task<IActionResult> Inbox(CancellationToken ct)
         {
             if (!TryGetUserId(out var userId)) return Forbid();
-            var items = await _inbox.GetPendingForUserAsync(userId, GetUserRoles(), limit: null, ct);
+            var items = await _inbox.GetPendingForUserAsync(userId, GetUserRoles(), FirmaIds, limit: null, ct);
             return View(new WorkflowInboxViewModel { Items = items });
         }
 
@@ -173,7 +179,25 @@ namespace Mosaik.Controllers
                 Approved: input.Approved,
                 Comment: string.IsNullOrWhiteSpace(input.Comment) ? null : input.Comment.Trim());
 
-            var result = await _engine.AdvanceAsync(id, advance, ct);
+            ServiceResult result;
+            try
+            {
+                result = await _engine.AdvanceAsync(id, advance, ct);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "WorkflowEngine.AdvanceAsync başarısız. InstanceId={Id}", id);
+                await _auditLog.LogAsync(new AuditLogEntry
+                {
+                    EventType = input.Approved ? "workflow_step_approved" : "workflow_step_rejected",
+                    TargetType = "workflow_instance",
+                    TargetKey = id.ToString(),
+                    Description = "Engine hatası — işlem tamamlanamadı.",
+                    IsSuccess = false
+                });
+                TempData["Message"] = "İşlem sırasında hata oluştu. Lütfen tekrar deneyin.";
+                return RedirectToAction(nameof(Instance), new { id });
+            }
 
             await _auditLog.LogAsync(new AuditLogEntry
             {

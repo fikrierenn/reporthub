@@ -199,12 +199,8 @@ namespace Mosaik.Controllers
 
         // FirmaId çözümü — kullanıcının ilk firması (multi-firma kullanıcıları için
         // Plan 14 Faz B sonrası context picker gerek; şimdilik ilk firma).
-        private int ResolveFirmaId()
-        {
-            var firmaClaim = User.FindFirst("FirmaId")?.Value;
-            if (int.TryParse(firmaClaim, out var fid) && fid > 0) return fid;
-            return 1; // fallback — tek firmalı kurulum
-        }
+        private int ResolveFirmaId() =>
+            _currentUser.FirmaIds.Count > 0 ? _currentUser.FirmaIds[0] : 0;
 
         // W-05 designer için step.properties dropdown veri kaynağı.
         // Active users + active roles JSON.
