@@ -6,7 +6,7 @@
 > Tahmin etme. **Önce buraya bak.**
 
 Son elle güncelleme: **2026-05-12**
-Son otomatik refresh: <!-- AUTO:LAST_REFRESH --> 2026-05-26 <!-- /AUTO:LAST_REFRESH -->
+Son otomatik refresh: <!-- AUTO:LAST_REFRESH --> 2026-05-27 <!-- /AUTO:LAST_REFRESH -->
 
 > **Otomatik tazelenir.** `bash scripts/refresh-arch-map.sh` çalıştırılınca aşağıdaki marker'lı bölümler regenerate edilir:
 > AppModules live state (§ 7), Admin views listesi (§ 12), Controller routes (§ 13).
@@ -250,7 +250,7 @@ Bir view/method/file silmeden veya rename etmeden önce **hepsini sırayla** yap
 _Otomatik üretildi. Mosaik/Views/Admin/*.cshtml (partial hariç)._
 
 - `AiSettings.cshtml` (lines=184, inline-style=0)
-- `AiSettingsEdit.cshtml` (lines=230, inline-style=0)
+- `AiSettingsEdit.cshtml` (lines=231, inline-style=0)
 - `BrandSettings.cshtml` (lines=106, inline-style=0)
 - `CreateDataSource.cshtml` (lines=145, inline-style=0)
 - `CreateFilter.cshtml` (lines=51, inline-style=0)
