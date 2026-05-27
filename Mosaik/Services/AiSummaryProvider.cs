@@ -2,6 +2,7 @@ using System.Collections.Concurrent;
 using System.Text;
 using System.Text.Json;
 using Mosaik.Core.Ai;
+using Mosaik.Core.AI.Local;
 
 namespace Mosaik.Services
 {
@@ -18,6 +19,7 @@ namespace Mosaik.Services
         private readonly IAiSettingsProvider _settings;
         private readonly IHttpClientFactory _httpFactory;
         private readonly ILogger<AiSummaryProvider> _logger;
+        private readonly ILlmRunner? _localRunner;
 
         // key = AiSettings.Id (string), value = (UTC gün, kümülatif token)
         private static readonly ConcurrentDictionary<string, (DateOnly Date, long Tokens)> s_dailyUsage = new();
@@ -25,11 +27,13 @@ namespace Mosaik.Services
         public AiSummaryProvider(
             IAiSettingsProvider settings,
             IHttpClientFactory httpFactory,
-            ILogger<AiSummaryProvider> logger)
+            ILogger<AiSummaryProvider> logger,
+            ILlmRunner? localRunner = null)
         {
             _settings = settings;
             _httpFactory = httpFactory;
             _logger = logger;
+            _localRunner = localRunner;
         }
 
         public async Task<AiSummaryResult> GenerateAsync(AiRequest req, CancellationToken ct = default)
@@ -74,6 +78,7 @@ namespace Mosaik.Services
                     {
                         "gemini" => await CallGeminiAsync(effective, req, ct),
                         "zai" => await CallZaiAsync(effective, req, ct),
+                        "local" => await CallLocalAsync(effective, req, ct),
                         _ => await CallOpenAiCompatibleAsync(effective, req, ct)
                     };
                 }
@@ -337,6 +342,43 @@ namespace Mosaik.Services
             var last = text.LastIndexOf('}');
             if (first >= 0 && last > first) return text.Substring(first, last - first + 1);
             return null;
+        }
+
+        // Plan 27 Faz B (2026-05-27) — Yerleşik AI (LLamaSharp + Qwen 2.5 3B Q4).
+        // Cloud bağımlılığı yok, KVKK uyumlu, $0 cost. Context 4096 token (~3K char).
+        // RequireJson=true ise output'tan JSON bloğu ayıklanır (Qwen strict json_object yok).
+        private async Task<AiSummaryResult> CallLocalAsync(AiConfig cfg, AiRequest req, CancellationToken ct)
+        {
+            if (_localRunner is null || !_localRunner.IsReady)
+            {
+                return new AiSummaryResult(false, null,
+                    "Yerleşik AI hazır değil (Qwen model dosyası eksik veya runner devre dışı).");
+            }
+
+            var options = new LlmRunOptions(
+                MaxTokens: Math.Clamp(cfg.MaxTokens, 64, 2048),
+                Temperature: (float)Math.Clamp(cfg.Temperature, 0.0, 1.0),
+                TopP: 0.9f);
+
+            var run = await _localRunner.RunAsync(req.SystemPrompt, req.UserPrompt, options, ct);
+
+            if (!run.IsSuccess || string.IsNullOrWhiteSpace(run.Answer))
+            {
+                return new AiSummaryResult(false, null,
+                    $"Yerleşik AI hata: {run.Error ?? "boş cevap"}",
+                    run.TokensIn, run.TokensOut, cfg.Model);
+            }
+
+            var content = run.Answer!;
+            if (req.RequireJson)
+            {
+                var extracted = ExtractJsonBlock(content);
+                if (!string.IsNullOrWhiteSpace(extracted))
+                    content = extracted;
+            }
+
+            return new AiSummaryResult(true, content, null,
+                run.TokensIn, run.TokensOut, "qwen-2.5-3b-q4");
         }
 
         private async Task<AiSummaryResult> CallGeminiAsync(AiConfig cfg, AiRequest req, CancellationToken ct)

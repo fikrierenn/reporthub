@@ -2,6 +2,7 @@ using System.Net;
 using System.Text;
 using System.Text.Json;
 using Mosaik.Core.Ai;
+using Mosaik.Core.AI.Local;
 using Mosaik.Services;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -69,8 +70,18 @@ public class AiSummaryProviderTests
             Model: "m", MaxTokens: 512, Temperature: 0.3, BaseUrl: null,
             DailyTokenBudget: budget);
 
-    private static AiSummaryProvider Build(FakeSettings settings, FakeFactory factory) =>
-        new AiSummaryProvider(settings, factory, NullLogger<AiSummaryProvider>.Instance);
+    private static AiSummaryProvider Build(FakeSettings settings, FakeFactory factory, ILlmRunner? local = null) =>
+        new AiSummaryProvider(settings, factory, NullLogger<AiSummaryProvider>.Instance, local);
+
+    // Fake local LLM runner — sabit cevap döner, IsReady kontrol edilebilir.
+    private sealed class FakeLocalRunner(bool ready, string answer, string? error = null) : ILlmRunner
+    {
+        public bool IsReady => ready;
+        public Task<LlmRunResult> RunAsync(string systemPrompt, string userPrompt, LlmRunOptions options, CancellationToken ct = default)
+            => Task.FromResult(error is null
+                ? new LlmRunResult(true, answer, TokensIn: 42, TokensOut: 17)
+                : new LlmRunResult(false, null, 0, 0, error));
+    }
 
     private static AiRequest Req(string purpose = "test") =>
         new AiRequest("sys", "user", Purpose: purpose);
@@ -235,6 +246,43 @@ public class AiSummaryProviderTests
         var sut = Build(new FakeSettings([cfg]), new FakeFactory(OpenAiOk()));
         var r = await sut.GenerateAsync(Req());
         Assert.True(r.IsSuccess);
+    }
+
+    // ---- Local (yerleşik AI — LLamaSharp + Qwen) ----
+
+    [Fact]
+    public async Task Local_RunnerReady_ReturnsSuccess()
+    {
+        var runner = new FakeLocalRunner(ready: true, answer: "Yerleşik yanıt.");
+        var sut = Build(new FakeSettings([Cfg("local")]), new FakeFactory(), runner);
+        var r = await sut.GenerateAsync(new AiRequest("sys", "user", RequireJson: false));
+        Assert.True(r.IsSuccess);
+        Assert.Equal("Yerleşik yanıt.", r.RawJson);
+        Assert.Equal(42, r.InputTokens);
+        Assert.Equal(17, r.OutputTokens);
+        Assert.Equal("qwen-2.5-3b-q4", r.ModelUsed);
+    }
+
+    [Fact]
+    public async Task Local_RunnerNotReady_FallsBackToNextProvider()
+    {
+        var runner = new FakeLocalRunner(ready: false, answer: "");
+        var configs = new[] { Cfg("local"), Cfg("openai") };
+        var sut = Build(new FakeSettings(configs), new FakeFactory(OpenAiOk("cloud cevap")), runner);
+        var r = await sut.GenerateAsync(Req());
+        Assert.True(r.IsSuccess);
+        Assert.Equal("cloud cevap", r.RawJson);
+    }
+
+    [Fact]
+    public async Task Local_RequireJson_ExtractsJsonBlock()
+    {
+        var raw = "Açıklama metni... ```json\n{\"summary\":\"abc\"}\n``` ek metin";
+        var runner = new FakeLocalRunner(ready: true, answer: raw);
+        var sut = Build(new FakeSettings([Cfg("local")]), new FakeFactory(), runner);
+        var r = await sut.GenerateAsync(new AiRequest("sys", "user", RequireJson: true));
+        Assert.True(r.IsSuccess);
+        Assert.Equal("{\"summary\":\"abc\"}", r.RawJson);
     }
 
     // ---- Cancellation ----
