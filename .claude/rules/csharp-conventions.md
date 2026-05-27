@@ -129,3 +129,40 @@ Login/logout, create/update/delete, export, dashboard config invalid hepsi log'l
 - **_underscorePrefix:** private readonly field (`_context`, `_logger`).
 - **Interface:** `I` prefix (`IStoredProcedureExecutor`).
 - **Async method:** `Async` suffix (`GetUserAsync`, `LogAsync`).
+
+## Modern C# 14 / .NET 10 Özellikleri (cherry-pick)
+
+_Kaynak: codewithmukesh/dotnet-claude-kit `modern-csharp` skill, 2026-05-27 manuel adapte._
+_Hedef: Mosaik `net10.0` + C# 14. Yeni kod modern pattern, mevcut legacy refactor touch-ettikçe._
+
+### Tercih edilen modern pattern'ler
+
+| Eski pattern | Yeni pattern (C# 14) | Ne zaman |
+|---|---|---|
+| Constructor + `private readonly _x = x` boilerplate | **Primary constructor** `public class OrderService(IRepo repo, ILogger<OrderService> log)` | Her DI'lı class, alan body'de kullanılıyorsa |
+| `new List<string>() { "a", "b" }` | **Collection expression** `List<string> names = ["a", "b"];` | List/array/dict init |
+| Manuel `private string _name; public string Name { get => _name; set => _name = value?.Trim() ?? ""; }` | **`field` keyword** `public string Name { get; set => field = value?.Trim() ?? ""; }` | Property validation/normalize |
+| DTO için class + manual equality | **`record`** (immutable DTO) veya **`readonly record struct`** (küçük value) | Flat data taşıma, value semantics |
+| `static class StringExtensions { static string Trim2(this string s) }` | **Extension members** (C# 14) | Cleaner sözdizimi |
+| `"line1\nline2 \" quote"` string escape | **Raw string** `"""..."""` | SQL/JSON/HTML literal |
+
+### Karar matrisi
+- **DTO / ViewModel** → `record`
+- **Küçük value object** (≤ 16 byte, immutable) → `readonly record struct`
+- **DI'lı service / controller** → primary constructor
+- **Performans-kritik byte/char slice** → `Span<T>` / `ReadOnlySpan<T>` zero-alloc
+- **Default**: `sealed` ekle (inheritance açıkça gerekli değilse)
+- **Immutability default**: `record`, `readonly`, `init`, `required` ile invalid state'i imkânsız yap
+
+### Anti-pattern
+- Manuel backing field (`field` kw varken)
+- `var` belirsizken (`var x = GetThing()` — `Thing x` tercih)
+- Deeply nested pattern match (>2 seviye) — ayrı method'a çıkar
+- `record` yerine tuple ile domain type taşıma
+- `new HttpClient()` (zaten yasak — `IHttpClientFactory`)
+
+### Mosaik için pratik
+- **Mevcut legacy** dokunmadan refactor YOK ([coding-discipline.md](coding-discipline.md) surgical changes).
+- **Yeni dosya** = modern pattern default.
+- **Touch ettikçe** = constructor → primary ctor, `new List<>(){}` → `[]`, manuel backing field → `field`.
+- Roslyn MCP (`cwm-roslyn-navigator`) `detect_antipatterns` ile sync-over-async + async void tara — pre-commit hook bash regex'inden daha güvenilir.

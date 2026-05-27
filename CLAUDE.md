@@ -55,7 +55,7 @@ Detay: [`.claude/rules/session-protocol.md`](.claude/rules/session-protocol.md).
 - **Tailwind CSS** (CDN, utility-first) + `wwwroot/assets/css/style.css` custom sınıflar (`btn-brand`, `form-input-brand`).
 - **Chart.js 4** + **Font Awesome 6** CDN (dashboard render).
 - **Frontend JS:** Vanilla, IIFE pattern, `wwwroot/assets/js/`. jQuery yok.
-- **Testler:** xUnit (`Mosaik.Tests/Mosaik.Tests.csproj`). <!-- AUTO:TEST_COUNT -->442<!-- /AUTO:TEST_COUNT --> test geçiyor.
+- **Testler:** xUnit (`Mosaik.Tests/Mosaik.Tests.csproj`). <!-- AUTO:TEST_COUNT -->445<!-- /AUTO:TEST_COUNT --> test geçiyor.
 
 ### Ana klasörler
 - `Mosaik/Controllers/` — <!-- AUTO:CONTROLLERS -->`Admin`, `Ai`, `Auth`, `Calendar`, `Compliance`, `Contracts`, `Dashboard`, `Documents`, `Home`, `Logs`, `Notifications`, `Obligations`, `OrgChart`, `Profile`, `Reports`, `Test`, `Workflow`<!-- /AUTO:CONTROLLERS -->
@@ -159,10 +159,14 @@ cd D:/Dev/reporthub && dotnet test
 - JS parse kontrolü: `node -e "new Function(require('fs').readFileSync('path/to.js'))"`.
 
 ### Dosya konvansiyonları (özet — detay `.claude/rules/`)
-- C#: [`.claude/rules/csharp-conventions.md`](.claude/rules/csharp-conventions.md)
+- C#: [`.claude/rules/csharp-conventions.md`](.claude/rules/csharp-conventions.md) (+ C# 14 modern features section)
+- Hata yönetimi: [`.claude/rules/error-handling.md`](.claude/rules/error-handling.md) (Result pattern + exception disiplini)
 - Razor: [`.claude/rules/razor-conventions.md`](.claude/rules/razor-conventions.md)
 - SQL: [`.claude/rules/sql-conventions.md`](.claude/rules/sql-conventions.md)
 - JS: [`.claude/rules/js-conventions.md`](.claude/rules/js-conventions.md)
+
+### Roslyn MCP (2026-05-27)
+- `cwm-roslyn-navigator` user-scope MCP — 15 semantic tool (find_symbol/references/callers, detect_antipatterns, find_dead_code, get_diagnostics). Token kazancı ~10x vs file scan. **Claude Code restart sonrası `mcp__cwm-roslyn-navigator__*` aktif.**
 
 ---
 
