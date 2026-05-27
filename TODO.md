@@ -13,6 +13,12 @@ Bu dosya AKTIF işleri ve backlog'u takip eder. Tamamlanmış işler arşiv böl
 
 ---
 
+### 🔝 YARIN BAŞLANGIÇ — 2026-05-28
+- [ ] **RoslynNavigator MCP smoke** — Claude Code restart sonrası `mcp__cwm-roslyn-navigator__*` aktif. 3 query: `find_callers AiSummaryProvider.CallLocalAsync` + `detect_antipatterns Mosaik` + `find_dead_code Mosaik`. Token kazancı ölç + Kaspersky AV çatışma kontrolü. Detay: `memory/reference_roslyn_navigator_mcp.md`, journal `docs/journal/2026-05-27.md`.
+- [ ] **Yerleşik AI commit-split** — 6 uncommitted dosya 3 mantıksal commit'e (feat ai local + docs rules cherry-pick + docs claude referans).
+
+---
+
 #### Plan 33 Faz 1 — Plan stale + Kritik bugfix (~7-10 saat) ✅ **BAŞLADI 2026-05-15**
 
 - [x] **R-01..R-07** — 7 plan stale temizlik (4 archive: 16.6, 17, 23, 26 + 4 durum güncel: 21, 25, 25.1, 27) ✅ 2026-05-15
