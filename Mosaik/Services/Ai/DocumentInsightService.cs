@@ -9,7 +9,7 @@ namespace Mosaik.Services.Ai
     // Kullanım: DocumentsController.Upload sonrası fire-and-forget background task.
     public sealed class DocumentInsightService
     {
-        private const int MaxInputChars = 16000;  // ~4K token, hızlı yanıt
+        private const int MaxInputChars = 8000;  // ~2K token — cloud'da hızlı yanıt, Qwen 4096-ctx safe
         private const string SystemPrompt = """
             Sen bir kurumsal doküman analiz uzmanısın. Sana verilen metni inceleyip
             aşağıdaki JSON formatında yapılandırılmış özet üret:
@@ -81,7 +81,11 @@ namespace Mosaik.Services.Ai
                     department = StrOrNull(root, "department"),
                     tags = TagsArray(root)
                 };
-                var tagsJson = JsonSerializer.Serialize(tagsObj, new JsonSerializerOptions { DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull });
+                var tagsJson = JsonSerializer.Serialize(tagsObj, new JsonSerializerOptions
+                {
+                    DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull,
+                    Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+                });
 
                 return new DocumentInsightResult(summary, tagsJson, result.ModelUsed, result.InputTokens, result.OutputTokens);
             }
