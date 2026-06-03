@@ -62,6 +62,7 @@ namespace Mosaik.Models
         public DbSet<ContractRecurrence> ContractRecurrences { get; set; }
         public DbSet<ContractFile> ContractFiles { get; set; }
         public DbSet<DocumentVersion> DocumentVersions { get; set; }
+        public DbSet<DocumentPermission> DocumentPermissions { get; set; }
         public DbSet<ContractAiExtraction> ContractAiExtractions { get; set; }
         public DbSet<ContractEvent> ContractEvents { get; set; }
         public DbSet<AiSuggestion> AiSuggestions { get; set; }

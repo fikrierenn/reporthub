@@ -151,6 +151,8 @@ builder.Services.AddSingleton<Mosaik.Services.Ai.IPdfTextExtractor, Mosaik.Servi
 builder.Services.AddSingleton<Mosaik.Services.Ai.TesseractOcrExtractor>();
 // Plan 27 Faz A-01
 builder.Services.AddSingleton<Mosaik.Services.Ai.PageImportanceScorer>();
+// Plan 27 Faz C-06 — doküman/klasör seviyesi izin servisi.
+builder.Services.AddScoped<Mosaik.Services.IDocumentPermissionService, Mosaik.Services.DocumentPermissionService>();
 // Plan 27 Faz B-01+B-03 — auto-classify + executive summary servisi.
 builder.Services.AddScoped<Mosaik.Services.Ai.DocumentInsightService>();
 // Plan 27 Faz B-05 — single-doc chat (RAG'siz, token <30K direkt z.ai context).

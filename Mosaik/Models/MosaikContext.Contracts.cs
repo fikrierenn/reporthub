@@ -132,6 +132,21 @@ namespace Mosaik.Models
                     .OnDelete(DeleteBehavior.Cascade);
                 e.HasIndex(v => v.ContractFileId);
             });
+
+            // Plan 27 Faz C-06 — doküman/klasör izin tablosu
+            modelBuilder.Entity<DocumentPermission>(e =>
+            {
+                e.HasKey(p => p.Id);
+                e.Property(p => p.SubjectType).HasMaxLength(10).IsRequired();
+                e.Property(p => p.GrantedAt).HasDefaultValueSql("GETUTCDATE()");
+                e.HasOne(p => p.ContractFile)
+                    .WithMany()
+                    .HasForeignKey(p => p.ContractFileId)
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired(false);
+                e.HasIndex(p => new { p.FirmaId, p.SubjectType, p.SubjectId });
+                e.HasIndex(p => p.ContractFileId);
+            });
         }
     }
 }
