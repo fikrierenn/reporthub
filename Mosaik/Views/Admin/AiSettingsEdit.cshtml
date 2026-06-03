@@ -45,7 +45,8 @@
     @await Html.PartialAsync("_AlertMessage", (TempData["MessageType"]?.ToString() ?? "info", TempData["Message"]?.ToString() ?? ""))
 }
 
-<form method="post" action="@(Model.Id > 0 ? $"/Admin/AiSettings/Edit/{Model.Id}" : "/Admin/AiSettings/Edit")" novalidate>
+<form method="post" action="@(Model.Id > 0 ? $"/Admin/AiSettings/Edit/{Model.Id}" : "/Admin/AiSettings/Edit")" novalidate
+      x-data="{ provider: '@Model.Provider' }">
     @Html.AntiForgeryToken()
 
     <div class="form-section-card wide">
@@ -67,7 +68,7 @@
             <div class="grid-200-1fr">
                 <div class="field">
                     <label class="lab" for="Provider">Provider <span class="text-danger">*</span></label>
-                    <select id="Provider" name="Provider" class="inp" required>
+                    <select id="Provider" name="Provider" class="inp" required x-model="provider">
                         <option value="groq" selected="@(Model.Provider == "groq")">Groq (Llama 3.x — hızlı, free)</option>
                         <option value="grok" selected="@(Model.Provider == "grok")">Grok (xAI — paid)</option>
                         <option value="gemini" selected="@(Model.Provider == "gemini")">Google Gemini (free)</option>
@@ -85,12 +86,12 @@
                 </div>
             </div>
 
-            <div class="field">
-                <label class="lab" for="ApiKey">API Anahtarı @(hasKey ? "" : "*")</label>
+            <div class="field" x-show="provider !== 'local'">
+                <label class="lab" for="ApiKey">API Anahtarı @(hasKey ? "" : "<span class='text-danger'>*</span>")</label>
                 <input type="password" id="ApiKey" name="ApiKey" class="inp" maxlength="500"
                        placeholder="@(hasKey ? "(kayıtlı — değiştirmek için yeni anahtar gir, boş bırakırsan korunur)" : "Provider panelinden aldığın API key")"
                        autocomplete="off"
-                       @(hasKey ? "" : "required") />
+                       :required="provider !== 'local' && !@(hasKey ? "true" : "false")" />
                 @if (hasKey)
                 {
                     <p class="help-text help-success">
@@ -107,6 +108,12 @@
                     <i class="fas fa-circle-info icon-xs" aria-hidden="true"></i>
                     <strong>Önemli:</strong> Her provider'ın ayrı API anahtarı vardır. Provider değiştirdiysen yeni provider'dan <em>ayrı bir anahtar</em> al ve buraya yapıştır (Groq key Gemini'da çalışmaz, tersi de geçerli).
                 </div>
+            </div>
+            <div class="field" x-show="provider === 'local'" x-cloak>
+                <p class="help-text help-success">
+                    <i class="fas fa-circle-check icon-xs" aria-hidden="true"></i>
+                    Yerleşik AI — API anahtarı gerekmez. Model sunucu üzerinde yerel çalışır.
+                </p>
             </div>
 
             <div class="grid-3col">
@@ -210,7 +217,8 @@
         gemini:      { model: 'gemini-1.5-flash',                hint: 'gemini-2.0-flash / gemini-1.5-flash / gemini-1.5-pro' },
         openrouter:  { model: 'qwen/qwen-2.5-72b-instruct:free', hint: 'qwen/qwen-2.5-72b-instruct:free (Türkçe iyi) / meta-llama/llama-3.3-70b-instruct:free / deepseek/deepseek-chat:free / google/gemma-3-27b-it:free' },
         openai:      { model: 'gpt-4o-mini',                     hint: 'gpt-4o-mini / gpt-4o / o1-mini' },
-        ollama:      { model: 'llama3.1',                        hint: 'llama3.1 / qwen2.5:7b / mistral / phi3' }
+        ollama:      { model: 'llama3.1',                        hint: 'llama3.1 / qwen2.5:7b / mistral / phi3' },
+        local:       { model: 'qwen2.5-3b-q4',                  hint: 'qwen2.5-3b-q4 (varsayılan, sunucuda yüklü)' }
     };
 
     function updateHint() {
