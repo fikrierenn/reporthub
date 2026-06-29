@@ -7,7 +7,7 @@ paths:
 
 ## Dosya Konvansiyonu
 
-- **Migration:** `Database/NN_KisaAciklama.sql` — numaralı, sıralı. Mevcut: 01-14.
+- **Migration:** `Database/NN_KisaAciklama.sql` — numaralı, sıralı. Mevcut: 00 → 74 (güncel sayım için `ls Mosaik/Database/`).
 - **Stored Procedure:** `Database/sp_PascalCase.sql`.
 - **Function (TVF):** `Database/fn_PascalCase.sql`.
 - **Seed:** `Database/NN_SeedX.sql` veya `Database/Seed/` alt klasörü (ilerde).

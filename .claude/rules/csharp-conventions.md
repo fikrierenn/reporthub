@@ -18,8 +18,7 @@ paths:
 - Util/helper: 5+ public method varsa scope bazlı ayır.
 - **Mevcut büyük dosyalar** (legacy): TODO maddesi + ADR "Known debt" + faz planla. Touch ettikçe azaltmaya çalış.
 
-**Snapshot (22 Nisan 2026):**
-- `AdminController.cs` 1736 satır — **anti-pattern**. TODO M-01 (Faz 2) service extraction.
+**Snapshot:** `AdminController` M-01 ile **bölündü** (368 ana + 11 partial, en büyük 266 satır — hard-limit altı). Geçmiş 1736-satır anti-pattern'i `architecture.md` "Düzeltilen Aykırılıklar"da.
 
 ## Controller Action'ları
 
@@ -66,6 +65,7 @@ using var reader = await cmd.ExecuteReaderAsync();
   ```
 - **User'a `ex.Message` GÖSTERME** — stack / connection string sızar.
 - **Sessiz `catch {}` yasak** — en azından `_logger.LogWarning`.
+- **Canonical (Result pattern + tam exception disiplini):** [`error-handling.md`](error-handling.md). Bu blok özet; detay + `ServiceResult` orada.
 
 ## Nullability
 

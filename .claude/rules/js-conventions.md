@@ -120,7 +120,7 @@ fetch('/Admin/SpPreview?dataSourceKey=' + encodeURIComponent(dsKey))
 
 - `dashboard-builder.js` IIFE içinde `render()`, `attachDragDrop()`, `renderForm()`, event handler'lar.
 - `window.__spPreview` global — SP Preview sonucunu builder'a taşır.
-- `document.addEventListener('spPreviewReady', ...)` — henüz bağlanmadı (TODO FAZ 1, kolon datalist).
+- `document.addEventListener('spPreviewReady', ...)` — SP Preview → builder kolon datalist akışı (Plan 25.2 split sonrası canlı).
 
 ## Syntax Check
 
