@@ -4,6 +4,8 @@
 
 **Son güncelleme:** 2026-05-21 (KVKK Process Backbone + Form Builder + Process Execution Runtime — vNext kalbi altılı; portal = execution platform).
 
+> **Kapsam sınırı + rakip benchmark (2026-06-29):** [`docs/COMPETITIVE_SCOPE_2026-06-29.md`](COMPETITIVE_SCOPE_2026-06-29.md) — portalda ne OLMALI/OLMAMALI (CORE/ADJACENT/OUT) + global/TR rakip parity gap. Eksik must-have: unified inbox + cross-module search + dashboard→alert (CORE bağ-dokusu) · e-imza + İK self-servis + KVKK tamamlama (DSAR/VERBİS/ihlal) (TR table-stakes). CUT review: Plan 49 biyometrik / 51 differential-privacy / 50 shadow-org (onaylı ama scope-creep). Differentiator/wedge: **local-LLM KVKK-safe on-prem AI** (rakip yapısal eşleşemez). OUT/integrate: ERP/CRM/HRIS-bordro/e-Devlet.
+>
 > **Dış best-practice doğrulaması (2026-06-29):** vNext yönü 5 paralel web-research + sistem taraması ile sektör pratiğine oturtuldu → [`docs/RESEARCH_VISION_2026-06-29.md`](RESEARCH_VISION_2026-06-29.md). Özet: yön DOĞRU (modüler monolit + OI north star literatürle uyumlu). **3 düzeltme planlara fold bekliyor:** (1) Plan 42 — 6 fiziksel aspect tablosu yerine **tek `ProcessActivity` stream** (discriminator + PayloadJson + RefEntityType/Id); (2) Plan 41 — **`FormVersion` snapshot** + SurveyJS reuse; (3) Plan 40 — ProcessingPurpose/Recipient/VerbisRegistration lookup + Pattern 9. Platform boşluğu = cross-module search + unified inbox + dashboard→alert (yeni modül değil, bağlayıcı doku). EntityRelations generic tablo genişletilmeden typed-junction kararı verilmeli.
 
 ---
