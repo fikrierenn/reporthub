@@ -18,14 +18,16 @@ namespace Mosaik.Controllers
         private readonly AuditLogService _auditLog;
         private readonly IBusinessClock _clock;
         private readonly IModuleService _modules;
+        private readonly Mosaik.Core.Lookup.ILookupService _lookup;
 
-        public ComplianceController(MosaikContext db, ICurrentUserService currentUser, AuditLogService auditLog, IBusinessClock clock, IModuleService modules)
+        public ComplianceController(MosaikContext db, ICurrentUserService currentUser, AuditLogService auditLog, IBusinessClock clock, IModuleService modules, Mosaik.Core.Lookup.ILookupService lookup)
         {
             _db = db;
             _currentUser = currentUser;
             _clock = clock;
             _auditLog = auditLog;
             _modules = modules;
+            _lookup = lookup;
         }
 
         // N-2: DB-driven modül yetki kontrolü — ModuleRoleAccess tablosundan.
@@ -78,6 +80,8 @@ namespace Mosaik.Controllers
                 : new List<Firma>();
 
             ViewBag.Package = package;
+            ViewBag.RecurrenceLabels = (await _lookup.GetValuesAsync("recurrenceType")).ToDictionary(v => v.Code, v => v.Label);
+            ViewBag.ObligationCategoryLabels = (await _lookup.GetValuesAsync("obligationCategory")).ToDictionary(v => v.Code, v => v.Label);
             return View(templates);
         }
 

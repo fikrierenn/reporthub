@@ -2,7 +2,12 @@
 
 **Tarih:** 2026-05-09
 **Yazan:** Claude
-**Durum:** ⚠️ **KISMI IMPLEMENT** — `LookupService` canlı (`Mosaik/Services/LookupService.cs` + `Mosaik.Core.Lookup.ILookupService` adapter). 2026-05-14 Plan 33 keşfinde tespit edildi. Plan dosyasının "Taslak" durumu stale. Implement detayı + done criteria audit ayrı oturuma bırakıldı (Plan 33 R-04). Migration ve kullanılan enum'ların listesi doğrulanmadıkça archive'a alınmaz.
+**Durum:** ⚠️ **KISMI — SPEC GÜNCELLENDİ 2026-06-29.** Altyapı canlı ama bu planın öngördüğü tek `Lookups` tablosu **SUPERSEDED**: gerçekte `DictionaryType`/`DictionaryValue` (migration `34_CreateMosaikCoreLookup.sql`) + `LookupService` (`GetValuesAsync(typeCode)`, IMemoryCache 10dk) kullanılıyor. Tamim (`38_SeedTamimLookups.sql`) + SOP (`08`) seed'lemiş; **Contracts/Obligations etmemiş** — 5 enum hâlâ view'larda hardcoded `<option>` (`Contracts/Create.cshtml:140-146` vb.), `/Admin/Lookups` CRUD **YOK**. Bu plan o eksiği DictionaryType altyapısıyla kapatır (yeni tablo YOK).
+
+### Güncel pattern (34 + LookupService)
+- `DictionaryTypes(Id, Code, Name, IsActive)` + `DictionaryValues(TypeId, Code, Label, DisplayOrder, IsActive)`. Code = camelCase EN, Label = TR (turkish-ui).
+- View tüketim: `await _lookup.GetValuesAsync("contractCategory")` → dropdown.
+- **Enum↔lookup eşleme:** enum kolonu (`ContractCategory Category` int) KALIR. `DictionaryValue.Code` = enum üye camelCase'i (örn. `ContractCategory.Rent`→`"rent"`). POST'ta Code→enum parse, render'da enum→Code→Label. **Admin sadece Label/DisplayOrder/IsActive düzenler** (Code lock, enum bütünlüğü korunur); admin yeni-kategori-ekleme bu fazda YOK (enum üyesi olmadan int gelmez — kapsam dışı, Risk tablosu).
 
 ---
 
@@ -28,19 +33,21 @@ Kullanıcı kararı: "varsa başka yerlerde de enumları normal db ye çevir".
 - User-defined custom group ekleme — sadece sabit 5 group.
 - Migration ile mevcut data değiştirme (DB'deki INT değerler enum ordinal'iyle eşleşiyor zaten).
 
-### Etkilenen dosyalar
-- `Mosaik/Models/Lookup.cs` — yeni entity
-- `Mosaik/Database/51_CreateLookups.sql` — tablo + 29 seed
-- `Mosaik/Services/ILookupService.cs` + `LookupService.cs` — cache'li singleton
-- `Mosaik/Controllers/AdminController.Lookups.cs` — CRUD partial
-- `Mosaik/Views/Admin/Lookups.cshtml` — admin CRUD ekranı
-- `Mosaik/Views/Contracts/Create.cshtml` + `Edit.cshtml` — dropdown'lar
-- `Mosaik/Views/Obligations/Create.cshtml` — dropdown'lar
-- `Mosaik/Views/Compliance/Preview.cshtml` — RecurrenceType label
-- `Mosaik/Views/Calendar/Index.cshtml` — EventType label
-- `Mosaik/Models/MosaikContext.cs` — DbSet + index
+### Etkilenen dosyalar (güncel — DictionaryType altyapısı, yeni tablo YOK)
 
-**Tahmini boyut:** 10 dosya / ~400 satır.
+**Faz 1 — seed + view wiring (asıl kullanıcı kazancı, ~6 dosya):**
+- `Mosaik/Database/75_SeedContractLookups.sql` — 5 DictionaryType (`contractCategory`, `obligationCategory`, `obligationType`, `recurrenceType`, `eventType`) + ~29 DictionaryValue (Code = enum üye camelCase). İdempotent, 38 pattern.
+- `Mosaik/Controllers/ContractsController.cs` + `ObligationsController.cs` — GET'te `ViewBag.X = await _lookup.GetValuesAsync(...)`, POST'ta Code→enum parse fallback.
+- `Mosaik/Views/Contracts/Create.cshtml` + `Edit.cshtml` — hardcoded `<option>` → lookup loop.
+- `Mosaik/Views/Obligations/Create.cshtml` — aynı.
+- `Mosaik/Views/Compliance/Preview.cshtml` + `Calendar/Index.cshtml` — RecurrenceType/EventType label lookup.
+
+**Faz 2 — admin CRUD (opsiyonel, daha ağır):**
+- `Mosaik/Controllers/AdminController.Lookups.cs` + `Views/Admin/Lookups.cshtml` — DictionaryType/Value CRUD (Label/DisplayOrder/IsActive edit, Code read-only). `LookupService` cache invalidation save sonrası.
+
+**Tahmini boyut:** Faz 1 ~6 dosya/~200 satır; Faz 2 ~2 dosya/~200 satır.
+
+> ⚠️ `Lookup.cs` entity + `51_CreateLookups.sql` + ayrı `LookupService` (eski spec) **YAZILMAYACAK** — DictionaryType/Value + mevcut `LookupService` kullanılır.
 
 ## 3. Alternatifler
 

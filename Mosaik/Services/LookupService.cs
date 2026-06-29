@@ -96,6 +96,32 @@ namespace Mosaik.Services
             return ServiceResult<DictionaryValue>.Ok(value, "Eklendi.");
         }
 
+        public async Task<ServiceResult> UpdateValueAsync(int valueId, string label, int displayOrder, string updatedBy)
+        {
+            if (string.IsNullOrWhiteSpace(label))
+                return ServiceResult.Failure("Etiket zorunludur.");
+
+            var value = await _context.DictionaryValues.Include(v => v.Type).FirstOrDefaultAsync(v => v.Id == valueId);
+            if (value == null) return ServiceResult.Failure("Değer bulunamadı.");
+
+            value.Label = label.Trim();
+            value.DisplayOrder = displayOrder;
+            value.UpdatedBy = updatedBy;
+            value.UpdatedAt = DateTime.UtcNow;
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "LookupService.UpdateValueAsync valueId={ValueId}", valueId);
+                return ServiceResult.Failure("Güncelleme sırasında hata oluştu.");
+            }
+
+            if (value.Type != null) _cache.Remove(CacheKey(value.Type.Code));
+            return ServiceResult.Ok("Güncellendi.");
+        }
+
         public async Task<ServiceResult> SetActiveAsync(int valueId, bool active, string updatedBy)
         {
             var value = await _context.DictionaryValues.Include(v => v.Type).FirstOrDefaultAsync(v => v.Id == valueId);

@@ -12,16 +12,22 @@ namespace Mosaik.Controllers
     {
         private readonly MosaikContext _db;
         private readonly ICurrentUserService _currentUser;
+        private readonly Mosaik.Core.Lookup.ILookupService _lookup;
 
-        public CalendarController(MosaikContext db, ICurrentUserService currentUser)
+        public CalendarController(MosaikContext db, ICurrentUserService currentUser, Mosaik.Core.Lookup.ILookupService lookup)
         {
             _db = db;
             _currentUser = currentUser;
+            _lookup = lookup;
         }
 
         private IReadOnlyList<int> FirmaIds => _currentUser.FirmaIds;
 
-        public IActionResult Index() => View();
+        public async Task<IActionResult> Index()
+        {
+            ViewBag.EventTypes = await _lookup.GetValuesAsync("eventType");
+            return View();
+        }
 
         // ADR-016: vw_CalendarUnified birleşik takvim verisi.
         // sources parametresi boş = hepsi; virgülle ayrılmış SourceType filtresi.

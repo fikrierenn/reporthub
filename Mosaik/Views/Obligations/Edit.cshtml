@@ -63,23 +63,19 @@
                 <div class="field">
                     <label class="lab" for="Category">Kategori</label>
                     <select class="inp" id="Category" name="Category">
-                        <option value="0" selected="@(Model.Category == ObligationCategory.Finance)">Finans</option>
-                        <option value="1" selected="@(Model.Category == ObligationCategory.Tax)">Vergi</option>
-                        <option value="2" selected="@(Model.Category == ObligationCategory.Hr)">İK</option>
-                        <option value="3" selected="@(Model.Category == ObligationCategory.Operation)">Operasyon</option>
-                        <option value="4" selected="@(Model.Category == ObligationCategory.It)">BT</option>
-                        <option value="5" selected="@(Model.Category == ObligationCategory.Legal)">Hukuk</option>
+                        @foreach (var v in (List<Mosaik.Core.Lookup.DictionaryValue>)ViewBag.ObligationCategories)
+                        {
+                            <option value="@v.Code" selected="@(string.Equals(Model.Category.ToString(), v.Code, StringComparison.OrdinalIgnoreCase))">@v.Label</option>
+                        }
                     </select>
                 </div>
                 <div class="field">
                     <label class="lab" for="Type">Tür</label>
                     <select class="inp" id="Type" name="Type">
-                        <option value="0" selected="@(Model.Type == ObligationType.Payment)">Ödeme</option>
-                        <option value="1" selected="@(Model.Type == ObligationType.Tax)">Vergi</option>
-                        <option value="2" selected="@(Model.Type == ObligationType.Compliance)">Uyum</option>
-                        <option value="3" selected="@(Model.Type == ObligationType.Renewal)">Yenileme</option>
-                        <option value="4" selected="@(Model.Type == ObligationType.Deadline)">Son Tarih</option>
-                        <option value="5" selected="@(Model.Type == ObligationType.Audit)">Denetim</option>
+                        @foreach (var v in (List<Mosaik.Core.Lookup.DictionaryValue>)ViewBag.ObligationTypes)
+                        {
+                            <option value="@v.Code" selected="@(string.Equals(Model.Type.ToString(), v.Code, StringComparison.OrdinalIgnoreCase))">@v.Label</option>
+                        }
                     </select>
                 </div>
             </div>

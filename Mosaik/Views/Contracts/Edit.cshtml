@@ -42,13 +42,10 @@
                 <div class="field">
                     <label class="lab" for="Category">Kategori</label>
                     <select class="inp" id="Category" name="Category">
-                        <option value="0" selected="@(Model.Category == ContractCategory.Lease)">Kira</option>
-                        <option value="1" selected="@(Model.Category == ContractCategory.Service)">Hizmet</option>
-                        <option value="2" selected="@(Model.Category == ContractCategory.Supply)">Tedarik</option>
-                        <option value="3" selected="@(Model.Category == ContractCategory.Employment)">İş</option>
-                        <option value="4" selected="@(Model.Category == ContractCategory.License)">Lisans</option>
-                        <option value="5" selected="@(Model.Category == ContractCategory.Insurance)">Sigorta</option>
-                        <option value="6" selected="@(Model.Category == ContractCategory.Other)">Diğer</option>
+                        @foreach (var v in (List<Mosaik.Core.Lookup.DictionaryValue>)ViewBag.ContractCategories)
+                        {
+                            <option value="@v.Code" selected="@(string.Equals(Model.Category.ToString(), v.Code, StringComparison.OrdinalIgnoreCase))">@v.Label</option>
+                        }
                     </select>
                 </div>
                 <div class="field">

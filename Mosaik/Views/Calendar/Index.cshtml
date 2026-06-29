@@ -117,12 +117,10 @@
                 <div class="field">
                     <label class="lab" for="evType">Tür</label>
                     <select class="inp" id="evType" name="EventType">
-                        <option value="0">Ödeme</option>
-                        <option value="1" selected>Son Tarih</option>
-                        <option value="2">Yenileme</option>
-                        <option value="3">Vergi</option>
-                        <option value="4">Uyumluluk</option>
-                        <option value="5">Operasyon</option>
+                        @foreach (var v in (List<Mosaik.Core.Lookup.DictionaryValue>)ViewBag.EventTypes)
+                        {
+                            <option value="@v.Code" selected="@(v.Code == "deadline")">@v.Label</option>
+                        }
                     </select>
                 </div>
             </div>

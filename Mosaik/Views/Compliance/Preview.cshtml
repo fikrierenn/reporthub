@@ -6,24 +6,13 @@
     var firmas  = ViewBag.AccessibleFirmas as List<Firma> ?? new List<Firma>();
     ViewData["Title"] = $"Uyum — {package}";
 
-    string RecurrenceLabel(RecurrenceType r) => r switch
-    {
-        RecurrenceType.Monthly   => "Aylık",
-        RecurrenceType.Quarterly => "Çeyreklik",
-        RecurrenceType.Yearly    => "Yıllık",
-        RecurrenceType.Custom    => "Özel",
-        _                        => r.ToString()
-    };
-    string CategoryLabel(ObligationCategory c) => c switch
-    {
-        ObligationCategory.Finance    => "Finans",
-        ObligationCategory.Tax        => "Vergi",
-        ObligationCategory.Hr         => "İK",
-        ObligationCategory.Operation  => "Operasyon",
-        ObligationCategory.It         => "BT",
-        ObligationCategory.Legal      => "Hukuk",
-        _                             => c.ToString()
-    };
+    var recurrenceLabels = ViewBag.RecurrenceLabels as Dictionary<string, string> ?? new();
+    var categoryLabels   = ViewBag.ObligationCategoryLabels as Dictionary<string, string> ?? new();
+
+    string RecurrenceLabel(RecurrenceType r) =>
+        recurrenceLabels.TryGetValue(r.ToString().ToLowerInvariant(), out var lbl) ? lbl : r.ToString();
+    string CategoryLabel(ObligationCategory c) =>
+        categoryLabels.TryGetValue(c.ToString().ToLowerInvariant(), out var lbl) ? lbl : c.ToString();
 }
 
 @section Breadcrumb {

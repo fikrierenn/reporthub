@@ -59,6 +59,38 @@ namespace Mosaik.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UpdateLookupValue(int valueId, string label, int displayOrder)
+        {
+            try
+            {
+                var result = await _lookupService.UpdateValueAsync(valueId, label, displayOrder, User.Identity?.Name ?? "admin");
+                TempData["Message"] = result.Message;
+                TempData["MessageType"] = result.IsSuccess ? "success" : "error";
+
+                if (result.IsSuccess)
+                {
+                    await _auditLog.LogAsync(new AuditLogEntry
+                    {
+                        EventType = "lookup_value_update",
+                        TargetType = "lookup",
+                        TargetKey = valueId.ToString(),
+                        Description = $"Lookup değeri güncellendi: {label}",
+                        NewValuesJson = AuditLogService.ToJson(new { valueId, label, displayOrder }),
+                        IsSuccess = true
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "AdminController.UpdateLookupValue failed valueId={ValueId}", valueId);
+                TempData["Message"] = "Beklenmedik bir hata oluştu.";
+                TempData["MessageType"] = "error";
+            }
+            return RedirectToAction(nameof(Lookup));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> LookupToggleValue(int valueId, bool active)
         {
             try

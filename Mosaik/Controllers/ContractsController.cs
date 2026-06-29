@@ -22,6 +22,7 @@ namespace Mosaik.Controllers
         private readonly ILogger<ContractsController> _logger;
         private readonly IModuleService _modules;
         private readonly WorkflowInboxService _workflowInbox;
+        private readonly Mosaik.Core.Lookup.ILookupService _lookup;
 
         public ContractsController(
             MosaikContext db,
@@ -31,7 +32,8 @@ namespace Mosaik.Controllers
             AuditLogService auditLog,
             ILogger<ContractsController> logger,
             IModuleService modules,
-            WorkflowInboxService workflowInbox)
+            WorkflowInboxService workflowInbox,
+            Mosaik.Core.Lookup.ILookupService lookup)
         {
             _db = db;
             _currentUser = currentUser;
@@ -41,6 +43,7 @@ namespace Mosaik.Controllers
             _logger = logger;
             _modules = modules;
             _workflowInbox = workflowInbox;
+            _lookup = lookup;
         }
 
         // N-2: DB-driven modül yetki kontrolü
@@ -128,6 +131,7 @@ namespace Mosaik.Controllers
             if (firmas.Count == 0) return Forbid();
 
             ViewBag.AccessibleFirmas = await GetAccessibleFirmasAsync();
+            ViewBag.ContractCategories = await _lookup.GetValuesAsync("contractCategory");
             return View(new ContractCreateViewModel { FirmaId = firmas[0] });
         }
 
@@ -141,6 +145,7 @@ namespace Mosaik.Controllers
             if (!ModelState.IsValid)
             {
                 ViewBag.AccessibleFirmas = await GetAccessibleFirmasAsync();
+                ViewBag.ContractCategories = await _lookup.GetValuesAsync("contractCategory");
                 return View(model);
             }
 
@@ -225,6 +230,7 @@ namespace Mosaik.Controllers
                 _logger.LogWarning(ex, "Contract create domain validation fail. FirmaId={FirmaId}", model.FirmaId);
                 ModelState.AddModelError(string.Empty, ex.Message);
                 ViewBag.AccessibleFirmas = await GetAccessibleFirmasAsync();
+                ViewBag.ContractCategories = await _lookup.GetValuesAsync("contractCategory");
                 return View(model);
             }
             catch (DbUpdateException due) when (due.InnerException is Microsoft.Data.SqlClient.SqlException sqlEx && sqlEx.Number == 547)
@@ -235,6 +241,7 @@ namespace Mosaik.Controllers
                 ModelState.AddModelError(string.Empty,
                     "Seçtiğiniz firma artık erişilebilir değil. Sayfayı yenileyip tekrar deneyin.");
                 ViewBag.AccessibleFirmas = await GetAccessibleFirmasAsync();
+                ViewBag.ContractCategories = await _lookup.GetValuesAsync("contractCategory");
                 return View(model);
             }
             catch (Exception ex)
@@ -243,6 +250,7 @@ namespace Mosaik.Controllers
                 _logger.LogError(ex, "Contract create failed for FirmaId={FirmaId}", model.FirmaId);
                 TempData["Error"] = "Sözleşme kaydedilemedi. Lütfen tekrar deneyin.";
                 ViewBag.AccessibleFirmas = await GetAccessibleFirmasAsync();
+                ViewBag.ContractCategories = await _lookup.GetValuesAsync("contractCategory");
                 return View(model);
             }
         }
@@ -258,6 +266,7 @@ namespace Mosaik.Controllers
 
             if (contract is null) return NotFound();
 
+            ViewBag.ContractCategories = await _lookup.GetValuesAsync("contractCategory");
             return View(new ContractEditViewModel
             {
                 Id = contract.Id,
@@ -283,6 +292,7 @@ namespace Mosaik.Controllers
             if (!ModelState.IsValid)
             {
                 model.Id = id;
+                ViewBag.ContractCategories = await _lookup.GetValuesAsync("contractCategory");
                 return View(model);
             }
 

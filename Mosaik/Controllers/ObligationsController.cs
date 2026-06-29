@@ -15,13 +15,15 @@ namespace Mosaik.Controllers
         private readonly ICurrentUserService _currentUser;
         private readonly AuditLogService _auditLog;
         private readonly IModuleService _modules;
+        private readonly Mosaik.Core.Lookup.ILookupService _lookup;
 
-        public ObligationsController(MosaikContext db, ICurrentUserService currentUser, AuditLogService auditLog, IModuleService modules)
+        public ObligationsController(MosaikContext db, ICurrentUserService currentUser, AuditLogService auditLog, IModuleService modules, Mosaik.Core.Lookup.ILookupService lookup)
         {
             _db = db;
             _currentUser = currentUser;
             _auditLog = auditLog;
             _modules = modules;
+            _lookup = lookup;
         }
 
         // N-2: DB-driven modül yetki kontrolü
@@ -95,6 +97,8 @@ namespace Mosaik.Controllers
             ViewBag.ContractId = contractId;
             ViewBag.ContractTitle = contractTitle;
             ViewBag.AccessibleFirmas = await GetAccessibleFirmasAsync();
+            ViewBag.ObligationCategories = await _lookup.GetValuesAsync("obligationCategory");
+            ViewBag.ObligationTypes = await _lookup.GetValuesAsync("obligationType");
 
             return View(new ObligationCreateViewModel
             {
@@ -114,6 +118,8 @@ namespace Mosaik.Controllers
             if (!ModelState.IsValid)
             {
                 ViewBag.ContractId = model.ContractId;
+                ViewBag.ObligationCategories = await _lookup.GetValuesAsync("obligationCategory");
+                ViewBag.ObligationTypes = await _lookup.GetValuesAsync("obligationType");
                 return View(model);
             }
 
@@ -194,6 +200,8 @@ namespace Mosaik.Controllers
             };
 
             ViewBag.AccessibleFirmas = await GetAccessibleFirmasAsync();
+            ViewBag.ObligationCategories = await _lookup.GetValuesAsync("obligationCategory");
+            ViewBag.ObligationTypes = await _lookup.GetValuesAsync("obligationType");
             return View(model);
         }
 
@@ -217,6 +225,8 @@ namespace Mosaik.Controllers
                 model.CurrentStatus = obligation.Status;
                 model.ContractTitle = obligation.Contract?.Title;
                 ViewBag.AccessibleFirmas = await GetAccessibleFirmasAsync();
+                ViewBag.ObligationCategories = await _lookup.GetValuesAsync("obligationCategory");
+                ViewBag.ObligationTypes = await _lookup.GetValuesAsync("obligationType");
                 return View(model);
             }
 

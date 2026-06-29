@@ -67,8 +67,17 @@
                         {
                             <tr>
                                 <td><span class="mono">@val.Code</span></td>
-                                <td>@val.Label</td>
-                                <td>@val.DisplayOrder</td>
+                                <td colspan="2">
+                                    <form method="post" action="/Admin/UpdateLookupValue" class="inline-form">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="valueId" value="@val.Id" />
+                                        <input class="inp inp-label" type="text" name="label" value="@val.Label"
+                                               maxlength="200" required aria-label="Etiket (@val.Code)" />
+                                        <input class="inp inp-order" type="number" name="displayOrder" value="@val.DisplayOrder"
+                                               min="0" max="9999" aria-label="Sıra (@val.Code)" />
+                                        <button type="submit" class="btn sm primary">Kaydet</button>
+                                    </form>
+                                </td>
                                 <td class="td-right">
                                     <form method="post" action="/Admin/LookupToggleValue" class="inline-form">
                                         @Html.AntiForgeryToken()
