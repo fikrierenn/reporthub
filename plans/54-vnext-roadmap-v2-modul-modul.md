@@ -23,7 +23,7 @@ Her satır = bir oturum-üstü "modül". Sıra dependency'e saygılıdır; üstt
 | # | Modül | Bağımlılık | Tip | Kısa kapsam |
 |---|---|---|---|---|
 | ~~M1~~ | ~~SMTP foundation~~ | — | ✅ **VERIFIED-DONE 2026-06-29** | Temel ZATEN canlı: `IEmailService` (Plan 31, `Program.cs:137-139`) + `INotificationService` zengin (Plan 17 Faz H: Create/Bulk/NotifyAll/dedup/unread/markread). **Digest yok** → M5'e fold (volume olunca). **Plan 32 scheduled-reports → Park** (ayrı feature, foundation değil, attachment Plan 32 ile gelir). İlk gerçek build = **M2**. |
-| **M2** | **Unified Inbox** (Plan 37, ADR-018) | — | CORE | **LEAN** (2026-06-29): TEK `IInboxProvider` + explicit DI (reflection YOK) + 3 provider (workflow/obligation/circular) + `/Inbox`. Diğer 4 capability interface YAZILMAZ (YAGNI). |
+| ~~M2~~ | ~~Unified Inbox~~ | — | ✅ **KAPANDI 2026-06-29** commit `22bbc30` | LEAN: tek `IInboxProvider` + explicit DI + workflow/obligation provider + `/Inbox` + sidebar. Circular deferred (read-receipt entity yok). Denetim kapısı tam (build+532test+4 denetim+startup smoke). Authed /Inbox görsel = kullanıcı 5197'de doğrular. **Sonraki: M3.** |
 | **M3** | **Cross-module Search** (ADR-018) | — | CORE | SQL Server full-text; rapor+SOP+sözleşme+tamim tek arama. **vector kurma** |
 | **M4** | **Dashboard→Alert** (EscalationRule) | M1 | CORE | eşik aşımı → `INotificationService`; Hangfire sweeper. OI≠BI |
 | **M5** | **Comment/Mention** (Plan 35) | — | CORE-cap | polymorphic + entity_type lookup-FK + denormalize firma_id + fan-out-on-write. **+ notification digest** (M1'den devralındı — volume burada oluşur) |
