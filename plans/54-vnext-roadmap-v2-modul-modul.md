@@ -22,11 +22,11 @@ Her satır = bir oturum-üstü "modül". Sıra dependency'e saygılıdır; üstt
 
 | # | Modül | Bağımlılık | Tip | Kısa kapsam |
 |---|---|---|---|---|
-| **M1** | **SMTP foundation** (Plan 32) | — | prereq | `IEmailService` + scheduled caller; notification/digest/comment altyapısı |
+| ~~M1~~ | ~~SMTP foundation~~ | — | ✅ **VERIFIED-DONE 2026-06-29** | Temel ZATEN canlı: `IEmailService` (Plan 31, `Program.cs:137-139`) + `INotificationService` zengin (Plan 17 Faz H: Create/Bulk/NotifyAll/dedup/unread/markread). **Digest yok** → M5'e fold (volume olunca). **Plan 32 scheduled-reports → Park** (ayrı feature, foundation değil, attachment Plan 32 ile gelir). İlk gerçek build = **M2**. |
 | **M2** | **Unified Inbox** (Plan 37, ADR-018) | M1 | CORE | `IInboxProvider` opt-in + `/Inbox` çok-modül aggregation (workflow+form+obligation+circular-read) |
 | **M3** | **Cross-module Search** (ADR-018) | — | CORE | SQL Server full-text; rapor+SOP+sözleşme+tamim tek arama. **vector kurma** |
 | **M4** | **Dashboard→Alert** (EscalationRule) | M1 | CORE | eşik aşımı → `INotificationService`; Hangfire sweeper. OI≠BI |
-| **M5** | **Comment/Mention** (Plan 35) | M1 | CORE-cap | polymorphic + entity_type lookup-FK + denormalize firma_id + fan-out-on-write |
+| **M5** | **Comment/Mention** (Plan 35) | — | CORE-cap | polymorphic + entity_type lookup-FK + denormalize firma_id + fan-out-on-write. **+ notification digest** (M1'den devralındı — volume burada oluşur) |
 | **M6** | **KVKK backbone** (Plan 40, düzelt) | M2 | vNext | Process+DataElement + ProcessingPurpose/Recipient/VerbisRegistration lookup + Pattern 9 |
 | **M7** | **Form Builder** (Plan 41, düzelt) | M6 | vNext KRİTİK | hybrid + **FormVersion snapshot** + SurveyJS reuse + DataElement map |
 | **M8** | **Process Exec Runtime** (Plan 42, düzelt) | M6,M7 | vNext birleştirici | **tek `ProcessActivity` stream** (6 aspect değil) + Stateless guard + SLA sweeper |
@@ -38,7 +38,7 @@ Her satır = bir oturum-üstü "modül". Sıra dependency'e saygılıdır; üstt
 | **M14** | **Documents Faz C** (Plan 27) | — | DYS | C-02 check-in/out + C-04 FTS + C-05 metadata + C-07 audit (DocVersions+74 ✅) |
 | **M15** | **AI differentiator** (Plan 44✅+45✅+chat) | M6-M8 | wedge | RAG guard + Excel-to-process + chat-over-data citation |
 
-**Park (ertele/doğrula):** PWA (46 — saha ihtiyacı doğrula), Auto-tuning (47 — M8 verisi sonrası), Executable-SOP (48 — spekülatif), Trend-Endeksi (52 — nice).
+**Park (ertele/doğrula):** Scheduled-reports+attachment (Plan 32 — ayrı feature, foundation değil), PWA (46 — saha ihtiyacı doğrula), Auto-tuning (47 — M8 verisi sonrası), Executable-SOP (48 — spekülatif), Trend-Endeksi (52 — nice).
 **CUT (onay ister, §6):** Zero-UI biyometrik (49), Shadow-Org (50), Differential-Privacy (51).
 
 > Sıra önerisidir; her modül kapanışında bir sonraki yeniden değerlendirilebilir (değer/aciliyet değişirse). Ama **aynı anda bir modül** kuralı sabit.
