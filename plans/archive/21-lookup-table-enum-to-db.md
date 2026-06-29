@@ -2,7 +2,9 @@
 
 **Tarih:** 2026-05-09
 **Yazan:** Claude
-**Durum:** ⚠️ **KISMI — SPEC GÜNCELLENDİ 2026-06-29.** Altyapı canlı ama bu planın öngördüğü tek `Lookups` tablosu **SUPERSEDED**: gerçekte `DictionaryType`/`DictionaryValue` (migration `34_CreateMosaikCoreLookup.sql`) + `LookupService` (`GetValuesAsync(typeCode)`, IMemoryCache 10dk) kullanılıyor. Tamim (`38_SeedTamimLookups.sql`) + SOP (`08`) seed'lemiş; **Contracts/Obligations etmemiş** — 5 enum hâlâ view'larda hardcoded `<option>` (`Contracts/Create.cshtml:140-146` vb.), `/Admin/Lookups` CRUD **YOK**. Bu plan o eksiği DictionaryType altyapısıyla kapatır (yeni tablo YOK).
+**Durum:** ✅ **TAMAMLANDI 2026-06-29** — commit `7682ec5` (Faz 1+2: seed 75 + 7 view + admin CRUD), `036c20a` (Operax port: IsSystemDefined lock + never-blank), `87584fc` (Alpine recurrence label DB-driven). 5 enum DictionaryType lookup'a bağlandı, enum INT kolonları korundu, build 0 hata + test 532/532. Spec güncellemesi aşağıda (eski ayrı Lookups tablosu superseded).
+
+**Durum (tarihsel):** ⚠️ **KISMI — SPEC GÜNCELLENDİ 2026-06-29.** Altyapı canlı ama bu planın öngördüğü tek `Lookups` tablosu **SUPERSEDED**: gerçekte `DictionaryType`/`DictionaryValue` (migration `34_CreateMosaikCoreLookup.sql`) + `LookupService` (`GetValuesAsync(typeCode)`, IMemoryCache 10dk) kullanılıyor. Tamim (`38_SeedTamimLookups.sql`) + SOP (`08`) seed'lemiş; **Contracts/Obligations etmemiş** — 5 enum hâlâ view'larda hardcoded `<option>` (`Contracts/Create.cshtml:140-146` vb.), `/Admin/Lookups` CRUD **YOK**. Bu plan o eksiği DictionaryType altyapısıyla kapatır (yeni tablo YOK).
 
 ### Güncel pattern (34 + LookupService)
 - `DictionaryTypes(Id, Code, Name, IsActive)` + `DictionaryValues(TypeId, Code, Label, DisplayOrder, IsActive)`. Code = camelCase EN, Label = TR (turkish-ui).
