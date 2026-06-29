@@ -50,6 +50,17 @@ namespace Mosaik.Services
             return values.FirstOrDefault(v => v.Code == valueCode);
         }
 
+        // Operax "never-blank" fallback (Plan 21): etiket bulunamazsa raw code döner,
+        // boş badge/label oluşmaz. Case-insensitive (enum.ToString() camelCase Code'la eşleşsin).
+        public async Task<string> LabelAsync(string typeCode, string valueCode)
+        {
+            if (string.IsNullOrWhiteSpace(valueCode)) return string.Empty;
+            var values = await GetValuesAsync(typeCode);
+            var match = values.FirstOrDefault(v =>
+                string.Equals(v.Code, valueCode, StringComparison.OrdinalIgnoreCase));
+            return match?.Label ?? valueCode;
+        }
+
         public async Task<List<DictionaryType>> GetTypesAsync()
         {
             return await _context.DictionaryTypes
@@ -68,6 +79,9 @@ namespace Mosaik.Services
 
             var type = await _context.DictionaryTypes.FindAsync(typeId);
             if (type == null) return ServiceResult<DictionaryValue>.Failure("Tip bulunamadı.");
+
+            if (type.IsSystemDefined)
+                return ServiceResult<DictionaryValue>.Failure("Sistem-tanımlı tip (enum-anchored) — yeni değer eklenemez. Yalnızca etiket/sıra düzenlenebilir.");
 
             if (await _context.DictionaryValues.AnyAsync(v => v.TypeId == typeId && v.Code == code))
                 return ServiceResult<DictionaryValue>.Failure("Bu kod zaten mevcut.");

@@ -42,6 +42,12 @@
                 <div>
                     <span class="form-section-head__title">@type.Name</span>
                     <span class="mono text-muted ml-4 text-xs">@type.Code</span>
+                    @if (type.IsSystemDefined)
+                    {
+                        <span class="pill" title="Enum-anchored: yeni değer eklenemez, etiket/sıra düzenlenebilir">
+                            <i class="fas fa-lock text-[9px]" aria-hidden="true"></i> Sistem
+                        </span>
+                    }
                 </div>
                 <span class="mono text-muted text-xs">@type.Values.Count(v => v.IsActive) aktif değer</span>
             </div>
@@ -94,27 +100,34 @@
                 </table>
             }
 
-            @* TODO(Plan 25.1): <details>/summary için utility class yok — minimum inline kalıyor (cursor + user-select). *@
-            <details class="lookup-add-details">
-                <summary class="lookup-add-summary">+ Yeni Değer Ekle</summary>
-                <form method="post" action="/Admin/LookupAddValue" class="lookup-add-form">
-                    @Html.AntiForgeryToken()
-                    <input type="hidden" name="typeId" value="@type.Id" />
-                    <div class="field">
-                        <label class="lab" for="fld-code-@type.Id">Kod</label>
-                        <input class="inp inp-code" type="text" id="fld-code-@type.Id" name="code" placeholder="camelCase" required />
-                    </div>
-                    <div class="field">
-                        <label class="lab" for="fld-label-@type.Id">Etiket</label>
-                        <input class="inp inp-label" type="text" id="fld-label-@type.Id" name="label" placeholder="Türkçe görünen ad" required />
-                    </div>
-                    <div class="field">
-                        <label class="lab" for="fld-order-@type.Id">Sıra</label>
-                        <input class="inp inp-order" type="number" id="fld-order-@type.Id" name="displayOrder" value="@(type.Values.Any() ? type.Values.Max(v => v.DisplayOrder) + 10 : 10)" />
-                    </div>
-                    <button type="submit" class="btn primary">Ekle</button>
-                </form>
-            </details>
+            @if (type.IsSystemDefined)
+            {
+                <p class="text-muted text-xs"><i class="fas fa-lock text-[9px]" aria-hidden="true"></i> Enum-anchored tip — yeni değer eklenemez (kod bütünlüğü). Etiket ve sırayı yukarıdan düzenleyebilirsiniz.</p>
+            }
+            else
+            {
+                @* TODO(Plan 25.1): <details>/summary için utility class yok — minimum inline kalıyor (cursor + user-select). *@
+                <details class="lookup-add-details">
+                    <summary class="lookup-add-summary">+ Yeni Değer Ekle</summary>
+                    <form method="post" action="/Admin/LookupAddValue" class="lookup-add-form">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="typeId" value="@type.Id" />
+                        <div class="field">
+                            <label class="lab" for="fld-code-@type.Id">Kod</label>
+                            <input class="inp inp-code" type="text" id="fld-code-@type.Id" name="code" placeholder="camelCase" required />
+                        </div>
+                        <div class="field">
+                            <label class="lab" for="fld-label-@type.Id">Etiket</label>
+                            <input class="inp inp-label" type="text" id="fld-label-@type.Id" name="label" placeholder="Türkçe görünen ad" required />
+                        </div>
+                        <div class="field">
+                            <label class="lab" for="fld-order-@type.Id">Sıra</label>
+                            <input class="inp inp-order" type="number" id="fld-order-@type.Id" name="displayOrder" value="@(type.Values.Any() ? type.Values.Max(v => v.DisplayOrder) + 10 : 10)" />
+                        </div>
+                        <button type="submit" class="btn primary">Ekle</button>
+                    </form>
+                </details>
+            }
         </div>
     </div>
 }

@@ -26,6 +26,11 @@ namespace Mosaik.Core.Lookup
 
         public bool IsActive { get; set; } = true;
 
+        // Operax AllowValueCrud uyarlaması (Plan 21): true ise tip enum-anchored —
+        // yeni değer eklenemez (admin bozuk Code ile enum eşlemesini kıramaz).
+        // Mevcut değerlerin Label/sıra/aktiflik düzenlenebilir; Code immutable.
+        public bool IsSystemDefined { get; set; } = false;
+
         public List<DictionaryValue> Values { get; set; } = new();
     }
 
