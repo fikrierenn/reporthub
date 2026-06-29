@@ -2,7 +2,7 @@
 
 _Yeni `.cshtml` view yazıyorsan / mevcut view'ı düzenliyorsan ÖNCE bu dosyayı oku. Tam HTML snippet'ler için: `.claude/rules/docs/UI_SNIPPETS.md`._
 
-**Tetikleyici:** UI değişikliklerinde `frontend-design` + `ui-ux-pro-max` skill'leri otomatik devreye girer (CLAUDE.md §2.2). Bu rule onların output'unu tutarlı kılar.
+**Tetikleyici:** UI değişikliklerinde `ui-ux-pro-max` + `accessibility-compliance` skill'leri otomatik devreye girer (CLAUDE.md §2). Bu rule onların output'unu tutarlı kılar.
 
 ---
 
@@ -193,8 +193,7 @@ Yeni pattern eklemeden önce:
 4. Pattern eklenince bu rule'a yaz
 
 UI değişikliklerinde otomatik tetik:
-- `frontend-design` skill — visual design + interaction
-- `ui-ux-pro-max` skill — WCAG/contrast/touch target audit
+- `ui-ux-pro-max` skill — visual design + WCAG/contrast/touch target audit
 - `accessibility-compliance` skill — A11y checklist
 
 **TL;DR:** Bu dosya = Mosaik UI'ın anayasası. Yeni view = bu listeden geçir. Tam HTML snippet'ler için `docs/UI_SNIPPETS.md`.

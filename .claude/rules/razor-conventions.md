@@ -32,7 +32,7 @@ paths:
 ## CSS
 
 - **Tailwind utility** birincil.
-- **Custom class** (`btn-brand`, `btn-brand-outline`, `form-input-brand`) — brand renkler için.
+- **Modern custom class** (`.btn` / `.btn.primary` / `.inp` / `.field` / `.lab`) — `btn-brand`/`form-input-brand` vb. SİLİNDİ (M-13 Plan 03 R2), kullanma. Detay: `ui-patterns.md`.
 - İkisini bir element'te karıştırma: ya utility ya custom.
 
 ## Icon

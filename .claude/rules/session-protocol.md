@@ -61,7 +61,7 @@ Scope: `git diff --name-only HEAD` + untracked (`git ls-files --others --exclude
 
 **Önemli:** Bulgular fix edilmeden commit-split yapma. Aksi takdirde HIGH/MEDIUM bulgular commit'lere gömülür ve sonraki oturumda kaybolur.
 
-**Refactor agent'lara dağıtım:** Inline style HIGH bulgular birden fazla view'a yayılırsa **tek başına yapma** — kullanıcı 2026-05-10'da net söyledi: "agentlara dağıttın mı". Her bağımsız view için paralel agent (general-purpose veya frontend-design skill ile), shared CSS önce eklenir. 8+ view = 4-8 paralel agent.
+**Refactor agent'lara dağıtım:** Inline style HIGH bulgular birden fazla view'a yayılırsa **tek başına yapma** — kullanıcı 2026-05-10'da net söyledi: "agentlara dağıttın mı". Her bağımsız view için paralel agent (general-purpose veya `ui-ux-pro-max` skill ile), shared CSS önce eklenir. 8+ view = 4-8 paralel agent.
 
 **Override:** Kullanıcı açıkça "tarama yapma" / "atla" derse atlanır. Aksi default = tarama zorunlu.
 
@@ -115,8 +115,7 @@ Kullanıcının "TodoWrite kullanmadın" / "planı dosyaya yazmadın" demesi bu 
 | Oturum sonu | `session-handoff` | "iyi geceler" / "handoff" |
 | Multi-LLM danışma | `llm-council` skill | Mimari "hangi yol" belirsizliği |
 | UI/UX değişiklik (HER .cshtml edit) | `accessibility-compliance` + `ui-ux-pro-max` | **Otomatik:** view düzenlerken WCAG contrast, ARIA, touch target, focus-visible kontrol |
-| Yeni sayfa / layout değişiklik | `frontend-design` + `visual-design-foundations` + `responsive-design` | Yeni view, layout migration, hero/card/table pattern |
-| Design system değişiklik | `design-system-patterns` + `interaction-design` | Token ekleme, animasyon, theming |
+| Yeni sayfa / layout + design system değişiklik | `ui-ux-pro-max` + `ui-patterns.md` rule | Yeni view, layout migration, hero/card/table, token/theming. (Generic design skill yığını 2026-06-29 arşivlendi — ui-ux-pro-max kapsıyor) |
 | BKM kurumsal DB sorgu | `mcp__sqlserver__*` | Allowlist: master, DerinSIS*, BKMDATA, EncoreMerkez, BKM. **Mosaik DB allowlist DIŞINDA** — uygulama içi DB için MCP yerine SSMS/sqlcmd |
 | Dashboard/UI regresyon | `mcp__Claude_Preview__*` | Render smoke test, screenshot |
 | Yeni feature implement | `/feature-dev` slash | 7 fazlı guided |

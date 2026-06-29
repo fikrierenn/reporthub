@@ -70,7 +70,7 @@ _Kullanıcı kararı 2026-05-10. Bu kural `.cshtml` view yazarken / düzenlerken
 
 ## Refactor agent'lara dağıtım (kullanıcı kararı 2026-05-10)
 
-HIGH bulgular birden fazla view'a yayılırsa **tek başına refactor yapma**. Her bağımsız view için paralel agent (general-purpose veya frontend-design skill ile). Önce `components.css`'e utility paketi eklenir (shared dependency), sonra 4-8 paralel agent her biri 1 view dosyası refactor eder. Çakışma yok (farklı dosyalar).
+HIGH bulgular birden fazla view'a yayılırsa **tek başına refactor yapma**. Her bağımsız view için paralel agent (general-purpose veya `ui-ux-pro-max` skill ile). Önce `components.css`'e utility paketi eklenir (shared dependency), sonra 4-8 paralel agent her biri 1 view dosyası refactor eder. Çakışma yok (farklı dosyalar).
 
 ## Borç durumu
 
