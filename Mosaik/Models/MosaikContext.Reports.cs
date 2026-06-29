@@ -150,6 +150,27 @@ namespace Mosaik.Models
                     .HasForeignKey(e => e.DataSourceKey)
                     .OnDelete(DeleteBehavior.Restrict);
             });
+
+            // Plan 54 M4 — Dashboard→Alert eşik kuralları
+            modelBuilder.Entity<EscalationRule>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Name).HasMaxLength(150).IsRequired();
+                entity.Property(e => e.Column).HasMaxLength(128).IsRequired();
+                entity.Property(e => e.Aggregation).HasMaxLength(10).IsRequired();
+                entity.Property(e => e.Operator).HasMaxLength(4).IsRequired();
+                entity.Property(e => e.Threshold).HasColumnType("decimal(18,4)");
+                entity.Property(e => e.LastValue).HasColumnType("decimal(18,4)");
+                entity.Property(e => e.NotifyUserIds).HasMaxLength(500).IsRequired();
+                entity.Property(e => e.LastError).HasMaxLength(500);
+                entity.Property(e => e.CreatedAt).HasDefaultValueSql("SYSUTCDATETIME()");
+                entity.HasIndex(e => e.IsActive);
+
+                entity.HasOne(e => e.Report)
+                    .WithMany()
+                    .HasForeignKey(e => e.ReportId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
         }
     }
 }

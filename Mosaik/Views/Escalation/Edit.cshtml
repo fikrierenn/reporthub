@@ -1,0 +1,161 @@
+@model Mosaik.ViewModels.EscalationRuleFormViewModel
+@{
+    Layout = "_AppLayout";
+    var isNew = Model.Id == 0;
+    ViewData["Title"] = (isNew ? "Yeni Eşik Kuralı" : "Eşik Kuralı Düzenle") + " - Mosaik";
+    ViewData["PageTitle"] = isNew ? "Yeni Eşik Kuralı" : "Eşik Kuralı Düzenle";
+
+    var aggregations = new (string Value, string Label)[]
+    {
+        ("first", "İlk satır değeri"),
+        ("count", "Satır sayısı"),
+        ("sum", "Toplam (sum)"),
+        ("avg", "Ortalama (avg)"),
+        ("min", "En küçük (min)"),
+        ("max", "En büyük (max)")
+    };
+    var operators = new (string Value, string Label)[]
+    {
+        ("gt", "Büyük (>)"),
+        ("gte", "Büyük eşit (≥)"),
+        ("lt", "Küçük (<)"),
+        ("lte", "Küçük eşit (≤)"),
+        ("eq", "Eşit (=)")
+    };
+}
+
+@section Breadcrumb {
+    <nav class="crumbs" aria-label="Sayfa konumu">
+        <a href="/Dashboard">Mosaik</a>
+        <span class="sep" aria-hidden="true">/</span>
+        <a href="/Escalation">Eşik Uyarıları</a>
+        <span class="sep" aria-hidden="true">/</span>
+        <span class="current" aria-current="page">@(isNew ? "Yeni Kural" : "Düzenle")</span>
+    </nav>
+}
+
+@section TopActions {
+    <a href="/Escalation" class="btn">
+        <i class="fas fa-xmark text-[10px]" aria-hidden="true"></i>
+        İptal
+    </a>
+}
+
+<div class="hero">
+    <h1>@(isNew ? "Yeni Eşik Kuralı" : "Eşik Kuralı Düzenle")</h1>
+    <div class="sub">
+        <span>Rapor metriği eşiği aştığında bildirim gönderilir</span>
+    </div>
+</div>
+
+@if (!ViewData.ModelState.IsValid)
+{
+    <div role="alert" class="alert error">
+        <i class="fas fa-exclamation-circle" aria-hidden="true"></i>
+        @Html.ValidationSummary(false)
+    </div>
+}
+
+<form method="post" action="/Escalation/Save">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="Id" value="@Model.Id" />
+
+    <div class="form-section-card wide">
+        <div class="form-section-head">
+            <h2>
+                <i class="fas fa-bell text-muted" aria-hidden="true"></i>
+                Kural Tanımı
+            </h2>
+            <div class="help-text">Metrik kaynağı + eşik koşulu</div>
+        </div>
+
+        <div class="form-section-body stack">
+            <div class="field mb-0">
+                <label class="lab" for="Name">Kural Adı <span class="req">*</span></label>
+                <input type="text" id="Name" name="Name" value="@Model.Name" required maxlength="150" class="inp"
+                       placeholder="örn: Eksik giriş sayısı 50'yi aştı" />
+            </div>
+
+            <div class="grid-2col">
+                <div class="field mb-0">
+                    <label class="lab" for="ReportId">Rapor <span class="req">*</span></label>
+                    <select id="ReportId" name="ReportId" required class="inp">
+                        <option value="0">— Rapor seçin —</option>
+                        @foreach (var r in Model.Reports)
+                        {
+                            <option value="@r.ReportId" selected="@(r.ReportId == Model.ReportId)">@r.Title</option>
+                        }
+                    </select>
+                    <div class="help-text">Yalnızca parametresiz raporlar global değerlendirilir.</div>
+                </div>
+                <div class="field mb-0">
+                    <label class="lab" for="ResultSet">Result Set (0-tabanlı)</label>
+                    <input type="number" id="ResultSet" name="ResultSet" value="@Model.ResultSet" min="0" max="50" class="inp" />
+                    <div class="help-text">Çok-RS panolarda metriğin bulunduğu sonuç kümesi.</div>
+                </div>
+            </div>
+
+            <div class="grid-2col">
+                <div class="field mb-0">
+                    <label class="lab" for="Aggregation">Toplama</label>
+                    <select id="Aggregation" name="Aggregation" class="inp">
+                        @foreach (var a in aggregations)
+                        {
+                            <option value="@a.Value" selected="@(a.Value == Model.Aggregation)">@a.Label</option>
+                        }
+                    </select>
+                </div>
+                <div class="field mb-0">
+                    <label class="lab" for="Column">Kolon Adı</label>
+                    <input type="text" id="Column" name="Column" value="@Model.Column" maxlength="128" class="inp"
+                           placeholder="örn: EksikGiris" />
+                    <div class="help-text">"Satır sayısı" seçilirse kolon gerekmez.</div>
+                </div>
+            </div>
+
+            <div class="grid-2col">
+                <div class="field mb-0">
+                    <label class="lab" for="Operator">Karşılaştırma</label>
+                    <select id="Operator" name="Operator" class="inp">
+                        @foreach (var o in operators)
+                        {
+                            <option value="@o.Value" selected="@(o.Value == Model.Operator)">@o.Label</option>
+                        }
+                    </select>
+                </div>
+                <div class="field mb-0">
+                    <label class="lab" for="Threshold">Eşik Değeri <span class="req">*</span></label>
+                    <input type="number" id="Threshold" name="Threshold" value="@Model.Threshold" step="any" required class="inp" />
+                </div>
+            </div>
+
+            <div class="field mb-0">
+                <label class="lab" for="NotifyUserIdsList">Bildirim Alıcıları <span class="req">*</span></label>
+                <select id="NotifyUserIdsList" name="NotifyUserIdsList" multiple size="6" class="inp">
+                    @foreach (var u in Model.Users)
+                    {
+                        <option value="@u.UserId" selected="@(Model.NotifyUserIdsList.Contains(u.UserId))">@u.Username</option>
+                    }
+                </select>
+                <div class="help-text">Birden fazla seçmek için Ctrl/Cmd ile tıklayın.</div>
+            </div>
+
+            <div class="checkbox-row">
+                <input type="hidden" name="IsActive" value="false" />
+                <input type="checkbox" id="IsActive" name="IsActive" value="true" @(Model.IsActive ? "checked" : "") class="checkbox" />
+                <label for="IsActive" class="lab inline">Kural aktif</label>
+            </div>
+        </div>
+    </div>
+
+    <div class="action-row wide">
+        <a href="/Escalation" class="btn ghost">
+            <i class="fas fa-arrow-left text-[10px]" aria-hidden="true"></i>
+            Geri Dön
+        </a>
+        <button type="submit" class="btn primary">
+            <i class="fas fa-check text-[10px]" aria-hidden="true"></i>
+            Kaydet
+        </button>
+    </div>
+</form>

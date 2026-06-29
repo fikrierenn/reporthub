@@ -51,6 +51,8 @@ builder.Services.AddScoped<Mosaik.Services.FilterDefinitionService>();
 builder.Services.AddScoped<Mosaik.Services.ExcelExportService>();
 builder.Services.AddScoped<Mosaik.Services.UserDataFilterInjector>();
 builder.Services.AddScoped<Mosaik.Services.StoredProcedureExecutor>();
+// Plan 54 M4 — Dashboard→Alert sweeper (Hangfire recurring job, aşağıda kaydedilir)
+builder.Services.AddScoped<Mosaik.Services.EscalationSweeperJob>();
 builder.Services.AddSingleton<Mosaik.Services.IBrandService, Mosaik.Services.BrandSettingsService>();
 builder.Services.AddSingleton<Mosaik.Services.IModuleService, Mosaik.Services.ModuleService>();
 // Plan 39 Faz B — Stored XSS koruma için render-time HTML sanitize (Block.Content + gelecek Comment/Mention).
@@ -333,6 +335,18 @@ RecurringJob.AddOrUpdate<Mosaik.Modules.SOP.Services.SopAiHistoryCleanupJob>(
     recurringJobId: "sop-ai-history-cleanup",
     methodCall: job => job.ExecuteAsync(CancellationToken.None),
     cronExpression: "0 3 * * *",
+    options: new RecurringJobOptions
+    {
+        TimeZone = TimeZoneInfo.FindSystemTimeZoneById(
+            OperatingSystem.IsWindows() ? "Turkey Standard Time" : "Europe/Istanbul")
+    });
+
+// Plan 54 M4 — Dashboard→Alert eşik sweeper (her saat başı, Europe/Istanbul).
+// Aktif EscalationRule'ları GLOBAL değerlendirir → eşik aşımında INotificationService bildirim (günlük dedup).
+RecurringJob.AddOrUpdate<Mosaik.Services.EscalationSweeperJob>(
+    recurringJobId: "escalation-sweeper",
+    methodCall: job => job.ExecuteAsync(CancellationToken.None),
+    cronExpression: "0 * * * *",
     options: new RecurringJobOptions
     {
         TimeZone = TimeZoneInfo.FindSystemTimeZoneById(

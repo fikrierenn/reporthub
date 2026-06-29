@@ -82,6 +82,9 @@ namespace Mosaik.Models
         public DbSet<Workflow.WorkflowInstance> WorkflowInstances { get; set; }
         public DbSet<Workflow.WorkflowInstanceLog> WorkflowInstanceLogs { get; set; }
 
+        // Plan 54 M4 — Dashboard→Alert eşik kuralları
+        public DbSet<EscalationRule> EscalationRules { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             ConfigureIdentityAndAudit(modelBuilder);

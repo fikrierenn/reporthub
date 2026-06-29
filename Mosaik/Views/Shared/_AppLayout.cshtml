@@ -338,6 +338,12 @@
 
                             <li class="nav-subsection">İzleme</li>
                             <li>
+                                <a href="/Escalation" class="@(IsActive("Escalation") ? "active" : "")" aria-current="@(IsActive("Escalation") ? "page" : null)">
+                                    <span class="icon" aria-hidden="true"><i class="fas fa-bell" aria-hidden="true"></i></span>
+                                    <span class="label">Eşik Uyarıları</span>
+                                </a>
+                            </li>
+                            <li>
                                 <a href="/Logs" class="@(IsActive("Logs") ? "active" : "")" aria-current="@(IsActive("Logs") ? "page" : null)">
                                     <span class="icon" aria-hidden="true"><i class="fas fa-clock-rotate-left" aria-hidden="true"></i></span>
                                     <span class="label">Geçmiş / Loglar</span>

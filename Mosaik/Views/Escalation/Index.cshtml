@@ -1,0 +1,124 @@
+@model Mosaik.ViewModels.EscalationRuleListViewModel
+@{
+    Layout = "_AppLayout";
+    ViewData["Title"] = "Eşik Uyarıları - Mosaik";
+    ViewData["PageTitle"] = "Eşik Uyarıları";
+    var message = TempData["Message"] as string;
+    var messageType = TempData["MessageType"] as string;
+}
+
+@section Breadcrumb {
+    <nav class="crumbs" aria-label="Sayfa konumu">
+        <a href="/Dashboard">Mosaik</a>
+        <span class="sep" aria-hidden="true">/</span>
+        <span class="current" aria-current="page">Eşik Uyarıları</span>
+    </nav>
+}
+
+@section TopActions {
+    <a href="/Escalation/Create" class="btn primary">
+        <i class="fas fa-plus text-[10px]" aria-hidden="true"></i>
+        Yeni Kural
+    </a>
+    <form method="post" action="/Escalation/RunNow" class="inline-form">
+        @Html.AntiForgeryToken()
+        <button type="submit" class="btn" title="Tüm aktif kuralları şimdi değerlendir">
+            <i class="fas fa-play text-[10px]" aria-hidden="true"></i>
+            Şimdi Değerlendir
+        </button>
+    </form>
+}
+
+<div class="hero">
+    <h1>Eşik Uyarıları</h1>
+    <div class="sub">
+        <span>Rapor metriği eşiği aştığında otomatik bildirim</span>
+        <span class="mono">@Model.Rules.Count kural</span>
+        <span class="pill">
+            <i class="fas fa-circle-info text-[9px] text-muted" aria-hidden="true"></i>
+            Saatlik değerlendirme
+        </span>
+    </div>
+</div>
+
+@if (!string.IsNullOrWhiteSpace(message))
+{
+    <div role="alert" class="alert @(messageType == "success" ? "success" : "error")">
+        <i class="fas @(messageType == "success" ? "fa-check-circle" : "fa-exclamation-circle")" aria-hidden="true"></i>
+        @message
+    </div>
+}
+
+@if (Model.Rules.Count == 0)
+{
+    <div class="empty-state">
+        <i class="fas fa-bell-slash" aria-hidden="true"></i>
+        <h3>Henüz eşik kuralı yok</h3>
+        <p>Bir rapor metriği için eşik tanımlayın; aşıldığında ilgili kişilere bildirim gönderilir.</p>
+        <a href="/Escalation/Create" class="btn primary">
+            <i class="fas fa-plus text-[10px]" aria-hidden="true"></i>
+            İlk Kuralı Oluştur
+        </a>
+    </div>
+}
+else
+{
+    <div class="paper-card clip">
+        <table class="dt">
+            <thead>
+                <tr>
+                    <th scope="col">Kural</th>
+                    <th scope="col">Rapor</th>
+                    <th scope="col">Koşul</th>
+                    <th scope="col">Son Değer</th>
+                    <th scope="col">Durum</th>
+                    <th scope="col">Son Değerlendirme</th>
+                    <th scope="col" class="col-right">İşlemler</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var rule in Model.Rules)
+                {
+                    var reportTitle = Model.ReportTitles.TryGetValue(rule.ReportId, out var t) ? t : $"#{rule.ReportId}";
+                    var opLabel = rule.Operator switch
+                    {
+                        "gt" => ">", "gte" => "≥", "lt" => "<", "lte" => "≤", "eq" => "=", _ => rule.Operator
+                    };
+                    var metricLabel = rule.Aggregation == "count" ? "satır sayısı" : $"{rule.Aggregation}({rule.Column})";
+                    <tr>
+                        <td>
+                            @rule.Name
+                            @if (!string.IsNullOrWhiteSpace(rule.LastError))
+                            {
+                                <span class="status err" title="@rule.LastError">hata</span>
+                            }
+                        </td>
+                        <td class="cell-muted">@reportTitle</td>
+                        <td class="text-sm"><span class="mono">@metricLabel @opLabel @rule.Threshold</span></td>
+                        <td><span class="mono">@(rule.LastValue?.ToString("0.##") ?? "-")</span></td>
+                        <td>
+                            <span class="status @(rule.IsActive ? "ok" : "err")">@(rule.IsActive ? "Aktif" : "Pasif")</span>
+                        </td>
+                        <td><span class="ago">@(rule.LastEvaluatedAt?.ToLocalTime().ToString("dd.MM.yyyy HH:mm") ?? "-")</span></td>
+                        <td class="cell-right">
+                            <div class="row-actions">
+                                <a href="/Escalation/Edit/@rule.Id" class="btn ghost sm">
+                                    <i class="fas fa-pen text-[9px]" aria-hidden="true"></i>
+                                    Düzenle
+                                </a>
+                                <form method="post" action="/Escalation/Delete/@rule.Id" class="inline-form"
+                                      onsubmit="return confirm('Bu eşik kuralını silmek istediğinizden emin misiniz?')">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn sm danger">
+                                        <i class="fas fa-trash text-[9px]" aria-hidden="true"></i>
+                                        Sil
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
