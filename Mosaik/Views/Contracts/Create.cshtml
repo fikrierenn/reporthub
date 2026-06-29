@@ -1,5 +1,6 @@
 @model Mosaik.ViewModels.ContractCreateViewModel
 @using Mosaik.Models
+@inject Mosaik.Core.Lookup.ILookupService Lookup
 
 @{
     Layout = "_AppLayout";
@@ -243,13 +244,12 @@
                         </div>
                         <div class="field">
                             <label class="lab" :for="'rec-type-' + i">Tür</label>
+                            @* Alpine x-model int kalır (x-show/JS default bağımlı); sadece label DB-driven (lookup never-blank). *@
                             <select class="inp" x-model="item.type" :id="'rec-type-' + i" :name="'Recurrences[' + i + '].Type'">
-                                <option value="0">Ödeme</option>
-                                <option value="1">Vergi (Stopaj/KDV)</option>
-                                <option value="2">Uyumluluk</option>
-                                <option value="3">Yenileme</option>
-                                <option value="4">Son Tarih</option>
-                                <option value="5">Denetim</option>
+                                @foreach (ObligationType t in Enum.GetValues<ObligationType>())
+                                {
+                                    <option value="@((int)t)">@(await Lookup.LabelAsync("obligationType", t.ToString()))</option>
+                                }
                             </select>
                         </div>
                     </div>
@@ -274,10 +274,10 @@
                             <select class="inp" x-model="item.recurrenceType"
                                     :id="'rec-period-' + i"
                                     :name="'Recurrences[' + i + '].RecurrenceType'">
-                                <option value="0">Aylık</option>
-                                <option value="1">3 Aylık</option>
-                                <option value="2">Yıllık</option>
-                                <option value="3">Özel (ay aralığı)</option>
+                                @foreach (RecurrenceType rt in Enum.GetValues<RecurrenceType>())
+                                {
+                                    <option value="@((int)rt)">@(await Lookup.LabelAsync("recurrenceType", rt.ToString()))</option>
+                                }
                             </select>
                         </div>
                     </div>

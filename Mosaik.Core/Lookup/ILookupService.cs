@@ -7,5 +7,7 @@ namespace Mosaik.Core.Lookup
     {
         Task<List<DictionaryValue>> GetValuesAsync(string typeCode);
         Task<DictionaryValue?> GetByCodeAsync(string typeCode, string valueCode);
+        // never-blank: etiket yoksa raw code döner (boş badge/label olmaz).
+        Task<string> LabelAsync(string typeCode, string valueCode);
     }
 }
