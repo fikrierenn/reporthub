@@ -16,7 +16,7 @@ Belirli iş türlerine dokunmadan **ÖNCE** ilgili **danışmana** danışılır
 | KVKK / DataElement mapping / VERBİS / saklama süresi / aydınlatma | `kvkk-veri-envanteri` skill | skill (mevcut) |
 | Yeni view / layout / hero-card-table / token-theming / WCAG | `ui-ux-pro-max` + `accessibility-compliance` skill | skill (mevcut) |
 | Yeni C# / Razor / ViewModel / service / migration | `mosaik-csharp-razor` + `mosaik-css-expert`/`mosaik-js-expert` skill | skill (mevcut) |
-| **Portal/süreç modelleme kararı** (status enum→lookup, EntityRelations, modül izolasyon, Process/aspect, approval/inbox sözleşmesi, lifecycle) | **`mosaik-portal-danismani` agent** | agent (yeni, read-only) |
+| **Portal/süreç modelleme kararı** (status enum→lookup, EntityRelations, modül izolasyon, Process/aspect, approval/inbox, lifecycle) **VEYA kapsam/sınır kararı** (portala mı / ayrı tool mu / entegrasyon mu / hiç yapılmamalı mı — CORE/ADJACENT/OUT, build/buy/cut, scope-creep) | **`mosaik-portal-danismani` agent** | agent (read-only) |
 | Mimari "hangi yol" belirsizliği (gerçek tradeoff, scope, önceliklendirme) | `llm-council` skill | skill (mevcut) |
 | BKM kurumsal DB şema keşfi | `bkm-db-explorer` skill | skill (mevcut) |
 

@@ -109,3 +109,31 @@ _5 paralel WebSearch agent + `mosaik-portal-danismani` sistem taraması. Amaç: 
 6. **EntityRelations**: genişletmeden önce typed-junction vs generic kararı (`mosaik-portal-danismani`).
 
 > Bu doküman 40/41/42 planlarına ve VISION §7'ye foldlanmalı (belge-hizalama-disiplini). Planlar Taslak — onay + fold ayrı oturum.
+
+---
+
+## EK — Portal Kapsam/Sınır Çerçevesi (2026-06-29, 2. research turu)
+
+_2 paralel WebSearch agent (capability reference model + scope-boundary frameworks). `mosaik-portal-danismani` agent bu çerçeveyle güçlendirildi (kapsam danışmanlığı yeteneği)._
+
+### 3-Tier Capability Taksonomi (Gartner DEX / ClearBox / ClearPeople maturity)
+- **CORE** (her portal kendi sahiplenir — bir kez yap, capability): identity/SSO/RBAC, **cross-module search**, **notifications/unified inbox/activity feed**, navigation/home shell, audit/logging, people directory/OrgChart, content/duyuru. → Mosaik'te **search + unified inbox eksik** (en yüksek-değer CORE).
+- **ADJACENT** (olgunlaşınca portal-native — şirket süreç/veri sahibiyse IN): workflow/approvals, forms/intake, SOP/knowledge, light dashboards, document mgmt, comments/mentions, contracts/obligations (izle: full CLM'e büyürse reassess).
+- **OUT** (system-of-record → entegre et, asla yeniden yazma): ERP/muhasebe, CRM, HRIS/bordro, data-warehouse/heavy-BI, real-time chat/email, enterprise GRC SaaS, Jira-ölçek PM. (Gartner "SaaS sprawl" + build-vs-buy konsensüsü.)
+
+### IN-vs-OUT Checklist (8)
+shared-data gravity · cross-module reuse · single-source-of-truth · compliance ownership · frequency/journey-centrality · build-cost vs reuse · latency/data-model fit · capability-vs-feature.
+
+### Karar ağacı (ilk tetiklenen kapı)
+**CUT** (güncel iş yok / Kano Indifferent-Reverse) → **BUY/reuse** (Wardley commodity: auth/BI/form/PDF/search/chat) → **INTEGRATE** (veri başka sistemde) → **BUILD** (yalnız farklılaştıran süreç, kendi veri) → **MODULE** (ayrı servis sadece cadence/compliance/ownership/data-gravity zorlarsa; aksi modüler monolit ADR-002/015).
+
+### do-NOT-build red-flags (küçük takım)
+auth/SSO · real-time chat · sıfırdan BI · generic form engine · PDF/office render · full-text/vector search altyapısı · notification/email altyapısı · workflow state-machine engine. → Mosaik zaten doğru: SurveyJS/Stateless/Gotenberg reuse.
+
+### Scoping
+Kano (Must/Performance/Delighter/Indifferent) → RICE (survivors) → walking-skeleton sınırı. Gold-plating = sessiz proje katili.
+
+**Sonuç:** Bu çerçeve Mosaik'in mevcut footprint-ladder (narrow waist) + ADR-002/015 (modüler monolit) disiplinlerinin **dış-research gerekçesi**. Capability-vs-feature + cross-module-reuse + data-ownership = IN testinin belkemiği ("faydalı mı" değil).
+
+### Kaynaklar
+Gartner DEX/Digital Workplace · ClearBox 2024 Intranet Report · ClearPeople Maturity Model · ServiceNow/Microsoft/Atlassian capability maps · Wardley Mapping (build-vs-buy) · TechTarget YAGNI · Kano (ProductSchool) · RICE/MoSCoW (Plane) · Cerbos/Merge (don't-build-auth) · debugg.ai/Cogent (modular-monolith).
