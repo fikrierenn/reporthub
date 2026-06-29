@@ -139,6 +139,12 @@ builder.Services.AddScoped<Mosaik.Core.Module.Capabilities.IInboxProvider, Mosai
 builder.Services.AddScoped<Mosaik.Core.Module.Capabilities.IInboxProvider, Mosaik.Services.Inbox.ObligationInboxProvider>();
 builder.Services.AddScoped<Mosaik.Services.Inbox.UnifiedInboxService>();
 
+// M3 Cross-module Search — explicit provider kaydı (reflection YOK). Modül provider'ları (Circular) kendi modülünde.
+builder.Services.AddScoped<Mosaik.Core.Module.Capabilities.ISearchProvider, Mosaik.Services.Search.ReportSearchProvider>();
+builder.Services.AddScoped<Mosaik.Core.Module.Capabilities.ISearchProvider, Mosaik.Services.Search.ContractSearchProvider>();
+builder.Services.AddScoped<Mosaik.Core.Module.Capabilities.ISearchProvider, Mosaik.Services.Search.ObligationSearchProvider>();
+builder.Services.AddScoped<Mosaik.Services.Search.UnifiedSearchService>();
+
 // Plan 31 — Email (SMTP)
 builder.Services.Configure<Mosaik.Core.Email.SmtpSettings>(builder.Configuration.GetSection("SmtpSettings"));
 builder.Services.AddScoped<Mosaik.Core.Email.IEmailService, Mosaik.Services.Email.SmtpEmailService>();

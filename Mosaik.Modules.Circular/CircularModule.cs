@@ -23,6 +23,8 @@ namespace Mosaik.Modules.Circular
             services.AddScoped<Services.CompileCircularJob>();
             services.AddScoped<Services.TamimReminderJob>();
             services.AddScoped<Services.CircularSummaryService>();
+            // M3 Cross-module Search — yayınlanmış tamim araması (firma sınırsız, herkese açık okuma).
+            services.AddScoped<Mosaik.Core.Module.Capabilities.ISearchProvider, Services.CircularSearchProvider>();
             // Plan 17 Faz D + C-03 — RecurringJob register Mosaik/Program.cs'de
         }
 
