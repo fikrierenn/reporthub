@@ -176,8 +176,14 @@
                             </a>
                         </li>
                         <li>
-                            <a href="/Workflow/Inbox" class="@(IsActive("Workflow") ? "active" : "")" aria-current="@(IsActive("Workflow") ? "page" : null)">
+                            <a href="/Inbox" class="@(IsActive("Inbox") ? "active" : "")" aria-current="@(IsActive("Inbox") ? "page" : null)">
                                 <span class="icon" aria-hidden="true"><i class="fas fa-inbox" aria-hidden="true"></i></span>
+                                <span class="label">Gelen Kutusu</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="/Workflow/Inbox" class="@(IsActive("Workflow") ? "active" : "")" aria-current="@(IsActive("Workflow") ? "page" : null)">
+                                <span class="icon" aria-hidden="true"><i class="fas fa-check-double" aria-hidden="true"></i></span>
                                 <span class="label">Bekleyen Onaylar</span>
                             </a>
                         </li>

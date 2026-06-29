@@ -1,0 +1,113 @@
+@using Mosaik.Core.Module.Capabilities
+@using Mosaik.ViewModels.Ui
+@model IReadOnlyList<InboxItem>
+
+@{
+    Layout = "_AppLayout";
+    ViewData["Title"] = "Gelen Kutusu";
+
+    // Aktif provider kategorileri (circular "unread" M2 LEAN'de ertelendi — provider gelince eklenir).
+    var groups = new (string Key, string Label, string Icon)[]
+    {
+        ("approval", "Onay Bekleyen", "fa-check-double"),
+        ("due", "Vadesi Yaklaşan", "fa-calendar-day")
+    };
+
+    var byCategory = Model.GroupBy(i => i.Category)
+        .ToDictionary(g => g.Key, g => g.ToList());
+
+    string ProviderChip(string key) => key switch
+    {
+        "workflow" => "Onay",
+        "obligation" => "Yükümlülük",
+        "circular" => "Tamim",
+        _ => key
+    };
+}
+
+@section Breadcrumb {
+    <nav class="crumbs" aria-label="Sayfa konumu">
+        <a href="/">Ana Sayfa</a>
+        <span aria-current="page">Gelen Kutusu</span>
+    </nav>
+}
+
+<div class="hero">
+    <h1>Gelen Kutusu</h1>
+    <div class="sub">
+        <span class="mono">@Model.Count kalem</span>
+        @if (Model.Any(i => i.IsOverdue))
+        {
+            <span class="pill"><span class="dot err"></span>@Model.Count(i => i.IsOverdue) gecikmiş</span>
+        }
+    </div>
+</div>
+
+@if (Model.Count == 0)
+{
+    @await Html.PartialAsync("_EmptyState", new EmptyStateViewModel
+    {
+        Icon = "fa-inbox",
+        Title = "Gelen kutunuz boş",
+        Message = "Şu an bekleyen onay, vadesi yaklaşan yükümlülük veya okunmamış kalem yok."
+    })
+}
+else
+{
+    foreach (var (key, label, icon) in groups)
+    {
+        if (!byCategory.TryGetValue(key, out var items) || items.Count == 0)
+        {
+            continue;
+        }
+
+        <section class="form-section-card">
+            <header class="form-section-head">
+                <span class="form-section-head__title"><i class="fas @icon text-[12px]" aria-hidden="true"></i> @label <span class="mono">(@items.Count)</span></span>
+            </header>
+            <div class="table-card">
+                <table class="dt">
+                    <thead>
+                        <tr>
+                            <th scope="col">Kaynak</th>
+                            <th scope="col">Başlık</th>
+                            <th scope="col">Detay</th>
+                            <th scope="col">Tarih</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in items)
+                        {
+                            <tr>
+                                <td><span class="pill">@ProviderChip(item.ProviderKey)</span></td>
+                                <td class="fw-500"><a href="@item.Url" class="data-link">@item.Title</a></td>
+                                <td>
+                                    @if (!string.IsNullOrWhiteSpace(item.Subtitle))
+                                    {
+                                        <span class="@(item.IsOverdue ? "status err" : "text-muted")">@item.Subtitle</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">—</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (item.DueAt.HasValue)
+                                    {
+                                        <span class="@(item.IsOverdue ? "status err" : "")">@item.DueAt.Value.ToString("dd.MM.yyyy")</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="ago">@item.CreatedAt.ToString("dd.MM.yyyy")</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    }
+}
+
+@await Html.PartialAsync("_FooterHint", (string?)$"{Model.Count} kalem")

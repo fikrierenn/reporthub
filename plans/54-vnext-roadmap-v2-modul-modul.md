@@ -23,7 +23,7 @@ Her satır = bir oturum-üstü "modül". Sıra dependency'e saygılıdır; üstt
 | # | Modül | Bağımlılık | Tip | Kısa kapsam |
 |---|---|---|---|---|
 | ~~M1~~ | ~~SMTP foundation~~ | — | ✅ **VERIFIED-DONE 2026-06-29** | Temel ZATEN canlı: `IEmailService` (Plan 31, `Program.cs:137-139`) + `INotificationService` zengin (Plan 17 Faz H: Create/Bulk/NotifyAll/dedup/unread/markread). **Digest yok** → M5'e fold (volume olunca). **Plan 32 scheduled-reports → Park** (ayrı feature, foundation değil, attachment Plan 32 ile gelir). İlk gerçek build = **M2**. |
-| **M2** | **Unified Inbox** (Plan 37, ADR-018) | M1 | CORE | `IInboxProvider` opt-in + `/Inbox` çok-modül aggregation (workflow+form+obligation+circular-read) |
+| **M2** | **Unified Inbox** (Plan 37, ADR-018) | — | CORE | **LEAN** (2026-06-29): TEK `IInboxProvider` + explicit DI (reflection YOK) + 3 provider (workflow/obligation/circular) + `/Inbox`. Diğer 4 capability interface YAZILMAZ (YAGNI). |
 | **M3** | **Cross-module Search** (ADR-018) | — | CORE | SQL Server full-text; rapor+SOP+sözleşme+tamim tek arama. **vector kurma** |
 | **M4** | **Dashboard→Alert** (EscalationRule) | M1 | CORE | eşik aşımı → `INotificationService`; Hangfire sweeper. OI≠BI |
 | **M5** | **Comment/Mention** (Plan 35) | — | CORE-cap | polymorphic + entity_type lookup-FK + denormalize firma_id + fan-out-on-write. **+ notification digest** (M1'den devralındı — volume burada oluşur) |
@@ -47,6 +47,7 @@ Her satır = bir oturum-üstü "modül". Sıra dependency'e saygılıdır; üstt
 
 Modül "bitti" demek için **hepsi** geçmeli. Biri kırmızıysa modül kapanmaz, sonraki başlamaz.
 
+0. **Simplicity-gate (build ÖNCESİ — kullanıcı kararı 2026-06-29 "tüm modüller için").** Kod yazmadan mimari tart: minimum soyutlama mı? İzolasyon sınırının (ADR-002) gerçekten gerektirdiğinden **fazlası yazılmıyor** mu? Spekülatif framework / reflection-discovery / "ileride lazım" interface YOK. Over-engineering şüphesi → en dar irtifaya in (örnek: M2 → tek IInboxProvider + explicit DI, 5 capability + reflection DEĞİL; ADR-018 trim edildi). `coding-discipline.md` simplicity-first + `footprint-ladder.md`.
 1. **Build yeşil** — `dotnet build` 0 hata.
 2. **Test yeşil** — `dotnet test` tam geçer (test-discipline: build≠test). Yeni davranış → yeni test.
 3. **4 paralel compliance scan** (session-protocol Adım 5) — **kapsam: o oturumda dokunulan TÜM modüller** (`git diff` + bu modül + komşu):
