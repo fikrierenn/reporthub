@@ -58,12 +58,12 @@ Detay: [`.claude/rules/session-protocol.md`](.claude/rules/session-protocol.md).
 - **Testler:** xUnit (`Mosaik.Tests/Mosaik.Tests.csproj`). <!-- AUTO:TEST_COUNT -->453<!-- /AUTO:TEST_COUNT --> test geçiyor.
 
 ### Ana klasörler
-- `Mosaik/Controllers/` — <!-- AUTO:CONTROLLERS -->`Admin`, `Ai`, `Auth`, `Calendar`, `Compliance`, `Contracts`, `Dashboard`, `Documents`, `Home`, `Logs`, `Notifications`, `Obligations`, `OrgChart`, `Profile`, `Reports`, `Test`, `Workflow`<!-- /AUTO:CONTROLLERS -->
+- `Mosaik/Controllers/` — <!-- AUTO:CONTROLLERS -->`Admin`, `Ai`, `Auth`, `Calendar`, `Compliance`, `Contracts`, `Dashboard`, `Documents`, `Home`, `Inbox`, `Logs`, `Notifications`, `Obligations`, `OrgChart`, `Profile`, `Reports`, `Test`, `Workflow`<!-- /AUTO:CONTROLLERS -->
 - `Mosaik/Models/` — EF entities
 - `Mosaik/ViewModels/` — view-model wrapper'ları
 - `Mosaik/Views/` — Razor views, `_AppLayout.cshtml` ana layout
 - `Mosaik/Services/` — `PasswordHasher`, `AuditLogService`, `DashboardRenderer`
-- `Mosaik/Database/` — SQL migration + seed + SP scriptleri (<!-- AUTO:MIGRATION_RANGE -->00_ → 74_<!-- /AUTO:MIGRATION_RANGE -->, <!-- AUTO:MIGRATION_COUNT -->75<!-- /AUTO:MIGRATION_COUNT --> dosya)
+- `Mosaik/Database/` — SQL migration + seed + SP scriptleri (<!-- AUTO:MIGRATION_RANGE -->00_ → 76_<!-- /AUTO:MIGRATION_RANGE -->, <!-- AUTO:MIGRATION_COUNT -->77<!-- /AUTO:MIGRATION_COUNT --> dosya)
 - `Mosaik/wwwroot/assets/{js,css}/` — static assets
 
 ---

@@ -6,7 +6,7 @@
 > Tahmin etme. **Önce buraya bak.**
 
 Son elle güncelleme: **2026-05-12**
-Son otomatik refresh: <!-- AUTO:LAST_REFRESH --> 2026-06-03 <!-- /AUTO:LAST_REFRESH -->
+Son otomatik refresh: <!-- AUTO:LAST_REFRESH --> 2026-06-29 <!-- /AUTO:LAST_REFRESH -->
 
 > **Otomatik tazelenir.** `bash scripts/refresh-arch-map.sh` çalıştırılınca aşağıdaki marker'lı bölümler regenerate edilir:
 > AppModules live state (§ 7), Admin views listesi (§ 12), Controller routes (§ 13).
@@ -264,7 +264,7 @@ _Otomatik üretildi. Mosaik/Views/Admin/*.cshtml (partial hariç)._
 - `EditRole.cshtml` (lines=88, inline-style=0)
 - `EditUser.cshtml` (lines=177, inline-style=0)
 - `Index.cshtml` (lines=30, inline-style=0)
-- `Lookup.cshtml` (lines=123, inline-style=0)
+- `Lookup.cshtml` (lines=145, inline-style=0)
 - `Modules.cshtml` (lines=78, inline-style=0)
 - `OrgChart.cshtml` (lines=429, inline-style=0)
 <!-- AUTO:ADMIN_VIEWS:END -->
@@ -315,7 +315,8 @@ _Otomatik üretildi. AdminController partial'larından çıkarılır._
 122:        public async Task<IActionResult> TestFilterOptionsQuery(
 12:        public async Task<IActionResult> Lookup()
 30:        public async Task<IActionResult> LookupAddValue(int typeId, string code, string label, int displayOrder)
-62:        public async Task<IActionResult> LookupToggleValue(int valueId, bool active)
+62:        public async Task<IActionResult> UpdateLookupValue(int valueId, string label, int displayOrder)
+94:        public async Task<IActionResult> LookupToggleValue(int valueId, bool active)
 10:        [Route("Admin/Modules")]
 11:        public async Task<IActionResult> Modules()
 19:        [Route("Admin/Modules")]
