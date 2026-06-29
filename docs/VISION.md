@@ -4,6 +4,8 @@
 
 **Son güncelleme:** 2026-05-21 (KVKK Process Backbone + Form Builder + Process Execution Runtime — vNext kalbi altılı; portal = execution platform).
 
+> **Dış best-practice doğrulaması (2026-06-29):** vNext yönü 5 paralel web-research + sistem taraması ile sektör pratiğine oturtuldu → [`docs/RESEARCH_VISION_2026-06-29.md`](RESEARCH_VISION_2026-06-29.md). Özet: yön DOĞRU (modüler monolit + OI north star literatürle uyumlu). **3 düzeltme planlara fold bekliyor:** (1) Plan 42 — 6 fiziksel aspect tablosu yerine **tek `ProcessActivity` stream** (discriminator + PayloadJson + RefEntityType/Id); (2) Plan 41 — **`FormVersion` snapshot** + SurveyJS reuse; (3) Plan 40 — ProcessingPurpose/Recipient/VerbisRegistration lookup + Pattern 9. Platform boşluğu = cross-module search + unified inbox + dashboard→alert (yeni modül değil, bağlayıcı doku). EntityRelations generic tablo genişletilmeden typed-junction kararı verilmeli.
+
 ---
 
 ## 1. Mosaik nedir, ne olacak?
