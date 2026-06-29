@@ -58,7 +58,7 @@ Detay: [`.claude/rules/session-protocol.md`](.claude/rules/session-protocol.md).
 - **Testler:** xUnit (`Mosaik.Tests/Mosaik.Tests.csproj`). <!-- AUTO:TEST_COUNT -->453<!-- /AUTO:TEST_COUNT --> test geçiyor.
 
 ### Ana klasörler
-- `Mosaik/Controllers/` — <!-- AUTO:CONTROLLERS -->`Admin`, `Ai`, `Auth`, `Calendar`, `Compliance`, `Contracts`, `Dashboard`, `Documents`, `Home`, `Inbox`, `Logs`, `Notifications`, `Obligations`, `OrgChart`, `Profile`, `Reports`, `Test`, `Workflow`<!-- /AUTO:CONTROLLERS -->
+- `Mosaik/Controllers/` — <!-- AUTO:CONTROLLERS -->`Admin`, `Ai`, `Auth`, `Calendar`, `Compliance`, `Contracts`, `Dashboard`, `Documents`, `Home`, `Inbox`, `Logs`, `Notifications`, `Obligations`, `OrgChart`, `Profile`, `Reports`, `Search`, `Test`, `Workflow`<!-- /AUTO:CONTROLLERS -->
 - `Mosaik/Models/` — EF entities
 - `Mosaik/ViewModels/` — view-model wrapper'ları
 - `Mosaik/Views/` — Razor views, `_AppLayout.cshtml` ana layout
