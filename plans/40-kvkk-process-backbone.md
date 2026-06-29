@@ -574,3 +574,7 @@ Genel kapanış
 
 - **2026-05-21:** Taslak. Onay bekliyor.
 - **2026-05-21 rev 2:** Kullanıcı netleştirmesi sonrası execution kapsam dışına çıkarıldı. ProcessInstance runtime Plan 42'ye, Form altyapısı Plan 41'e devredildi. Önceki Faz 3 (Workflow+Form+DSAR+Breach) silindi, Faz 4-8 yeniden numaralandı (3-7). Effort 72-92h → 50-65h. 8 faz → 7 faz. Plan 40 artık passive envanter + denetim + reverse search + AI integrity + VERBİS export odaklı.
+
+
+---
+> **DÜZELTME 2026-06-29 (Plan 54 / research):** Faz 1 seed öncesi EKLE → `ProcessingPurpose` lookup (KVKK 10 amaç) + `Recipient` lookup (alıcı grubu) + `VerbisRegistration` (controller header + SCC `SccSignedAt`/`KurulNotifiedAt`) + **Pattern 9** (açık-rıza-only cross-border risk flag). DSAR Plan 42: clock-pause-on-verification. Faz 5-7 SADELEŞTİR (AI weekly değil daily, diff-UI yok). Kaynak: docs/RESEARCH_VISION + COMPETITIVE_SCOPE.

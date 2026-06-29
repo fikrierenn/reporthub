@@ -349,3 +349,7 @@ Plan onaylanmazsa: bu dosya `plans/archive/`'a taşınır, TODO'ya "vNext keşif
 2. Plan 16.5 (shared kit) önce mi yoksa Plan 17 (Tamim) içinde mi yapılsın?
 3. Plan 14 Faz A (audit log fix, ~60 dk) bu modüllerden önce mi sonra mı?
 4. Kullanıcının asıl sürpriz beklediği modül var mı (BkmArgus risk, KPI?)
+
+
+---
+> **SUPERSEDED 2026-06-29 → Plan 54** (modül-modül seri + denetim kapısı, kapsam-disiplinli). Scope-creep (49/50/51) CUT + rakip table-stakes eklendi. git history korur.

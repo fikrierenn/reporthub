@@ -531,3 +531,7 @@ Toplam: 54-70h, 4-5 hafta
 ## 11. Sürüm
 
 - **2026-05-21:** Taslak. Onay bekliyor.
+
+
+---
+> **DÜZELTME 2026-06-29 (Plan 54 / research):** `FormVersion` snapshot (FK Form + version + tam SchemaJson + publishedAt) + `submission.FormVersionId` ZORUNLU — submission render edildiği versiyona göre validate. SurveyJS engine+builder REUSE (kendi renderer yazma); sadece ince Mosaik wrapper (entity/version/DataElement-map/HMAC/encryption/anti-spam). Anti-spam katmanlı: honeypot→timing→IP-rate-limit(IP yazma)→CAPTCHA-son. field→DataElement map OPTIONAL. Not: `FormDefinitionVersion.cs` zaten var (§4.6).

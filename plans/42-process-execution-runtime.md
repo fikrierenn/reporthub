@@ -598,3 +598,7 @@ Toplam: 64-84h, 4-5 hafta
 ## 11. Sürüm
 
 - **2026-05-21:** Taslak. Onay bekliyor.
+
+
+---
+> **DÜZELTME 2026-06-29 (Plan 54 / research — KRİTİK):** 6 fiziksel aspect tablosu YERİNE **tek `ProcessActivity` stream** (ActivityType lookup + PayloadJson + RefEntityType/RefEntityId; aspect = projeksiyon WHERE ActivityType=...). Tek-sorgu timeline, 6-yollu UNION yok, modül izolasyonu korunur. Engine: `.NET Stateless` transition guard, persistence EF Core, SLA: DueAt/EscalationLevel + Hangfire sweeper + IBusinessClock. BPMN/Elsa/event-sourcing YOK. Kaynak: docs/RESEARCH_VISION §2.

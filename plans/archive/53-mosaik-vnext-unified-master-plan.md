@@ -115,3 +115,7 @@ Hafta 13+:   [Faz 6] Plan 50 Shadow Org Graph + Plan 52 BKM Kitap Trend Endeksi 
 * **Biometrik Ses Güvenliği:** Whisper ses notları sunucu diskine yazılmayacak, transkrip sonrası anında RAM'den yok edilecektir.
 * **Diferansiyel Gizlilik (Laplace Noise):** Analistler ve düşük yetkili kullanıcılar için `ε = 1.0` Laplace mekanizmasıyla finansal range'ler gösterilecek, ham ciro rakamlarının repeated query'lerle sızmasını engellemek için cache ve rate limiting bypass korumaları devrede olacaktır.
 * **Immutable Süreç Koruması:** Aktif onay akışları in-flight esnasında asla modifiye edilmeyecek, her optimizasyon şablon sürüm kontrolü (V1.0 -> V1.1) ve "Staging / Pending Activation" onay adımlarıyla devreye sokulacaktır.
+
+
+---
+> **SUPERSEDED 2026-06-29 → Plan 54** (modül-modül seri + denetim kapısı, kapsam-disiplinli). Scope-creep (49/50/51) CUT + rakip table-stakes eklendi. git history korur.

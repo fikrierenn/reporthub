@@ -333,3 +333,7 @@ public async Task<IActionResult> Update(int id, PrivacyPolicyDto dto)
 - Export DAHA SIKI (ayrı ExportStrategy kolon)
 - Cache invalidate `ReportCache.InvalidateAll()` + audit
 - **Implementasyon:** Plan 14 UserDataScope + Plan 44 RAG Guard ✅ + Plan 40 KVKK Presidio ✅ production sonrası
+
+
+---
+> **CUT 2026-06-29 (Plan 54 kapsam review).** Onaylıydı ama kapsam-disiplini sonrası red-flag: 49 biyometrik=KVKK m.6 riski / 50 workplace-surveillance / 51 tek-tenant overkill. Bütçe table-stakes (e-imza/İK/KVKK-tamamlama) modüllerine döndü. Gerekirse yeniden açılır (footprint-ladder).

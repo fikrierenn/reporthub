@@ -243,3 +243,7 @@ Admin Form Builder UI'da slider + "Düşük confidence durumunda kullanıcıya g
 - v1 sadece ses+foto, GPS v2 opsiyonel manuel
 - Push-to-talk only (always-listening yasak)
 - **Implementasyon:** Plan 46 PWA ✅ + Plan 41 Form ✅ + Plan 44 RAG Guard ✅ sonrası
+
+
+---
+> **CUT 2026-06-29 (Plan 54 kapsam review).** Onaylıydı ama kapsam-disiplini sonrası red-flag: 49 biyometrik=KVKK m.6 riski / 50 workplace-surveillance / 51 tek-tenant overkill. Bütçe table-stakes (e-imza/İK/KVKK-tamamlama) modüllerine döndü. Gerekirse yeniden açılır (footprint-ladder).

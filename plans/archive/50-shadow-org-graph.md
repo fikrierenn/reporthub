@@ -277,3 +277,7 @@ Yorum: "Onay şemasında adı yokken kararları etkileyen sıklığı".
 - v1 sadece pozitif, negatif Plan 50.1
 - **KVKK aydınlatma metni güncelleme:** Plan başlangıcında DPO consult zorunlu
 - **Implementasyon:** Plan 35 Comment + Plan 36 Workflow + Plan 38 EntityRelations production'da 6+ ay log birikmesi sonrası
+
+
+---
+> **CUT 2026-06-29 (Plan 54 kapsam review).** Onaylıydı ama kapsam-disiplini sonrası red-flag: 49 biyometrik=KVKK m.6 riski / 50 workplace-surveillance / 51 tek-tenant overkill. Bütçe table-stakes (e-imza/İK/KVKK-tamamlama) modüllerine döndü. Gerekirse yeniden açılır (footprint-ladder).
