@@ -21,6 +21,10 @@ namespace Mosaik.Modules.Kvkk.Entities
         public string? RecipientGroups { get; set; }        // Aktarılan Alıcı Grupları (serbest)
         public int? RetentionRuleId { get; set; }
         public int? DisposalMethodId { get; set; }
+        // Serbest-metin saklama/imha (xlsx kaynak — VERBİS export + uyumluluk için).
+        // Lookup FK opsiyonel; bu alanlar denetim-hazır ham değeri korur (import düşürmesin).
+        public string? RetentionText { get; set; }
+        public string? DisposalText { get; set; }
 
         public byte RiskLevel { get; set; }                 // 0 Düşük 1 Orta 2 Yüksek
         public byte ReviewStatus { get; set; }              // 0 Taslak 1 Birim onayı 2 KVKK onay 3 VERBİS yayında

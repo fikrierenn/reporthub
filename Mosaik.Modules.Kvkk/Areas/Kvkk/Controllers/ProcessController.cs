@@ -17,12 +17,14 @@ namespace Mosaik.Modules.Kvkk.Areas.Kvkk.Controllers
     {
         private readonly DbContext _db;
         private readonly KvkkProcessService _processes;
+        private readonly VerbisExporter _verbis;
         private readonly IAuditLog _audit;
 
-        public ProcessController(DbContext db, KvkkProcessService processes, IAuditLog audit)
+        public ProcessController(DbContext db, KvkkProcessService processes, VerbisExporter verbis, IAuditLog audit)
         {
             _db = db;
             _processes = processes;
+            _verbis = verbis;
             _audit = audit;
         }
 
@@ -66,6 +68,19 @@ namespace Mosaik.Modules.Kvkk.Areas.Kvkk.Controllers
             if (p == null)
                 return NotFound();
             return View(p);
+        }
+
+        // VERBİS / denetim-hazır envanter Excel indir.
+        [HttpGet]
+        public async Task<IActionResult> ExportVerbis(CancellationToken ct)
+        {
+            var firmaId = CurrentFirmaId;
+            if (firmaId <= 0)
+                return Forbid();
+            var bytes = await _verbis.ExportAsync(firmaId, ct);
+            await AuditAsync("kvkk_verbis_export", 0, "VERBİS envanteri Excel export");
+            var fileName = $"KVKK_Envanteri_{DateTime.UtcNow:yyyyMMdd}.xlsx";
+            return File(bytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
         }
 
         [HttpGet]

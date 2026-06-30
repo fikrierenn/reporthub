@@ -49,7 +49,8 @@ namespace Mosaik.Modules.Kvkk.Services
                     && l.Process!.FirmaId == firmaId && l.Process.IsActive)
                 .Select(l => new ProcessUsage(
                     l.ProcessId, l.Process!.Name, l.Process.Department, l.UsageType,
-                    l.Process.RetentionRuleId != null, l.Process.DisposalMethodId != null))
+                    l.Process.RetentionRuleId != null || (l.Process.RetentionText != null && l.Process.RetentionText != ""),
+                    l.Process.DisposalMethodId != null || (l.Process.DisposalText != null && l.Process.DisposalText != "")))
                 .Distinct()
                 .ToListAsync(ct);
         }

@@ -91,6 +91,8 @@ namespace Mosaik.Modules.Kvkk.Services
                     p.StorageMedium = Trunc(Cell(ws, r, 12), 500);
                     p.AccessAuthority = Trunc(Cell(ws, r, 13), 500);
                     p.RecipientGroups = Trunc(Cell(ws, r, 14), 500);
+                    p.RetentionText = Trunc(Cell(ws, r, 16), 500);  // Saklama Süresi (serbest metin)
+                    p.DisposalText = Trunc(Cell(ws, r, 17), 500);   // İmha Yöntemi (serbest metin)
                     p.RiskLevel = KvkkImportParsers.ParseRiskLevel(Cell(ws, r, 20));
                     p.IsActive = true;
                     p.UpdatedAt = DateTime.UtcNow;
