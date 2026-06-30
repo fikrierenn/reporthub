@@ -37,6 +37,30 @@ namespace Mosaik.Services
                 .ToList();
         }
 
+        public async Task<List<ActiveUserInfo>> GetActiveUsersAsync(int? firmaId = null)
+        {
+            if (firmaId is null or 0)
+            {
+                return await _db.Users.AsNoTracking()
+                    .Where(u => u.IsActive)
+                    .OrderBy(u => u.Username)
+                    .Select(u => new ActiveUserInfo(u.UserId, u.Username, u.FullName))
+                    .ToListAsync();
+            }
+
+            var firmaToken = firmaId.Value;
+            var candidates = await _db.Users.AsNoTracking()
+                .Where(u => u.IsActive && u.FirmaIds != null)
+                .Select(u => new { u.UserId, u.Username, u.FullName, u.FirmaIds })
+                .ToListAsync();
+
+            return candidates
+                .Where(u => ParseFirmaIds(u.FirmaIds!).Contains(firmaToken))
+                .OrderBy(u => u.Username)
+                .Select(u => new ActiveUserInfo(u.UserId, u.Username, u.FullName))
+                .ToList();
+        }
+
         public async Task<Dictionary<int, string>> GetUserEmailsAsync(IEnumerable<int> userIds)
         {
             var ids = userIds.Distinct().ToList();

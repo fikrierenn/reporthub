@@ -92,6 +92,8 @@ public class SopReadReminderJobTests
             var ids = userIds.ToHashSet();
             return Task.FromResult(Emails.Where(kv => ids.Contains(kv.Key)).ToDictionary(kv => kv.Key, kv => kv.Value));
         }
+        public Task<List<Mosaik.Core.Users.ActiveUserInfo>> GetActiveUsersAsync(int? firmaId = null)
+            => Task.FromResult(new List<Mosaik.Core.Users.ActiveUserInfo>());
     }
 
     private static (TestContext db, SopReadReminderJob job, FakeAudit audit, FakeNotifications notif, FakeEmail email, FakeUserDirectory dir) NewJob(string name)

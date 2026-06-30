@@ -97,6 +97,11 @@ builder.Services.AddScoped<Mosaik.Core.Notification.INotificationService, Mosaik
 // Plan 34 Faz E S-20 — modüllerin User entity'sine erişmeden aktif kullanıcı ID listesi alması için
 builder.Services.AddScoped<Mosaik.Core.Users.IActiveUserDirectory, Mosaik.Services.ActiveUserDirectoryService>();
 
+// Plan 54 M5 — cross-modül yorum + @mention servisi
+builder.Services.AddScoped<Mosaik.Core.Comments.ICommentService, Mosaik.Services.CommentService>();
+// Plan 54 M5 — günlük okunmamış bildirim digest job'ı (Hangfire recurring, aşağıda kaydedilir)
+builder.Services.AddScoped<Mosaik.Services.NotificationDigestJob>();
+
 // Plan 34.1 Faz 1 A-06 — SOP RAG embedder (e5-base ONNX). Singleton: ONNX session reuse.
 builder.Services.AddSingleton<Mosaik.Core.AI.Embed.IMosaikEmbedder>(sp =>
 {
@@ -347,6 +352,17 @@ RecurringJob.AddOrUpdate<Mosaik.Services.EscalationSweeperJob>(
     recurringJobId: "escalation-sweeper",
     methodCall: job => job.ExecuteAsync(CancellationToken.None),
     cronExpression: "0 * * * *",
+    options: new RecurringJobOptions
+    {
+        TimeZone = TimeZoneInfo.FindSystemTimeZoneById(
+            OperatingSystem.IsWindows() ? "Turkey Standard Time" : "Europe/Istanbul")
+    });
+
+// Plan 54 M5 — günlük okunmamış bildirim digest'i (her gün 08:00, Europe/Istanbul).
+RecurringJob.AddOrUpdate<Mosaik.Services.NotificationDigestJob>(
+    recurringJobId: "notification-digest-daily",
+    methodCall: job => job.ExecuteAsync(CancellationToken.None),
+    cronExpression: "0 8 * * *",
     options: new RecurringJobOptions
     {
         TimeZone = TimeZoneInfo.FindSystemTimeZoneById(

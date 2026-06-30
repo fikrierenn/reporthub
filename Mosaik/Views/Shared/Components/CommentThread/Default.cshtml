@@ -1,0 +1,62 @@
+@model Mosaik.ViewModels.CommentThreadViewModel
+@{
+    var msg = TempData["Message"] as string;
+    var msgType = TempData["MessageType"] as string;
+}
+
+<section id="comments" class="comment-thread" aria-label="Yorumlar">
+    <h3 class="comment-thread__title">
+        <i class="fas fa-comments" aria-hidden="true"></i>
+        Yorumlar
+        <span class="mono">@Model.Comments.Count</span>
+    </h3>
+
+    @if (!string.IsNullOrWhiteSpace(msg))
+    {
+        <div role="alert" class="alert @(msgType == "success" ? "success" : "error")">
+            <i class="fas @(msgType == "success" ? "fa-check-circle" : "fa-exclamation-circle")" aria-hidden="true"></i>
+            @msg
+        </div>
+    }
+
+    @if (Model.Comments.Count == 0)
+    {
+        <p class="comment-empty text-muted">Henüz yorum yok. İlk yorumu siz ekleyin.</p>
+    }
+    else
+    {
+        <ul class="comment-list">
+            @foreach (var c in Model.Comments)
+            {
+                <li class="comment-item">
+                    <div class="comment-head">
+                        <span class="comment-author">@c.AuthorName</span>
+                        <span class="ago">@c.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</span>
+                    </div>
+                    @* Body kayıt-anında IContentSanitizer ile temizlendi (sanitize-on-write) — güvenli render. *@
+                    <div class="comment-body">@Html.Raw(c.Body)</div>
+                </li>
+            }
+        </ul>
+    }
+
+    <form method="post" action="/Comments/Add" class="comment-form" data-comment-form>
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="entityType" value="@Model.EntityType" />
+        <input type="hidden" name="entityId" value="@Model.EntityId" />
+        <div class="comment-compose">
+            <textarea name="body" class="inp comment-input" rows="2" maxlength="4000" required
+                      placeholder="Yorum yazın… @@ ile kullanıcı etiketleyin" data-mention-input
+                      autocomplete="off"></textarea>
+            <div class="mention-box" data-mention-box hidden role="listbox" aria-label="Kullanıcı önerileri"></div>
+        </div>
+        <div class="comment-actions">
+            <button type="submit" class="btn primary sm">
+                <i class="fas fa-paper-plane text-[9px]" aria-hidden="true"></i>
+                Gönder
+            </button>
+        </div>
+    </form>
+</section>
+
+<script src="~/assets/js/comments.js" asp-append-version="true"></script>

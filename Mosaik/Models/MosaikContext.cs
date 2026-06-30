@@ -85,6 +85,9 @@ namespace Mosaik.Models
         // Plan 54 M4 — Dashboard→Alert eşik kuralları
         public DbSet<EscalationRule> EscalationRules { get; set; }
 
+        // Plan 54 M5 — polymorphic yorum + mention
+        public DbSet<Mosaik.Core.Comments.Comment> Comments { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             ConfigureIdentityAndAudit(modelBuilder);
@@ -94,6 +97,7 @@ namespace Mosaik.Models
             ConfigureWorkflowAndLookup(modelBuilder);
             ConfigureContracts(modelBuilder);
             ConfigureCompliance(modelBuilder);
+            ConfigureComments(modelBuilder);
 
             // Plan 16.6 — Her vNext modül kendi entity'lerini ConfigureModelBuilder
             // metodu içinde kayıt eder. ModuleLoader assembly'leri tarar, sırayla

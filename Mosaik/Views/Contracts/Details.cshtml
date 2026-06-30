@@ -252,6 +252,9 @@
     </div>
 </div>
 
+@* Plan 54 M5 — yorum + @@mention thread *@
+@await Component.InvokeAsync("CommentThread", new { entityType = "contract", entityId = Model.Id, firmaId = Model.FirmaId })
+
 @functions {
     string CategoryLabel(ContractCategory cat) => cat switch
     {

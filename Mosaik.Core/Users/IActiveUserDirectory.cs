@@ -16,5 +16,12 @@ namespace Mosaik.Core.Users
         // Sadece IsActive=1 + Email NotNullOrEmpty kullanıcılar döner.
         // Verilen userIds boşsa boş dictionary.
         Task<Dictionary<int, string>> GetUserEmailsAsync(IEnumerable<int> userIds);
+
+        // Plan 54 M5 — @mention çözümü + autocomplete. Aktif kullanıcılar (UserId+Username+FullName).
+        // firmaId verilirse o firmaya erişenler (ADR-012). Username @mention anahtarıdır.
+        Task<List<ActiveUserInfo>> GetActiveUsersAsync(int? firmaId = null);
     }
+
+    // @mention çözümü + autocomplete için hafif kullanıcı kaydı.
+    public sealed record ActiveUserInfo(int UserId, string Username, string FullName);
 }

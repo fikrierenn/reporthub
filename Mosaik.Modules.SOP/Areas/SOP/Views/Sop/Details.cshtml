@@ -547,3 +547,6 @@
         }
     </div>
 </div>
+
+@* Plan 54 M5 — yorum + @@mention thread *@
+@await Component.InvokeAsync("CommentThread", new { entityType = "sopDocument", entityId = Model.Document.Id, firmaId = Model.Document.FirmaId })

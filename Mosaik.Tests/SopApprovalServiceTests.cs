@@ -99,6 +99,9 @@ public class SopApprovalServiceTests
 
         public Task<Dictionary<int, string>> GetUserEmailsAsync(IEnumerable<int> userIds)
             => Task.FromResult(new Dictionary<int, string>());
+
+        public Task<List<Mosaik.Core.Users.ActiveUserInfo>> GetActiveUsersAsync(int? firmaId = null)
+            => Task.FromResult(new List<Mosaik.Core.Users.ActiveUserInfo>());
     }
 
     private sealed class FakeEmbedder : Mosaik.Core.AI.Embed.IMosaikEmbedder

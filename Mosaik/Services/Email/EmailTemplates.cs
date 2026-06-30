@@ -117,5 +117,20 @@ namespace Mosaik.Services.Email
                 </table>
                 <a class="btn" href="{{SafeUrl(appUrl)}}/Approvals/Details/{{approvalId}}">Talebi İncele</a>
                 """);
+
+        // Plan 54 M5 — okunmamış bildirim digest'i (günlük özet).
+        public static string NotificationDigest(int unreadCount, IEnumerable<string> recentTitles, string appUrl)
+        {
+            var rows = string.Join("", recentTitles.Select(t => $"<tr><td>{E(t)}</td></tr>"));
+            return Wrap("Okunmamış Bildirimler", $$"""
+                <p>Merhaba,</p>
+                <p>Mosaik'te <strong>{{unreadCount}}</strong> okunmamış bildiriminiz var. Son bildirimler:</p>
+                <table>
+                  <tr><th>Bildirim</th></tr>
+                  {{rows}}
+                </table>
+                <a class="btn" href="{{SafeUrl(appUrl)}}/Notifications">Bildirimleri Görüntüle</a>
+                """);
+        }
     }
 }
