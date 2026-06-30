@@ -1,0 +1,150 @@
+@model Mosaik.Modules.Kvkk.Areas.Kvkk.ViewModels.KvkkProcessFormViewModel
+@{
+    var isNew = Model.Id == 0;
+    ViewData["Title"] = isNew ? "Yeni Süreç" : "Süreç Düzenle";
+}
+
+@section Breadcrumb {
+    <nav class="crumbs" aria-label="Sayfa konumu">
+        <a href="/Dashboard">Mosaik</a>
+        <span class="sep" aria-hidden="true">/</span>
+        <a href="/Kvkk/Process">KVKK Envanteri</a>
+        <span class="sep" aria-hidden="true">/</span>
+        <span class="current" aria-current="page">@(isNew ? "Yeni Süreç" : "Düzenle")</span>
+    </nav>
+}
+
+@section TopActions {
+    <a href="@(isNew ? "/Kvkk/Process" : $"/Kvkk/Process/Details/{Model.Id}")" class="btn">
+        <i class="fas fa-xmark text-[10px]" aria-hidden="true"></i> İptal
+    </a>
+}
+
+<div class="hero">
+    <h1>@(isNew ? "Yeni KVKK Süreci" : "Süreç Düzenle")</h1>
+    <div class="sub"><span>Kişisel veri işleme süreci tanımı (KVİE)</span></div>
+</div>
+
+@if (!ViewData.ModelState.IsValid)
+{
+    <div role="alert" class="alert error">
+        <i class="fas fa-exclamation-circle" aria-hidden="true"></i>
+        @Html.ValidationSummary(false)
+    </div>
+}
+
+<form method="post" action="/Kvkk/Process/Save">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="Id" value="@Model.Id" />
+
+    <div class="form-section-card wide">
+        <div class="form-section-head">
+            <h2><i class="fas fa-shield-halved text-muted" aria-hidden="true"></i> Süreç Bilgileri</h2>
+        </div>
+        <div class="form-section-body stack">
+            <div class="field mb-0">
+                <label class="lab" for="Name">Süreç / Faaliyet Adı <span class="req">*</span></label>
+                <input type="text" id="Name" name="Name" value="@Model.Name" required maxlength="300" class="inp" />
+            </div>
+            <div class="grid-2col">
+                <div class="field mb-0">
+                    <label class="lab" for="Department">Departman <span class="req">*</span></label>
+                    <input type="text" id="Department" name="Department" value="@Model.Department" required maxlength="120" class="inp" />
+                </div>
+                <div class="field mb-0">
+                    <label class="lab" for="Unit">Birim</label>
+                    <input type="text" id="Unit" name="Unit" value="@Model.Unit" maxlength="120" class="inp" />
+                </div>
+            </div>
+            <div class="grid-2col">
+                <div class="field mb-0">
+                    <label class="lab" for="Owner">Süreç Sahibi</label>
+                    <input type="text" id="Owner" name="Owner" value="@Model.Owner" maxlength="200" class="inp" />
+                </div>
+                <div class="field mb-0">
+                    <label class="lab" for="RiskLevel">Risk Seviyesi</label>
+                    <select id="RiskLevel" name="RiskLevel" class="inp">
+                        <option value="0" selected="@(Model.RiskLevel == 0)">Düşük</option>
+                        <option value="1" selected="@(Model.RiskLevel == 1)">Orta</option>
+                        <option value="2" selected="@(Model.RiskLevel == 2)">Yüksek</option>
+                    </select>
+                </div>
+            </div>
+            <div class="field mb-0">
+                <label class="lab" for="Purpose">İşleme Amacı <span class="req">*</span></label>
+                <textarea id="Purpose" name="Purpose" rows="2" required class="inp">@Model.Purpose</textarea>
+            </div>
+            <div class="grid-2col">
+                <div class="field mb-0">
+                    <label class="lab" for="LegalBasisId">Hukuki Sebep <span class="req">*</span></label>
+                    <select id="LegalBasisId" name="LegalBasisId" required class="inp">
+                        <option value="0">— Seçin —</option>
+                        @foreach (var o in Model.LegalBases)
+                        {
+                            <option value="@o.Id" selected="@(o.Id == Model.LegalBasisId)">@o.Name</option>
+                        }
+                    </select>
+                </div>
+                <div class="field mb-0">
+                    <label class="lab" for="ProcessingPurposeId">Standart Amaç</label>
+                    <select id="ProcessingPurposeId" name="ProcessingPurposeId" class="inp">
+                        <option value="">— Yok —</option>
+                        @foreach (var o in Model.ProcessingPurposes)
+                        {
+                            <option value="@o.Id" selected="@(o.Id == Model.ProcessingPurposeId)">@o.Name</option>
+                        }
+                    </select>
+                </div>
+            </div>
+            <div class="grid-2col">
+                <div class="field mb-0">
+                    <label class="lab" for="RetentionRuleId">Saklama Kuralı</label>
+                    <select id="RetentionRuleId" name="RetentionRuleId" class="inp">
+                        <option value="">— Yok —</option>
+                        @foreach (var o in Model.RetentionRules)
+                        {
+                            <option value="@o.Id" selected="@(o.Id == Model.RetentionRuleId)">@o.Name</option>
+                        }
+                    </select>
+                </div>
+                <div class="field mb-0">
+                    <label class="lab" for="DisposalMethodId">İmha Yöntemi</label>
+                    <select id="DisposalMethodId" name="DisposalMethodId" class="inp">
+                        <option value="">— Yok —</option>
+                        @foreach (var o in Model.DisposalMethods)
+                        {
+                            <option value="@o.Id" selected="@(o.Id == Model.DisposalMethodId)">@o.Name</option>
+                        }
+                    </select>
+                </div>
+            </div>
+            <div class="field mb-0">
+                <label class="lab" for="DataSource">Veri Kaynağı</label>
+                <input type="text" id="DataSource" name="DataSource" value="@Model.DataSource" maxlength="500" class="inp" />
+            </div>
+            <div class="field mb-0">
+                <label class="lab" for="StorageMedium">Saklandığı Ortam</label>
+                <input type="text" id="StorageMedium" name="StorageMedium" value="@Model.StorageMedium" maxlength="500" class="inp" />
+            </div>
+            <div class="grid-2col">
+                <div class="field mb-0">
+                    <label class="lab" for="AccessAuthority">Erişim Yetkisi</label>
+                    <input type="text" id="AccessAuthority" name="AccessAuthority" value="@Model.AccessAuthority" maxlength="500" class="inp" />
+                </div>
+                <div class="field mb-0">
+                    <label class="lab" for="RecipientGroups">Alıcı Grupları</label>
+                    <input type="text" id="RecipientGroups" name="RecipientGroups" value="@Model.RecipientGroups" maxlength="500" class="inp" />
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="action-row wide">
+        <a href="/Kvkk/Process" class="btn ghost">
+            <i class="fas fa-arrow-left text-[10px]" aria-hidden="true"></i> Geri Dön
+        </a>
+        <button type="submit" class="btn primary">
+            <i class="fas fa-check text-[10px]" aria-hidden="true"></i> Kaydet
+        </button>
+    </div>
+</form>

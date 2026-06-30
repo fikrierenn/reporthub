@@ -16,7 +16,10 @@
 
 @section TopActions {
     <a href="/Kvkk/Process" class="btn">
-        <i class="fas fa-arrow-left text-[10px]" aria-hidden="true"></i> Listeye Dön
+        <i class="fas fa-arrow-left text-[10px]" aria-hidden="true"></i> Liste
+    </a>
+    <a href="/Kvkk/Process/Edit/@Model.Id" class="btn primary">
+        <i class="fas fa-pen text-[10px]" aria-hidden="true"></i> Düzenle
     </a>
 }
 
@@ -27,6 +30,52 @@
         <span class="status @KvkkLabels.RiskClass(Model.RiskLevel)">@KvkkLabels.Risk(Model.RiskLevel) risk</span>
         <span class="pill">@KvkkLabels.ReviewStatus(Model.ReviewStatus)</span>
     </div>
+</div>
+
+@{
+    var msg = TempData["Message"] as string;
+    var msgType = TempData["MessageType"] as string;
+}
+@if (!string.IsNullOrWhiteSpace(msg))
+{
+    <div role="alert" class="alert @(msgType == "success" ? "success" : "error")">
+        <i class="fas @(msgType == "success" ? "fa-check-circle" : "fa-exclamation-circle")" aria-hidden="true"></i>
+        @msg
+    </div>
+}
+
+<div class="action-row" role="group" aria-label="Onay durumu işlemleri">
+    <div class="row-actions">
+        @if (Model.ReviewStatus < 3)
+        {
+            <form method="post" action="/Kvkk/Process/SetReviewStatus" class="inline-form">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" value="@Model.Id" />
+                <input type="hidden" name="status" value="@(Model.ReviewStatus + 1)" />
+                <button type="submit" class="btn primary sm">
+                    <i class="fas fa-arrow-right text-[9px]" aria-hidden="true"></i>
+                    İlerlet: @KvkkLabels.ReviewStatus((byte)(Model.ReviewStatus + 1))
+                </button>
+            </form>
+        }
+        @if (Model.ReviewStatus > 0)
+        {
+            <form method="post" action="/Kvkk/Process/SetReviewStatus" class="inline-form">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" value="@Model.Id" />
+                <input type="hidden" name="status" value="0" />
+                <button type="submit" class="btn ghost sm">Taslağa Al</button>
+            </form>
+        }
+    </div>
+    <form method="post" action="/Kvkk/Process/Delete" class="inline-form"
+          onsubmit="return confirm('Bu süreci pasife almak istediğinizden emin misiniz? Listeden kaldırılır (kayıt korunur).')">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="id" value="@Model.Id" />
+        <button type="submit" class="btn sm danger">
+            <i class="fas fa-trash text-[9px]" aria-hidden="true"></i> Pasife Al
+        </button>
+    </form>
 </div>
 
 <div x-data="{ tab: 'kvkk' }">
