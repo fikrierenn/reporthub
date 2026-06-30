@@ -1,0 +1,88 @@
+@model List<DataElement>
+@{
+    ViewData["Title"] = "Veri Öğesi Arama";
+    var q = ViewBag.Query as string;
+}
+
+@section Breadcrumb {
+    <nav class="crumbs" aria-label="Sayfa konumu">
+        <a href="/Dashboard">Mosaik</a>
+        <span class="sep" aria-hidden="true">/</span>
+        <a href="/Kvkk/Process">KVKK Envanteri</a>
+        <span class="sep" aria-hidden="true">/</span>
+        <span class="current" aria-current="page">Veri Öğesi Arama</span>
+    </nav>
+}
+
+@section TopActions {
+    <a href="/Kvkk/Process" class="btn">
+        <i class="fas fa-list text-[10px]" aria-hidden="true"></i> Süreçler
+    </a>
+}
+
+<div class="hero">
+    <h1>Veri Öğesi Arama</h1>
+    <div class="sub">
+        <span>"Bu veri nerede işleniyor?" — ters arama</span>
+        <span class="mono">@Model.Count öğe</span>
+    </div>
+</div>
+
+<form method="get" action="/Kvkk/DataElement" class="filter-bar">
+    <div class="filter-bar__field filter-bar__field--grow">
+        <label class="lab" for="q">Veri öğesi ara</label>
+        <input type="text" id="q" name="q" value="@q" class="inp" placeholder="ad soyad, tc kimlik, iban, parmak izi, cctv…" autofocus />
+    </div>
+    <div class="filter-bar__actions">
+        <button type="submit" class="btn primary"><i class="fas fa-magnifying-glass text-[10px]" aria-hidden="true"></i> Ara</button>
+        <a href="/Kvkk/DataElement" class="btn ghost">Temizle</a>
+    </div>
+</form>
+
+@if (Model.Count == 0)
+{
+    <div class="empty-state">
+        <i class="fas fa-magnifying-glass" aria-hidden="true"></i>
+        <h3>Eşleşen veri öğesi yok</h3>
+        <p>Farklı bir terim deneyin (alias'lar Türkçe-duyarsız eşleşir).</p>
+    </div>
+}
+else
+{
+    <div class="paper-card clip">
+        <table class="dt">
+            <thead>
+                <tr>
+                    <th scope="col">Veri Öğesi</th>
+                    <th scope="col">Kod</th>
+                    <th scope="col">Nitelik</th>
+                    <th scope="col" class="col-right">İşlem</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var d in Model)
+                {
+                    <tr>
+                        <td>@d.DisplayName</td>
+                        <td><span class="mono">@d.ElementCode</span></td>
+                        <td>
+                            @if (d.IsSpecialCategory)
+                            {
+                                <span class="status err">Özel Nitelikli</span>
+                            }
+                            else
+                            {
+                                <span class="status ok">Genel</span>
+                            }
+                        </td>
+                        <td class="cell-right">
+                            <a href="/Kvkk/DataElement/Reverse/@d.Id" class="btn ghost sm">
+                                <i class="fas fa-diagram-project text-[9px]" aria-hidden="true"></i> Nerede?
+                            </a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

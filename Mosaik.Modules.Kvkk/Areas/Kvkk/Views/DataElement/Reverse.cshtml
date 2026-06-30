@@ -1,0 +1,106 @@
+@model Mosaik.Modules.Kvkk.Areas.Kvkk.ViewModels.DataElementReverseViewModel
+@using Mosaik.Modules.Kvkk
+@{
+    ViewData["Title"] = Model.Element.DisplayName + " — Nerede İşleniyor";
+}
+
+@section Breadcrumb {
+    <nav class="crumbs" aria-label="Sayfa konumu">
+        <a href="/Dashboard">Mosaik</a>
+        <span class="sep" aria-hidden="true">/</span>
+        <a href="/Kvkk/Process">KVKK Envanteri</a>
+        <span class="sep" aria-hidden="true">/</span>
+        <a href="/Kvkk/DataElement">Veri Öğesi Arama</a>
+        <span class="sep" aria-hidden="true">/</span>
+        <span class="current" aria-current="page">@Model.Element.DisplayName</span>
+    </nav>
+}
+
+@section TopActions {
+    <a href="/Kvkk/DataElement" class="btn">
+        <i class="fas fa-arrow-left text-[10px]" aria-hidden="true"></i> Arama
+    </a>
+}
+
+<div class="hero">
+    <h1>@Model.Element.DisplayName</h1>
+    <div class="sub">
+        <span class="mono">@Model.Element.ElementCode</span>
+        @if (Model.Element.IsSpecialCategory)
+        {
+            <span class="status err">Özel Nitelikli (m.6)</span>
+        }
+        else
+        {
+            <span class="status ok">Genel (m.5)</span>
+        }
+        <span class="pill">@Model.Processes.Count süreçte işleniyor</span>
+    </div>
+</div>
+
+@if (!string.IsNullOrWhiteSpace(Model.Element.Aliases))
+{
+    <p class="text-muted text-sm">Eş anlamlılar: @Model.Element.Aliases</p>
+}
+
+@if (Model.Processes.Count == 0)
+{
+    <div class="empty-state">
+        <i class="fas fa-circle-check" aria-hidden="true"></i>
+        <h3>Bu veri öğesi hiçbir aktif süreçte işlenmiyor</h3>
+        <p>Envanterde bu veri türüne bağlı süreç bulunmuyor.</p>
+    </div>
+}
+else
+{
+    <div class="action-row" role="group" aria-label="Uyumluluk özeti">
+        <div class="sub">
+            <span class="status @(Model.CompliancePercent >= 80 ? "ok" : Model.CompliancePercent >= 50 ? "warn" : "err")">
+                Saklama uyumu: %@Model.CompliancePercent
+            </span>
+            @if (Model.WithoutRetention > 0)
+            {
+                <span class="pill"><span class="dot err"></span>@Model.WithoutRetention süreçte saklama kuralı eksik</span>
+            }
+        </div>
+    </div>
+
+    <div class="paper-card clip">
+        <table class="dt">
+            <thead>
+                <tr>
+                    <th scope="col">Süreç</th>
+                    <th scope="col">Departman</th>
+                    <th scope="col">Kullanım</th>
+                    <th scope="col">Saklama</th>
+                    <th scope="col" class="col-right">İşlem</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var p in Model.Processes.OrderBy(x => x.Department).ThenBy(x => x.ProcessName))
+                {
+                    <tr>
+                        <td>@p.ProcessName</td>
+                        <td class="cell-muted">@p.Department</td>
+                        <td class="text-sm">@KvkkLabels.UsageType(p.UsageType)</td>
+                        <td>
+                            @if (p.HasRetention)
+                            {
+                                <span class="status ok">Tanımlı</span>
+                            }
+                            else
+                            {
+                                <span class="status err">Eksik</span>
+                            }
+                        </td>
+                        <td class="cell-right">
+                            <a href="/Kvkk/Process/Details/@p.ProcessId" class="btn ghost sm">
+                                <i class="fas fa-eye text-[9px]" aria-hidden="true"></i> Detay
+                            </a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
