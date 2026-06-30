@@ -418,12 +418,15 @@ Cron job (Hangfire): günlük tarama → `KvkkIntegrityFinding` tablo → dashbo
 - [ ] EntityRelations otomatik bağlama (`derivedFrom`)
 - [ ] Bütünlük check: SOP'ta veri öğesi geçiyor ama Process'te yok → uyarı
 
-### Faz 4 — Global reverse search
-- [ ] Sidebar üst arama kutusu (her sayfada görünür)
-- [ ] DataElementController.ReverseSearch endpoint
-- [ ] Modal: sol DataElement kart, sağ tüketici listesi gruplu
-- [ ] EntityRelations query 1-hop (3-hop versiyonu Plan 38 v2)
-- [ ] Test: en az 5 DataElement için reverse query unit test
+### Faz 4 — Global reverse search ✅ KAPANDI 2026-06-30 (commit 05cb977)
+> **§4.5 düzeltme (advisor):** "her sayfada global arama kutusu" → **M3 cross-module topbar search ZATEN var**; ikinci global kutu UX çakışması. Faz 4 **modül-içi sayfa** olarak daraltıldı (`/Kvkk/DataElement`). İleride istenirse KVKK `ISearchProvider` ile M3 topbar'a beslenir (ayrı, küçük iş).
+- [x] `DataElementController` (Area Kvkk): Index (Türkçe-duyarsız veri öğesi arama) + Reverse (DataElement kartı + işlendiği aktif süreçler + uyumluluk skoru)
+- [x] Veri kaynağı: **junction (ProcessDataLink)** — EntityRelations değil (ADR-002: modül ana-proje EntityRelations'ı okumaz; junction strongly-typed + index'li)
+- [x] Modül-içi sayfa (global modal yerine) — Process Index'ten "Veri Öğesi Arama" linki
+- [x] SOP/Form/Doküman gruplu tüketici: cross-module bağ (Faz 3+) gelmeden **gösterilmez** (boş grup yanlış güven verir — advisor lean)
+- [x] Uyumluluk skoru = saklama-kuralı doluluk oranı (CompliancePercent saf helper, yeni motor yok)
+- [x] Firma sınırı: katalog GLOBAL (read) / süreç sonuçları FİRMA-scoped + fail-closed Forbid
+- [x] Test: 6 CompliancePercent + (Faz 0 DataElementMatcher 8 + reverse smoke)
 
 ### Faz 5 — AI Integrity Checker
 - [ ] `KvkkIntegrityChecker` 8 pattern detector
