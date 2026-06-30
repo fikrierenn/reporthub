@@ -153,13 +153,14 @@
                     var groupOrder = new[]
                     {
                         ("main",      "Ana"),
-                        ("workspace", "Çalışma Alanı"),
-                        ("contracts", "Sözleşmeler & Uyum"),
-                        ("structure", "Yapı & Yapay Zeka")
+                        ("reporting", "Raporlama"),
+                        ("content",   "İçerik"),
+                        ("process",   "Süreçler"),
+                        ("org",       "Kurum")
                     };
 
                 var modulesByGroup = enabledModules
-                    .GroupBy(m => string.IsNullOrEmpty(m.GroupKey) ? "workspace" : m.GroupKey!)
+                    .GroupBy(m => string.IsNullOrEmpty(m.GroupKey) ? "content" : m.GroupKey!)
                     .ToDictionary(g => g.Key, g => g.OrderBy(m => m.SortOrder).ToList());
 
                 @* Sabit "Ana" grubu — Dashboard core link. *@
@@ -270,6 +271,12 @@
                                 </a>
                             </li>
                             <li>
+                                <a href="/Admin?tab=groups" class="@(TabActive("groups") ? "active" : "")">
+                                    <span class="icon" aria-hidden="true"><i class="fas fa-folder-tree" aria-hidden="true"></i></span>
+                                    <span class="label">Rapor Grupları</span>
+                                </a>
+                            </li>
+                            <li>
                                 <a href="/Admin?tab=filters" class="@(TabActive("filters") ? "active" : "")">
                                     <span class="icon" aria-hidden="true"><i class="fas fa-filter" aria-hidden="true"></i></span>
                                     <span class="label">Filtreler</span>
@@ -293,12 +300,6 @@
                                 <a href="/Admin?tab=roles" class="@(TabActive("roles") ? "active" : "")">
                                     <span class="icon" aria-hidden="true"><i class="fas fa-shield-halved" aria-hidden="true"></i></span>
                                     <span class="label">Roller</span>
-                                </a>
-                            </li>
-                            <li>
-                                <a href="/Admin?tab=groups" class="@(TabActive("groups") ? "active" : "")">
-                                    <span class="icon" aria-hidden="true"><i class="fas fa-folder-tree" aria-hidden="true"></i></span>
-                                    <span class="label">Rapor Grupları</span>
                                 </a>
                             </li>
 

@@ -26,9 +26,9 @@ namespace Mosaik.Models
         [Required, MaxLength(20)]
         public string ModuleType { get; set; } = "core";
 
-        // Plan 23 — sidebar grup atama. Sabit 5 group:
-        // 'main', 'workspace', 'contracts', 'structure', 'system'.
-        // NULL ise sidebar'da "workspace" (Çalışma Alanı) fallback.
+        // Sidebar grup atama (Plan 54 IA revize). Gruplar:
+        // 'main'(Ana), 'reporting'(Raporlama), 'content'(İçerik), 'process'(Süreçler),
+        // 'org'(Kurum), 'system'(Sistem — admin). NULL ise "content" fallback.
         [MaxLength(50)]
         public string? GroupKey { get; set; }
     }
