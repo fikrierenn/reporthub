@@ -164,18 +164,18 @@ _Otomatik üretildi — `scripts/refresh-arch-map.sh` tarafından. Elle düzenle
 
 | ModuleKey | DisplayName | GroupKey | IsEnabled | ModuleType | AssemblyName |
 |---|---|---|---|---|---|
-| reports | Raporlar | workspace | ✓ | core |  |
-| dashboards | Panolar | workspace | ✗ | core |  |
-| calendar | Takvim | workspace | ✗ | extension |  |
-| documents | Dokümanlar | workspace | ✗ | core |  |
-| compliance | Uyum | contracts | ✗ | extension |  |
-| ai | AI Analiz | structure | ✗ | extension |  |
-| contracts | Sözleşmeler | contracts | ✗ | core |  |
-| obligations | Yükümlülükler | contracts | ✗ | core |  |
-| orgchart | Organizasyon | structure | ✗ | core |  |
-| circular | Tamim & Sirküler | workspace | ✗ | extension | Mosaik.Modules.Circular |
-| forms | Formlar |  | ✗ | extension | Mosaik.Modules.Forms |
-| sop | Prosedürler |  | ✗ | extension | Mosaik.Modules.SOP |
+| circular | Tamim & Sirküler | content | ✗ | extension | Mosaik.Modules.Circular |
+| reports | Raporlar | reporting | ✓ | core |  |
+| contracts | Sözleşmeler | process | ✗ | core |  |
+| orgchart | Organizasyon | org | ✗ | core |  |
+| documents | Dokümanlar | content | ✗ | core |  |
+| obligations | Yükümlülükler | process | ✗ | core |  |
+| dashboards | Panolar | reporting | ✗ | core |  |
+| calendar | Takvim | org | ✗ | extension |  |
+| compliance | Uyum | process | ✗ | extension |  |
+| ai | AI Analiz | reporting | ✗ | extension |  |
+| sop | Prosedürler | content | ✗ | extension | Mosaik.Modules.SOP |
+| forms | Formlar | process | ✗ | extension | Mosaik.Modules.Forms |
 <!-- AUTO:APPMODULES:END -->
 
 Not: `dashboards` modülü sidebar render'da SKIP edilir (Genel Bakış zaten `/Dashboard`).

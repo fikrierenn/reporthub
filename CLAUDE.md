@@ -55,7 +55,7 @@ Detay: [`.claude/rules/session-protocol.md`](.claude/rules/session-protocol.md).
 - **Tailwind CSS** (CDN, utility-first) + `wwwroot/assets/css/style.css` custom sınıflar (`btn-brand`, `form-input-brand`).
 - **Chart.js 4** + **Font Awesome 6** CDN (dashboard render).
 - **Frontend JS:** Vanilla, IIFE pattern, `wwwroot/assets/js/`. jQuery yok.
-- **Testler:** xUnit (`Mosaik.Tests/Mosaik.Tests.csproj`). <!-- AUTO:TEST_COUNT -->470<!-- /AUTO:TEST_COUNT --> test geçiyor.
+- **Testler:** xUnit (`Mosaik.Tests/Mosaik.Tests.csproj`). <!-- AUTO:TEST_COUNT -->480<!-- /AUTO:TEST_COUNT --> test geçiyor.
 
 ### Ana klasörler
 - `Mosaik/Controllers/` — <!-- AUTO:CONTROLLERS -->`Admin`, `Ai`, `Auth`, `Calendar`, `Comments`, `Compliance`, `Contracts`, `Dashboard`, `Documents`, `Escalation`, `Home`, `Inbox`, `Logs`, `Notifications`, `Obligations`, `OrgChart`, `Profile`, `Reports`, `Search`, `Test`, `Workflow`<!-- /AUTO:CONTROLLERS -->
@@ -63,7 +63,7 @@ Detay: [`.claude/rules/session-protocol.md`](.claude/rules/session-protocol.md).
 - `Mosaik/ViewModels/` — view-model wrapper'ları
 - `Mosaik/Views/` — Razor views, `_AppLayout.cshtml` ana layout
 - `Mosaik/Services/` — `PasswordHasher`, `AuditLogService`, `DashboardRenderer`
-- `Mosaik/Database/` — SQL migration + seed + SP scriptleri (<!-- AUTO:MIGRATION_RANGE -->00_ → 78_<!-- /AUTO:MIGRATION_RANGE -->, <!-- AUTO:MIGRATION_COUNT -->79<!-- /AUTO:MIGRATION_COUNT --> dosya)
+- `Mosaik/Database/` — SQL migration + seed + SP scriptleri (<!-- AUTO:MIGRATION_RANGE -->00_ → 79_<!-- /AUTO:MIGRATION_RANGE -->, <!-- AUTO:MIGRATION_COUNT -->80<!-- /AUTO:MIGRATION_COUNT --> dosya)
 - `Mosaik/wwwroot/assets/{js,css}/` — static assets
 
 ---

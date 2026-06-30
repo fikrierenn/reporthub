@@ -12,10 +12,12 @@ namespace Mosaik.Core.Intelligence
         public const string References = "references";
         public const string Approved = "approved";
         public const string Rejected = "rejected";
+        // Plan 54 M6 / Plan 40 — süreç bir veri öğesini işler
+        public const string Processes = "processes";
 
         public static readonly IReadOnlySet<string> All = new HashSet<string>(StringComparer.Ordinal)
         {
-            Manages, MemberOf, Owns, Signed, AssignedTo, References, Approved, Rejected
+            Manages, MemberOf, Owns, Signed, AssignedTo, References, Approved, Rejected, Processes
         };
 
         public static bool IsValid(string? type) => type is not null && All.Contains(type);

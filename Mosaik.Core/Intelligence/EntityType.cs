@@ -15,11 +15,15 @@ namespace Mosaik.Core.Intelligence
         public const string Circular = "Circular";
         public const string WorkflowInstance = "WorkflowInstance";
         public const string Report = "Report";
+        // Plan 54 M6 / Plan 40 — KVKK backbone
+        public const string KvkkProcess = "KvkkProcess";
+        public const string DataElement = "DataElement";
 
         public static readonly IReadOnlySet<string> All = new HashSet<string>(StringComparer.Ordinal)
         {
             User, Department, Position, Contract, Obligation,
-            Vendor, Document, Circular, WorkflowInstance, Report
+            Vendor, Document, Circular, WorkflowInstance, Report,
+            KvkkProcess, DataElement
         };
 
         public static bool IsValid(string? type) => type is not null && All.Contains(type);
