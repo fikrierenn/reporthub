@@ -386,13 +386,14 @@ Cron job (Hangfire): günlük tarama → `KvkkIntegrityFinding` tablo → dashbo
 - [x] Test: 11 unit test (DataElementMatcher 8 + whitelist sözleşme 3)
 - **Not:** Faz 0 backend-only — controller/UI yok (Faz 2), AppModules sidebar kaydı Faz 2'de. ayrı csproj ADR-015.
 
-### Faz 1 — Xlsx import
-- [ ] `XlsxImporter` servis: idempotent UPSERT
-- [ ] BKM Kitap v7 xlsx → 361 süreç import (test environment)
-- [ ] AuditLog `kvkk_xlsx_import` event
-- [ ] Import sonuç raporu (insert/update/skip/error)
-- [ ] Re-import: aynı dosya 2. kez çalıştırıldığında 0 değişiklik
-- [ ] Test: en az 3 integration test (sample xlsx)
+### Faz 1 — Xlsx import ✅ KAPANDI 2026-06-30 (commit 9dad0da)
+- [x] `XlsxImporter` servis: idempotent UPSERT (natural key FirmaId+Department+Name + DB unique index)
+- [x] BKM Kitap v7 xlsx → **361 süreç** import (CLI: `dotnet run -- --import-kvkk <dosya> [firmaId]`)
+- [x] AuditLog `kvkk_xlsx_import` event (IAuditLog Core abstraction)
+- [x] Import sonuç raporu (ImportResult: inserted/updated/skipped/links/crossBorder + errors + warnings)
+- [x] Re-import idempotent: 0 eklenen / 361 güncellenen / 0 yeni bağ / 0 yurtdışı
+- [~] Test: parser unit (26 test) + **gerçek import empirik doğrulama** (361 süreç, 4025 bağ=4025 EntityRelation, 96 yurtdışı, risk Düşük1/Orta231/Yüksek129). DB integration test infra yok → deferred (test-discipline).
+- **Not:** DataElement free-text fuzzy map → RetentionRuleId/DisposalMethodId/ProcessingPurposeId null (Faz 2 UI insan-onayı). Parser ASCII-fold bug (risk hepsi Orta'ydı) testlerle yakalanıp düzeltildi.
 
 ### Faz 2 — KVİE CRUD UI
 - [ ] ProcessController: Index/Edit/Details/Create/Delete
