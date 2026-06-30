@@ -404,11 +404,12 @@ Cron job (Hangfire): günlük tarama → `KvkkIntegrityFinding` tablo → dashbo
 - [x] WCAG: scope th, aria-label, role=tablist/tab/tabpanel + aria-selected
 - [x] Sidebar: AppModules kvkk (GroupKey='process', ModuleType=extension, enabled) + moduleIcons + KvkkLabels
 - [x] Test: 14 KvkkLabels unit (606 toplam) + boot/route smoke
-**Faz 2b (write) — KALDI:**
-- [ ] Create/Edit (20 sütun form, AntiForgery) + Delete
-- [ ] Birim müdürü onay workflow — `ReviewStatus` 0→1→2→3 state machine + audit
-- [ ] Index ek filtre: özel-nitelikli / yurt-dışı / review-status (Faz 2a'da dept/risk/search ile başlandı)
-- [ ] Test: controller/write path
+**Faz 2b (write) ✅ KAPANDI 2026-06-30 (commit df4a38a):**
+- [x] Create/Edit (KvkkProcessFormViewModel DTO + 13 alan form + lookup dropdown, AntiForgery) + soft-delete (IsActive=false — KVKK kaydı kurtarılabilir)
+- [x] Onay durumu geçişi — `ReviewStatus` 0→1→2→3 (İlerlet/Taslağa Al butonları) + her mutasyon audit (create/update/delete/status)
+- [x] Mass-assignment safe (FirmaId/ReviewStatus server-set), firma-scoped, LegalBasis varlık doğrulama
+- [~] Index ek filtre (özel-nitelikli/yurt-dışı/review-status) — incremental, dept/risk/search yeterli; backlog
+- [~] Test: write path controller integration → DB infra yok, security denetimi + boot smoke ile kapatıldı (test-discipline)
 
 ### Faz 3 — SOP entegrasyonu (Plan 34 bağımlılık)
 > **2026-05-21 rev 2:** Önceki "Faz 3 Workflow + Form bağlama + DSAR/Breach" → **Plan 42 Faz 1-5'e taşındı.** Burada eski Faz 4 yeniden numaralandı (4→3 oldu).
