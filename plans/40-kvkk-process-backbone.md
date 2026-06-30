@@ -396,14 +396,19 @@ Cron job (Hangfire): günlük tarama → `KvkkIntegrityFinding` tablo → dashbo
 - **Not:** DataElement free-text fuzzy map → RetentionRuleId/DisposalMethodId/ProcessingPurposeId null (Faz 2 UI insan-onayı). Parser ASCII-fold bug (risk hepsi Orta'ydı) testlerle yakalanıp düzeltildi.
 
 ### Faz 2 — KVİE CRUD UI
-- [ ] ProcessController: Index/Edit/Details/Create/Delete
-- [ ] Index filter + search çalışır
-- [ ] Edit 20 sütun form, AntiForgery + AsNoTracking standard
-- [ ] Detail 6 aspect tab (KVKK + 5 stub "Henüz bağlı yok")
-- [ ] Birim müdürü onay workflow (Plan 36 reuse) — `ReviewStatus` 0→1→2→3 state machine
-- [ ] WCAG: dialog focus trap, scope th, aria-label
-- [ ] Multi-firma `IUserDataScope` filter
-- [ ] Test: 8+ unit test (controller, service, workflow trigger)
+**Faz 2a (read) ✅ KAPANDI 2026-06-30 (commit f44de5f):**
+- [x] ProcessController: Index + Details (read-side; [Area Kvkk]+[Authorize admin])
+- [x] Index filter (dept/risk) + search çalışır (.filter-bar)
+- [x] Detail 6 aspect tab (KVKK dolu + 5 stub "Henüz bağlı yok")
+- [x] Multi-firma firma-claim filter (service `.Where(FirmaId)` her path; IDOR kapalı — security temiz)
+- [x] WCAG: scope th, aria-label, role=tablist/tab/tabpanel + aria-selected
+- [x] Sidebar: AppModules kvkk (GroupKey='process', ModuleType=extension, enabled) + moduleIcons + KvkkLabels
+- [x] Test: 14 KvkkLabels unit (606 toplam) + boot/route smoke
+**Faz 2b (write) — KALDI:**
+- [ ] Create/Edit (20 sütun form, AntiForgery) + Delete
+- [ ] Birim müdürü onay workflow — `ReviewStatus` 0→1→2→3 state machine + audit
+- [ ] Index ek filtre: özel-nitelikli / yurt-dışı / review-status (Faz 2a'da dept/risk/search ile başlandı)
+- [ ] Test: controller/write path
 
 ### Faz 3 — SOP entegrasyonu (Plan 34 bağımlılık)
 > **2026-05-21 rev 2:** Önceki "Faz 3 Workflow + Form bağlama + DSAR/Breach" → **Plan 42 Faz 1-5'e taşındı.** Burada eski Faz 4 yeniden numaralandı (4→3 oldu).
