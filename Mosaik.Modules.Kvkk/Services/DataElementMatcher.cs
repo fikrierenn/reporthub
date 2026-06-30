@@ -9,6 +9,24 @@ namespace Mosaik.Modules.Kvkk.Services
         public static string Normalize(string? s) =>
             (s ?? string.Empty).Trim().Replace('İ', 'I').Replace('ı', 'i').ToLowerInvariant();
 
+        // Import yönü (haystack): serbest metin (örn. "Ad, soyad, TC kimlik no") bir veri
+        // öğesinin displayName veya alias'ını İÇERİYOR mu? Reverse-search'ün tersi yön.
+        public static bool TextContainsElement(string text, string displayName, string? aliases)
+        {
+            var hay = Normalize(text);
+            if (hay.Length == 0) return false;
+            if (Normalize(displayName).Length > 0 && hay.Contains(Normalize(displayName)))
+                return true;
+            if (!string.IsNullOrEmpty(aliases))
+                foreach (var a in aliases.Split(',', System.StringSplitOptions.RemoveEmptyEntries | System.StringSplitOptions.TrimEntries))
+                {
+                    var na = Normalize(a);
+                    if (na.Length >= 2 && hay.Contains(na))
+                        return true;
+                }
+            return false;
+        }
+
         public static bool Matches(string query, string elementCode, string displayName, string? aliases)
         {
             var q = Normalize(query);

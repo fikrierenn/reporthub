@@ -84,6 +84,10 @@ GO
 IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name='IX_KvkkProcesses_Risk' AND object_id=OBJECT_ID('dbo.KvkkProcesses'))
     CREATE INDEX IX_KvkkProcesses_Risk ON dbo.KvkkProcesses(FirmaId, RiskLevel);
 GO
+-- Natural key (idempotent UPSERT garantisi + concurrency koruması): FirmaId+Department+Name
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name='UQ_KvkkProcesses_Natural' AND object_id=OBJECT_ID('dbo.KvkkProcesses'))
+    CREATE UNIQUE INDEX UQ_KvkkProcesses_Natural ON dbo.KvkkProcesses(FirmaId, Department, Name);
+GO
 
 IF NOT EXISTS (SELECT 1 FROM sys.tables WHERE name='KvkkDataElements')
 CREATE TABLE dbo.KvkkDataElements (

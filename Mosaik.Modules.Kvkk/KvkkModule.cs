@@ -23,6 +23,7 @@ namespace Mosaik.Modules.Kvkk
         {
             services.AddScoped<Services.KvkkProcessService>();
             services.AddScoped<Services.DataElementService>();
+            services.AddScoped<Services.XlsxImporter>();
         }
 
         public void ConfigureModelBuilder(ModelBuilder mb)
@@ -112,6 +113,7 @@ namespace Mosaik.Modules.Kvkk
                 e.Property(x => x.RecipientGroups).HasMaxLength(500);
                 e.HasIndex(x => new { x.FirmaId, x.Department });
                 e.HasIndex(x => new { x.FirmaId, x.RiskLevel });
+                e.HasIndex(x => new { x.FirmaId, x.Department, x.Name }).IsUnique(); // natural key
 
                 e.HasOne(x => x.LegalBasis).WithMany().HasForeignKey(x => x.LegalBasisId)
                     .OnDelete(DeleteBehavior.Restrict);

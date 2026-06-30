@@ -281,6 +281,28 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Dashboard}/{action=Index}/{id?}");
 
+// Plan 40 Faz 1 — KVKK xlsx import CLI: dotnet run -- --import-kvkk <dosya> [firmaId]
+// Recurring job kayıtlarından ÖNCE + web host başlatmadan tek seferlik import + çık
+// (cron job'lara dokunmaz, sadece DI scope + DbContext).
+if (args.Contains("--import-kvkk"))
+{
+    var idx = Array.IndexOf(args, "--import-kvkk");
+    var file = idx + 1 < args.Length ? args[idx + 1] : null;
+    var firmaId = idx + 2 < args.Length && int.TryParse(args[idx + 2], out var fId) ? fId : 1;
+    if (string.IsNullOrWhiteSpace(file))
+    {
+        Console.WriteLine("Kullanım: --import-kvkk <dosya yolu> [firmaId=1]");
+        return;
+    }
+    using var importScope = app.Services.CreateScope();
+    var importer = importScope.ServiceProvider.GetRequiredService<Mosaik.Modules.Kvkk.Services.XlsxImporter>();
+    var res = await importer.ImportAsync(file, firmaId);
+    Console.WriteLine($"KVKK import: eklenen={res.Inserted} guncellenen={res.Updated} atlanan={res.Skipped} yeniBag={res.LinksCreated} yurtdisi={res.CrossBorderCreated} uyari={res.Warnings.Count} hata={res.Errors.Count}");
+    foreach (var w in res.Warnings.Take(10)) Console.WriteLine("  ~ " + w);
+    foreach (var e in res.Errors.Take(10)) Console.WriteLine("  ! " + e);
+    return;
+}
+
 // C-01 (Plan 33 Faz 2) — Günlük yükümlülük hatırlatma cron (her gün 09:00 Europe/Istanbul).
 // Pending ContractObligations: vade yaklaşan veya geçmiş → bildirim + SMTP email.
 RecurringJob.AddOrUpdate<Mosaik.Services.DailyReminderJob>(

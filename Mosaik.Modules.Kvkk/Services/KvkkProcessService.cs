@@ -57,14 +57,16 @@ namespace Mosaik.Modules.Kvkk.Services
         }
 
         // Process × DataElement bağla + EntityRelations'a çift-yaz (Plan 38 omurga).
-        public async Task<ServiceResult> LinkDataElementAsync(
+        // Dönüş Data: yeni junction yaratıldı mı (true) yoksa zaten var mıydı (false) —
+        // idempotent re-import'ta "kaç yeni bağ" doğru raporlanır.
+        public async Task<ServiceResult<bool>> LinkDataElementAsync(
             int processId, int dataElementId, int firmaId, byte usageType = 0,
             string? notes = null, CancellationToken ct = default)
         {
             var owned = await Processes.AsNoTracking()
                 .AnyAsync(p => p.Id == processId && p.FirmaId == firmaId, ct);
             if (!owned)
-                return ServiceResult.Failure("Süreç bulunamadı.");
+                return ServiceResult<bool>.Failure("Süreç bulunamadı.");
 
             var exists = await Links.AnyAsync(
                 l => l.ProcessId == processId && l.DataElementId == dataElementId && l.UsageType == usageType, ct);
@@ -96,10 +98,10 @@ namespace Mosaik.Modules.Kvkk.Services
 
             // Çift-yazma sözleşmesi: EntityRelation yazılamazsa junction'ı da geri al (atomik).
             if (!rel.IsSuccess)
-                return ServiceResult.Failure("Veri öğesi ilişkilendirilemedi.");
+                return ServiceResult<bool>.Failure("Veri öğesi ilişkilendirilemedi.");
 
             await tx.CommitAsync(ct);
-            return ServiceResult.Ok();
+            return ServiceResult<bool>.Ok(!exists);
         }
     }
 }
