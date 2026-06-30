@@ -376,14 +376,15 @@ Cron job (Hangfire): günlük tarama → `KvkkIntegrityFinding` tablo → dashbo
 
 ## 6. Done Criteria
 
-### Faz 0 — Veri modeli omurgası
-- [ ] Migration 66 (schema) idempotent, build yeşil
-- [ ] Migration 67 (REF lookup seed) — 5 REF sheet → tablo karşılığı
-- [ ] Migration 68 (DataElement seed ~60 öğe)
-- [ ] `Process`, `DataElement`, `ProcessDataLink`, `CrossBorderTransfer` entity + DbSet
-- [ ] EntityRelations ilk yazıcı pattern dokuman (Plan 38 sözleşme test)
-- [ ] Smoke test: en az 5 Process insert + reverse lookup query
-- [ ] Test: 5+ unit test (entity validation, reverse lookup, EntityRelations hook)
+### Faz 0 — Veri modeli omurgası ✅ KAPANDI 2026-06-30 (commit eac6a59)
+- [x] Migration 01 (schema) idempotent, build yeşil — Mosaik.Modules.Kvkk/Database/
+- [x] Migration 02 (REF lookup seed) — 8 lookup (DataCategory 23 / LegalBasis 17 / PersonGroup 13 / RetentionRule 20 / DisposalMethod 6 / MeasureStandard 15 / ProcessingPurpose 10 / Recipient 10)
+- [x] Migration 03 (DataElement seed 60 öğe, alias'lı)
+- [x] `KvkkProcess`, `DataElement`, `ProcessDataLink`, `CrossBorderTransfer` entity + ConfigureModelBuilder
+- [x] EntityRelations çift-yazma (atomik transaction) + whitelist (EntityType.KvkkProcess/DataElement + RelationType.processes)
+- [x] Smoke: 5 Process insert + reverse lookup query (tran+rollback, DB temiz)
+- [x] Test: 11 unit test (DataElementMatcher 8 + whitelist sözleşme 3)
+- **Not:** Faz 0 backend-only — controller/UI yok (Faz 2), AppModules sidebar kaydı Faz 2'de. ayrı csproj ADR-015.
 
 ### Faz 1 — Xlsx import
 - [ ] `XlsxImporter` servis: idempotent UPSERT
