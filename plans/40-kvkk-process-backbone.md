@@ -436,12 +436,13 @@ Cron job (Hangfire): günlük tarama → `KvkkIntegrityFinding` tablo → dashbo
 - [ ] Plan 31 SMTP caller — kritik findings için email digest
 - [ ] Test: 8 pattern için unit test (positive + negative case)
 
-### Faz 6 — VERBİS export + aydınlatma metni versioning
-- [ ] `VerbisExporter` ClosedXML — Mart 2025 rehber 20 sütun template
-- [ ] Aktif + birim onaylı süreçler export edilir
-- [ ] `DisclosureNotice` versioning entity
-- [ ] Sürüm karşılaştırma (diff view)
-- [ ] Periyodik 6 ay review reminder + sign-off log
+### Faz 6 — VERBİS export ✅ KAPANDI 2026-06-30 (commit 5bd5907)
+- [x] **Retention/Disposal bloker fix:** KvkkProcess RetentionText+DisposalText serbest-metin (migration 05) — import xlsx col16/17'yi düşürüyordu; re-import 361/361 doldurdu
+- [x] `VerbisExporter` (ClosedXML) — denetim-hazır 15 sütun Excel, aktif firma süreçleri, freeze + auto-width
+- [x] ExportVerbis action (firma-scoped + Forbid guard + audit `kvkk_verbis_export`) + Index "VERBİS Export" butonu
+- [x] **Güvenlik:** XLSX formula-injection guard (Safe() quote-prefix — denetçi Excel'inde formül çalışmaz) + 7 test
+- [x] Preview: ExportVerbis 200 geçerli xlsx (46KB ZIP); reverse compliance %100 (retention dolu)
+- [~] `DisclosureNotice` versioning + diff view + 6-ay reminder → **ERTELE** (plan §11 2026-06-29 sadeleştirme: diff-UI kesildi; ayrı küçük iş)
 
 ### Faz 7 — Risk dashboard
 - [ ] Departman bazlı Yüksek/Orta/Düşük chart (xlsx Risk Özeti parite)
