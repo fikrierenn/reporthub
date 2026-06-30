@@ -1,0 +1,104 @@
+@model List<KvkkProcess>
+@using Mosaik.Modules.Kvkk
+@{
+    ViewData["Title"] = "KVKK Veri Envanteri";
+    var departments = ViewBag.Departments as List<string> ?? new List<string>();
+    var selDept = ViewBag.Department as string;
+    var selRisk = ViewBag.Risk as byte?;
+    var q = ViewBag.Query as string;
+}
+
+@section Breadcrumb {
+    <nav class="crumbs" aria-label="Sayfa konumu">
+        <a href="/Dashboard">Mosaik</a>
+        <span class="sep" aria-hidden="true">/</span>
+        <span class="current" aria-current="page">KVKK Envanteri</span>
+    </nav>
+}
+
+<div class="hero">
+    <h1>KVKK Veri Envanteri</h1>
+    <div class="sub">
+        <span>Kişisel veri işleme süreçleri</span>
+        <span class="mono">@Model.Count kayıt</span>
+        <span class="pill">
+            <i class="fas fa-circle-info text-[9px] text-muted" aria-hidden="true"></i>
+            KVİE — Mart 2025 rehber
+        </span>
+    </div>
+</div>
+
+<form method="get" action="/Kvkk/Process" class="filter-bar">
+    <div class="filter-bar__field">
+        <label class="lab" for="department">Departman</label>
+        <select id="department" name="department" class="inp">
+            <option value="">Tümü</option>
+            @foreach (var d in departments)
+            {
+                <option value="@d" selected="@(d == selDept)">@d</option>
+            }
+        </select>
+    </div>
+    <div class="filter-bar__field">
+        <label class="lab" for="risk">Risk</label>
+        <select id="risk" name="risk" class="inp">
+            <option value="">Tümü</option>
+            <option value="0" selected="@(selRisk == 0)">Düşük</option>
+            <option value="1" selected="@(selRisk == 1)">Orta</option>
+            <option value="2" selected="@(selRisk == 2)">Yüksek</option>
+        </select>
+    </div>
+    <div class="filter-bar__field filter-bar__field--grow">
+        <label class="lab" for="q">Ara</label>
+        <input type="text" id="q" name="q" value="@q" class="inp" placeholder="Süreç adı, amaç, sahip…" />
+    </div>
+    <div class="filter-bar__actions">
+        <button type="submit" class="btn primary">
+            <i class="fas fa-filter text-[10px]" aria-hidden="true"></i> Filtrele
+        </button>
+        <a href="/Kvkk/Process" class="btn ghost">Temizle</a>
+    </div>
+</form>
+
+@if (Model.Count == 0)
+{
+    <div class="empty-state">
+        <i class="fas fa-folder-open" aria-hidden="true"></i>
+        <h3>Kayıt bulunamadı</h3>
+        <p>Filtre kriterlerinize uyan süreç yok. Envanter import: <span class="mono">--import-kvkk</span>.</p>
+    </div>
+}
+else
+{
+    <div class="paper-card clip">
+        <table class="dt">
+            <thead>
+                <tr>
+                    <th scope="col">Departman</th>
+                    <th scope="col">Süreç / Faaliyet</th>
+                    <th scope="col">Sahip</th>
+                    <th scope="col">Risk</th>
+                    <th scope="col">Durum</th>
+                    <th scope="col" class="col-right">İşlem</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var p in Model)
+                {
+                    <tr>
+                        <td class="cell-muted">@p.Department</td>
+                        <td>@p.Name</td>
+                        <td class="cell-muted text-sm">@(string.IsNullOrWhiteSpace(p.Owner) ? "—" : p.Owner)</td>
+                        <td><span class="status @KvkkLabels.RiskClass(p.RiskLevel)">@KvkkLabels.Risk(p.RiskLevel)</span></td>
+                        <td class="text-sm">@KvkkLabels.ReviewStatus(p.ReviewStatus)</td>
+                        <td class="cell-right">
+                            <a href="/Kvkk/Process/Details/@p.Id" class="btn ghost sm">
+                                <i class="fas fa-eye text-[9px]" aria-hidden="true"></i> Detay
+                            </a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

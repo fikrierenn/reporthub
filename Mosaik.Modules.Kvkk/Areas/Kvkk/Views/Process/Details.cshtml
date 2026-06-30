@@ -1,0 +1,129 @@
+@model KvkkProcess
+@using Mosaik.Modules.Kvkk
+@{
+    ViewData["Title"] = Model.Name;
+}
+
+@section Breadcrumb {
+    <nav class="crumbs" aria-label="Sayfa konumu">
+        <a href="/Dashboard">Mosaik</a>
+        <span class="sep" aria-hidden="true">/</span>
+        <a href="/Kvkk/Process">KVKK Envanteri</a>
+        <span class="sep" aria-hidden="true">/</span>
+        <span class="current" aria-current="page">Süreç #@Model.Id</span>
+    </nav>
+}
+
+@section TopActions {
+    <a href="/Kvkk/Process" class="btn">
+        <i class="fas fa-arrow-left text-[10px]" aria-hidden="true"></i> Listeye Dön
+    </a>
+}
+
+<div class="hero">
+    <h1>@Model.Name</h1>
+    <div class="sub">
+        <span>@Model.Department@(string.IsNullOrWhiteSpace(Model.Unit) ? "" : " · " + Model.Unit)</span>
+        <span class="status @KvkkLabels.RiskClass(Model.RiskLevel)">@KvkkLabels.Risk(Model.RiskLevel) risk</span>
+        <span class="pill">@KvkkLabels.ReviewStatus(Model.ReviewStatus)</span>
+    </div>
+</div>
+
+<div x-data="{ tab: 'kvkk' }">
+    <nav class="subnav" role="tablist" aria-label="Süreç görünümleri">
+        <button type="button" class="subnav-link" role="tab" @@click="tab='kvkk'" :class="{ 'active': tab==='kvkk' }" :aria-selected="tab==='kvkk'">KVKK</button>
+        <button type="button" class="subnav-link" role="tab" @@click="tab='workflow'" :class="{ 'active': tab==='workflow' }" :aria-selected="tab==='workflow'">İş Akışı</button>
+        <button type="button" class="subnav-link" role="tab" @@click="tab='form'" :class="{ 'active': tab==='form' }" :aria-selected="tab==='form'">Form</button>
+        <button type="button" class="subnav-link" role="tab" @@click="tab='sop'" :class="{ 'active': tab==='sop' }" :aria-selected="tab==='sop'">SOP</button>
+        <button type="button" class="subnav-link" role="tab" @@click="tab='audit'" :class="{ 'active': tab==='audit' }" :aria-selected="tab==='audit'">Denetim</button>
+        <button type="button" class="subnav-link" role="tab" @@click="tab='doc'" :class="{ 'active': tab==='doc' }" :aria-selected="tab==='doc'">Kitapçık</button>
+    </nav>
+
+    @* --- KVKK aspect --- *@
+    <div x-show="tab==='kvkk'" role="tabpanel">
+        <div class="paper-card clip">
+            <table class="dt">
+                <tbody>
+                    <tr><th scope="row">Departman</th><td>@Model.Department</td></tr>
+                    <tr><th scope="row">Birim</th><td>@(Model.Unit ?? "—")</td></tr>
+                    <tr><th scope="row">Süreç Sahibi</th><td>@(Model.Owner ?? "—")</td></tr>
+                    <tr><th scope="row">İşleme Amacı</th><td>@Model.Purpose</td></tr>
+                    <tr><th scope="row">Hukuki Sebep</th><td>@(Model.LegalBasis != null ? $"{Model.LegalBasis.Article} — {Model.LegalBasis.Name}" : "—")</td></tr>
+                    <tr><th scope="row">Veri Kaynağı</th><td>@(Model.DataSource ?? "—")</td></tr>
+                    <tr><th scope="row">Saklandığı Ortam</th><td>@(Model.StorageMedium ?? "—")</td></tr>
+                    <tr><th scope="row">Erişim Yetkisi</th><td>@(Model.AccessAuthority ?? "—")</td></tr>
+                    <tr><th scope="row">Alıcı Grupları</th><td>@(Model.RecipientGroups ?? "—")</td></tr>
+                    <tr><th scope="row">Saklama</th><td>@(Model.RetentionRule != null ? $"{Model.RetentionRule.Name} ({Model.RetentionRule.DurationText})" : "—")</td></tr>
+                    <tr><th scope="row">Risk</th><td><span class="status @KvkkLabels.RiskClass(Model.RiskLevel)">@KvkkLabels.Risk(Model.RiskLevel)</span></td></tr>
+                    <tr><th scope="row">Onay Durumu</th><td>@KvkkLabels.ReviewStatus(Model.ReviewStatus)</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <h3 class="section-subtitle">İşlenen Veri Öğeleri <span class="mono">@Model.DataLinks.Count</span></h3>
+        @if (Model.DataLinks.Count == 0)
+        {
+            <p class="text-muted text-sm">Bağlı veri öğesi yok.</p>
+        }
+        else
+        {
+            <div class="paper-card clip">
+                <table class="dt">
+                    <thead><tr><th scope="col">Veri Öğesi</th><th scope="col">Kullanım</th><th scope="col">Nitelik</th></tr></thead>
+                    <tbody>
+                        @foreach (var l in Model.DataLinks.OrderBy(x => x.DataElement?.DisplayName))
+                        {
+                            <tr>
+                                <td>@(l.DataElement?.DisplayName ?? "—")</td>
+                                <td class="text-sm">@KvkkLabels.UsageType(l.UsageType)</td>
+                                <td>
+                                    @if (l.DataElement?.IsSpecialCategory == true)
+                                    {
+                                        <span class="status err">Özel Nitelikli</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="status ok">Genel</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+
+        @if (Model.CrossBorderTransfers.Count > 0)
+        {
+            <h3 class="section-subtitle">Yurt Dışı Aktarım <span class="mono">@Model.CrossBorderTransfers.Count</span></h3>
+            <div class="paper-card clip">
+                <table class="dt">
+                    <thead><tr><th scope="col">Alıcı</th><th scope="col">Ülke</th><th scope="col">Mekanizma</th></tr></thead>
+                    <tbody>
+                        @foreach (var t in Model.CrossBorderTransfers)
+                        {
+                            <tr><td class="text-sm">@t.RecipientName</td><td>@t.Country</td><td class="text-sm">@KvkkLabels.Mechanism(t.Mechanism)</td></tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+
+    @* --- Stub aspect tab'ları (Faz 3+) --- *@
+    <div x-show="tab==='workflow'" role="tabpanel" class="aspect-stub">
+        <p class="text-muted">İş akışı bağlama Plan 36 / Faz 3 ile gelecek. Henüz bağlı iş akışı yok.</p>
+    </div>
+    <div x-show="tab==='form'" role="tabpanel" class="aspect-stub">
+        <p class="text-muted">Form bağlama Plan 41 / M7 ile gelecek. Henüz bağlı form yok.</p>
+    </div>
+    <div x-show="tab==='sop'" role="tabpanel" class="aspect-stub">
+        <p class="text-muted">SOP bağlama Faz 3 ile gelecek. Henüz bağlı prosedür yok.</p>
+    </div>
+    <div x-show="tab==='audit'" role="tabpanel" class="aspect-stub">
+        <p class="text-muted">Denetim izi (AuditLog) görünümü Faz 5 ile gelecek.</p>
+    </div>
+    <div x-show="tab==='doc'" role="tabpanel" class="aspect-stub">
+        <p class="text-muted">Bağlı kitapçık/doküman görünümü Faz 3 ile gelecek.</p>
+    </div>
+</div>
