@@ -70,6 +70,22 @@ namespace Mosaik.Tests
         }
 
         [Fact]
+        public void Matches_MultiWord_TokenAnd()
+        {
+            // "ad soyad" (boşluklu) → her iki token da alias'larda → eşleşir.
+            Assert.True(DataElementMatcher.Matches("ad soyad", "person.fullname", "Ad-Soyad", "ad,soyad,isim,name"));
+            // "tc kimlik" → displayName "TC Kimlik No" her iki token'ı içerir.
+            Assert.True(DataElementMatcher.Matches("tc kimlik", "person.tckn", "TC Kimlik No", "tc,tckn,kimlik no"));
+        }
+
+        [Fact]
+        public void Matches_MultiWord_AllTokensRequired()
+        {
+            // "ad plaka" → "ad" eşleşir ama "plaka" yok → token-AND başarısız.
+            Assert.False(DataElementMatcher.Matches("ad plaka", "person.fullname", "Ad-Soyad", "ad,soyad,isim"));
+        }
+
+        [Fact]
         public void Normalize_LowercasesAndFoldsI()
         {
             Assert.Equal("istanbul", DataElementMatcher.Normalize("İstanbul"));

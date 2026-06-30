@@ -27,18 +27,28 @@ namespace Mosaik.Modules.Kvkk.Services
             return false;
         }
 
+        // Çok-kelimeli sorgu (örn "ad soyad", "tc kimlik") için token-AND: her kelime
+        // code/displayName/alias'lardan birinde geçmeli. Tek kelime = eski davranış.
         public static bool Matches(string query, string elementCode, string displayName, string? aliases)
         {
-            var q = Normalize(query);
-            if (q.Length == 0)
+            var tokens = Normalize(query).Split(' ', System.StringSplitOptions.RemoveEmptyEntries);
+            if (tokens.Length == 0)
                 return false;
-            if (Normalize(elementCode).Contains(q))
+            foreach (var tok in tokens)
+                if (!FieldContainsToken(tok, elementCode, displayName, aliases))
+                    return false;
+            return true;
+        }
+
+        private static bool FieldContainsToken(string tok, string elementCode, string displayName, string? aliases)
+        {
+            if (Normalize(elementCode).Contains(tok))
                 return true;
-            if (Normalize(displayName).Contains(q))
+            if (Normalize(displayName).Contains(tok))
                 return true;
             if (!string.IsNullOrEmpty(aliases))
                 foreach (var a in aliases.Split(',', System.StringSplitOptions.RemoveEmptyEntries | System.StringSplitOptions.TrimEntries))
-                    if (Normalize(a).Contains(q))
+                    if (Normalize(a).Contains(tok))
                         return true;
             return false;
         }
