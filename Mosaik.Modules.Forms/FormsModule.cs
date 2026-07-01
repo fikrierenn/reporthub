@@ -28,10 +28,11 @@ namespace Mosaik.Modules.Forms
             services.AddScoped<Services.FormFieldService>();
             services.AddScoped<Services.PublicTokenService>();
             services.AddScoped<Services.SubmitRateLimiter>();
+            services.AddScoped<Services.FormFileStorage>();          // Faz 4: ek + imza disk storage
+            services.AddScoped<Services.DataElementLookupService>(); // Faz 4: KVKK DataElement picker (cross-modül read)
             services.AddMemoryCache(); // SubmitRateLimiter için (idempotent — ana proje de çağırmış olabilir)
-            // Plan 41 Faz 5+ servisleri (sonraki commit'lerde):
+            // Plan 41 Faz 5 servisi (sonraki commit):
             // services.AddScoped<Services.FormEncryptionService>();
-            // services.AddScoped<Services.DataElementMapValidator>();
         }
 
         public void ConfigureModelBuilder(ModelBuilder mb)
@@ -136,6 +137,29 @@ namespace Mosaik.Modules.Forms
                     .OnDelete(DeleteBehavior.Cascade);
                 e.HasIndex(x => new { x.FormDefinitionId, x.Version }).IsUnique();
             });
+
+            mb.Entity<FormSubmissionFile>(e =>
+            {
+                e.ToTable("FormSubmissionFiles");
+                e.HasKey(x => x.Id);
+                e.Property(x => x.FieldKey).HasMaxLength(80).IsRequired();
+                e.Property(x => x.FileName).HasMaxLength(300).IsRequired();
+                e.Property(x => x.DiskPath).HasMaxLength(400).IsRequired();
+                e.Property(x => x.MimeType).HasMaxLength(120);
+                e.HasOne(x => x.FormSubmission)
+                    .WithMany(s => s.Files)
+                    .HasForeignKey(x => x.FormSubmissionId)
+                    .OnDelete(DeleteBehavior.Cascade);
+                e.HasIndex(x => new { x.FormSubmissionId, x.FieldKey });
+            });
+
+            // FieldValue → File (nullable soft-ref). NoAction — çoklu cascade yolu (Submission→File
+            // ve Submission→FieldValue→File) SQL Server'da hata verir; dosya Submission cascade'iyle silinir.
+            mb.Entity<FormSubmissionFieldValue>()
+                .HasOne(x => x.File)
+                .WithMany()
+                .HasForeignKey(x => x.ValueFileId)
+                .OnDelete(DeleteBehavior.NoAction);
         }
 
         public void MapEndpoints(IEndpointRouteBuilder endpoints)

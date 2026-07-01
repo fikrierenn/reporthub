@@ -45,5 +45,6 @@ namespace Mosaik.Modules.Forms.Entities
         public DateTime SubmittedAt { get; set; } = DateTime.UtcNow;
 
         public ICollection<FormSubmissionFieldValue> Values { get; set; } = new List<FormSubmissionFieldValue>();
+        public ICollection<FormSubmissionFile> Files { get; set; } = new List<FormSubmissionFile>();   // Faz 4: ek + imza
     }
 }

@@ -9,9 +9,11 @@ namespace Mosaik.Modules.Forms.Services
         string? Options, string? ValidationRules, string? DefaultValue, string? Placeholder);
 
     // Plan 41 Faz 2 — liste-tabanlı builder (drag-drop yok). Alan ekle/güncelle/sil/sırala.
-    public class FormFieldService(DbContext db)
+    // Faz 4: KVKK DataElement eşleme (opsiyonel — cross-modül lookup ile doğrulanır).
+    public class FormFieldService(DbContext db, DataElementLookupService dataElements)
     {
         private DbSet<FormField> Fields => db.Set<FormField>();
+        private DbSet<FormFieldDataElementMap> Maps => db.Set<FormFieldDataElementMap>();
 
         public async Task<ServiceResult<int>> AddAsync(int formDefinitionId, int firmaId, FormFieldInput input, CancellationToken ct = default)
         {
@@ -113,6 +115,53 @@ namespace Mosaik.Modules.Forms.Services
             foreach (var (id, newOrder) in swaps)
                 byId[id].Order = newOrder;
 
+            await db.SaveChangesAsync(ct);
+            return ServiceResult<bool>.Ok(true);
+        }
+
+        // Faz 4 §4.3 — field → KVKK DataElement eşle (OPTIONAL, Yayında bloklamaz). DataElementId
+        // cross-modül lookup ile doğrulanır (Kvkk modülü yoksa Exists=false → hata, sessiz kabul yok).
+        public async Task<ServiceResult<int>> MapDataElementAsync(
+            int fieldId, int formDefinitionId, int firmaId, int dataElementId, byte usageType, string? notes, CancellationToken ct = default)
+        {
+            var field = await Fields
+                .Include(f => f.FormDefinition)
+                .FirstOrDefaultAsync(f => f.Id == fieldId && f.FormDefinitionId == formDefinitionId, ct);
+            if (field?.FormDefinition == null || field.FormDefinition.FirmaId != firmaId)
+                return ServiceResult<int>.Failure("Alan bulunamadı.");
+
+            if (!await dataElements.ExistsAsync(dataElementId, ct))
+                return ServiceResult<int>.Failure("Seçilen KVKK veri öğesi bulunamadı (KVKK modülü aktif mi?).");
+
+            var exists = await Maps.AsNoTracking()
+                .AnyAsync(m => m.FormFieldId == fieldId && m.DataElementId == dataElementId, ct);
+            if (exists)
+                return ServiceResult<int>.Failure("Bu veri öğesi zaten bu alana bağlı.");
+
+            var map = new FormFieldDataElementMap
+            {
+                FormFieldId = fieldId,
+                DataElementId = dataElementId,
+                UsageType = usageType,
+                Notes = notes
+            };
+            Maps.Add(map);
+            await db.SaveChangesAsync(ct);
+            return ServiceResult<int>.Ok(map.Id);
+        }
+
+        public async Task<ServiceResult<bool>> UnmapDataElementAsync(
+            int mapId, int formDefinitionId, int firmaId, CancellationToken ct = default)
+        {
+            var map = await Maps
+                .Include(m => m.FormField!).ThenInclude(f => f.FormDefinition)
+                .FirstOrDefaultAsync(m => m.Id == mapId, ct);
+            if (map?.FormField?.FormDefinition == null
+                || map.FormField.FormDefinitionId != formDefinitionId
+                || map.FormField.FormDefinition.FirmaId != firmaId)
+                return ServiceResult<bool>.Failure("Eşleme bulunamadı.");
+
+            Maps.Remove(map);
             await db.SaveChangesAsync(ct);
             return ServiceResult<bool>.Ok(true);
         }

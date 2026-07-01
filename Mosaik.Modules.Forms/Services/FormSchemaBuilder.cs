@@ -52,6 +52,17 @@ namespace Mosaik.Modules.Forms.Services
                 case FormFieldType.Radio:
                     el["choices"] = BuildChoices(field.Options);
                     break;
+                case FormFieldType.File:
+                    // survey-core file question: tek dosya, base64 dataURL olarak data'ya gömülür
+                    // (storeDataAsText — ayrı upload endpoint yok, tek POST kanalı, FormSubmissionService decode eder).
+                    el["storeDataAsText"] = true;
+                    el["allowMultiple"] = false;
+                    el["maxSize"] = FormFileStorage.PublicMaxBytes; // client-side ön kontrol; server magic-byte+boyut yeniden doğrular
+                    break;
+                case FormFieldType.Signature:
+                    // survey-core native signaturepad (signature_pad bundled, MIT) → data:image/png;base64 dataURL.
+                    el["penColor"] = "#1f2937";
+                    break;
                 case FormFieldType.Hidden:
                     el["visible"] = false;
                     break;
@@ -66,7 +77,7 @@ namespace Mosaik.Modules.Forms.Services
             return el;
         }
 
-        // "text"|"comment"|"dropdown"|"checkbox"|"radiogroup"|"boolean"|"file"|"comment"(signature placeholder — Faz 4 signature_pad ile değişir)
+        // survey-core question tipleri (MIT). signaturepad + file native — ayrı lib gerekmez.
         private static string MapType(byte fieldType) => fieldType switch
         {
             FormFieldType.Text => "text",
@@ -79,7 +90,7 @@ namespace Mosaik.Modules.Forms.Services
             FormFieldType.Radio => "radiogroup",
             FormFieldType.Checkbox => "boolean",
             FormFieldType.File => "file",
-            FormFieldType.Signature => "comment", // Faz 4: signature_pad Canvas ile değişir
+            FormFieldType.Signature => "signaturepad", // native (signature_pad bundled)
             FormFieldType.Hidden => "text",
             _ => "text"
         };

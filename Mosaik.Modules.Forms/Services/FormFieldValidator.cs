@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
@@ -15,21 +16,26 @@ namespace Mosaik.Modules.Forms.Services
             if (field.FieldType is FormFieldType.Hidden or FormFieldType.Section)
                 return null;
 
-            if (field.IsRequired && string.IsNullOrWhiteSpace(rawValue))
+            // File: boş survey değeri "[]" gelir — zorunlu ise reddet (magic-byte/boyut submit'te ayrıca doğrulanır).
+            var isEmpty = string.IsNullOrWhiteSpace(rawValue)
+                || (field.FieldType == FormFieldType.File && rawValue.Trim() is "[]" or "null");
+
+            if (field.IsRequired && isEmpty)
                 return $"'{field.Label}' zorunlu bir alan.";
 
-            if (string.IsNullOrWhiteSpace(rawValue))
+            if (isEmpty)
                 return null; // opsiyonel + boş — geçerli
 
             switch (field.FieldType)
             {
                 case FormFieldType.Number:
-                    if (!decimal.TryParse(rawValue, out _))
+                    // InvariantCulture — survey-core "." ondalık; tr-TR host'ta kültür-duyarlı parse reddederdi.
+                    if (!decimal.TryParse(rawValue, NumberStyles.Number, CultureInfo.InvariantCulture, out _))
                         return $"'{field.Label}' geçerli bir sayı olmalı.";
                     break;
                 case FormFieldType.Date:
                 case FormFieldType.DateTime:
-                    if (!DateTime.TryParse(rawValue, out _))
+                    if (!DateTime.TryParse(rawValue, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out _))
                         return $"'{field.Label}' geçerli bir tarih olmalı.";
                     break;
                 case FormFieldType.Checkbox:

@@ -3,6 +3,7 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Mosaik.Core.Logging;
 using Mosaik.Modules.Forms.Areas.Forms.ViewModels;
 using Mosaik.Modules.Forms.Entities;
@@ -18,13 +19,22 @@ namespace Mosaik.Modules.Forms.Areas.Forms.Controllers
         private readonly FormDefinitionService _definitions;
         private readonly FormFieldService _fields;
         private readonly PublicTokenService _tokens;
+        private readonly DataElementLookupService _dataElements;
+        private readonly Microsoft.EntityFrameworkCore.DbContext _db;
+        private readonly Microsoft.AspNetCore.Hosting.IWebHostEnvironment _env;
         private readonly IAuditLog _audit;
 
-        public FormDefinitionController(FormDefinitionService definitions, FormFieldService fields, PublicTokenService tokens, IAuditLog audit)
+        public FormDefinitionController(
+            FormDefinitionService definitions, FormFieldService fields, PublicTokenService tokens,
+            DataElementLookupService dataElements, Microsoft.EntityFrameworkCore.DbContext db,
+            Microsoft.AspNetCore.Hosting.IWebHostEnvironment env, IAuditLog audit)
         {
             _definitions = definitions;
             _fields = fields;
             _tokens = tokens;
+            _dataElements = dataElements;
+            _db = db;
+            _env = env;
             _audit = audit;
         }
 
@@ -107,7 +117,57 @@ namespace Mosaik.Modules.Forms.Areas.Forms.Controllers
             if (def == null)
                 return NotFound();
             ViewBag.FieldTypeOptions = FieldTypeOptions();
+
+            // Faz 4 — KVKK DataElement eşleme picker verisi (Kvkk modülü yoksa boş → picker gizlenir).
+            var elements = await _dataElements.ListActiveAsync();
+            ViewBag.DataElements = elements;
+            ViewBag.DataElementNames = elements.ToDictionary(e => e.Id, e => e.DisplayName);
             return View(def);
+        }
+
+        // Faz 4 §4.3 — field → KVKK DataElement eşle (opsiyonel).
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> MapDataElement(int fieldId, int formDefinitionId, int dataElementId, byte usageType, string? notes)
+        {
+            var r = await _fields.MapDataElementAsync(fieldId, formDefinitionId, CurrentFirmaId, dataElementId, usageType, notes);
+            TempData["Message"] = r.IsSuccess ? "Veri öğesi eşlendi." : r.Message;
+            TempData["MessageType"] = r.IsSuccess ? "success" : "error";
+            if (r.IsSuccess)
+                await _audit.LogAsync("form_field_map_dataelement", "form_field", fieldId.ToString(), $"dataElementId={dataElementId}");
+            return RedirectToAction(nameof(Details), new { id = formDefinitionId });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UnmapDataElement(int mapId, int formDefinitionId)
+        {
+            var r = await _fields.UnmapDataElementAsync(mapId, formDefinitionId, CurrentFirmaId);
+            TempData["Message"] = r.IsSuccess ? "Eşleme kaldırıldı." : r.Message;
+            TempData["MessageType"] = r.IsSuccess ? "success" : "error";
+            if (r.IsSuccess)
+                await _audit.LogAsync("form_field_unmap_dataelement", "form_field_map", mapId.ToString(), string.Empty);
+            return RedirectToAction(nameof(Details), new { id = formDefinitionId });
+        }
+
+        // Faz 4 — submission eki/imza indir. Admin-only + firma guard + App_Data/forms altında path guard.
+        [HttpGet]
+        public async Task<IActionResult> DownloadFile(int fileId)
+        {
+            var file = await _db.Set<FormSubmissionFile>().AsNoTracking()
+                .FirstOrDefaultAsync(f => f.Id == fileId && f.FirmaId == CurrentFirmaId);
+            if (file == null)
+                return NotFound();
+
+            // Trailing separator — "forms" prefix'i "forms_export" gibi kardeş dizinle eşleşmesin (security M-1).
+            var root = Path.GetFullPath(Path.Combine(_env.ContentRootPath, "App_Data", "forms")) + Path.DirectorySeparatorChar;
+            var abs = Path.GetFullPath(Path.Combine(_env.ContentRootPath, file.DiskPath.Replace('/', Path.DirectorySeparatorChar)));
+            if (!abs.StartsWith(root, StringComparison.OrdinalIgnoreCase) || !System.IO.File.Exists(abs))
+                return NotFound();
+
+            await _audit.LogAsync("form_file_download", "form_submission_file", fileId.ToString(), file.FileName);
+            var stream = System.IO.File.OpenRead(abs);
+            return File(stream, file.MimeType ?? "application/octet-stream", file.FileName);
         }
 
         [HttpPost]

@@ -19,11 +19,15 @@ namespace Mosaik.Modules.Forms.Entities
         [Required, MaxLength(80)]
         public string FieldKey { get; set; } = string.Empty;      // denormalized for query
 
-        public string? ValueText { get; set; }                    // text/textarea/select/radio/multiselect/signature(base64)
+        public string? ValueText { get; set; }                    // text/textarea/select/radio/multiselect
         public decimal? ValueNumber { get; set; }
         public DateTime? ValueDate { get; set; }
         public bool? ValueBool { get; set; }
-        public int? ValueFileId { get; set; }                     // Documents FK (soft ref)
+
+        // Faz 4: file + signature değeri → FormSubmissionFile (disk storage). base64 inline DEĞİL
+        // (advisor 2026-07-01, conf 72 — NVARCHAR(MAX) şişmesi + render decode maliyeti).
+        public int? ValueFileId { get; set; }
+        public FormSubmissionFile? File { get; set; }
 
         public bool IsEncrypted { get; set; }
     }

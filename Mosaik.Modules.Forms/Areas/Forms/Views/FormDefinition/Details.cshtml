@@ -1,9 +1,17 @@
 @model Mosaik.Modules.Forms.Entities.FormDefinition
 @using Mosaik.Modules.Forms
+@using Mosaik.Modules.Forms.Entities
+@using Mosaik.Modules.Forms.Services
 @{
     ViewData["Title"] = Model.Name;
     Layout = "_AppLayout";
     var fieldTypeOptions = ViewBag.FieldTypeOptions as List<(byte Value, string Text)> ?? [];
+    var dataElements = ViewBag.DataElements as IReadOnlyList<DataElementLookupService.DataElementLookup> ?? [];
+    var dataElementNames = ViewBag.DataElementNames as Dictionary<int, string> ?? new();
+    // Section/Hidden hariç eşlenebilir alanlar (KVKK envanter kapsamı).
+    var mappableFields = Model.Fields
+        .Where(f => f.FieldType is not (FormFieldType.Section or FormFieldType.Hidden))
+        .OrderBy(f => f.Order).ToList();
 }
 
 @section Breadcrumb {
@@ -182,6 +190,83 @@ else
                 }
             </tbody>
         </table>
+    </div>
+}
+
+@if (mappableFields.Count > 0)
+{
+    <div class="form-section-card wide">
+        <div class="form-section-head"><h2 class="form-section-head__title">KVKK Veri Öğesi Eşleme <span class="pill">opsiyonel</span></h2></div>
+        <div class="form-section-body">
+            @if (dataElements.Count == 0)
+            {
+                <p class="help-text">KVKK modülü aktif değil ya da veri öğesi tanımlı değil — eşleme yapılamıyor. Eşleme opsiyoneldir, yayınlamayı engellemez.</p>
+            }
+            else
+            {
+                <p class="help-text">Her alanı bir KVKK veri öğesine bağlayın; bağlı alanlar KVKK envanteri "bu veri nerede işleniyor?" aramasına dahil olur. Bağlamak zorunlu değildir.</p>
+                <div class="paper-card clip">
+                    <table class="dt">
+                        <thead>
+                            <tr>
+                                <th scope="col">Alan</th>
+                                <th scope="col">Bağlı Veri Öğeleri</th>
+                                <th scope="col">Ekle</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var f in mappableFields)
+                            {
+                                <tr>
+                                    <td>@f.Label <span class="mono text-sm">@f.FieldKey</span></td>
+                                    <td>
+                                        @if (f.DataElementMaps.Count == 0)
+                                        {
+                                            <span class="text-muted text-sm">— bağlı değil</span>
+                                        }
+                                        else
+                                        {
+                                            @foreach (var m in f.DataElementMaps)
+                                            {
+                                                <span class="pill">
+                                                    @(dataElementNames.TryGetValue(m.DataElementId, out var nm) ? nm : $"#{m.DataElementId}")
+                                                    <form method="post" action="/Forms/FormDefinition/UnmapDataElement" class="inline-form">
+                                                        @Html.AntiForgeryToken()
+                                                        <input type="hidden" name="mapId" value="@m.Id" />
+                                                        <input type="hidden" name="formDefinitionId" value="@Model.Id" />
+                                                        <button type="submit" class="icon-btn" title="Eşlemeyi kaldır" aria-label="Eşlemeyi kaldır">
+                                                            <i class="fas fa-xmark text-[9px]" aria-hidden="true"></i>
+                                                        </button>
+                                                    </form>
+                                                </span>
+                                            }
+                                        }
+                                    </td>
+                                    <td>
+                                        <form method="post" action="/Forms/FormDefinition/MapDataElement" class="inline-form">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="fieldId" value="@f.Id" />
+                                            <input type="hidden" name="formDefinitionId" value="@Model.Id" />
+                                            <label class="sr-only" for="de_@f.Id">Veri öğesi seç</label>
+                                            <select class="inp inp-sm" id="de_@f.Id" name="dataElementId" required>
+                                                <option value="">Veri öğesi seç…</option>
+                                                @foreach (var de in dataElements)
+                                                {
+                                                    <option value="@de.Id">@de.DisplayName@(de.IsSpecialCategory ? " (özel nitelikli)" : "")</option>
+                                                }
+                                            </select>
+                                            <button type="submit" class="btn sm">
+                                                <i class="fas fa-link text-[9px]" aria-hidden="true"></i> Bağla
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
     </div>
 }
 

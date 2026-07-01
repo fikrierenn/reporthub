@@ -28,6 +28,21 @@ namespace Mosaik.Tests
         }
 
         [Fact]
+        public void Validate_RequiredFileEmptyArray_ReturnsError()
+        {
+            // survey file question boş değeri "[]" gönderir — zorunlu ise reddedilmeli (Faz 4).
+            var error = FormFieldValidator.Validate(Field(FormFieldType.File, required: true), "[]");
+            Assert.NotNull(error);
+        }
+
+        [Fact]
+        public void Validate_OptionalFileEmptyArray_ReturnsNull()
+        {
+            var error = FormFieldValidator.Validate(Field(FormFieldType.File), "[]");
+            Assert.Null(error);
+        }
+
+        [Fact]
         public void Validate_NumberField_NonNumeric_ReturnsError()
         {
             var error = FormFieldValidator.Validate(Field(FormFieldType.Number), "abc");

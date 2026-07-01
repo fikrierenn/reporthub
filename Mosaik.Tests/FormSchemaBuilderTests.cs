@@ -27,6 +27,22 @@ namespace Mosaik.Tests
         }
 
         [Fact]
+        public void BuildSchemaJson_SignatureField_MapsToSignaturePad()
+        {
+            var el = JsonNode.Parse(FormSchemaBuilder.BuildSchemaJson([Field(FormFieldType.Signature)]))!["elements"]![0]!.AsObject();
+            Assert.Equal("signaturepad", el["type"]!.GetValue<string>());
+        }
+
+        [Fact]
+        public void BuildSchemaJson_FileField_SetsStoreDataAsTextAndMaxSize()
+        {
+            var el = JsonNode.Parse(FormSchemaBuilder.BuildSchemaJson([Field(FormFieldType.File)]))!["elements"]![0]!.AsObject();
+            Assert.Equal("file", el["type"]!.GetValue<string>());
+            Assert.True(el["storeDataAsText"]!.GetValue<bool>());
+            Assert.True(el["maxSize"]!.GetValue<int>() > 0);
+        }
+
+        [Fact]
         public void BuildSchemaJson_SelectField_BuildsChoicesFromStringArray()
         {
             var json = FormSchemaBuilder.BuildSchemaJson([Field(FormFieldType.Select, options: "[\"Evet\",\"Hayır\"]")]);

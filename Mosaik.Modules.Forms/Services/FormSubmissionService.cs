@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Mosaik.Core.Domain;
@@ -18,7 +19,8 @@ namespace Mosaik.Modules.Forms.Services
 
     // Plan 41 Faz 1 — submission save + FormVersionId bind (§4.6 ZORUNLU). Workflow/ProcessInstance
     // trigger stub (Plan 36/42 — sonraki fazlarda gerçek çağrı eklenir).
-    public class FormSubmissionService(DbContext db, FormValidationService validation)
+    // Faz 4 — File/Signature alanları: base64 dataURL decode → magic-byte doğrula → disk yaz → ValueFileId.
+    public class FormSubmissionService(DbContext db, FormValidationService validation, FormFileStorage fileStorage)
     {
         // silent-failure-hunter HIGH — alan-bazlı hata dict'i bu koda taşınır (JSON-encoded
         // Message); controller/JS ayırt edip survey-core question.addError'a bağlar.
@@ -51,6 +53,33 @@ namespace Mosaik.Modules.Forms.Services
                 .Where(f => f.FormDefinitionId == def.Id)
                 .ToListAsync(ct);
 
+            // Public/anonim (token ile veya IsAnonymous) daha sıkı boyut limiti (advisor conf 80).
+            var maxBytes = def.IsAnonymous || input.PublicTokenId != null
+                ? FormFileStorage.PublicMaxBytes
+                : FormFileStorage.InternalMaxBytes;
+
+            // Pass 1: File/Signature alanlarını DECODE et (disk'e dokunmadan) — bir alan geçersizse
+            // hiçbir dosya yazılmadan field_validation döner (orphan dosya bırakma).
+            var decoded = new List<(FormField Field, FormFileStorage.DecodedFile File)>();
+            var fileErrors = new Dictionary<string, string>();
+            foreach (var field in fields)
+            {
+                if (field.FieldType is not (FormFieldType.File or FormFieldType.Signature))
+                    continue;
+                if (!input.Values.TryGetValue(field.FieldKey, out var raw) || string.IsNullOrWhiteSpace(raw))
+                    continue;
+
+                var r = field.FieldType == FormFieldType.Signature
+                    ? fileStorage.DecodeSignature(raw, maxBytes)
+                    : fileStorage.DecodeFileField(raw, maxBytes);
+                if (!r.IsSuccess)
+                    fileErrors[field.FieldKey] = r.Message;
+                else
+                    decoded.Add((field, r.Data));
+            }
+            if (fileErrors.Count > 0)
+                return ServiceResult<int>.Failure(JsonSerializer.Serialize(fileErrors), FieldValidationErrorCode);
+
             var submission = new FormSubmission
             {
                 FormDefinitionId = def.Id,
@@ -65,18 +94,46 @@ namespace Mosaik.Modules.Forms.Services
                 Status = 0
             };
 
+            // Pass 2a: dosya olmayan alanlar.
             foreach (var field in fields)
             {
-                if (!input.Values.TryGetValue(field.FieldKey, out var raw) || raw == null)
-                    continue;
                 if (field.FieldType is FormFieldType.Hidden or FormFieldType.Section)
+                    continue;
+                if (field.FieldType is FormFieldType.File or FormFieldType.Signature)
+                    continue;
+                if (!input.Values.TryGetValue(field.FieldKey, out var raw) || raw == null)
                     continue;
 
                 submission.Values.Add(BuildFieldValue(field, raw));
             }
 
-            db.Set<FormSubmission>().Add(submission);
-            await db.SaveChangesAsync(ct);
+            // Pass 2b: decode edilmiş dosyaları diske yaz + submission graph'ına bağla + kaydet.
+            // Write loop + SaveChanges TEK try içinde (silent-failure F3): mid-batch WriteToDisk IOException'ı
+            // da orphan temizliğine dahil olur — yazılmış dosyalar `written`'da, catch hepsini siler.
+            var written = new List<FormSubmissionFile>();
+            try
+            {
+                foreach (var (field, file) in decoded)
+                {
+                    var stored = await fileStorage.WriteToDiskAsync(file, input.FirmaId, field.FieldKey, ct);
+                    written.Add(stored);
+                    submission.Files.Add(stored);
+                    submission.Values.Add(new FormSubmissionFieldValue
+                    {
+                        FormFieldId = field.Id,
+                        FieldKey = field.FieldKey,
+                        File = stored
+                    });
+                }
+
+                db.Set<FormSubmission>().Add(submission);
+                await db.SaveChangesAsync(ct);
+            }
+            catch (Exception)
+            {
+                fileStorage.TryDeleteAll(written); // disk-write veya DB başarısız — yazılmış dosyaları temizle
+                throw;
+            }
 
             // Plan 36/42 — workflow/ProcessInstance trigger stub. Sonraki fazlarda gerçek çağrı.
 
@@ -89,11 +146,14 @@ namespace Mosaik.Modules.Forms.Services
             switch (field.FieldType)
             {
                 case FormFieldType.Number:
-                    value.ValueNumber = decimal.TryParse(raw, out var n) ? n : null;
+                    // InvariantCulture ZORUNLU — survey-core "." ondalık gönderir; tr-TR host "."'ı binlik
+                    // ayraç sanıp "3.5"→35 yapardı (code-reviewer locale bug; Faz 3 _elapsed'ın aynısı).
+                    value.ValueNumber = decimal.TryParse(raw, NumberStyles.Number, CultureInfo.InvariantCulture, out var n) ? n : null;
                     break;
                 case FormFieldType.Date:
                 case FormFieldType.DateTime:
-                    value.ValueDate = DateTime.TryParse(raw, out var d) ? d.ToUniversalTime() : null;
+                    value.ValueDate = DateTime.TryParse(raw, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var d)
+                        ? d.ToUniversalTime() : null;
                     break;
                 case FormFieldType.Checkbox:
                     value.ValueBool = bool.TryParse(raw, out var b) && b;
