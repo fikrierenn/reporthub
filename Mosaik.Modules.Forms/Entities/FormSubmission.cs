@@ -15,6 +15,12 @@ namespace Mosaik.Modules.Forms.Entities
         [Required]
         public int FirmaId { get; set; }
 
+        // Plan 41 rev 2 (§4.6) — ZORUNLU: submission hangi şema versiyonuna göre
+        // render/validate edildiyse o versiyon (geriye uyumluluk garantisi).
+        [Required]
+        public int FormVersionId { get; set; }
+        public FormDefinitionVersion? FormVersion { get; set; }
+
         public int? SubmittedById { get; set; }                   // NULL anonim
 
         [MaxLength(200)]

@@ -2,7 +2,7 @@
 
 **Tarih:** 2026-05-21
 **Yazan:** Fikri / Claude
-**Durum:** `Taslak` (onay bekliyor)
+**Durum:** `Taslak` (rev 2 — 2026-07-01, implementasyon-hazır, kullanıcı onayı bekliyor)
 **Bağımlılık:** Plan 38 EntityRelations (✅), Plan 36 Workflow Engine (✅ onaylı, başlamadı), Documents (var — file upload reuse)
 **Kritik path:** Plan 42 Process Execution Runtime'ın prereq'i. Plan 40 KVKK Faz 3 form aspect typed bağlama için zorunlu.
 
@@ -156,19 +156,27 @@ wwwroot/assets/css/components-forms.css        modül-özel CSS
 
 ## 3. Alternatifler — Own vs Integrate vs Hybrid
 
-### A: Hybrid (SEÇİLEN — server-side v1, builder UI v2)
+### A: Hybrid (SEÇİLEN — survey-core renderer reuse + DIY liste-builder v1, drag-drop v2 opsiyonel)
 
-**v1 (4 hafta):** JSON config-driven server-side render. Admin form ile `FormField` CRUD. Drag-drop builder yok — alan tek tek eklenir. KVKK ihtiyacının %70'i karşılanır.
-
-**v2 (sonra ~2 hafta):** Vanilla JS drag-drop builder UI. JSON şema ile uyumlu — v1 form'lar otomatik geçer.
+**v1 (revize 2026-07-01 — 2 tur OSS araştırması sonrası):**
+- **Renderer:** `survey-core` + `survey-js-ui` (MIT, ücretsiz, vanilla-JS uyumlu, framework bağımsız) reuse edilir — kendi renderer YAZILMAZ. JSON şema motoru + validation + tüm field tipleri (text/select/file/signature/vb) hazır, olgun (SurveyJS ekosistemi büyük, iyi dokümante).
+- **Builder (admin form tasarım UI):** **Mosaik DIY, liste-tabanlı** (drag-drop YOK) — alan ekle/sil/sırala (yukarı/aşağı buton)/tip seç/validation kuralı gir. survey-core JSON şemasını (`elements: [{type,name,title,...}]`) hedefler. **$0, üçüncü-parti risk yok.**
+- **Drag-drop builder (v2, opsiyonel, gerekirse):** Şimdi COMMIT edilmiyor. Gerekirse `Formeo` (MIT, vanilla, editor+renderer aynı paket) adapte edilir veya native HTML5 drag-drop (`draggable`+`dragstart`/`dragover`/`drop`, js-conventions.md pattern) ile liste-builder'a drag-reorder eklenir — **ayrı küçük iş, footprint-ladder**.
 
 **v3 (ileride):** Conditional logic + multi-page + advanced validation.
 
+**2 tur OSS araştırması sonucu (reddedilen "daha iyi" adaylar):**
+- **Form.io** — lisans belirsizliği (repo MIT ama kurumsal doküman/3.parti kaynaklar OSL-3.0/copyleft diyor, çelişkili) + MongoDB zorunluluğu + enterprise özellikler paywall. KVKK aracı için lisans riski kabul edilemez.
+- **Formeo** — MIT temiz, vanilla, drag-drop dahil ama JSON şema resmi dokümante değil (adapter yazımı gerekir), 80 açık issue, tek-maintainer riski. v2 drag-drop adayı olarak not edildi, v1'e commit edilmedi.
+- **JSON Forms** — builder tarafı deprecated/terk edilmiş.
+- **kevinchappell/formBuilder** — MIT ama jQuery zorunlu (Mosaik "jQuery yok" ihlali).
+- **Formily, GrapesJS** — framework kilitli (React/Vue) veya form-özel değil.
+
 **Sebep:**
-- KVKK Plan 40 ve Process Execution Plan 42 bekliyor. v1 yetiyor.
-- Own kontrol = DataElement mapping native + audit hooks tam + multi-firma izole + Türkçe UI + KVKK uyum
-- Builder UI ertelenebilir; KVKK senaryoları admin form ile çözülür
-- Risk düşük — incremental
+- KVKK Plan 40 (kapandı) ve Process Execution Plan 42 bekliyor. v1 (renderer reuse + DIY builder) fonksiyonel olarak tam — sadece drag-drop kozmetik eksik.
+- survey-core reuse = ~12h → ~4h tasarruf (renderer yazmaktan), sıfır lisans riski (MIT, mature).
+- DIY builder = DataElement mapping native + audit hooks tam + multi-firma izole + Türkçe UI + KVKK uyum + üçüncü-parti bağımlılık yok.
+- Risk düşük — incremental, drag-drop sonradan eklenebilir (builder'ın altındaki veri modeli/API değişmez).
 
 ### B: Own (Mosaik full builder, drag-drop dahil)
 
@@ -186,21 +194,29 @@ wwwroot/assets/css/components-forms.css        modül-özel CSS
 - Embed iframe Mosaik design system bozuluyor
 - Toplam effort ~3-4 hafta integrate + 2 hafta KVKK adapt = own v1 ile aynı
 
-### OSS reuse stack (2026-05-21 araştırma sonrası — `docs/RESEARCH_OSS_VNEXT_2026-05-21.md`)
+### OSS reuse stack (2026-05-21 ilk araştırma + 2026-07-01 rev 2 — 2 tur derinleşme)
 
 | Bileşen | OSS | Lisans | Konum | Tasarruf |
 |---|---|---|---|---|
-| Renderer | **SurveyJS Form Library 3.x** (MIT) | MIT | `wwwroot/lib/surveyjs/` UMD | %70 (~12h → 4h) — JSON schema + `Serializer.addProperty()` ile KVKK DataElement custom metadata |
-| Builder UI | **Mosaik DIY** (Survey Creator £422/yıl ticari değil) | İç | Plan 41 Faz B-C drag-drop | 0 (kapsamda kalır, ~30h korunur) |
+| Renderer | **survey-core + survey-js-ui** (SurveyJS Form Library, MIT) | MIT | `wwwroot/lib/surveyjs/` UMD, vanilla embed (script+CSS, iframe yok) | %70 (~12h → 4h) — JSON schema + `Serializer.addProperty()` ile KVKK DataElement custom metadata |
+| Builder UI (v1) | **Mosaik DIY — liste-tabanlı** (drag-drop YOK, Survey Creator $579+$229/yıl ticari — reddedildi, ücretsiz kalınacak) | İç | Plan 41 Faz 2 | 0 (kapsamda kalır, ~20-25h — drag-drop'suz basitleşmiş) |
+| Builder UI (v2, opsiyonel) | **Formeo adapte** (MIT, vanilla, drag-drop) VEYA native HTML5 drag-drop | MIT/İç | **Commit edilmedi** — gerekirse ayrı küçük iş | Drag-drop istenirse ~10-15h (Formeo adapter) |
 | Signature pad | **signature_pad 5.1.1** (MIT, ~5KB UMD) | MIT | `wwwroot/assets/js/form-signature.js` IIFE wrapper | %85 (~6h → 1h) |
-| AntiSpam (zorunlu) | **Honeypot + time-based** (5 satır pattern) | Pattern | controller side | %50 (~4h → 2h) |
-| AntiSpam (opsiyonel public) | **Cloudflare Turnstile** SaaS ücretsiz | SaaS | DSAR/ihbar yüksek risk endpoint | KVKK-friendly, "no PII collection" |
-| DataElement KVKK metadata | Plan 40 entegrasyon, **kapsamda kalır** | İç | Plan 41 Faz D | 0 |
-| Workflow trigger | Plan 36 Stateless callback | İç | Plan 41 Faz G | 0 |
+| AntiSpam katmanlı (2026-06-29 düzeltme) | **Honeypot → timing-check → IP-rate-limit → CAPTCHA (son)** | Pattern | controller side, sıralı early-exit | %50 (~4h → 2h) — CAPTCHA sadece üst katmanlar geçilirse tetiklenir (Cloudflare Turnstile önerilir, Google reCAPTCHA KVKK riski) |
+| DataElement KVKK metadata | Plan 40 entegrasyon, **OPTIONAL** (2026-06-29 düzeltme — Yayında geçişini bloklamaz) | İç | Plan 41 Faz 4 | 0 |
+| Workflow trigger | Plan 36 Stateless callback | İç | Plan 41 Faz 7 | 0 |
 
-**Reddedilenler:** Formbricks (AGPLv3 viral), LimeSurvey (GPL+PHP), formio.js (OSL-3.0), Survey Creator (£422/dev/yıl ticari), reCAPTCHA v3 (KVKK riski — Google), Blazor formlar (stack uyumsuz), kevinchappell/formBuilder (jQuery), json-editor/Alpaca (Bootstrap/jQuery UI legacy), Tripetto (proprietary), Syncfusion (proprietary).
+**Reddedilenler (2026-05-21):** Formbricks (AGPLv3 viral), LimeSurvey (GPL+PHP), Survey Creator (ücretli, bütçe onayı yok), reCAPTCHA v3 (KVKK riski — Google), Blazor formlar (stack uyumsuz), json-editor/Alpaca (Bootstrap/jQuery UI legacy), Tripetto (proprietary), Syncfusion (proprietary).
 
-**Net Plan 41 effort tasarrufu: ~%30-35** (~62h → ~42h).
+**Reddedilenler (2026-07-01 rev 2 — 2. tur "daha iyi ücretsiz drag-drop var mı" araştırması):**
+- **Form.io / formio.js** — lisans belirsiz (repo LICENSE.txt MIT ama form.io kurumsal dokümantasyon + 3.parti kaynaklar OSL-3.0/copyleft anlatıyor, çelişkili) + self-host MongoDB zorunlu + enterprise özellik paywall. KVKK aracı için lisans riski kabul edilemez.
+- **Formeo** (Draggable/formeo) — MIT temiz, vanilla, drag-drop dahil (editor+renderer aynı paket) — **v2 adayı olarak not edildi**, ama JSON şema resmi dokümante değil (adapter yazımı gerekir) + 80 açık issue + tek-maintainer riski → v1'e commit edilmedi.
+- **JSON Forms** (@jsonforms/core) — renderer MIT ve olgun ama resmi drag-drop builder (`@jsonforms/editor`) deprecated/terk edilmiş.
+- **kevinchappell/formBuilder** — MIT, aktif bakımlı, ama **jQuery zorunlu bağımlılık** — Mosaik "jQuery yok" kuralını ihlal eder.
+- **Formily + Designable** (Alibaba) — MIT ama React/Vue'ya sıkı bağlı, framework-agnostic çekirdek yok — vanilla JS/Razor MVC entegrasyonu pratik değil.
+- **GrapesJS + grapesjs-plugin-forms** — MIT ama genel sayfa builder'ı (form-özel değil), form-plugin 3 yıl güncellenmemiş, çıktı HTML/CSS (JSON şema değil) — DataElement mapping'e uymuyor.
+
+**Net Plan 41 effort tasarrufu: ~%25-30** (~62h → ~44-47h, drag-drop v1 kapsamından çıktığı için tasarruf biraz düştü ama üçüncü-parti risk sıfıra indi).
 
 ### Lens kontrolü
 
@@ -275,6 +291,8 @@ CREATE TABLE FormSubmissions (
     SubmitterUserAgent NVARCHAR(500) NULL,
     PublicTokenId INT NULL FK PublicFormTokens,    -- public link ile gelmişse
     Status TINYINT NOT NULL DEFAULT 0,             -- 0 Submitted 1 InReview 2 Completed 3 Rejected
+    FormVersionId INT NOT NULL FK FormDefinitionVersions,  -- 2026-06-29 düzeltme: ZORUNLU — submission hangi
+                                                            -- şema versiyonuna göre render/validate edildiyse o versiyon (§4.6)
     LinkedProcessInstanceId INT NULL FK,           -- Plan 42 ProcessInstance
     WorkflowInstanceId INT NULL FK,                -- Plan 36
     SubmittedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
@@ -345,9 +363,9 @@ Submit:
  10. Response: 200 + redirect /Forms/Submitted/{id}
 ```
 
-### 4.3 KVKK uyum — DataElement mapping ZORUNLU
+### 4.3 KVKK uyum — DataElement mapping OPTIONAL (2026-06-29 düzeltme)
 
-Plan 40 KVKK envanteri için **her form field bir DataElement'e bağlı olmalı**. `DataElementMapValidator`:
+Plan 40 KVKK envanteri için form field'lar DataElement'e bağlanabilir ama **zorunlu değil** — `Yayında` geçişini bloklamaz (ilk taslak "ZORUNLU + blocker" kararı gerçek kullanımda çok katı bulundu, düzeltildi). `DataElementMapValidator` **uyarı** üretir, hata değil:
 
 ```csharp
 public Task<ValidationResult> ValidateAsync(FormDefinition def, CancellationToken ct)
@@ -357,32 +375,31 @@ public Task<ValidationResult> ValidateAsync(FormDefinition def, CancellationToke
         .Where(f => !_db.FormFieldDataElementMaps.Any(m => m.FormFieldId == f.Id))
         .ToList();
 
-    if (unmappedFields.Any())
-        return new ValidationResult(
-            valid: false,
-            errors: unmappedFields.Select(f =>
-                $"Field '{f.Label}' bir KVKK DataElement'e bağlı değil. KVKK envanteri için zorunlu."));
-
-    return ValidationResult.Ok();
+    // OPTIONAL — Warning döner, IsSuccess=true kalır. Admin UI "X alan KVKK'ya bağlı değil" banner gösterir,
+    // ama Yayında geçişini bloklamaz (Faz 4 done criteria: warning, blocker değil).
+    return ValidationResult.OkWithWarnings(
+        unmappedFields.Select(f => $"Field '{f.Label}' bir KVKK DataElement'e bağlı değil (opsiyonel)."));
 }
 ```
 
-`FormDefinition.Status = 0 Taslak` iken mapping eksik OK. **`Status = 1 Yayında` geçişi için tam mapping zorunlu** — service guard.
+Bağlanmış alanlar KVKK reverse-search'e (Plan 40 Faz 4 pattern) dahil olur; bağlanmamış alanlar sadece envanterde görünmez (veri kaybı değil, görünürlük kaybı — kabul edilebilir risk).
 
 ### 4.4 Şifreli alan (ihbar formu için)
 
 `FormDefinition.IsEncrypted = 1` ise her `FormSubmissionFieldValue.ValueText` AES-256 ile şifrelenir. Anahtar Azure Key Vault veya `appsettings` (env override) — Plan 40 secret discipline. Sadece "İhbar Komitesi" rolü çözebilir (DB level RLS değil, service level guard).
 
-### 4.5 Anti-spam
+### 4.5 Anti-spam — katmanlı sıra (2026-06-29 düzeltme)
 
-- **Honeypot:** hidden field `_hp` — bot doldurursa reject
-- **Rate limit:** IP başına dakikada 5 submit (ASP.NET Core rate limiter middleware)
-- **Time check:** form load → submit arası < 2 saniye → bot şüphesi
-- **reCAPTCHA v3** (v2): public form'larda opsiyonel toggle (FormDefinition.UseRecaptcha)
+Her katman early-exit; sadece önceki katman(lar) geçilirse sıradaki çalışır (maliyet artan sırada):
 
-### 4.6 Sürüm yönetimi
+1. **Honeypot:** hidden field `_hp` — bot doldurursa **anında reject** (CAPTCHA'ya bile gitmeden).
+2. **Timing check:** form load → submit arası < 2 saniye → bot şüphesi, reject.
+3. **IP rate-limit:** IP başına dakikada 5 submit (ASP.NET Core rate limiter middleware) — **IP yazma zorunlu** (audit + rate-limit paylaşır).
+4. **CAPTCHA (son katman, en maliyetli):** Cloudflare Turnstile (SaaS ücretsiz, "no PII collection" — reCAPTCHA v3 Google veri paylaşımı KVKK riski, reddedildi). Yukarıdaki 3 katman geçilirse tetiklenir; `FormDefinition.UseCaptcha` toggle, ihbar/DSAR default açık.
 
-Form yayınlandığında `FormDefinitionVersions` snapshot alır. Submission `FormDefinitionId + Version` referansı saklar — eski submission'lar eski şema ile render edilir (geriye uyumluluk). Yeni submit'ler aktif Version'a gider.
+### 4.6 Sürüm yönetimi (2026-06-29 düzeltme — ZORUNLU FK)
+
+Form yayınlandığında `FormDefinitionVersions` snapshot alır (SchemaJson tam kopya). `FormSubmission.FormVersionId` **ZORUNLU FK** (§4.1) — submission her zaman render edildiği versiyona bağlı kalır, eski submission'lar eski şema ile render edilir (geriye uyumluluk garantisi, "hangi soruları gördü" denetim sorusu her zaman cevaplanabilir). Yeni submit'ler aktif (en son yayınlanan) Version'a gider.
 
 ---
 
@@ -390,11 +407,12 @@ Form yayınlandığında `FormDefinitionVersions` snapshot alır. Submission `Fo
 
 | Risk | Olasılık | Etki | Önlem |
 |---|---|---|---|
-| v1 admin form yorucu, kullanıcı sevmez | Orta | Orta | 8-10 hazır template seed; çoğu form template'ten klon. v2 builder ile çöz. |
-| DataElement mapping unutulur, KVKK envanteri eksik | Yüksek | Yüksek | `Yayında` geçişi mapping eksikse blok. Admin UI uyarı banner. |
-| Anonim form abuse (ihbar spam) | Orta | Orta | Rate limit + reCAPTCHA + IP audit + manuel review queue |
+| v1 admin form yorucu, kullanıcı sevmez (drag-drop yok) | Orta | Orta | 8-10 hazır template seed; çoğu form template'ten klon. Drag-drop v2'ye deferred (Formeo adayı). |
+| DataElement mapping unutulur, KVKK envanteri eksik | Orta | Orta | **(2026-07-01 düzeltme: OPTIONAL, blocker değil)** — Admin UI uyarı banner, denetim raporunda "eşlenmemiş alan" listesi. Görünürlük kaybı, veri kaybı değil. |
+| Anonim form abuse (ihbar spam) | Orta | Orta | Katmanlı anti-spam (honeypot→timing→rate-limit→Turnstile CAPTCHA) + IP audit + manuel review queue |
 | Şifreli ihbar key management | Düşük | Yüksek | Key Vault zorunlu prod; appsettings dev only |
-| Form sürüm değişikliği aktif submission'ları kırar | Düşük | Orta | Submission `Version` referansı; eski şema arşiv |
+| Form sürüm değişikliği aktif submission'ları kırar | Düşük | Orta | `FormSubmission.FormVersionId` ZORUNLU FK; eski şema arşiv (§4.6) |
+| survey-core/survey-js-ui üçüncü-parti bakım riski | Düşük | Orta | SurveyJS ekosistemi büyük+aktif (ticari Survey Creator'ı besleyen şirket sürdürüyor); MIT fork edilebilir. Wrapper ince tutulur (Faz 1) — üst kütüphane değişirse adapter katmanı izole eder. |
 | Public token leak | Orta | Yüksek | HMAC + ExpiresAt + MaxUses; tek-kullanımlık seçenek |
 | File upload payload bomb | Orta | Orta | Documents reuse — magic byte + MaxFileSize + virus scan stub |
 | Workflow trigger başarısız → submission orphan | Orta | Orta | Transaction wrap; retry queue Hangfire; admin re-trigger UI |
@@ -405,40 +423,42 @@ Form yayınlandığında `FormDefinitionVersions` snapshot alır. Submission `Fo
 
 ## 6. Done Criteria
 
-### Faz 0 — Veri modeli + scaffold (6-8h)
-- [ ] `Mosaik.Modules.Forms` csproj + `FormsModule.cs` IMosaikModule
-- [ ] Migration 70 schema (idempotent)
-- [ ] 7 entity + DbSet
-- [ ] Build yeşil + 3+ unit test (entity validation)
+### Faz 0 — Veri modeli + scaffold ✅ KAPANDI (retroaktif — 2026-05-21 onay öncesi scaffold edilmiş, rev 2'de tamamlandı 2026-07-01)
+- [x] `Mosaik.Modules.Forms` csproj + `FormsModule.cs` IMosaikModule — commit `315aa5c`, `c26d7f8`, `d0b81ee`, `6430cd7` (2026-05-21, plan onay beklerken)
+- [x] Migration 70/72/73 schema (idempotent) + **74 rev 2 eklendi (2026-07-01):** `FormSubmissions.FormVersionId` ZORUNLU FK
+- [x] 7 entity + DbSet — `FormSubmission.FormVersionId` rev 2'de eklendi (tablo boştu, NOT NULL güvenli)
+- [x] Build yeşil
 
-### Faz 1 — JSON config v1 (Render + Submit) (10-12h)
-- [ ] `FormRendererService` — JSON → Razor view
-- [ ] `FormValidationService` — server-side auth
-- [ ] `FormSubmissionService` — save + workflow trigger stub
+### Faz 1 — survey-core render + Submit (rev — 8-10h, renderer reuse tasarrufu)
+- [ ] `wwwroot/lib/surveyjs/` — survey-core + survey-js-ui UMD (MIT, vanilla embed, script+CSS)
+- [ ] `FormRendererService` — `FormField[]` → survey-core JSON şema dönüşümü (kendi Razor renderer YAZILMAZ)
+- [ ] `FormValidationService` — server-side authoritative (survey-core client validation'ı tekrarlar, client'a güvenilmez)
+- [ ] `FormSubmissionService` — save + `FormVersionId` bind + workflow trigger stub
 - [ ] `/Forms/{slug}` GET + POST endpoint
-- [ ] form-render.js + form-validate.js (vanilla IIFE)
+- [ ] form-render.js (survey-core init + Alpine glue) — vanilla IIFE
 - [ ] AntiForgery + AsNoTracking
-- [ ] 5+ unit test (field type render, validation, submit happy path)
+- [ ] 5+ unit test (field type→schema dönüşüm, validation, submit happy path, FormVersionId bind)
 
-### Faz 2 — Admin Form CRUD (8-10h)
+### Faz 2 — Admin Form CRUD, liste-tabanlı builder (rev — 10-12h, drag-drop'suz)
 - [ ] `FormDefinitionController` — Index/Edit/Details/Create/Delete
-- [ ] FormField ekle/sil/sırala admin form
-- [ ] Status Taslak→Yayında transition (DataElement mapping check)
+- [ ] FormField ekle/sil/sırala (yukarı/aşağı buton, drag-drop YOK v1) admin form
+- [ ] Status Taslak→Yayında transition — DataElement mapping check **warning banner, blocker DEĞİL** (§4.3 düzeltme)
+- [ ] `FormDefinitionVersion` snapshot — Yayına alma anında SchemaJson snapshot alınır (§4.6)
 - [ ] WCAG focus trap, scope th, aria-label
 - [ ] 5+ unit test
 
-### Faz 3 — Public link + Anonim + AntiSpam (8-10h)
+### Faz 3 — Public link + Anonim + AntiSpam katmanlı (8-10h)
 - [ ] `PublicTokenService` HMAC + expiry
 - [ ] `PublicFormController` — token validate, render, submit
-- [ ] Honeypot + rate limit middleware
+- [ ] AntiSpam katmanlı sıra (§4.5 düzeltme): honeypot → timing-check → IP-rate-limit → CAPTCHA (son, sadece üst katmanlar geçilirse)
 - [ ] Submission audit (IP, UA, timing)
-- [ ] 5+ unit test (token validate, expired, max-uses)
+- [ ] 5+ unit test (token validate, expired, max-uses, anti-spam katman sırası)
 
-### Faz 4 — File upload + Signature + DataElement mapping (8-10h)
+### Faz 4 — File upload + Signature + DataElement mapping (opsiyonel) (8-10h)
 - [ ] File field — Documents modülü reuse (Plan 33 B-03 App_Data pattern)
-- [ ] Signature pad — Canvas → base64 PNG → Documents
+- [ ] Signature pad — `signature_pad` 5.1.1 (MIT) Canvas → base64 PNG → Documents
 - [ ] `FormFieldDataElementMap` admin UI
-- [ ] `DataElementMapValidator` — Yayında geçişi blocker
+- [ ] `DataElementMapValidator` — **warning banner, Yayında blocker DEĞİL** (§4.3 düzeltme)
 - [ ] 6+ unit test
 
 ### Faz 5 — Şifreli alan + İhbar template (4-6h)
@@ -518,19 +538,21 @@ Toplam: 54-70h, 4-5 hafta
 
 ---
 
-## 10. Karar gerekiyor
+## 10. Karar gerekiyor (rev 2 — çözülenler işaretli)
 
-1. **v1 admin form mu, hafif inline builder mı?** — v1 katı admin form CRUD (4-5 hafta), v1.5 inline builder (~+1 hafta). Önerim: katı v1, v2 ile drag-drop.
-2. **Şifreli ihbar key storage** — Azure Key Vault zorunlu prod mu, sadece appsettings yeterli mi? Önerim: KV zorunlu (KVKK m.12/5 yüksek güvenlik gereksinimi).
-3. **reCAPTCHA opt-in mi default mu?** — Public form'larda Google reCAPTCHA v3 zorunlu mu? Önerim: opsiyonel `FormDefinition.UseRecaptcha`; ihbar/DSAR default açık.
-4. **Conditional logic v1'de mi v2'de mi?** — v1 basit (if A=X show B), v2 advanced (multi-condition AND/OR). Önerim: v2'ye.
-5. **Form template marketplace** — Şimdilik 8 BKM template + admin CRUD yeterli mi? Önerim: yeterli, marketplace ileride.
+1. ~~v1 admin form mu, hafif inline builder mı?~~ **ÇÖZÜLDÜ (2026-07-01):** survey-core renderer reuse + Mosaik DIY liste-tabanlı builder (drag-drop yok). 2 tur OSS araştırması sonrası — Form.io lisans riski, Formeo olgunlaşmamış, Survey Creator ücretli. Drag-drop v2'ye (opsiyonel, gerekirse Formeo adaptasyonu).
+2. **Şifreli ihbar key storage** — Azure Key Vault zorunlu prod mu, sadece appsettings yeterli mi? Önerim: KV zorunlu (KVKK m.12/5 yüksek güvenlik gereksinimi). **Açık — onay bekliyor.**
+3. ~~reCAPTCHA opt-in mi default mu?~~ **ÇÖZÜLDÜ (2026-06-29):** Google reCAPTCHA reddedildi (KVKK veri paylaşımı riski) → Cloudflare Turnstile, katmanlı anti-spam'in son adımı (§4.5).
+4. **Conditional logic v1'de mi v2'de mi?** — v1 basit (if A=X show B), v2 advanced (multi-condition AND/OR). Önerim: v2'ye. **Açık — onay bekliyor.**
+5. **Form template marketplace** — Şimdilik 8 BKM template + admin CRUD yeterli mi? Önerim: yeterli, marketplace ileride. **Açık — onay bekliyor (düşük öncelik).**
 
 ---
 
 ## 11. Sürüm
 
 - **2026-05-21:** Taslak. Onay bekliyor.
+- **2026-06-29 (Plan 54 / research düzeltme, önceki plan sonunda not olarak vardı, rev 2'de plan gövdesine işlendi):** `FormVersionId` submission'da ZORUNLU FK. SurveyJS engine (survey-core+survey-js-ui, MIT) reuse — builder AYRI değerlendirilecek (rev 2'de çözüldü). Anti-spam katmanlı sıra. DataElement mapping OPTIONAL (blocker değil).
+- **2026-07-01 rev 2 — 2 tur OSS araştırması + kullanıcı onayı:** Builder kararı kilitlendi — survey-core renderer + Mosaik DIY liste-builder (v1, $0, üçüncü-parti risksiz), drag-drop v2'ye deferred (Formeo MIT adayı not edildi, commit edilmedi). Survey Creator ($579+$229/yıl ticari) kullanıcı kararıyla reddedildi ("ücretsiz kullan"). OSS reddedilenler listesi genişletildi (Form.io lisans riski, Formeo olgunluk riski, JSON Forms/formBuilder/Formily/GrapesJS uyumsuzluk). **Plan implementasyon-hazır — kullanıcı onayı bekliyor (Faz 0 başlangıcı).**
 
 
 ---

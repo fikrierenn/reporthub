@@ -80,6 +80,10 @@ namespace Mosaik.Modules.Forms
                     .WithMany(d => d.Submissions)
                     .HasForeignKey(x => x.FormDefinitionId)
                     .OnDelete(DeleteBehavior.Restrict);  // KVKK: submission kayıtları silinmez
+                e.HasOne(x => x.FormVersion)
+                    .WithMany()
+                    .HasForeignKey(x => x.FormVersionId)
+                    .OnDelete(DeleteBehavior.Restrict);  // rev 2 §4.6 — ZORUNLU, versiyon geçmişi silinmez
                 e.HasIndex(x => new { x.FormDefinitionId, x.SubmittedAt });
                 e.HasIndex(x => new { x.SubmittedById, x.SubmittedAt });
             });
