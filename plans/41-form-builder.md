@@ -465,12 +465,13 @@ Form yayınlandığında `FormDefinitionVersions` snapshot alır (SchemaJson tam
 - **Preview'de 1 gerçek bug (canlı 3-senaryo testi):** too-fast **geçti** (elapsed=0.5) — tr-TR culture noktayı binlik-ayraç sanıp `0.5→5` parse ediyordu (TooFast bypass). `InvariantCulture` + parse-fail→-1 fix. Sonra: honeypot→400, too-fast→400, temiz→200 (anonim submission, PublicTokenId bağlı, UsedCount=1 sadece temiz; spam DB'ye girmedi) doğrulandı.
 - **Not:** Chrome extension localhost'u kurumsal AV policy'yle blokluyor — public akış preview MCP ([AllowAnonymous] endpoint oturumdan bağımsız) ile doğrulandı.
 
-### Faz 4 — File upload + Signature + DataElement mapping (opsiyonel) (8-10h)
-- [ ] File field — Documents modülü reuse (Plan 33 B-03 App_Data pattern)
-- [ ] Signature pad — `signature_pad` 5.1.1 (MIT) Canvas → base64 PNG → Documents
-- [ ] `FormFieldDataElementMap` admin UI
-- [ ] `DataElementMapValidator` — **warning banner, Yayında blocker DEĞİL** (§4.3 düzeltme)
-- [ ] 6+ unit test
+### Faz 4 — File upload + Signature + DataElement mapping (opsiyonel) (8-10h) ✅ KAPANDI (commit 3a3c72e, 2026-07-01)
+- [x] File field — Forms **kendi** App_Data/forms storage (ADR-002: Documents ana projeye compile bağlanamaz → magic-byte+guard kopyalandı). FormSubmissionFile entity + migration 75.
+- [x] Signature — survey-core **native signaturepad** (bundled, ayrı signature_pad lib GEREKMEDİ) → PNG dosya (inline base64 değil, advisor conf 72). Değişiklik: plan "signature_pad 5.1.1" yerine survey-core native.
+- [x] `FormFieldDataElementMap` admin UI (Details sayfası eşleme bölümü) + cross-modül DataElementLookupService (KvkkDataElements SqlQueryRaw + graceful degrade)
+- [x] Unmapped warning — `FormPublishValidator.GetUnmappedFieldWarnings` (ayrı DataElementMapValidator YARATILMADI, advisor conf 90). Yayında bloklamaz.
+- [x] 12 yeni test (697/697). Preview E2E: file+signature+number(3.5 locale)+magic-byte reddi+refund+map+admin download.
+- **Full scan:** 0 CRIT/0 HIGH; 3 MED fix (path trailing-sep, mid-batch orphan cleanup, InvariantCulture locale, DbException log).
 
 ### Faz 5 — Şifreli alan + İhbar template (4-6h)
 - [ ] `FormEncryptionService` AES-256
