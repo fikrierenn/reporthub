@@ -18,12 +18,14 @@ namespace Mosaik.Core.Intelligence
         // Plan 54 M6 / Plan 40 — KVKK backbone
         public const string KvkkProcess = "KvkkProcess";
         public const string DataElement = "DataElement";
+        // Plan 40 Faz 3 — SOP↔KVKK bağı (junction sahibi Kvkk modülü, bu sadece EntityRelations çift-yazma)
+        public const string Sop = "Sop";
 
         public static readonly IReadOnlySet<string> All = new HashSet<string>(StringComparer.Ordinal)
         {
             User, Department, Position, Contract, Obligation,
             Vendor, Document, Circular, WorkflowInstance, Report,
-            KvkkProcess, DataElement
+            KvkkProcess, DataElement, Sop
         };
 
         public static bool IsValid(string? type) => type is not null && All.Contains(type);

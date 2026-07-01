@@ -14,10 +14,12 @@ namespace Mosaik.Core.Intelligence
         public const string Rejected = "rejected";
         // Plan 54 M6 / Plan 40 — süreç bir veri öğesini işler
         public const string Processes = "processes";
+        // Plan 40 Faz 3 — SOP prosedürü süreçten türer (Source=Sop, Target=KvkkProcess)
+        public const string DerivedFrom = "derived_from";
 
         public static readonly IReadOnlySet<string> All = new HashSet<string>(StringComparer.Ordinal)
         {
-            Manages, MemberOf, Owns, Signed, AssignedTo, References, Approved, Rejected, Processes
+            Manages, MemberOf, Owns, Signed, AssignedTo, References, Approved, Rejected, Processes, DerivedFrom
         };
 
         public static bool IsValid(string? type) => type is not null && All.Contains(type);

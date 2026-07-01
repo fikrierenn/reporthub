@@ -166,8 +166,74 @@
     <div x-show="tab==='form'" role="tabpanel" class="aspect-stub">
         <p class="text-muted">Form bağlama Plan 41 / M7 ile gelecek. Henüz bağlı form yok.</p>
     </div>
-    <div x-show="tab==='sop'" role="tabpanel" class="aspect-stub">
-        <p class="text-muted">SOP bağlama Faz 3 ile gelecek. Henüz bağlı prosedür yok.</p>
+    <div x-show="tab==='sop'" role="tabpanel"
+         x-data="kvkkSopPicker({ processId: @Model.Id, antiforgery: document.querySelector('input[name=__RequestVerificationToken]')?.value || '' })">
+        <div class="field">
+            <label class="lab" for="sopSearch">SOP Ara</label>
+            <input id="sopSearch" class="inp" type="text" x-model="q" @@input.debounce.300ms="search()" placeholder="SOP başlığı…" autocomplete="off" />
+        </div>
+        <ul class="overview-list" x-show="results.length">
+            <template x-for="r in results" :key="r.id">
+                <li>
+                    <button type="button" class="btn ghost sm" @@click="link(r)" :disabled="loading">
+                        <i class="fas fa-link text-[9px]" aria-hidden="true"></i> <span x-text="r.title"></span>
+                    </button>
+                </li>
+            </template>
+        </ul>
+        <p class="text-muted text-sm" x-show="error" x-text="error" role="alert"></p>
+
+        <h3 class="section-subtitle">Bağlı SOP'lar <span class="mono" x-text="linked.length"></span></h3>
+        <p class="text-muted text-sm" x-show="!linked.length">Bağlı prosedür yok.</p>
+        <div class="paper-card clip" x-show="linked.length">
+            <table class="dt">
+                <thead><tr><th scope="col">Başlık</th><th scope="col" class="col-right">İşlem</th></tr></thead>
+                <tbody>
+                    <template x-for="l in linked" :key="l.linkId">
+                        <tr>
+                            <td><a :href="'/SOP/Sop/Details/' + l.sopDocumentId" x-text="l.title"></a></td>
+                            <td class="cell-right">
+                                <button type="button" class="btn ghost sm" @@click="scan(l.sopDocumentId)" :disabled="loading">
+                                    <i class="fas fa-magnifying-glass text-[9px]" aria-hidden="true"></i> İçerik Tara
+                                </button>
+                                <button type="button" class="btn sm danger" @@click="unlink(l.linkId)">
+                                    <i class="fas fa-link-slash text-[9px]" aria-hidden="true"></i> Kaldır
+                                </button>
+                            </td>
+                        </tr>
+                    </template>
+                </tbody>
+            </table>
+        </div>
+
+        @{ var suggested = ViewBag.SuggestedDataElements as List<Mosaik.Modules.Kvkk.Entities.DataElement> ?? new(); }
+        @if (suggested.Count > 0)
+        {
+            <h3 class="section-subtitle">SOP'ta Geçen, Sürece Bağlı Olmayan Veri Öğeleri <span class="mono">@suggested.Count</span></h3>
+            <div class="paper-card clip">
+                <table class="dt">
+                    <thead><tr><th scope="col">Veri Öğesi</th><th scope="col" class="col-right">İşlem</th></tr></thead>
+                    <tbody>
+                        @foreach (var e in suggested)
+                        {
+                            <tr>
+                                <td>@e.DisplayName</td>
+                                <td class="cell-right">
+                                    <form method="post" action="/Kvkk/Process/LinkDataElement" style="display:contents">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="processId" value="@Model.Id" />
+                                        <input type="hidden" name="dataElementId" value="@e.Id" />
+                                        <button type="submit" class="btn ghost sm">
+                                            <i class="fas fa-plus text-[9px]" aria-hidden="true"></i> Sürece Ekle
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
     </div>
     <div x-show="tab==='audit'" role="tabpanel" class="aspect-stub">
         <p class="text-muted">Denetim izi (AuditLog) görünümü Faz 5 ile gelecek.</p>
@@ -176,3 +242,7 @@
         <p class="text-muted">Bağlı kitapçık/doküman görünümü Faz 3 ile gelecek.</p>
     </div>
 </div>
+
+@section Scripts {
+    <script src="~/assets/js/kvkk-sop-link.js" asp-append-version="true"></script>
+}

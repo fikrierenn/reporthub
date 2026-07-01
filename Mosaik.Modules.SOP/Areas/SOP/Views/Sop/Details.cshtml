@@ -112,6 +112,51 @@
     @await Html.PartialAsync("_AlertMessage", ("success", msg))
 }
 
+@* Plan 40 (M6) Faz 3 — KVKK süreç bağı. Junction sahibi Kvkk modülü (ADR-002), bu panel
+   sadece cross-area fetch/POST yapar, Kvkk'ya compile-time referans vermez. *@
+<div class="form-section-card wide mb-16"
+     x-data="sopKvkkPicker({
+        sopDocumentId: @Model.Document.Id,
+        antiforgery: document.querySelector('input[name=__RequestVerificationToken]')?.value || ''
+     })">
+    <div class="form-section-head"><h2 class="form-section-head__title">KVKK Süreç Bağı</h2></div>
+    <div class="form-section-body">
+        <div class="field">
+            <label class="lab" for="processSearch">KVKK Süreci Ara</label>
+            <input id="processSearch" class="inp" type="text" x-model="q" @@input.debounce.300ms="search()" placeholder="Süreç adı, departman…" autocomplete="off" />
+        </div>
+        <ul class="overview-list" x-show="results.length">
+            <template x-for="r in results" :key="r.id">
+                <li>
+                    <button type="button" class="btn ghost sm" @@click="link(r)" :disabled="loading">
+                        <i class="fas fa-link text-[9px]" aria-hidden="true"></i> <span x-text="r.title"></span>
+                    </button>
+                </li>
+            </template>
+        </ul>
+        <p class="text-muted text-sm" x-show="error" x-text="error" role="alert"></p>
+
+        <p class="text-muted text-sm" x-show="!linked.length">Bağlı KVKK süreci yok.</p>
+        <div class="paper-card clip" x-show="linked.length">
+            <table class="dt">
+                <thead><tr><th scope="col">Süreç</th><th scope="col" class="col-right">İşlem</th></tr></thead>
+                <tbody>
+                    <template x-for="l in linked" :key="l.linkId">
+                        <tr>
+                            <td><a :href="'/Kvkk/Process/Details/' + l.id" x-text="l.title"></a></td>
+                            <td class="cell-right">
+                                <button type="button" class="btn sm danger" @@click="unlink(l.linkId)">
+                                    <i class="fas fa-link-slash text-[9px]" aria-hidden="true"></i> Kaldır
+                                </button>
+                            </td>
+                        </tr>
+                    </template>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
 @{
     var d = Model.Document;
     bool hasGovernance = !string.IsNullOrEmpty(d.DocumentNumber) || !string.IsNullOrEmpty(d.RevisionNumber)
@@ -550,3 +595,7 @@
 
 @* Plan 54 M5 — yorum + @@mention thread *@
 @await Component.InvokeAsync("CommentThread", new { entityType = "sopDocument", entityId = Model.Document.Id, firmaId = Model.Document.FirmaId })
+
+@section Scripts {
+    <script src="~/assets/js/kvkk-sop-link.js" asp-append-version="true"></script>
+}

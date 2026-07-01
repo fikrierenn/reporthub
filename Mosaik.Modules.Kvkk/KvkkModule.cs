@@ -28,6 +28,7 @@ namespace Mosaik.Modules.Kvkk
             services.AddScoped<Services.KvkkIntegrityChecker>();
             services.AddScoped<Services.KvkkIntegrityFindingService>();
             services.AddScoped<Services.KvkkIntegrityScanJob>();
+            services.AddScoped<Services.SopContentScanService>();
         }
 
         public void ConfigureModelBuilder(ModelBuilder mb)
@@ -181,6 +182,26 @@ namespace Mosaik.Modules.Kvkk
                 e.HasIndex(x => new { x.FirmaId, x.IsDismissed, x.Severity });
                 e.HasOne(x => x.Process).WithMany().HasForeignKey(x => x.ProcessId)
                     .OnDelete(DeleteBehavior.SetNull);
+            });
+
+            mb.Entity<SopProcessLink>(e =>
+            {
+                e.ToTable("KvkkSopProcessLinks");
+                e.HasKey(x => x.Id);
+                e.Property(x => x.SopTitle).HasMaxLength(300).IsRequired();
+                e.HasIndex(x => new { x.ProcessId, x.SopDocumentId }).IsUnique();
+                e.HasIndex(x => x.SopDocumentId);
+                e.HasOne(x => x.Process).WithMany().HasForeignKey(x => x.ProcessId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            mb.Entity<SopScannedElement>(e =>
+            {
+                e.ToTable("KvkkSopScannedElements");
+                e.HasKey(x => x.Id);
+                e.HasIndex(x => x.SopDocumentId);
+                e.HasOne(x => x.DataElement).WithMany().HasForeignKey(x => x.DataElementId)
+                    .OnDelete(DeleteBehavior.Cascade);
             });
         }
 

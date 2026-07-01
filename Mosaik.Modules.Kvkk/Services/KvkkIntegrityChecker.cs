@@ -31,9 +31,42 @@ namespace Mosaik.Modules.Kvkk.Services
             findings.AddRange(DetectCandidateCvOverLimit(processes));
             findings.AddRange(DetectHiddenCrossBorderTransfer(processes));
             findings.AddRange(DetectMissingLegalProcesses(processes));
+            findings.AddRange(await DetectSopDataElementGapAsync(processes, firmaId, ct));
             // Pattern 4 (disclosure-mismatch) tespit edilmiyor — DisclosureNotice entity Faz 6'da ertelendi.
 
             return findings;
+        }
+
+        // Pattern 8 (Faz 3) — SOP'ta taranan veri öğesi, bağlı sürecin ProcessDataLink'inde yok.
+        // SopDocument entity'sine hiç dokunmaz (junction + scan sonucu okunur — ADR-002).
+        private async Task<IEnumerable<KvkkFindingCandidate>> DetectSopDataElementGapAsync(
+            List<KvkkProcess> processes, int firmaId, CancellationToken ct)
+        {
+            var sopLinks = await db.Set<SopProcessLink>().AsNoTracking()
+                .Where(l => l.FirmaId == firmaId).ToListAsync(ct);
+            if (sopLinks.Count == 0)
+                return [];
+
+            var sopIds = sopLinks.Select(l => l.SopDocumentId).Distinct().ToList();
+            var scannedByDoc = (await db.Set<SopScannedElement>().AsNoTracking()
+                    .Where(s => sopIds.Contains(s.SopDocumentId)).ToListAsync(ct))
+                .GroupBy(s => s.SopDocumentId)
+                .ToDictionary(g => g.Key, g => g.Select(s => s.DataElementId).ToHashSet());
+
+            var processById = processes.ToDictionary(p => p.Id);
+            var result = new List<KvkkFindingCandidate>();
+            foreach (var link in sopLinks)
+            {
+                if (!processById.TryGetValue(link.ProcessId, out var p)) continue;
+                if (!scannedByDoc.TryGetValue(link.SopDocumentId, out var scannedIds)) continue;
+                var linkedIds = p.DataLinks.Select(l => l.DataElementId).ToHashSet();
+                var missing = scannedIds.Except(linkedIds).Count();
+                if (missing == 0) continue;
+                result.Add(new KvkkFindingCandidate(
+                    KvkkIntegrityPatterns.SopDataElementGap, SeverityIdari, p.Id,
+                    $"\"{link.SopTitle}\" SOP'unda {missing} veri öğesi geçiyor ama \"{p.Name}\" sürecinde tanımlı değil."));
+            }
+            return result;
         }
 
         private static IEnumerable<KvkkFindingCandidate> DetectCopyPastePurpose(List<KvkkProcess> processes)

@@ -36,6 +36,39 @@ namespace Mosaik.Modules.SOP.Areas.SOP.Controllers
         private int CurrentFirmaId =>
             int.TryParse(User.FindFirstValue("FirmaId"), out var id) ? id : 0;
 
+        // Plan 40 (M6) Faz 3 — KVKK Process Details picker'ı cross-area çağırır (ADR-002, compile referans yok).
+        [HttpGet]
+        public async Task<IActionResult> SearchJson(string? q)
+        {
+            if (string.IsNullOrWhiteSpace(q) || q.Length < 2)
+                return Json(Array.Empty<object>());
+            var firmaId = CurrentFirmaId;
+            var results = await _db.Set<SopDocument>().AsNoTracking()
+                .Where(d => d.FirmaId == firmaId && d.IsActive && d.Title.Contains(q))
+                .OrderBy(d => d.Title)
+                .Take(20)
+                .Select(d => new { id = d.Id, title = d.Title })
+                .ToListAsync();
+            return Json(results);
+        }
+
+        // Aktif (Approved) versiyonun düz-metni — KVKK'nın SOP içerik taraması bunu okur.
+        // hasContent=false: onaylı versiyon yok — "veri yok" ile "içerik yok" ayrımı JS tarafında yapılabilsin
+        // (silent-failure-hunter Faz 3 bulgusu — boş metin sessizce "0 eşleşme" olarak yorumlanmasın).
+        [HttpGet]
+        public async Task<IActionResult> PlainTextJson(int id)
+        {
+            // security-reviewer H-1: GetActiveVersionAsync firma filtrelemiyor — cross-firma
+            // SOP içerik sızıntısını burada durdur (SearchJson zaten firma-scoped).
+            var owned = await _db.Set<SopDocument>().AsNoTracking()
+                .AnyAsync(d => d.Id == id && d.FirmaId == CurrentFirmaId);
+            if (!owned)
+                return Forbid();
+
+            var active = await _sop.GetActiveVersionAsync(id);
+            return Json(new { id, plainText = active?.PlainTextContent ?? string.Empty, hasContent = active != null });
+        }
+
         public async Task<IActionResult> Index(bool showArchived = false)
         {
             var list = await _sop.ListByFirmaAsync(CurrentFirmaId, onlyActive: !showArchived);

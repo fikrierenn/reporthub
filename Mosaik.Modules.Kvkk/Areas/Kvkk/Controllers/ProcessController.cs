@@ -18,13 +18,17 @@ namespace Mosaik.Modules.Kvkk.Areas.Kvkk.Controllers
         private readonly DbContext _db;
         private readonly KvkkProcessService _processes;
         private readonly VerbisExporter _verbis;
+        private readonly SopContentScanService _sopScan;
         private readonly IAuditLog _audit;
 
-        public ProcessController(DbContext db, KvkkProcessService processes, VerbisExporter verbis, IAuditLog audit)
+        public ProcessController(
+            DbContext db, KvkkProcessService processes, VerbisExporter verbis,
+            SopContentScanService sopScan, IAuditLog audit)
         {
             _db = db;
             _processes = processes;
             _verbis = verbis;
+            _sopScan = sopScan;
             _audit = audit;
         }
 
@@ -67,7 +71,84 @@ namespace Mosaik.Modules.Kvkk.Areas.Kvkk.Controllers
             var p = await _processes.GetAsync(id, CurrentFirmaId);
             if (p == null)
                 return NotFound();
+            ViewBag.SuggestedDataElements = await _sopScan.GetSuggestedDataElementsAsync(id);
             return View(p);
+        }
+
+        // Plan 40 Faz 3 — SOP tarafındaki picker cross-area çağırır (ADR-002, compile referans yok).
+        [HttpGet]
+        public async Task<IActionResult> SearchJson(string? q, CancellationToken ct)
+        {
+            if (string.IsNullOrWhiteSpace(q) || q.Length < 2)
+                return Json(Array.Empty<object>());
+            var results = await _processes.SearchAsync(q, CurrentFirmaId, ct: ct);
+            return Json(results.Select(p => new { id = p.Id, title = $"{p.Name} ({p.Department})" }));
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> LinkedSopsJson(int processId, CancellationToken ct)
+        {
+            var links = await _processes.GetLinkedSopsAsync(processId, CurrentFirmaId, ct);
+            return Json(links.Select(l => new { linkId = l.Id, sopDocumentId = l.SopDocumentId, title = l.SopTitle }));
+        }
+
+        // Plan 40 Faz 3 — SOP Details sayfası cross-area fetch ile bunu okur.
+        [HttpGet]
+        public async Task<IActionResult> LinkedProcessesJson(int sopDocumentId, CancellationToken ct)
+        {
+            var rows = await _processes.GetProcessesForSopAsync(sopDocumentId, CurrentFirmaId, ct);
+            return Json(rows.Select(x => new { linkId = x.Link.Id, id = x.Process.Id, title = $"{x.Process.Name} ({x.Process.Department})" }));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> LinkSop(int processId, int sopDocumentId, CancellationToken ct)
+        {
+            // sopTitle client'tan alınmıyor — KvkkProcessService.LinkSopAsync SOP'u DB'den doğrulayıp okur
+            // (security-reviewer H-2: cross-firma referans + client-controlled title riski kapatıldı).
+            var r = await _processes.LinkSopAsync(processId, sopDocumentId, CurrentFirmaId, ct);
+            if (!r.IsSuccess)
+                return BadRequest(r.Message);
+            await AuditAsync("kvkk_process_link_sop", processId, sopDocumentId.ToString());
+            return Ok();
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UnlinkSop(int linkId, CancellationToken ct)
+        {
+            var r = await _processes.UnlinkSopAsync(linkId, CurrentFirmaId, ct);
+            if (!r.IsSuccess)
+                return BadRequest(r.Message);
+            await AuditAsync("kvkk_process_unlink_sop", linkId, string.Empty);
+            return Ok();
+        }
+
+        // Plan 40 Faz 3 — SOP düz-metnini tarar (client SOP modülünden fetch eder, buraya taşır).
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ScanSop(int processId, int sopDocumentId, string? plainText, CancellationToken ct)
+        {
+            var owned = await _db.Set<KvkkProcess>().AsNoTracking()
+                .AnyAsync(p => p.Id == processId && p.FirmaId == CurrentFirmaId, ct);
+            if (!owned)
+                return Forbid();
+            var matches = await _sopScan.ScanAsync(sopDocumentId, plainText ?? string.Empty, CurrentFirmaId, ct);
+            await AuditAsync("kvkk_sop_scan", sopDocumentId, $"{matches.Count} veri öğesi bulundu");
+            return Ok();
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> LinkDataElement(int processId, int dataElementId, CancellationToken ct)
+        {
+            var r = await _processes.LinkDataElementAsync(processId, dataElementId, CurrentFirmaId, ct: ct);
+            if (!r.IsSuccess)
+            {
+                TempData["Message"] = r.Message;
+                TempData["MessageType"] = "error";
+            }
+            return RedirectToAction(nameof(Details), new { id = processId });
         }
 
         // VERBİS / denetim-hazır envanter Excel indir.

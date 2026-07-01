@@ -411,12 +411,17 @@ Cron job (Hangfire): günlük tarama → `KvkkIntegrityFinding` tablo → dashbo
 - [~] Index ek filtre (özel-nitelikli/yurt-dışı/review-status) — incremental, dept/risk/search yeterli; backlog
 - [~] Test: write path controller integration → DB infra yok, security denetimi + boot smoke ile kapatıldı (test-discipline)
 
-### Faz 3 — SOP entegrasyonu (Plan 34 bağımlılık)
+### Faz 3 — SOP entegrasyonu (Plan 34 bağımlılık) ✅ KAPANDI 2026-07-01
 > **2026-05-21 rev 2:** Önceki "Faz 3 Workflow + Form bağlama + DSAR/Breach" → **Plan 42 Faz 1-5'e taşındı.** Burada eski Faz 4 yeniden numaralandı (4→3 oldu).
-- [ ] SOP detail page Process picker zorunlu (yeni SOP)
-- [ ] SOP content AI scan → DataElement detect + öneri panel
-- [ ] EntityRelations otomatik bağlama (`derivedFrom`)
-- [ ] Bütünlük check: SOP'ta veri öğesi geçiyor ama Process'te yok → uyarı
+- [x] SOP↔Process bağı — **junction sahipliği tamamen KVKK modülünde** (`SopProcessLink`), SOP modülü Kvkk'ya csproj referansı vermez (ADR-002). İki modül arası iletişim sadece cross-area fetch/POST (`/SOP/Sop/SearchJson`, `/SOP/Sop/PlainTextJson`, `/Kvkk/Process/*`). Picker her iki tarafta da (KVKK Process Details SOP tab + SOP Details KVKK paneli) — kullanıcı kararı 2026-07-01.
+- [x] SOP content AI scan → `SopContentScanService` (DataElementMatcher reuse) + öneri panel (Process Details, "Sürece Ekle" butonu)
+- [x] EntityRelations otomatik bağlama (`RelationType.DerivedFrom` + `EntityType.Sop` eklendi, çift-yazma `LinkSopAsync`)
+- [x] Bütünlük check — `KvkkIntegrityChecker` Pattern 8 (`sop-dataelement-gap`)
+- **Güvenlik hardening (security-reviewer H-1/H-2):** `PlainTextJson` firma-scope guard eklendi (cross-firma SOP içerik sızıntısı kapatıldı); `LinkSopAsync` client-supplied `sopTitle`'ı yok sayıp SOP'u raw SQL (`SqlQueryRaw<SopDocumentLookup>`) ile firma-doğrulayarak okuyor (cross-firma referans + veri kirliliği kapatıldı).
+- **code-reviewer bulgusu:** `Contains(string, StringComparison)` EF LINQ'te SQL'e çevrilemiyor (runtime exception) — iki arama metodunda düzeltildi (SQL Server default collation zaten case-insensitive).
+- **silent-failure-hunter bulgusu (CRITICAL):** SOP'un onaylı içeriği yoksa tarama sessizce "0 eşleşme" dönüyordu (veri-yok ile içerik-yok ayrımı kayboluyordu) — `PlainTextJson` `hasContent` flag'i + JS/controller net hata mesajı ile kapatıldı.
+- Preview: search/link/unlink her iki yönde de canlı doğrulandı (Alpine `$data` üzerinden). Onaylı SOP versiyonu ortamda yok — scan "içerik yok" happy-path'i doğrulandı, "eşleşme bulundu" happy-path'i seed veri eksikliği nedeniyle canlı test edilemedi (kod incelemesi temiz).
+- Test: EF-bağımlı servisler (DB infra yok, test-discipline istisnası); 646/646 mevcut test bozulmadı.
 
 ### Faz 4 — Global reverse search ✅ KAPANDI 2026-06-30 (commit 05cb977)
 > **§4.5 düzeltme (advisor):** "her sayfada global arama kutusu" → **M3 cross-module topbar search ZATEN var**; ikinci global kutu UX çakışması. Faz 4 **modül-içi sayfa** olarak daraltıldı (`/Kvkk/DataElement`). İleride istenirse KVKK `ISearchProvider` ile M3 topbar'a beslenir (ayrı, küçük iş).

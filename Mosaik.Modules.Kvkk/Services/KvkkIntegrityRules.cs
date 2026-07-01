@@ -14,6 +14,8 @@ namespace Mosaik.Modules.Kvkk.Services
         public const string CrossBorderHiddenTransfer = "cross-border-hidden";
         public const string NoWhistleblowerProcess = "no-whistleblower-process";
         public const string NoBreachProcess = "no-breach-process";
+        // Plan 40 Faz 3 — SOP taranan veri öğesi, bağlı süreçte tanımlı değil.
+        public const string SopDataElementGap = "sop-dataelement-gap";
     }
 
     public static class KvkkIntegrityRules
