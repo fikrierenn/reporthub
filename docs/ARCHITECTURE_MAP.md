@@ -6,7 +6,7 @@
 > Tahmin etme. **Önce buraya bak.**
 
 Son elle güncelleme: **2026-05-12**
-Son otomatik refresh: <!-- AUTO:LAST_REFRESH --> 2026-06-30 <!-- /AUTO:LAST_REFRESH -->
+Son otomatik refresh: <!-- AUTO:LAST_REFRESH --> 2026-07-01 <!-- /AUTO:LAST_REFRESH -->
 
 > **Otomatik tazelenir.** `bash scripts/refresh-arch-map.sh` çalıştırılınca aşağıdaki marker'lı bölümler regenerate edilir:
 > AppModules live state (§ 7), Admin views listesi (§ 12), Controller routes (§ 13).
@@ -176,6 +176,7 @@ _Otomatik üretildi — `scripts/refresh-arch-map.sh` tarafından. Elle düzenle
 | ai | AI Analiz | reporting | ✗ | extension |  |
 | sop | Prosedürler | content | ✗ | extension | Mosaik.Modules.SOP |
 | forms | Formlar | process | ✗ | extension | Mosaik.Modules.Forms |
+| kvkk | KVKK Envanteri | process | ✓ | extension |  |
 <!-- AUTO:APPMODULES:END -->
 
 Not: `dashboards` modülü sidebar render'da SKIP edilir (Genel Bakış zaten `/Dashboard`).

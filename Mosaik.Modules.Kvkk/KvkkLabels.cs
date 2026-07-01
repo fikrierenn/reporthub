@@ -33,5 +33,29 @@ namespace Mosaik.Modules.Kvkk
             5 => "Sözleşme İfası",
             _ => "—"
         };
+
+        // Plan 40 Faz 5 — AI Integrity bulgu şiddeti.
+        public static string Severity(byte v) => v switch
+        {
+            0 => "İdari", 1 => "İdari (Yüksek)", 2 => "Kritik", _ => "—"
+        };
+
+        public static string SeverityClass(byte v) => v switch
+        {
+            0 => "warn", 1 => "warn", 2 => "err", _ => ""
+        };
+
+        public static string PatternName(string code) => code switch
+        {
+            Services.KvkkIntegrityPatterns.CopyPastePurpose => "Kopyala-Yapıştır İşleme Amacı",
+            Services.KvkkIntegrityPatterns.ConsentLegalConflict => "Açık Rıza ↔ Hukuki Yükümlülük Çakışması",
+            Services.KvkkIntegrityPatterns.CctvRetentionOver60Days => "CCTV Saklama Süresi Aşımı",
+            Services.KvkkIntegrityPatterns.DisclosureMismatch => "Envanter ↔ Aydınlatma Metni Uyumsuzluğu",
+            Services.KvkkIntegrityPatterns.CandidateCvRetentionOver2Years => "Aday CV Saklama Süresi Aşımı",
+            Services.KvkkIntegrityPatterns.CrossBorderHiddenTransfer => "Gizli Yurt Dışı Aktarım",
+            Services.KvkkIntegrityPatterns.NoWhistleblowerProcess => "İhbar / Etik Hat Süreci Yok",
+            Services.KvkkIntegrityPatterns.NoBreachProcess => "İhlal Yönetim Süreci Yok",
+            _ => code
+        };
     }
 }

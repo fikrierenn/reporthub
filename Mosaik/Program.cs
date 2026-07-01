@@ -380,6 +380,18 @@ RecurringJob.AddOrUpdate<Mosaik.Services.EscalationSweeperJob>(
             OperatingSystem.IsWindows() ? "Turkey Standard Time" : "Europe/Istanbul")
     });
 
+// Plan 54 M6 / Plan 40 Faz 5 — KVKK AI integrity günlük tarama (her gün 06:00, Europe/Istanbul).
+// Digest job (08:00) öncesi çalışır — kritik bulgu bildirimleri aynı sabah özet e-postasına girer.
+RecurringJob.AddOrUpdate<Mosaik.Modules.Kvkk.Services.KvkkIntegrityScanJob>(
+    recurringJobId: "kvkk-integrity-scan-daily",
+    methodCall: job => job.ExecuteAsync(CancellationToken.None),
+    cronExpression: "0 6 * * *",
+    options: new RecurringJobOptions
+    {
+        TimeZone = TimeZoneInfo.FindSystemTimeZoneById(
+            OperatingSystem.IsWindows() ? "Turkey Standard Time" : "Europe/Istanbul")
+    });
+
 // Plan 54 M5 — günlük okunmamış bildirim digest'i (her gün 08:00, Europe/Istanbul).
 RecurringJob.AddOrUpdate<Mosaik.Services.NotificationDigestJob>(
     recurringJobId: "notification-digest-daily",

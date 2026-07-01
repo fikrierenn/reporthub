@@ -428,13 +428,15 @@ Cron job (Hangfire): günlük tarama → `KvkkIntegrityFinding` tablo → dashbo
 - [x] Firma sınırı: katalog GLOBAL (read) / süreç sonuçları FİRMA-scoped + fail-closed Forbid
 - [x] Test: 6 CompliancePercent + (Faz 0 DataElementMatcher 8 + reverse smoke)
 
-### Faz 5 — AI Integrity Checker
-- [ ] `KvkkIntegrityChecker` 8 pattern detector
-- [ ] Hangfire daily job
-- [ ] `KvkkIntegrityFinding` entity + dashboard widget
-- [ ] Severity threshold + per-pattern enable/disable
-- [ ] Plan 31 SMTP caller — kritik findings için email digest
-- [ ] Test: 8 pattern için unit test (positive + negative case)
+### Faz 5 — AI Integrity Checker ✅ KAPANDI 2026-07-01
+- [x] `KvkkIntegrityChecker` — 7/8 pattern saf-C# (Pattern 4 disclosure-mismatch DEFERRED — DisclosureNotice entity yok, Faz 6'da ertelendi)
+- [x] Hangfire daily job (`kvkk-integrity-scan-daily`, 06:00 Europe/Istanbul, digest'ten önce) + per-firma try/catch (bir firma hatası taramayı düşürmez)
+- [x] `KvkkIntegrityFinding` entity (migration 06) + `IntegrityFinding/Index.cshtml` panel (modül-içi, Faz 4 precedent)
+- [x] Dismiss (severity sabit kalır — per-pattern toggle/threshold **backlog**, kullanıcı-yönetimi talep gelirse ayrı ayar tablosu)
+- [x] Email digest — ayrı SMTP path YOK, `INotificationService.CreateAsync` → mevcut `NotificationDigestJob` (08:00) toplar (advisor kararı, reuse)
+- [x] Test: `KvkkDurationParserTests` (7) + `KvkkIntegrityRulesTests` (14) = 21 test (plan hedefi 16+ aşıldı)
+- **Preview:** 361 süreç canlı tarama → 191 bulgu (0 hata), Dismiss doğrulandı (191→190). En sık pattern: Gizli Yurt Dışı Aktarım (Kritik) — StorageMedium heuristiği geniş eşleşiyor, false-positive riski var, insan-onayı (dismiss) ile telafi ediliyor.
+- **Not:** Severity=byte (lookup DEĞİL — 3 sabit teknik skala, `feedback_mosaik_status_enum_lookup_pattern` istisnası, advisor onaylı). PatternCode=string const (DB lookup değil, kod-içi registry).
 
 ### Faz 6 — VERBİS export ✅ KAPANDI 2026-06-30 (commit 5bd5907)
 - [x] **Retention/Disposal bloker fix:** KvkkProcess RetentionText+DisposalText serbest-metin (migration 05) — import xlsx col16/17'yi düşürüyordu; re-import 361/361 doldurdu

@@ -25,6 +25,9 @@ namespace Mosaik.Modules.Kvkk
             services.AddScoped<Services.DataElementService>();
             services.AddScoped<Services.XlsxImporter>();
             services.AddScoped<Services.VerbisExporter>();
+            services.AddScoped<Services.KvkkIntegrityChecker>();
+            services.AddScoped<Services.KvkkIntegrityFindingService>();
+            services.AddScoped<Services.KvkkIntegrityScanJob>();
         }
 
         public void ConfigureModelBuilder(ModelBuilder mb)
@@ -165,6 +168,19 @@ namespace Mosaik.Modules.Kvkk
                 e.HasIndex(x => x.ProcessId);
                 e.HasOne(x => x.Process).WithMany(p => p.CrossBorderTransfers).HasForeignKey(x => x.ProcessId)
                     .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            mb.Entity<KvkkIntegrityFinding>(e =>
+            {
+                e.ToTable("KvkkIntegrityFindings");
+                e.HasKey(x => x.Id);
+                e.Property(x => x.PatternCode).HasMaxLength(60).IsRequired();
+                e.Property(x => x.Description).HasMaxLength(500).IsRequired();
+                e.Property(x => x.DismissReason).HasMaxLength(500);
+                e.HasIndex(x => new { x.FirmaId, x.PatternCode, x.ProcessId });
+                e.HasIndex(x => new { x.FirmaId, x.IsDismissed, x.Severity });
+                e.HasOne(x => x.Process).WithMany().HasForeignKey(x => x.ProcessId)
+                    .OnDelete(DeleteBehavior.SetNull);
             });
         }
 

@@ -1,0 +1,104 @@
+@model List<KvkkIntegrityFinding>
+@using Mosaik.Modules.Kvkk
+@{
+    ViewData["Title"] = "KVKK Bütünlük Bulguları";
+    var includeDismissed = ViewBag.IncludeDismissed as bool? ?? false;
+}
+
+@section Breadcrumb {
+    <nav class="crumbs" aria-label="Sayfa konumu">
+        <a href="/Dashboard">Mosaik</a>
+        <span class="sep" aria-hidden="true">/</span>
+        <a href="/Kvkk/Process">KVKK Envanteri</a>
+        <span class="sep" aria-hidden="true">/</span>
+        <span class="current" aria-current="page">Bütünlük Bulguları</span>
+    </nav>
+}
+
+@section TopActions {
+    <a href="/Kvkk/Process" class="btn">
+        <i class="fas fa-arrow-left text-[10px]" aria-hidden="true"></i> Envanter
+    </a>
+}
+
+<div class="hero">
+    <h1>KVKK Bütünlük Bulguları</h1>
+    <div class="sub">
+        <span>Günlük otomatik tarama — 7 saf-C# pattern</span>
+        <span class="mono">@Model.Count kayıt</span>
+    </div>
+</div>
+
+<div class="action-row" role="group" aria-label="Görünüm">
+    @if (includeDismissed)
+    {
+        <a href="/Kvkk/IntegrityFinding" class="btn ghost sm">Sadece açık bulgular</a>
+    }
+    else
+    {
+        <a href="/Kvkk/IntegrityFinding?includeDismissed=true" class="btn ghost sm">Kapatılanları da göster</a>
+    }
+</div>
+
+@if (Model.Count == 0)
+{
+    <div class="empty-state">
+        <i class="fas fa-circle-check" aria-hidden="true"></i>
+        <h3>Açık bulgu yok</h3>
+        <p>Son taramada bütünlük ihlali tespit edilmedi.</p>
+    </div>
+}
+else
+{
+    <div class="paper-card clip">
+        <table class="dt">
+            <thead>
+                <tr>
+                    <th scope="col">Şiddet</th>
+                    <th scope="col">Pattern</th>
+                    <th scope="col">Süreç</th>
+                    <th scope="col">Açıklama</th>
+                    <th scope="col">Son Tespit</th>
+                    <th scope="col" class="col-right">İşlem</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var f in Model)
+                {
+                    <tr>
+                        <td><span class="status @KvkkLabels.SeverityClass(f.Severity)">@KvkkLabels.Severity(f.Severity)</span></td>
+                        <td class="text-sm">@KvkkLabels.PatternName(f.PatternCode)</td>
+                        <td class="cell-muted">
+                            @if (f.Process != null)
+                            {
+                                <a href="/Kvkk/Process/Details/@f.ProcessId">@f.Process.Name</a>
+                            }
+                            else
+                            {
+                                <span>Firma geneli</span>
+                            }
+                        </td>
+                        <td class="text-sm">@f.Description</td>
+                        <td class="cell-muted text-sm">@f.LastDetectedAt.ToString("dd.MM.yyyy")</td>
+                        <td class="cell-right">
+                            @if (!f.IsDismissed)
+                            {
+                                <form method="post" action="/Kvkk/IntegrityFinding/Dismiss" style="display:contents">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@f.Id" />
+                                    <button type="submit" class="btn ghost sm">
+                                        <i class="fas fa-check text-[9px]" aria-hidden="true"></i> Kapat
+                                    </button>
+                                </form>
+                            }
+                            else
+                            {
+                                <span class="pill">Kapatıldı</span>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
