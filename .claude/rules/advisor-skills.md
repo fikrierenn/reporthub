@@ -37,6 +37,18 @@ Karar tablosu: `| Domain/Kod | Canonical küme | VT/kod kanıtı (file:line) | K
 - ❌ Council'i günlük işe çağırma — sadece gerçek belirsizlik.
 - ✅ Kod-öncesi danış, confidence+kanıt iste, sonra yaz.
 
+## Faz/Feature Geliştirme Döngüsü — ZORUNLU (kullanıcı kararı 2026-06-30)
+
+Kullanıcı direktifi: _"devam etmeden önce danış, kodu yaz, kontrol et — hem kod hem full scan hem de preview."_ Her substantive faz/feature bu 5 adımdan geçer:
+
+1. **DANIŞ (kod öncesi):** İlgili danışmana danış — kapsam/modelleme kararı `mosaik-portal-danismani`, domain `kvkk`/`mosaik-security`/`ui-ux-pro-max` skill. Karar tablosu + confidence + file:line al. Faz seçimi/tasarım belirsizse önce danış, sonra yaz.
+2. **KOD YAZ:** simplicity-gate (en dar irtifa, footprint-ladder) → build yeşil (0 hata, 0 CS uyarı).
+3. **KONTROL — full scan (paralel denetim):** `code-reviewer` + `security-reviewer` + `silent-failure-hunter` + (modelleme dokunulduysa) `mosaik-portal-danismani`. Bulguları file:line + confidence ile düzelt, denetimi tekrarla. CRITICAL/HIGH varken kapatma.
+4. **KONTROL — test + PREVIEW:** `dotnet test` tam yeşil. Ardından **canlı preview** (`Claude_Preview` MCP varsa: preview_start → login `admin`/`123456` → gerçek akışı eval/snapshot ile doğrula; MCP yoksa authed curl smoke). Preview gerçek bug yakalar (örn. Faz 4 çok-kelimeli arama `652727c` — preview'de bulundu).
+5. **COMMIT + plan/journal senkron:** faz kapanış commit'i (plan referanslı) + Plan/TODO ✅ + hash.
+
+**Preview kimlik:** dev admin `admin` / `123456` (seed `admin_staging` da mevcut, parola hash'li). Preview MCP kendi 5197 server'ını başlatır — tray'i çakıştırmaz (reused:false). Build öncesi preview_stop (bin/Debug kilidi).
+
 ## İlişkili
 
 - `.claude/agents/mosaik-portal-danismani.md` — portal/süreç modelleme read-only danışman.
