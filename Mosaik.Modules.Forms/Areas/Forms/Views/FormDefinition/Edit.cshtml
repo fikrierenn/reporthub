@@ -1,0 +1,64 @@
+@model Mosaik.Modules.Forms.Areas.Forms.ViewModels.FormDefinitionFormViewModel
+@{
+    var isCreate = Model.Id == 0;
+    ViewData["Title"] = isCreate ? "Yeni Form" : "Formu Düzenle";
+    Layout = "_AppLayout";
+}
+
+@section Breadcrumb {
+    <nav class="crumbs" aria-label="Sayfa konumu">
+        <a href="/">Ana Sayfa</a>
+        <a href="/Forms/FormDefinition">Formlar</a>
+        <span aria-current="page">@ViewData["Title"]</span>
+    </nav>
+}
+
+@section TopActions {
+    <a href="/Forms/FormDefinition" class="btn">İptal</a>
+}
+
+<div class="hero">
+    <h1>@ViewData["Title"]</h1>
+</div>
+
+<form method="post" action="@(isCreate ? "/Forms/FormDefinition/Create" : $"/Forms/FormDefinition/Edit/{Model.Id}")">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="Id" value="@Model.Id" />
+
+    <div class="form-section-card wide">
+        <div class="form-section-head"><h2 class="form-section-head__title">Form Bilgileri</h2></div>
+        <div class="form-section-body">
+            <div class="field">
+                <label class="lab" for="Slug">Slug</label>
+                <input class="inp" id="Slug" name="Slug" value="@Model.Slug" required maxlength="120" placeholder="dsar-basvuru" />
+                <p class="help-text">URL'de görünür: /Forms/&lt;slug&gt;. Sadece harf/rakam/tire.</p>
+            </div>
+            <div class="field">
+                <label class="lab" for="Name">Ad</label>
+                <input class="inp" id="Name" name="Name" value="@Model.Name" required maxlength="200" />
+            </div>
+            <div class="field">
+                <label class="lab" for="Description">Açıklama</label>
+                <textarea class="inp" id="Description" name="Description" rows="3">@Model.Description</textarea>
+            </div>
+            <div class="field">
+                <label class="lab" for="Category">Kategori</label>
+                <input class="inp" id="Category" name="Category" value="@Model.Category" maxlength="80" placeholder="KVKK, İK, Müşteri…" />
+            </div>
+            <div class="field">
+                <label class="lab"><input type="checkbox" name="IsPublic" value="true" checked="@Model.IsPublic" /> Public link ile erişilebilir (Faz 3)</label>
+            </div>
+            <div class="field">
+                <label class="lab"><input type="checkbox" name="IsAnonymous" value="true" checked="@Model.IsAnonymous" /> Anonim submit izinli (Faz 3)</label>
+            </div>
+            <div class="field">
+                <label class="lab"><input type="checkbox" name="IsEncrypted" value="true" checked="@Model.IsEncrypted" /> Alan-seviyesi şifreleme (Faz 5, örn. ihbar formu)</label>
+            </div>
+        </div>
+    </div>
+
+    <div class="action-row" role="group" aria-label="Form işlemleri">
+        <a href="/Forms/FormDefinition" class="btn ghost">Geri Dön</a>
+        <button type="submit" class="btn primary">Kaydet</button>
+    </div>
+</form>

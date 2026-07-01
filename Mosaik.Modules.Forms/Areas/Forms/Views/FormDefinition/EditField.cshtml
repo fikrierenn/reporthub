@@ -1,0 +1,93 @@
+@model Mosaik.Modules.Forms.Areas.Forms.ViewModels.FormFieldFormViewModel
+@{
+    ViewData["Title"] = "Alanı Düzenle";
+    Layout = "_AppLayout";
+    var fieldTypeOptions = ViewBag.FieldTypeOptions as List<(byte Value, string Text)> ?? [];
+}
+
+@section Breadcrumb {
+    <nav class="crumbs" aria-label="Sayfa konumu">
+        <a href="/">Ana Sayfa</a>
+        <a href="/Forms/FormDefinition">Formlar</a>
+        <a href="/Forms/FormDefinition/Details/@Model.FormDefinitionId">Detay</a>
+        <span aria-current="page">Alanı Düzenle</span>
+    </nav>
+}
+
+@section TopActions {
+    <a href="/Forms/FormDefinition/Details/@Model.FormDefinitionId" class="btn">İptal</a>
+}
+
+<div class="hero">
+    <h1>Alanı Düzenle</h1>
+    <div class="sub"><span class="mono">@Model.FieldKey</span></div>
+</div>
+
+<form method="post" action="/Forms/FormDefinition/EditField/@Model.Id">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="FormDefinitionId" value="@Model.FormDefinitionId" />
+
+    <div class="form-section-card wide">
+        <div class="form-section-body">
+            <div class="grid-2col">
+                <div class="field">
+                    <label class="lab" for="fk">Alan Anahtarı</label>
+                    <input class="inp" id="fk" name="FieldKey" value="@Model.FieldKey" required maxlength="80" />
+                </div>
+                <div class="field">
+                    <label class="lab" for="lbl">Etiket</label>
+                    <input class="inp" id="lbl" name="Label" value="@Model.Label" required maxlength="300" />
+                </div>
+            </div>
+            <div class="grid-2col">
+                <div class="field">
+                    <label class="lab" for="ft">Alan Tipi</label>
+                    <select class="inp" id="ft" name="FieldType">
+                        @foreach (var opt in fieldTypeOptions)
+                        {
+                            <option value="@opt.Value" selected="@(opt.Value == Model.FieldType)">@opt.Text</option>
+                        }
+                    </select>
+                </div>
+                <div class="field">
+                    <label class="lab"><input type="checkbox" name="IsRequired" value="true" checked="@Model.IsRequired" /> Zorunlu</label>
+                </div>
+            </div>
+            <div class="field">
+                <label class="lab" for="ht">Yardım Metni</label>
+                <input class="inp" id="ht" name="HelpText" value="@Model.HelpText" maxlength="500" />
+            </div>
+            <div class="field">
+                <label class="lab" for="opts">Seçenekler (satır satır)</label>
+                <textarea class="inp" id="opts" name="OptionsRaw" rows="3">@Model.OptionsRaw</textarea>
+            </div>
+            <div class="grid-2col">
+                <div class="field">
+                    <label class="lab" for="minl">Min Uzunluk</label>
+                    <input class="inp" id="minl" name="MinLength" type="number" value="@Model.MinLength" />
+                </div>
+                <div class="field">
+                    <label class="lab" for="maxl">Max Uzunluk</label>
+                    <input class="inp" id="maxl" name="MaxLength" type="number" value="@Model.MaxLength" />
+                </div>
+            </div>
+            <div class="field">
+                <label class="lab" for="rx">Regex (opsiyonel)</label>
+                <input class="inp" id="rx" name="Regex" value="@Model.Regex" />
+            </div>
+            <div class="field">
+                <label class="lab" for="dv">Varsayılan Değer</label>
+                <input class="inp" id="dv" name="DefaultValue" value="@Model.DefaultValue" />
+            </div>
+            <div class="field">
+                <label class="lab" for="ph">Placeholder</label>
+                <input class="inp" id="ph" name="Placeholder" value="@Model.Placeholder" maxlength="200" />
+            </div>
+        </div>
+    </div>
+
+    <div class="action-row" role="group" aria-label="Alan işlemleri">
+        <a href="/Forms/FormDefinition/Details/@Model.FormDefinitionId" class="btn ghost">Geri Dön</a>
+        <button type="submit" class="btn primary">Kaydet</button>
+    </div>
+</form>

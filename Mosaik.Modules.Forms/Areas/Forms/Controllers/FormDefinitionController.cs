@@ -1,0 +1,288 @@
+using System.Security.Claims;
+using System.Text.Json;
+using System.Text.Json.Nodes;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Mosaik.Core.Logging;
+using Mosaik.Modules.Forms.Areas.Forms.ViewModels;
+using Mosaik.Modules.Forms.Entities;
+using Mosaik.Modules.Forms.Services;
+
+namespace Mosaik.Modules.Forms.Areas.Forms.Controllers
+{
+    // Plan 41 Faz 2 — admin Form CRUD + liste-tabanlı builder (drag-drop yok, yukarı/aşağı buton).
+    [Area("Forms")]
+    [Authorize(Roles = "admin")]
+    public class FormDefinitionController : Controller
+    {
+        private readonly FormDefinitionService _definitions;
+        private readonly FormFieldService _fields;
+        private readonly IAuditLog _audit;
+
+        public FormDefinitionController(FormDefinitionService definitions, FormFieldService fields, IAuditLog audit)
+        {
+            _definitions = definitions;
+            _fields = fields;
+            _audit = audit;
+        }
+
+        private int CurrentFirmaId =>
+            int.TryParse(User.FindFirstValue("FirmaId"), out var id) ? id : 0;
+        private int CurrentUserId =>
+            int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var id) ? id : 0;
+
+        [HttpGet]
+        public async Task<IActionResult> Index(bool includeArchived = false)
+        {
+            ViewBag.IncludeArchived = includeArchived;
+            var list = await _definitions.ListByFirmaAsync(CurrentFirmaId, includeArchived);
+            return View(list);
+        }
+
+        [HttpGet]
+        public IActionResult Create() => View("Edit", new FormDefinitionFormViewModel());
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Create(FormDefinitionFormViewModel model)
+        {
+            if (!ModelState.IsValid)
+                return View("Edit", model);
+
+            var r = await _definitions.CreateAsync(ToInput(model), CurrentFirmaId, CurrentUserId);
+            if (!r.IsSuccess)
+            {
+                ModelState.AddModelError(string.Empty, r.Message);
+                return View("Edit", model);
+            }
+
+            await _audit.LogAsync("form_create", "form_definition", r.Data.ToString(), model.Name);
+            TempData["Message"] = "Form oluşturuldu.";
+            TempData["MessageType"] = "success";
+            return RedirectToAction(nameof(Details), new { id = r.Data });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Edit(int id)
+        {
+            var def = await _definitions.GetAsync(id, CurrentFirmaId);
+            if (def == null)
+                return NotFound();
+
+            return View(new FormDefinitionFormViewModel
+            {
+                Id = def.Id, Slug = def.Slug, Name = def.Name, Description = def.Description,
+                Category = def.Category, IsPublic = def.IsPublic, IsAnonymous = def.IsAnonymous,
+                IsEncrypted = def.IsEncrypted
+            });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(int id, FormDefinitionFormViewModel model)
+        {
+            if (id != model.Id) return BadRequest();
+            if (!ModelState.IsValid)
+                return View(model);
+
+            var r = await _definitions.UpdateAsync(id, ToInput(model), CurrentFirmaId);
+            if (!r.IsSuccess)
+            {
+                ModelState.AddModelError(string.Empty, r.Message);
+                return View(model);
+            }
+
+            await _audit.LogAsync("form_update", "form_definition", id.ToString(), model.Name);
+            TempData["Message"] = "Form güncellendi.";
+            TempData["MessageType"] = "success";
+            return RedirectToAction(nameof(Details), new { id });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Details(int id)
+        {
+            var def = await _definitions.GetAsync(id, CurrentFirmaId);
+            if (def == null)
+                return NotFound();
+            ViewBag.FieldTypeOptions = FieldTypeOptions();
+            return View(def);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Publish(int id)
+        {
+            var r = await _definitions.PublishAsync(id, CurrentFirmaId, CurrentUserId);
+            TempData["Message"] = r.Message;
+            TempData["MessageType"] = r.IsSuccess ? "success" : "error";
+            // silent-failure-hunter MEDIUM: eşlenmemiş alan uyarı listesi (r.Data) hesaplanıp
+            // atılıyordu — hangi alanların bağlı olmadığı admin'e gösterilsin (Details render eder).
+            if (r.IsSuccess && r.Data is { Count: > 0 })
+                TempData["PublishWarnings"] = System.Text.Json.JsonSerializer.Serialize(r.Data);
+            if (r.IsSuccess)
+                await _audit.LogAsync("form_publish", "form_definition", id.ToString(), r.Message);
+            return RedirectToAction(nameof(Details), new { id });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Archive(int id)
+        {
+            var r = await _definitions.SetStatusAsync(id, CurrentFirmaId, 2);
+            TempData["Message"] = r.IsSuccess ? "Form arşivlendi." : r.Message;
+            TempData["MessageType"] = r.IsSuccess ? "success" : "error";
+            if (r.IsSuccess)
+                await _audit.LogAsync("form_archive", "form_definition", id.ToString(), string.Empty);
+            return RedirectToAction(nameof(Details), new { id });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Restore(int id)
+        {
+            var r = await _definitions.SetStatusAsync(id, CurrentFirmaId, 0);
+            TempData["Message"] = r.IsSuccess ? "Form taslağa alındı." : r.Message;
+            TempData["MessageType"] = r.IsSuccess ? "success" : "error";
+            if (r.IsSuccess)
+                await _audit.LogAsync("form_restore", "form_definition", id.ToString(), string.Empty);
+            return RedirectToAction(nameof(Details), new { id });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AddField(int formDefinitionId, FormFieldFormViewModel model)
+        {
+            var r = await _fields.AddAsync(formDefinitionId, CurrentFirmaId, ToFieldInput(model));
+            TempData["Message"] = r.IsSuccess ? "Alan eklendi." : r.Message;
+            TempData["MessageType"] = r.IsSuccess ? "success" : "error";
+            if (r.IsSuccess)
+                await _audit.LogAsync("form_field_add", "form_field", r.Data.ToString(), model.Label);
+            return RedirectToAction(nameof(Details), new { id = formDefinitionId });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> EditField(int id, int formDefinitionId)
+        {
+            var def = await _definitions.GetAsync(formDefinitionId, CurrentFirmaId);
+            var field = def?.Fields.FirstOrDefault(f => f.Id == id);
+            if (field == null)
+                return NotFound();
+
+            ViewBag.FieldTypeOptions = FieldTypeOptions();
+            return View(FromField(field));
+        }
+
+        private static List<(byte Value, string Text)> FieldTypeOptions() =>
+            Enumerable.Range(0, 13).Select(i => ((byte)i, FormLabels.FieldType((byte)i))).ToList();
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditField(int id, FormFieldFormViewModel model)
+        {
+            var r = await _fields.UpdateAsync(id, model.FormDefinitionId, CurrentFirmaId, ToFieldInput(model));
+            TempData["Message"] = r.IsSuccess ? "Alan güncellendi." : r.Message;
+            TempData["MessageType"] = r.IsSuccess ? "success" : "error";
+            if (r.IsSuccess)
+                await _audit.LogAsync("form_field_update", "form_field", id.ToString(), model.Label);
+            return RedirectToAction(nameof(Details), new { id = model.FormDefinitionId });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> RemoveField(int id, int formDefinitionId)
+        {
+            var r = await _fields.RemoveAsync(id, formDefinitionId, CurrentFirmaId);
+            TempData["Message"] = r.IsSuccess ? "Alan kaldırıldı." : r.Message;
+            TempData["MessageType"] = r.IsSuccess ? "success" : "error";
+            if (r.IsSuccess)
+                await _audit.LogAsync("form_field_remove", "form_field", id.ToString(), string.Empty);
+            return RedirectToAction(nameof(Details), new { id = formDefinitionId });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> MoveField(int id, int formDefinitionId, string direction)
+        {
+            if (direction != "up" && direction != "down")
+                return BadRequest();
+            var dir = direction == "up" ? FieldMoveDirection.Up : FieldMoveDirection.Down;
+            var r = await _fields.MoveAsync(id, formDefinitionId, CurrentFirmaId, dir);
+            if (!r.IsSuccess)
+            {
+                // silent-failure-hunter CRITICAL: cross-firma / stale field move sessizce "başarı"
+                // gibi görünüyordu — sonuç kontrol + audit eklendi (diğer field action'larla tutarlı).
+                TempData["Message"] = r.Message;
+                TempData["MessageType"] = "error";
+            }
+            else
+            {
+                await _audit.LogAsync("form_field_move", "form_field", id.ToString(), direction);
+            }
+            return RedirectToAction(nameof(Details), new { id = formDefinitionId });
+        }
+
+        private static FormDefinitionInput ToInput(FormDefinitionFormViewModel m) => new(
+            Slug: m.Slug, Name: m.Name, Description: m.Description, Category: m.Category,
+            IsPublic: m.IsPublic, IsAnonymous: m.IsAnonymous, IsEncrypted: m.IsEncrypted);
+
+        // Options: satır satır girilen metin → JSON string dizisi. ValidationRules: minLength/maxLength/regex → JSON.
+        private static FormFieldInput ToFieldInput(FormFieldFormViewModel m)
+        {
+            string? optionsJson = null;
+            if (FormLabels.RequiresOptions(m.FieldType) && !string.IsNullOrWhiteSpace(m.OptionsRaw))
+            {
+                var lines = m.OptionsRaw.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+                optionsJson = JsonSerializer.Serialize(lines);
+            }
+
+            string? rulesJson = null;
+            if (m.MinLength.HasValue || m.MaxLength.HasValue || !string.IsNullOrWhiteSpace(m.Regex))
+            {
+                var rules = new JsonObject();
+                if (m.MinLength.HasValue) rules["minLength"] = m.MinLength.Value;
+                if (m.MaxLength.HasValue) rules["maxLength"] = m.MaxLength.Value;
+                if (!string.IsNullOrWhiteSpace(m.Regex)) rules["regex"] = m.Regex;
+                rulesJson = rules.ToJsonString();
+            }
+
+            return new FormFieldInput(
+                FieldKey: m.FieldKey, Label: m.Label, HelpText: m.HelpText, FieldType: m.FieldType,
+                IsRequired: m.IsRequired, Options: optionsJson, ValidationRules: rulesJson,
+                DefaultValue: m.DefaultValue, Placeholder: m.Placeholder);
+        }
+
+        private static FormFieldFormViewModel FromField(FormField f)
+        {
+            var vm = new FormFieldFormViewModel
+            {
+                Id = f.Id, FormDefinitionId = f.FormDefinitionId, FieldKey = f.FieldKey, Label = f.Label,
+                HelpText = f.HelpText, FieldType = f.FieldType, IsRequired = f.IsRequired,
+                DefaultValue = f.DefaultValue, Placeholder = f.Placeholder
+            };
+
+            if (!string.IsNullOrWhiteSpace(f.Options))
+            {
+                try
+                {
+                    var arr = JsonSerializer.Deserialize<string[]>(f.Options);
+                    if (arr != null) vm.OptionsRaw = string.Join('\n', arr);
+                }
+                catch (JsonException) { /* bozuk JSON — boş bırak, admin yeniden yazar */ }
+            }
+
+            if (!string.IsNullOrWhiteSpace(f.ValidationRules))
+            {
+                try
+                {
+                    var rules = JsonNode.Parse(f.ValidationRules) as JsonObject;
+                    if (rules?["minLength"] is JsonValue minL && minL.TryGetValue(out int minLen)) vm.MinLength = minLen;
+                    if (rules?["maxLength"] is JsonValue maxL && maxL.TryGetValue(out int maxLen)) vm.MaxLength = maxLen;
+                    if (rules?["regex"] is JsonValue rx && rx.TryGetValue(out string? pattern)) vm.Regex = pattern;
+                }
+                catch (JsonException) { /* bozuk JSON — boş bırak */ }
+            }
+
+            return vm;
+        }
+    }
+}

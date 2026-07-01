@@ -37,8 +37,8 @@
         // JSON string'in içindeki çift-tırnak attribute'u kırardı (bu bug preview'de yakalandı,
         // düzeltildi). JavaScriptEncoder.Default pinli (Faz 7 XSS-safe pattern).
         window.__mosaikFormSchemaJson = @Html.Raw(JsonSerializer.Serialize(Model.SchemaJson, jsonOpts));
-        window.__mosaikFormSubmitUrl = @Html.Raw(JsonSerializer.Serialize($"/Forms/{Model.Slug}/Submit", jsonOpts));
-        window.__mosaikFormSubmittedUrl = @Html.Raw(JsonSerializer.Serialize($"/Forms/{Model.Slug}/Submitted", jsonOpts));
+        window.__mosaikFormSubmitUrl = @Html.Raw(JsonSerializer.Serialize($"/Forms/f/{Model.Slug}/Submit", jsonOpts));
+        window.__mosaikFormSubmittedUrl = @Html.Raw(JsonSerializer.Serialize($"/Forms/f/{Model.Slug}/Submitted", jsonOpts));
     </script>
     <script src="~/assets/js/form-render.js" asp-append-version="true"></script>
 }

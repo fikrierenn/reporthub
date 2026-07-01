@@ -443,13 +443,16 @@ Form yayınlandığında `FormDefinitionVersions` snapshot alır (SchemaJson tam
 - Preview: manuel seed veri (FormDefinition+2 FormField+FormDefinitionVersion) ile tam render→doldur→submit→DB doğrulama akışı çalıştı (FormVersionId doğru bağlandı, ValueText/ValueNumber tip-doğru kaydedildi). Test verisi temizlendi.
 - Test: 664/664 (18 yeni).
 
-### Faz 2 — Admin Form CRUD, liste-tabanlı builder (rev — 10-12h, drag-drop'suz)
-- [ ] `FormDefinitionController` — Index/Edit/Details/Create/Delete
-- [ ] FormField ekle/sil/sırala (yukarı/aşağı buton, drag-drop YOK v1) admin form
-- [ ] Status Taslak→Yayında transition — DataElement mapping check **warning banner, blocker DEĞİL** (§4.3 düzeltme)
-- [ ] `FormDefinitionVersion` snapshot — Yayına alma anında SchemaJson snapshot alınır (§4.6)
-- [ ] WCAG focus trap, scope th, aria-label
-- [ ] 5+ unit test
+### Faz 2 — Admin Form CRUD, liste-tabanlı builder ✅ KAPANDI 2026-07-01
+- [x] `FormDefinitionController` — Index/Create/Edit/Details/Publish/Archive/Restore + AddField/EditField/RemoveField/MoveField
+- [x] FormField ekle/sil/sırala (yukarı/aşağı buton, `FormFieldOrderer` saf/testable, drag-drop YOK v1)
+- [x] Status Taslak→Yayında transition — DataElement mapping check **warning banner, blocker DEĞİL** (§4.3) + **boş-seçenek Select/Radio blocker** (silent-failure-hunter MEDIUM — canlı seçilemez dropdown önlendi)
+- [x] `FormDefinitionVersion` snapshot — Yayına alma anında SchemaJson snapshot (`FormSchemaBuilder` reuse) + Version++
+- [x] WCAG: scope th, aria-label, crumbs+aria-current; inline-style temiz (tarama doğruladı, 28 CSS class tanımlı)
+- [x] 11 unit test (FormFieldOrderer 5 + FormPublishValidator 6, boş-choice + malformed-JSON dahil)
+- **Full-scan bulguları kapatıldı:** güvenlik temiz (multi-tenant IDOR, CSRF, XSS, mass-assignment, ReDoS hepsi PASS), inline-style temiz, CSS class'lar tanımlı. silent-failure-hunter CRITICAL (MoveField sonuç yutuluyordu + audit yok) + MEDIUM (publish warnings gösterilmiyordu, boş-choice select) fix. code-reviewer redundant ternary + `.row-actions` `.dt`-dışı no-op fix.
+- **Preview'de 1 gerçek bug bulundu/düzeltildi:** `FormFieldService.AddAsync` + `FormDefinitionService.PublishAsync` `.DefaultIfEmpty(0).MaxAsync()` EF SQL'e çevrilemiyordu (500 hata) — `MaxAsync(v => (int?)...)  ?? 0` pattern'ine çevrildi. Faz 1'deki `Contains(string,StringComparison)` gibi build-yeşil-runtime-kırık sınıfından — preview yakaladı.
+- **Preview:** create→addField(boş Select)→publish BLOCKED→editField(seçenek ekle)→publish SUCCESS (Status=1, Version=1, SchemaJson dropdown+choices snapshot) end-to-end doğrulandı. Test verisi temizlendi.
 
 ### Faz 3 — Public link + Anonim + AntiSpam katmanlı (8-10h)
 - [ ] `PublicTokenService` HMAC + expiry

@@ -1,0 +1,76 @@
+@model List<Mosaik.Modules.Forms.Entities.FormDefinition>
+@using Mosaik.Modules.Forms
+@{
+    ViewData["Title"] = "Formlar";
+    Layout = "_AppLayout";
+    var includeArchived = ViewBag.IncludeArchived as bool? ?? false;
+}
+
+@section Breadcrumb {
+    <nav class="crumbs" aria-label="Sayfa konumu">
+        <a href="/">Ana Sayfa</a>
+        <span aria-current="page">Formlar</span>
+    </nav>
+}
+
+@section TopActions {
+    <a href="/Forms/FormDefinition/Create" class="btn primary">
+        <i class="fas fa-plus text-[10px]" aria-hidden="true"></i> Yeni Form
+    </a>
+}
+
+<div class="hero">
+    <h1><i class="fas fa-clipboard-list" aria-hidden="true"></i> Formlar</h1>
+    <div class="sub">
+        <span class="mono">@Model.Count kayıt</span>
+        @if (includeArchived)
+        {
+            <a href="/Forms/FormDefinition" class="pill">Sadece aktif</a>
+        }
+        else
+        {
+            <a href="/Forms/FormDefinition?includeArchived=true" class="pill">Arşivlenenleri de göster</a>
+        }
+    </div>
+</div>
+
+@if (Model.Count == 0)
+{
+    <div class="empty-state">
+        <i class="fas fa-clipboard-list" aria-hidden="true"></i>
+        <h3>Henüz form yok</h3>
+        <p>"Yeni Form" ile ilk formunuzu oluşturun.</p>
+    </div>
+}
+else
+{
+    <div class="paper-card clip">
+        <table class="dt">
+            <thead>
+                <tr>
+                    <th scope="col">Ad</th>
+                    <th scope="col">Kategori</th>
+                    <th scope="col">Durum</th>
+                    <th scope="col">Güncelleme</th>
+                    <th scope="col" class="col-right">İşlem</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var d in Model)
+                {
+                    <tr>
+                        <td><a href="/Forms/FormDefinition/Details/@d.Id">@d.Name</a> <span class="mono text-sm">@d.Slug</span></td>
+                        <td class="cell-muted">@(d.Category ?? "—")</td>
+                        <td><span class="status @FormLabels.StatusClass(d.Status)">@FormLabels.Status(d.Status)</span></td>
+                        <td class="cell-muted text-sm">@d.UpdatedAt.ToString("dd.MM.yyyy HH:mm")</td>
+                        <td class="cell-right">
+                            <a href="/Forms/FormDefinition/Details/@d.Id" class="btn ghost sm">
+                                <i class="fas fa-eye text-[9px]" aria-hidden="true"></i> Detay
+                            </a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

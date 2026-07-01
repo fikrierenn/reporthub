@@ -1,0 +1,233 @@
+@model Mosaik.Modules.Forms.Entities.FormDefinition
+@using Mosaik.Modules.Forms
+@{
+    ViewData["Title"] = Model.Name;
+    Layout = "_AppLayout";
+    var fieldTypeOptions = ViewBag.FieldTypeOptions as List<(byte Value, string Text)> ?? [];
+}
+
+@section Breadcrumb {
+    <nav class="crumbs" aria-label="Sayfa konumu">
+        <a href="/">Ana Sayfa</a>
+        <a href="/Forms/FormDefinition">Formlar</a>
+        <span aria-current="page">@Model.Name</span>
+    </nav>
+}
+
+@section TopActions {
+    <a href="/Forms/FormDefinition" class="btn">
+        <i class="fas fa-arrow-left text-[10px]" aria-hidden="true"></i> Liste
+    </a>
+    <a href="/Forms/FormDefinition/Edit/@Model.Id" class="btn">
+        <i class="fas fa-pen text-[10px]" aria-hidden="true"></i> Bilgileri Düzenle
+    </a>
+    @if (Model.Status == 1)
+    {
+        <a href="/Forms/f/@Model.Slug" class="btn" target="_blank">
+            <i class="fas fa-eye text-[10px]" aria-hidden="true"></i> Önizle
+        </a>
+    }
+}
+
+<div class="hero">
+    <h1>@Model.Name</h1>
+    <div class="sub">
+        <span class="mono">@Model.Slug</span>
+        <span class="status @FormLabels.StatusClass(Model.Status)">@FormLabels.Status(Model.Status)</span>
+        @if (Model.Status == 1)
+        {
+            <span class="pill">v@Model.Version</span>
+        }
+    </div>
+</div>
+
+@{
+    var msg = TempData["Message"] as string;
+    var msgType = TempData["MessageType"] as string;
+}
+@if (!string.IsNullOrWhiteSpace(msg))
+{
+    <div role="alert" class="alert @(msgType == "success" ? "success" : "error")">
+        <i class="fas @(msgType == "success" ? "fa-check-circle" : "fa-exclamation-circle")" aria-hidden="true"></i>
+        @msg
+    </div>
+}
+
+@{
+    var publishWarningsJson = TempData["PublishWarnings"] as string;
+    List<string>? publishWarnings = string.IsNullOrEmpty(publishWarningsJson)
+        ? null
+        : System.Text.Json.JsonSerializer.Deserialize<List<string>>(publishWarningsJson);
+}
+@if (publishWarnings is { Count: > 0 })
+{
+    <div role="alert" class="alert warn">
+        <i class="fas fa-triangle-exclamation" aria-hidden="true"></i>
+        <strong>KVKK eşleme uyarıları (opsiyonel):</strong>
+        <ul>
+            @foreach (var w in publishWarnings)
+            {
+                <li>@w</li>
+            }
+        </ul>
+    </div>
+}
+
+<div class="action-row" role="group" aria-label="Yayın işlemleri">
+    @if (Model.Status == 0)
+    {
+        <form method="post" action="/Forms/FormDefinition/Publish" class="inline-form">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="id" value="@Model.Id" />
+            <button type="submit" class="btn primary sm">
+                <i class="fas fa-upload text-[9px]" aria-hidden="true"></i> Yayınla
+            </button>
+        </form>
+    }
+    @if (Model.Status == 1)
+    {
+        <form method="post" action="/Forms/FormDefinition/Archive" class="inline-form">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="id" value="@Model.Id" />
+            <button type="submit" class="btn sm">Arşivle</button>
+        </form>
+    }
+    @if (Model.Status == 2)
+    {
+        <form method="post" action="/Forms/FormDefinition/Restore" class="inline-form">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="id" value="@Model.Id" />
+            <button type="submit" class="btn ghost sm">Taslağa Al</button>
+        </form>
+    }
+</div>
+
+<h3 class="section-subtitle">Alanlar <span class="mono">@Model.Fields.Count</span></h3>
+@if (Model.Fields.Count == 0)
+{
+    <div class="empty-state">
+        <i class="fas fa-list" aria-hidden="true"></i>
+        <h3>Henüz alan yok</h3>
+        <p>Aşağıdaki formla ilk alanı ekleyin.</p>
+    </div>
+}
+else
+{
+    <div class="paper-card clip">
+        <table class="dt">
+            <thead>
+                <tr>
+                    <th scope="col">#</th>
+                    <th scope="col">Etiket</th>
+                    <th scope="col">Anahtar</th>
+                    <th scope="col">Tip</th>
+                    <th scope="col">Zorunlu</th>
+                    <th scope="col" class="col-right">İşlem</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var f in Model.Fields.OrderBy(x => x.Order))
+                {
+                    <tr>
+                        <td class="cell-muted">@f.Order</td>
+                        <td>@f.Label</td>
+                        <td class="mono text-sm">@f.FieldKey</td>
+                        <td class="text-sm">@FormLabels.FieldType(f.FieldType)</td>
+                        <td>@(f.IsRequired ? "Evet" : "—")</td>
+                        <td class="cell-right">
+                            <form method="post" action="/Forms/FormDefinition/MoveField" class="inline-form">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@f.Id" />
+                                <input type="hidden" name="formDefinitionId" value="@Model.Id" />
+                                <input type="hidden" name="direction" value="up" />
+                                <button type="submit" class="icon-btn" title="Yukarı taşı" aria-label="Yukarı taşı">
+                                    <i class="fas fa-arrow-up text-[9px]" aria-hidden="true"></i>
+                                </button>
+                            </form>
+                            <form method="post" action="/Forms/FormDefinition/MoveField" class="inline-form">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@f.Id" />
+                                <input type="hidden" name="formDefinitionId" value="@Model.Id" />
+                                <input type="hidden" name="direction" value="down" />
+                                <button type="submit" class="icon-btn" title="Aşağı taşı" aria-label="Aşağı taşı">
+                                    <i class="fas fa-arrow-down text-[9px]" aria-hidden="true"></i>
+                                </button>
+                            </form>
+                            <a href="/Forms/FormDefinition/EditField/@f.Id?formDefinitionId=@Model.Id" class="btn ghost sm">
+                                <i class="fas fa-pen text-[9px]" aria-hidden="true"></i> Düzenle
+                            </a>
+                            <form method="post" action="/Forms/FormDefinition/RemoveField" class="inline-form"
+                                  onsubmit="return confirm('Bu alanı silmek istediğinizden emin misiniz?')">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@f.Id" />
+                                <input type="hidden" name="formDefinitionId" value="@Model.Id" />
+                                <button type="submit" class="btn sm danger">
+                                    <i class="fas fa-trash text-[9px]" aria-hidden="true"></i>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+<div class="form-section-card wide">
+    <div class="form-section-head"><h2 class="form-section-head__title">Yeni Alan Ekle</h2></div>
+    <div class="form-section-body">
+        <form method="post" action="/Forms/FormDefinition/AddField">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="formDefinitionId" value="@Model.Id" />
+            <div class="grid-2col">
+                <div class="field">
+                    <label class="lab" for="fk">Alan Anahtarı</label>
+                    <input class="inp" id="fk" name="FieldKey" required maxlength="80" placeholder="ad_soyad" />
+                </div>
+                <div class="field">
+                    <label class="lab" for="lbl">Etiket</label>
+                    <input class="inp" id="lbl" name="Label" required maxlength="300" placeholder="Ad Soyad" />
+                </div>
+            </div>
+            <div class="grid-2col">
+                <div class="field">
+                    <label class="lab" for="ft">Alan Tipi</label>
+                    <select class="inp" id="ft" name="FieldType">
+                        @foreach (var opt in fieldTypeOptions)
+                        {
+                            <option value="@opt.Value">@opt.Text</option>
+                        }
+                    </select>
+                </div>
+                <div class="field">
+                    <label class="lab"><input type="checkbox" name="IsRequired" value="true" /> Zorunlu</label>
+                </div>
+            </div>
+            <div class="field">
+                <label class="lab" for="ht">Yardım Metni</label>
+                <input class="inp" id="ht" name="HelpText" maxlength="500" />
+            </div>
+            <div class="field">
+                <label class="lab" for="opts">Seçenekler (Açılır Liste/Radyo/Çoklu Seçim — satır satır)</label>
+                <textarea class="inp" id="opts" name="OptionsRaw" rows="3" placeholder="Evet&#10;Hayır"></textarea>
+            </div>
+            <div class="grid-2col">
+                <div class="field">
+                    <label class="lab" for="minl">Min Uzunluk</label>
+                    <input class="inp" id="minl" name="MinLength" type="number" />
+                </div>
+                <div class="field">
+                    <label class="lab" for="maxl">Max Uzunluk</label>
+                    <input class="inp" id="maxl" name="MaxLength" type="number" />
+                </div>
+            </div>
+            <div class="field">
+                <label class="lab" for="rx">Regex (opsiyonel)</label>
+                <input class="inp" id="rx" name="Regex" placeholder="^[0-9]+$" />
+            </div>
+            <button type="submit" class="btn primary">
+                <i class="fas fa-plus text-[10px]" aria-hidden="true"></i> Alan Ekle
+            </button>
+        </form>
+    </div>
+</div>

@@ -29,7 +29,8 @@ namespace Mosaik.Modules.Forms.Areas.Forms.Controllers
         private int CurrentUserId =>
             int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var id) ? id : 0;
 
-        [HttpGet("/Forms/{slug}")]
+        // Route: /Forms/f/{slug} — admin CRUD (/Forms/FormDefinition/*) ile çakışmaması için "f/" prefix.
+        [HttpGet("/Forms/f/{slug}")]
         public async Task<IActionResult> Render(string slug, CancellationToken ct)
         {
             var model = await _renderer.GetBySlugAsync(slug, CurrentFirmaId, ct);
@@ -39,7 +40,7 @@ namespace Mosaik.Modules.Forms.Areas.Forms.Controllers
             return View(new FormRenderViewModel(slug, model.Definition.Name, model.Definition.Description, model.SchemaJson));
         }
 
-        [HttpPost("/Forms/{slug}/Submit")]
+        [HttpPost("/Forms/f/{slug}/Submit")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Submit(string slug, CancellationToken ct)
         {
@@ -76,7 +77,7 @@ namespace Mosaik.Modules.Forms.Areas.Forms.Controllers
             return Ok(new { submissionId = result.Data });
         }
 
-        [HttpGet("/Forms/{slug}/Submitted")]
+        [HttpGet("/Forms/f/{slug}/Submitted")]
         public IActionResult Submitted(string slug)
         {
             ViewBag.Slug = slug;
