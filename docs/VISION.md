@@ -542,6 +542,8 @@ EntityRelations { FirmaId, SourceType, SourceId, RelationType, TargetType, Targe
 
 Önce eklenmesi gereken 5 ilişki: Contract→Obligation (HasObligation), Document→Contract (AttachedTo), Obligation→User (AssignedTo), SOP→Department (AppliesTo), Task→Contract (DerivedFrom). Neo4j overkill — SQL pivot table yeterli. UI: her detay sayfasında collapsible "Bağlı Öğeler" section.
 
+**Canlı gerçekleşme (2026-07-01, ADR-027):** Plan 40 KVKK Process Backbone bu konseptin ilk büyük tüketicisi oldu — `KvkkProcess`↔`DataElement` (Processes) + `Sop`↔`KvkkProcess` (DerivedFrom) çift-yazma canlı. Sözleşme (whitelist + atomiklik) 7 fazda sertifiye edildi; okuma tarafı EntityRelations değil modül-yerel junction (`ProcessDataLink`, `SopProcessLink`) — performans + tip güvenliği için ADR-002 sınırında kalan pratik sapma, [ADR-027](ADR/027-kvkk-process-backbone.md) §2.1'de gerekçeli.
+
 ### 7.4 Org Intelligence — Bottleneck Detection
 
 ```sql

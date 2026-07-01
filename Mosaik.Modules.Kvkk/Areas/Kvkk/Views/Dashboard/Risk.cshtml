@@ -1,0 +1,123 @@
+@model Mosaik.Modules.Kvkk.Areas.Kvkk.ViewModels.KvkkRiskDashboardViewModel
+@using Mosaik.Modules.Kvkk
+@using System.Text.Json
+@{
+    ViewData["Title"] = "KVKK Risk Dashboard";
+}
+
+@section Breadcrumb {
+    <nav class="crumbs" aria-label="Sayfa konumu">
+        <a href="/Dashboard">Mosaik</a>
+        <span class="sep" aria-hidden="true">/</span>
+        <a href="/Kvkk/Process">KVKK Envanteri</a>
+        <span class="sep" aria-hidden="true">/</span>
+        <span class="current" aria-current="page">Risk Dashboard</span>
+    </nav>
+}
+
+@section TopActions {
+    <a href="/Kvkk/Process" class="btn">
+        <i class="fas fa-arrow-left text-[10px]" aria-hidden="true"></i> Envanter
+    </a>
+    <a href="/Kvkk/IntegrityFinding" class="btn">
+        <i class="fas fa-triangle-exclamation text-[10px]" aria-hidden="true"></i> Bütünlük Bulguları
+    </a>
+}
+
+<div class="hero">
+    <h1>KVKK Risk Dashboard</h1>
+    <div class="sub">
+        <span class="mono">@Model.TotalProcesses süreç</span>
+        <span class="pill"><span class="dot @(Model.TotalOpenFindings > 0 ? "err" : "ok")"></span>@Model.TotalOpenFindings açık bütünlük bulgusu</span>
+    </div>
+</div>
+
+@if (Model.TotalProcesses == 0)
+{
+    <div class="empty-state">
+        <i class="fas fa-folder-open" aria-hidden="true"></i>
+        <h3>Bu firmaya ait aktif KVKK süreci bulunamadı</h3>
+        <p>Grafik verisi için önce envanter import edilmeli — silent-failure-hunter Faz 7 bulgusu: boş firma ile bozuk sorgu birbirinden ayrılabilsin.</p>
+    </div>
+}
+else
+{
+    <div class="paper-card clip">
+        <h3 class="section-subtitle">Departman Bazlı Risk Dağılımı</h3>
+        <canvas id="deptRiskChart" height="120"></canvas>
+    </div>
+
+    <div class="paper-card clip">
+        <h3 class="section-subtitle">En Çok İşlenen 10 Veri Öğesi</h3>
+        <canvas id="topElementsChart" height="120"></canvas>
+    </div>
+}
+
+<h3 class="section-subtitle">Açık Bulgular — Şiddet Dağılımı</h3>
+@if (Model.OpenFindingsBySeverity.Count == 0)
+{
+    <div class="empty-state">
+        <i class="fas fa-circle-check" aria-hidden="true"></i>
+        <h3>Açık bulgu yok</h3>
+        <p>Son taramada bütünlük ihlali tespit edilmedi.</p>
+    </div>
+}
+else
+{
+    <div class="action-row" role="group" aria-label="Şiddet özeti">
+        @foreach (var s in Model.OpenFindingsBySeverity)
+        {
+            <span class="status @KvkkLabels.SeverityClass(s.Severity)">@KvkkLabels.Severity(s.Severity): @s.Count</span>
+        }
+    </div>
+}
+
+<div class="aspect-stub">
+    <p class="text-muted">72 saatlik ihlal bildirimi + KVKK m.13 başvuru SLA widget'ları Plan 42 ProcessInstance runtime'ı bekliyor.</p>
+</div>
+
+@{
+    // security-reviewer H-1 — encoder açıkça pinlenir (ambient JsonSerializerOptions'a güvenme),
+    // <script> context'ine gömülen JSON'da < > & breakout'u engeller.
+    var jsonOpts = new JsonSerializerOptions { Encoder = System.Text.Encodings.Web.JavaScriptEncoder.Default };
+}
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script>
+        (function () {
+            var deptCanvas = document.getElementById('deptRiskChart');
+            if (!deptCanvas) return; // TotalProcesses==0 empty-state — canvas DOM'da yok
+
+            var deptLabels = @Html.Raw(JsonSerializer.Serialize(Model.DepartmentRisk.Select(d => d.Department), jsonOpts));
+            var deptLow = @Html.Raw(JsonSerializer.Serialize(Model.DepartmentRisk.Select(d => d.Low), jsonOpts));
+            var deptMid = @Html.Raw(JsonSerializer.Serialize(Model.DepartmentRisk.Select(d => d.Mid), jsonOpts));
+            var deptHigh = @Html.Raw(JsonSerializer.Serialize(Model.DepartmentRisk.Select(d => d.High), jsonOpts));
+
+            new Chart(deptCanvas, {
+                type: 'bar',
+                data: {
+                    labels: deptLabels,
+                    datasets: [
+                        { label: 'Düşük', data: deptLow, backgroundColor: '#22c55e' },
+                        { label: 'Orta', data: deptMid, backgroundColor: '#f59e0b' },
+                        { label: 'Yüksek', data: deptHigh, backgroundColor: '#ef4444' }
+                    ]
+                },
+                options: { responsive: true, scales: { x: { stacked: true }, y: { stacked: true } } }
+            });
+
+            var elementLabels = @Html.Raw(JsonSerializer.Serialize(Model.TopDataElements.Select(e => e.DisplayName), jsonOpts));
+            var elementCounts = @Html.Raw(JsonSerializer.Serialize(Model.TopDataElements.Select(e => e.Count), jsonOpts));
+
+            new Chart(document.getElementById('topElementsChart'), {
+                type: 'bar',
+                data: {
+                    labels: elementLabels,
+                    datasets: [{ label: 'Süreç sayısı', data: elementCounts, backgroundColor: '#3b82f6' }]
+                },
+                options: { indexAxis: 'y', responsive: true }
+            });
+        })();
+    </script>
+}

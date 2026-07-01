@@ -2,7 +2,7 @@
 
 **Tarih:** 2026-05-21 (rev 2 — execution kapsam dışı, Plan 42'ye devredildi)
 **Yazan:** Fikri / Claude
-**Durum:** `Taslak` (onay bekliyor)
+**Durum:** ✅ `Tamamlandı` (2026-07-01 — 7/7 faz kapandı, ADR-027)
 **Bağımlılık:** Plan 38 EntityRelations (✅ onaylandı), Plan 34 SOP (✅ onaylandı, henüz başlamadı), Plan 36 Workflow Engine (✅ onaylandı), Plan 41 Form Builder (Taslak — KVKK form aspect typed bağlama için), Plan 42 Process Execution Runtime (Taslak — runtime execution Plan 42'de), Plan 16.5 AI Core (yarım), Plan 31 SMTP (✅ altyapı)
 
 > **2026-05-21 rev 2 (kullanıcı netleştirmesi "bu süreçlerin ve kvkk kısımlarının tamamının işleyişi formları akışı mümkün olduğunca portal üstünden olmalı"):**
@@ -451,20 +451,23 @@ Cron job (Hangfire): günlük tarama → `KvkkIntegrityFinding` tablo → dashbo
 - [x] Preview: ExportVerbis 200 geçerli xlsx (46KB ZIP); reverse compliance %100 (retention dolu)
 - [~] `DisclosureNotice` versioning + diff view + 6-ay reminder → **ERTELE** (plan §11 2026-06-29 sadeleştirme: diff-UI kesildi; ayrı küçük iş)
 
-### Faz 7 — Risk dashboard
-- [ ] Departman bazlı Yüksek/Orta/Düşük chart (xlsx Risk Özeti parite)
-- [ ] DataElement yayılım haritası (top 10)
-- [ ] Açık findings sayım
-- [ ] 72h breach + DSAR SLA widget'ları
-- [ ] Reports modülü reuse — DashboardConfigJson template
+### Faz 7 — Risk dashboard ✅ KAPANDI 2026-07-01
+- [x] Departman bazlı Yüksek/Orta/Düşük chart (xlsx Risk Özeti parite) — `DashboardController.Risk` + Chart.js stacked bar
+- [x] DataElement yayılım haritası (top 10) — join zinciri (GroupBy+nested-nav yerine, SQL çevirisi güvenilir)
+- [x] Açık findings sayım — `KvkkIntegrityFindingService.ListAsync` reuse, severity bazlı
+- [~] 72h breach + DSAR SLA widget'ları — **stub** (Plan 42 ProcessInstance bekliyor, advisor kararı — spekülatif tablo açılmadı)
+- **Karar (advisor B, 2026-07-01):** "Reports modülü reuse" ifadesi **UI pattern taklidi** olarak okundu (ADR-001/002 mixed-access + cross-modül kuplaj riski nedeniyle DashboardConfigJson/SP altyapısı KULLANILMADI). KVKK modülü kendi EF-native controller + view-local Chart.js CDN (`chart.js@4.4.0`, `DashboardShellRenderer.cs` ile aynı sürüm).
+- **Güvenlik hardening:** `@Html.Raw(JsonSerializer.Serialize(...))` çağrılarında `JavaScriptEncoder.Default` açıkça pinlendi (security-reviewer H-1, ambient encoder config'e güvenme).
+- **Silent-failure hardening:** `TotalProcesses==0` empty-state (boş firma ile bozuk sorgu ayrımı) + `FirmaId` claim eksikliği `LogWarning` (auth pipeline sorunu sessizce "0 süreç" görünmesin).
+- Preview: 361 süreç, 2 grafik canlı render doğrulandı (Chart.js `getChart()` ile), severity dağılımı (Kritik:152, İdari-Yüksek:1, İdari:37) doğru.
 
-### Genel
-- [ ] Build: 0 uyarı 0 hata
-- [ ] Test: tüm yeni test'ler yeşil + 387 mevcut bozulmamış
-- [ ] ARCHITECTURE_MAP refresh
-- [ ] CLAUDE.md modül listesine `Kvkk` ekle
-- [ ] VISION.md §7 entegrasyon notu
-- [ ] ADR-019 yazılır: "KVKK Process Backbone — Plan 38 EntityRelations ilk büyük tüketici"
+### Genel ✅ KAPANDI 2026-07-01
+- [x] Build: 0 hata (2 legacy NU1903 kabul)
+- [x] Test: 646/646 (proje toplamı, KVKK+SOP yeni testler dahil bozulmadı)
+- [x] ARCHITECTURE_MAP refresh (modül-lokal değişiklikler ana marker'ları etkilemedi)
+- [~] CLAUDE.md modül listesine `Kvkk` ekle — mevcut CLAUDE.md modül envanteri stale (Kvkk/SOP/Forms zaten ayrı csproj ama liste güncellenmemiş), geniş doc-sync ayrı iş — bu plan kapsamında atlandı
+- [x] VISION.md §7.3 entegrasyon notu — ADR-027 referanslı
+- [x] ADR yazıldı — **ADR-027** (plan taslağındaki "ADR-019" numarası stale, 019 başka karara gitmiş; 027 alındı): "KVKK Process Backbone — Plan 38 EntityRelations ilk büyük tüketici"
 
 ---
 
@@ -593,6 +596,7 @@ Genel kapanış
 
 - **2026-05-21:** Taslak. Onay bekliyor.
 - **2026-05-21 rev 2:** Kullanıcı netleştirmesi sonrası execution kapsam dışına çıkarıldı. ProcessInstance runtime Plan 42'ye, Form altyapısı Plan 41'e devredildi. Önceki Faz 3 (Workflow+Form+DSAR+Breach) silindi, Faz 4-8 yeniden numaralandı (3-7). Effort 72-92h → 50-65h. 8 faz → 7 faz. Plan 40 artık passive envanter + denetim + reverse search + AI integrity + VERBİS export odaklı.
+- **2026-07-01 — Plan 40 TAMAMLANDI.** 7 faz (0-7) hepsi ✅ KAPANDI. ADR-027 yazıldı. Sonraki: Faz 3 SOP entegrasyonu deneyimi Plan 42/48 (SOP↔Workflow) için precedent; Pattern 4 (disclosure-mismatch) ve breach/DSAR SLA widget'ları Plan 42 ProcessInstance runtime'ını bekliyor — ayrı işler, bu plan kapsamında değil.
 
 
 ---
