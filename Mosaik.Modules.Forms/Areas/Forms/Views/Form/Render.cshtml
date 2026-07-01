@@ -1,0 +1,44 @@
+@model Mosaik.Modules.Forms.Areas.Forms.ViewModels.FormRenderViewModel
+@using System.Text.Json
+@{
+    ViewData["Title"] = Model.Name;
+    Layout = "_AppLayout";
+    var jsonOpts = new JsonSerializerOptions { Encoder = System.Text.Encodings.Web.JavaScriptEncoder.Default };
+}
+
+@section Breadcrumb {
+    <nav class="crumbs" aria-label="Sayfa konumu">
+        <a href="/">Ana Sayfa</a>
+        <a href="/Forms">Formlar</a>
+        <span aria-current="page">@Model.Name</span>
+    </nav>
+}
+
+<div class="hero">
+    <h1><i class="fas fa-clipboard-list" aria-hidden="true"></i> @Model.Name</h1>
+    @if (!string.IsNullOrWhiteSpace(Model.Description))
+    {
+        <p class="sub"><span>@Model.Description</span></p>
+    }
+</div>
+
+<div class="paper-card clip" x-data="mosaikFormRender()" x-init="init()">
+    @Html.AntiForgeryToken()
+    <div id="surveyContainer"></div>
+    <p class="text-muted text-sm" x-show="error" x-text="error" role="alert"></p>
+</div>
+
+@section Scripts {
+    <link rel="stylesheet" href="~/lib/surveyjs/survey-core.min.css" />
+    <script src="~/lib/surveyjs/survey.core.min.js"></script>
+    <script src="~/lib/surveyjs/survey-js-ui.min.js"></script>
+    <script>
+        // Tüm dinamik değerler script-context'e taşınır (x-data HTML attribute'una GÖMÜLMEZ) —
+        // JSON string'in içindeki çift-tırnak attribute'u kırardı (bu bug preview'de yakalandı,
+        // düzeltildi). JavaScriptEncoder.Default pinli (Faz 7 XSS-safe pattern).
+        window.__mosaikFormSchemaJson = @Html.Raw(JsonSerializer.Serialize(Model.SchemaJson, jsonOpts));
+        window.__mosaikFormSubmitUrl = @Html.Raw(JsonSerializer.Serialize($"/Forms/{Model.Slug}/Submit", jsonOpts));
+        window.__mosaikFormSubmittedUrl = @Html.Raw(JsonSerializer.Serialize($"/Forms/{Model.Slug}/Submitted", jsonOpts));
+    </script>
+    <script src="~/assets/js/form-render.js" asp-append-version="true"></script>
+}

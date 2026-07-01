@@ -429,15 +429,19 @@ Form yayınlandığında `FormDefinitionVersions` snapshot alır (SchemaJson tam
 - [x] 7 entity + DbSet — `FormSubmission.FormVersionId` rev 2'de eklendi (tablo boştu, NOT NULL güvenli)
 - [x] Build yeşil
 
-### Faz 1 — survey-core render + Submit (rev — 8-10h, renderer reuse tasarrufu)
-- [ ] `wwwroot/lib/surveyjs/` — survey-core + survey-js-ui UMD (MIT, vanilla embed, script+CSS)
-- [ ] `FormRendererService` — `FormField[]` → survey-core JSON şema dönüşümü (kendi Razor renderer YAZILMAZ)
-- [ ] `FormValidationService` — server-side authoritative (survey-core client validation'ı tekrarlar, client'a güvenilmez)
-- [ ] `FormSubmissionService` — save + `FormVersionId` bind + workflow trigger stub
-- [ ] `/Forms/{slug}` GET + POST endpoint
-- [ ] form-render.js (survey-core init + Alpine glue) — vanilla IIFE
-- [ ] AntiForgery + AsNoTracking
-- [ ] 5+ unit test (field type→schema dönüşüm, validation, submit happy path, FormVersionId bind)
+### Faz 1 — survey-core render + Submit ✅ KAPANDI 2026-07-01
+- [x] `wwwroot/lib/surveyjs/` — survey-core + survey-js-ui UMD (MIT, vendored, unpkg@2.5.32)
+- [x] `FormRendererService` — `FormField[]` → survey-core JSON şema dönüşümü (`FormSchemaBuilder`, saf/testable)
+- [x] `FormValidationService` — server-side authoritative (`FormFieldValidator`, saf/testable) — **fail-closed** (bozuk kural = reddet, fail-open DEĞİL, silent-failure-hunter CRITICAL fix)
+- [x] `FormSubmissionService` — save + `FormVersionId` bind + workflow trigger stub + alan-bazlı hata dict (`ErrorCode="field_validation"`)
+- [x] `/Forms/{slug}` GET + `/Forms/{slug}/Submit` POST + `/Forms/{slug}/Submitted` GET
+- [x] form-render.js (survey-core init + Alpine glue, field-level error → `question.addError`) — Alpine factory pattern
+- [x] AntiForgery + AsNoTracking + firma-izolasyonu (her sorguda `CurrentFirmaId`)
+- [x] 18 unit test (FormSchemaBuilder 8 + FormFieldValidator 10) — field type→schema dönüşüm, validation, malformed-JSON fail-closed
+- **Full-scan bulguları kapatıldı:** code-reviewer/security-reviewer/inline-style temiz; silent-failure-hunter CRITICAL (fail-open validation) + HIGH (alan-bazlı hata) + MEDIUM (renderer log asimetrisi) fix edildi.
+- **Preview'de 2 gerçek bug bulundu/düzeltildi (full-scan sonrası, canlı test sırasında):** (1) `FormsModule.cs` Faz 0 scaffold'da `.ToTable()` eksik — EF "FormDefinition" (tekil) arıyordu, DB'de "FormDefinitions" (çoğul) — runtime `Invalid object name` hatası, sadece Faz 1 gerçek sorgu çalıştırınca ortaya çıktı. (2) Render.cshtml JSON'u `x-data` HTML attribute'una `Html.Raw` ile gömüyordu — JSON içindeki çift-tırnak attribute'u kırıyordu (Alpine "Unexpected token" hatası); tüm dinamik değerler script-context'e (`window.__mosaikForm*`) taşındı.
+- Preview: manuel seed veri (FormDefinition+2 FormField+FormDefinitionVersion) ile tam render→doldur→submit→DB doğrulama akışı çalıştı (FormVersionId doğru bağlandı, ValueText/ValueNumber tip-doğru kaydedildi). Test verisi temizlendi.
+- Test: 664/664 (18 yeni).
 
 ### Faz 2 — Admin Form CRUD, liste-tabanlı builder (rev — 10-12h, drag-drop'suz)
 - [ ] `FormDefinitionController` — Index/Edit/Details/Create/Delete

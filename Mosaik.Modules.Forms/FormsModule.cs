@@ -21,10 +21,10 @@ namespace Mosaik.Modules.Forms
 
         public void ConfigureServices(IServiceCollection services)
         {
-            // Plan 41 Faz 1+ servisleri (sonraki commit'lerde):
-            // services.AddScoped<Services.FormRendererService>();
-            // services.AddScoped<Services.FormValidationService>();
-            // services.AddScoped<Services.FormSubmissionService>();
+            services.AddScoped<Services.FormRendererService>();
+            services.AddScoped<Services.FormValidationService>();
+            services.AddScoped<Services.FormSubmissionService>();
+            // Plan 41 Faz 2+ servisleri (sonraki commit'lerde):
             // services.AddScoped<Services.PublicTokenService>();
             // services.AddScoped<Services.FormEncryptionService>();
             // services.AddScoped<Services.DataElementMapValidator>();
@@ -34,6 +34,7 @@ namespace Mosaik.Modules.Forms
         {
             mb.Entity<FormDefinition>(e =>
             {
+                e.ToTable("FormDefinitions");
                 e.HasKey(x => x.Id);
                 e.Property(x => x.Slug).HasMaxLength(120).IsRequired();
                 e.Property(x => x.Name).HasMaxLength(200).IsRequired();
@@ -45,6 +46,7 @@ namespace Mosaik.Modules.Forms
 
             mb.Entity<FormField>(e =>
             {
+                e.ToTable("FormFields");
                 e.HasKey(x => x.Id);
                 e.Property(x => x.FieldKey).HasMaxLength(80).IsRequired();
                 e.Property(x => x.Label).HasMaxLength(300).IsRequired();
@@ -60,6 +62,7 @@ namespace Mosaik.Modules.Forms
 
             mb.Entity<FormFieldDataElementMap>(e =>
             {
+                e.ToTable("FormFieldDataElementMaps");
                 e.HasKey(x => x.Id);
                 e.Property(x => x.Notes).HasMaxLength(500);
                 e.HasOne(x => x.FormField)
@@ -71,6 +74,7 @@ namespace Mosaik.Modules.Forms
 
             mb.Entity<FormSubmission>(e =>
             {
+                e.ToTable("FormSubmissions");
                 e.HasKey(x => x.Id);
                 e.Property(x => x.SubmitterEmail).HasMaxLength(200);
                 e.Property(x => x.SubmitterPhone).HasMaxLength(40);
@@ -90,6 +94,7 @@ namespace Mosaik.Modules.Forms
 
             mb.Entity<FormSubmissionFieldValue>(e =>
             {
+                e.ToTable("FormSubmissionFieldValues");
                 e.HasKey(x => x.Id);
                 e.Property(x => x.FieldKey).HasMaxLength(80).IsRequired();
                 e.Property(x => x.ValueNumber).HasPrecision(18, 4);   // DECIMAL(18,4) — SQL migration ile eşleşir
@@ -106,6 +111,7 @@ namespace Mosaik.Modules.Forms
 
             mb.Entity<PublicFormToken>(e =>
             {
+                e.ToTable("PublicFormTokens");
                 e.HasKey(x => x.Id);
                 e.Property(x => x.TokenHash).IsRequired();
                 e.Property(x => x.RecipientEmail).HasMaxLength(200);
@@ -118,6 +124,7 @@ namespace Mosaik.Modules.Forms
 
             mb.Entity<FormDefinitionVersion>(e =>
             {
+                e.ToTable("FormDefinitionVersions");
                 e.HasKey(x => x.Id);
                 e.HasOne(x => x.FormDefinition)
                     .WithMany(d => d.Versions)

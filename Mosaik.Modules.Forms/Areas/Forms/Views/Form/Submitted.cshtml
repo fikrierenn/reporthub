@@ -1,0 +1,20 @@
+@{
+    ViewData["Title"] = "Gönderildi";
+    Layout = "_AppLayout";
+    var slug = ViewBag.Slug as string;
+}
+
+@section Breadcrumb {
+    <nav class="crumbs" aria-label="Sayfa konumu">
+        <a href="/">Ana Sayfa</a>
+        <a href="/Forms">Formlar</a>
+        <span aria-current="page">Gönderildi</span>
+    </nav>
+}
+
+<div class="empty-state">
+    <i class="fas fa-circle-check" aria-hidden="true"></i>
+    <h3>Form gönderildi</h3>
+    <p>Yanıtınız kaydedildi. Teşekkür ederiz.</p>
+    <a href="/Forms/@slug" class="btn ghost">Yeniden Doldur</a>
+</div>
