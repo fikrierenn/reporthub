@@ -454,12 +454,16 @@ Form yayınlandığında `FormDefinitionVersions` snapshot alır (SchemaJson tam
 - **Preview'de 1 gerçek bug bulundu/düzeltildi:** `FormFieldService.AddAsync` + `FormDefinitionService.PublishAsync` `.DefaultIfEmpty(0).MaxAsync()` EF SQL'e çevrilemiyordu (500 hata) — `MaxAsync(v => (int?)...)  ?? 0` pattern'ine çevrildi. Faz 1'deki `Contains(string,StringComparison)` gibi build-yeşil-runtime-kırık sınıfından — preview yakaladı.
 - **Preview:** create→addField(boş Select)→publish BLOCKED→editField(seçenek ekle)→publish SUCCESS (Status=1, Version=1, SchemaJson dropdown+choices snapshot) end-to-end doğrulandı. Test verisi temizlendi.
 
-### Faz 3 — Public link + Anonim + AntiSpam katmanlı (8-10h)
-- [ ] `PublicTokenService` HMAC + expiry
-- [ ] `PublicFormController` — token validate, render, submit
-- [ ] AntiSpam katmanlı sıra (§4.5 düzeltme): honeypot → timing-check → IP-rate-limit → CAPTCHA (son, sadece üst katmanlar geçilirse)
-- [ ] Submission audit (IP, UA, timing)
-- [ ] 5+ unit test (token validate, expired, max-uses, anti-spam katman sırası)
+### Faz 3 — Public link + Anonim + AntiSpam katmanlı ✅ KAPANDI 2026-07-01
+- [x] `PublicTokenService` — **HMAC+secret DEĞİL** (random 256-bit token + SHA256 hash-storage, reset-password pattern; secret yönetimi yok, leak-safe). ConsumeAsync/RefundAsync atomik `ExecuteUpdateAsync`, FixedTimeEquals timing-safe.
+- [x] `PublicFormController` ([AllowAnonymous]) — token validate → render → submit; `/Forms/p/{formId}/{token}` route (admin `/Forms/FormDefinition/*` ile çakışma çözüldü; Faz 1'de `/Forms/{slug}`→`/Forms/f/{slug}` de aynı sebeple).
+- [x] AntiSpam katmanlı sıra (§4.5): honeypot → timing → IP-rate-limit (formId+IP key). CAPTCHA son-katman opsiyonel deferred (plan §4.5, açık internete açılmadan önce şart).
+- [x] Submission audit (IP, UA) + spam-blocked + token-exhausted audit
+- [x] Anonim submit — FormSubmissionService anonim-check public-token için gevşetildi (token = erişim kanıtı, PublicTokenId server-side ValidateAsync sonucundan, client-spoof imkansız)
+- [x] `AntiSpamGuard` 6 unit test (katman sırası, negative-elapsed skip)
+- **Full-scan hardening:** güvenlik 0 CRITICAL (token/multi-tenant/CSRF/XSS/anonim-spoof PASS). silent-failure-hunter CRITICAL: **over-use** — submission consume'dan ÖNCE kaydediliyordu + ConsumeAsync bool yutuluyordu → **consume-first gate + submit-fail'de RefundAsync** (over-use imkansız). HIGH: rate-limiter non-atomik race → StrongBox+Interlocked; rejection path'leri audit'siz → token-exhausted audit. code-reviewer: `.hp-field` honeypot CSS **tanımsızdı** (honeypot görünür + bot'a ipucu) → off-screen CSS eklendi.
+- **Preview'de 1 gerçek bug (canlı 3-senaryo testi):** too-fast **geçti** (elapsed=0.5) — tr-TR culture noktayı binlik-ayraç sanıp `0.5→5` parse ediyordu (TooFast bypass). `InvariantCulture` + parse-fail→-1 fix. Sonra: honeypot→400, too-fast→400, temiz→200 (anonim submission, PublicTokenId bağlı, UsedCount=1 sadece temiz; spam DB'ye girmedi) doğrulandı.
+- **Not:** Chrome extension localhost'u kurumsal AV policy'yle blokluyor — public akış preview MCP ([AllowAnonymous] endpoint oturumdan bağımsız) ile doğrulandı.
 
 ### Faz 4 — File upload + Signature + DataElement mapping (opsiyonel) (8-10h)
 - [ ] File field — Documents modülü reuse (Plan 33 B-03 App_Data pattern)

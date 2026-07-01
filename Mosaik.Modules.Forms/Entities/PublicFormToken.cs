@@ -2,7 +2,8 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Mosaik.Modules.Forms.Entities
 {
-    // Plan 41 §4.1 — Public link HMAC token.
+    // Plan 41 §4.1 — Public link token. Random 256-bit token (reset-password pattern);
+    // DB'de SADECE SHA256 hash saklanır (HMAC+secret DEĞİL — secret yönetimi yok, leak-safe).
     public class PublicFormToken
     {
         public int Id { get; set; }
@@ -12,7 +13,7 @@ namespace Mosaik.Modules.Forms.Entities
         public FormDefinition? FormDefinition { get; set; }
 
         [Required]
-        public byte[] TokenHash { get; set; } = Array.Empty<byte>();   // HMAC-SHA256
+        public byte[] TokenHash { get; set; } = Array.Empty<byte>();   // SHA256(random-token)
 
         [MaxLength(200)]
         public string? RecipientEmail { get; set; }

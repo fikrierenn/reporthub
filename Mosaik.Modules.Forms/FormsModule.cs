@@ -26,8 +26,10 @@ namespace Mosaik.Modules.Forms
             services.AddScoped<Services.FormSubmissionService>();
             services.AddScoped<Services.FormDefinitionService>();
             services.AddScoped<Services.FormFieldService>();
-            // Plan 41 Faz 3+ servisleri (sonraki commit'lerde):
-            // services.AddScoped<Services.PublicTokenService>();
+            services.AddScoped<Services.PublicTokenService>();
+            services.AddScoped<Services.SubmitRateLimiter>();
+            services.AddMemoryCache(); // SubmitRateLimiter için (idempotent — ana proje de çağırmış olabilir)
+            // Plan 41 Faz 5+ servisleri (sonraki commit'lerde):
             // services.AddScoped<Services.FormEncryptionService>();
             // services.AddScoped<Services.DataElementMapValidator>();
         }

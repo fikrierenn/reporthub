@@ -1,0 +1,36 @@
+@model Mosaik.Modules.Forms.Areas.Forms.ViewModels.PublicFormRenderViewModel
+@using System.Text.Json
+@{
+    ViewData["Title"] = Model.Name;
+    Layout = "_AuthLayout";
+    var jsonOpts = new JsonSerializerOptions { Encoder = System.Text.Encodings.Web.JavaScriptEncoder.Default };
+}
+
+<div x-data="mosaikFormRender()" x-init="init()">
+    <h2 class="auth-shell__card-title">@Model.Name</h2>
+    @if (!string.IsNullOrWhiteSpace(Model.Description))
+    {
+        <p class="text-muted text-sm">@Model.Description</p>
+    }
+    @Html.AntiForgeryToken()
+    @* Anti-spam: honeypot (bot doldurur) + elapsed timestamp (form-render.js doldurur). *@
+    <input type="text" name="_hp" value="" tabindex="-1" autocomplete="off" aria-hidden="true" class="hp-field" />
+    <div id="surveyContainer"></div>
+    <p class="text-muted text-sm" x-show="error" x-text="error" role="alert"></p>
+</div>
+
+@section Head {
+    <link rel="stylesheet" href="~/lib/surveyjs/survey-core.min.css" />
+}
+
+@section Scripts {
+    <script src="~/lib/surveyjs/survey.core.min.js"></script>
+    <script src="~/lib/surveyjs/survey-js-ui.min.js"></script>
+    <script>
+        window.__mosaikFormSchemaJson = @Html.Raw(JsonSerializer.Serialize(Model.SchemaJson, jsonOpts));
+        window.__mosaikFormSubmitUrl = @Html.Raw(JsonSerializer.Serialize($"/Forms/p/{Model.FormId}/{Model.Token}/Submit", jsonOpts));
+        window.__mosaikFormSubmittedUrl = @Html.Raw(JsonSerializer.Serialize($"/Forms/p/{Model.FormId}/{Model.Token}/Submitted", jsonOpts));
+        window.__mosaikFormAntiSpam = true; // form-render.js honeypot + elapsed ekler
+    </script>
+    <script src="~/assets/js/form-render.js" asp-append-version="true"></script>
+}

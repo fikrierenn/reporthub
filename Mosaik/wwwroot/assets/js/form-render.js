@@ -9,10 +9,13 @@ window.mosaikFormRender = function () {
         submitUrl: window.__mosaikFormSubmitUrl || '',
         submittedUrl: window.__mosaikFormSubmittedUrl || '',
         antiforgery: document.querySelector('input[name="__RequestVerificationToken"]')?.value || '',
+        antiSpam: window.__mosaikFormAntiSpam === true, // public form (Faz 3): honeypot + elapsed gönder
+        loadedAt: Date.now(),
         error: '',
         survey: null,
 
         init() {
+            this.loadedAt = Date.now();
             var schemaJson = window.__mosaikFormSchemaJson;
             if (!schemaJson) { this.error = 'Form şeması yüklenemedi.'; return; }
 
@@ -41,6 +44,14 @@ window.mosaikFormRender = function () {
                 }
             }
             form.append('__RequestVerificationToken', this.antiforgery);
+
+            if (this.antiSpam) {
+                // Public form anti-spam: honeypot (_hp — sayfadaki gizli input, bot doldurur) +
+                // elapsed saniye (form load → submit; bot < 2sn). Server AntiSpamGuard değerlendirir.
+                var hp = document.querySelector('input[name="_hp"]');
+                form.append('_hp', hp ? hp.value : '');
+                form.append('_elapsed', String((Date.now() - this.loadedAt) / 1000));
+            }
 
             try {
                 var resp = await fetch(this.submitUrl, { method: 'POST', body: form });

@@ -73,6 +73,18 @@
     </div>
 }
 
+@{
+    var publicLink = TempData["PublicLink"] as string;
+}
+@if (!string.IsNullOrWhiteSpace(publicLink))
+{
+    <div role="alert" class="alert success">
+        <i class="fas fa-link" aria-hidden="true"></i>
+        <strong>Public bağlantı (bir daha gösterilmez, kopyalayın):</strong>
+        <p class="mono text-sm">@publicLink</p>
+    </div>
+}
+
 <div class="action-row" role="group" aria-label="Yayın işlemleri">
     @if (Model.Status == 0)
     {
@@ -231,3 +243,40 @@ else
         </form>
     </div>
 </div>
+
+@if (Model is { IsPublic: true, Status: 1 })
+{
+    <div class="form-section-card wide">
+        <div class="form-section-head"><h2 class="form-section-head__title">Public Bağlantı Oluştur</h2></div>
+        <div class="form-section-body">
+            <p class="help-text">Anonim/dış kullanıcı için tek-kullanımlık (veya sınırlı) bağlantı. Token bir kez gösterilir, DB'de sadece hash saklanır.</p>
+            <form method="post" action="/Forms/FormDefinition/CreatePublicLink">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" value="@Model.Id" />
+                <div class="grid-2col">
+                    <div class="field">
+                        <label class="lab" for="exp">Geçerlilik (gün)</label>
+                        <input class="inp" id="exp" name="expiryDays" type="number" value="30" min="1" />
+                    </div>
+                    <div class="field">
+                        <label class="lab" for="mu">Maksimum Kullanım</label>
+                        <input class="inp" id="mu" name="maxUses" type="number" value="1" min="1" />
+                    </div>
+                </div>
+                <div class="field">
+                    <label class="lab" for="re">Alıcı E-posta (opsiyonel)</label>
+                    <input class="inp" id="re" name="recipientEmail" type="email" maxlength="200" />
+                </div>
+                <button type="submit" class="btn primary">
+                    <i class="fas fa-link text-[10px]" aria-hidden="true"></i> Bağlantı Oluştur
+                </button>
+            </form>
+        </div>
+    </div>
+}
+else if (Model.IsPublic && Model.Status != 1)
+{
+    <div class="aspect-stub">
+        <p class="text-muted">Public bağlantı oluşturmak için formu önce yayınlayın.</p>
+    </div>
+}

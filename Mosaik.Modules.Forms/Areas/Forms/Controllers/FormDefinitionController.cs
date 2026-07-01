@@ -17,12 +17,14 @@ namespace Mosaik.Modules.Forms.Areas.Forms.Controllers
     {
         private readonly FormDefinitionService _definitions;
         private readonly FormFieldService _fields;
+        private readonly PublicTokenService _tokens;
         private readonly IAuditLog _audit;
 
-        public FormDefinitionController(FormDefinitionService definitions, FormFieldService fields, IAuditLog audit)
+        public FormDefinitionController(FormDefinitionService definitions, FormFieldService fields, PublicTokenService tokens, IAuditLog audit)
         {
             _definitions = definitions;
             _fields = fields;
+            _tokens = tokens;
             _audit = audit;
         }
 
@@ -145,6 +147,33 @@ namespace Mosaik.Modules.Forms.Areas.Forms.Controllers
             TempData["MessageType"] = r.IsSuccess ? "success" : "error";
             if (r.IsSuccess)
                 await _audit.LogAsync("form_restore", "form_definition", id.ToString(), string.Empty);
+            return RedirectToAction(nameof(Details), new { id });
+        }
+
+        // Plan 41 Faz 3 — public link üret. Token plaintext SADECE burada bir kez gösterilir
+        // (DB'de hash saklanır — geri okunamaz).
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CreatePublicLink(int id, int expiryDays, int maxUses, string? recipientEmail)
+        {
+            if (expiryDays < 1) expiryDays = 30;
+            if (maxUses < 1) maxUses = 1;
+            var expiresAt = DateTime.UtcNow.AddDays(expiryDays);
+            var r = await _tokens.CreateAsync(id, CurrentFirmaId, CurrentUserId, expiresAt, maxUses, recipientEmail);
+            if (!r.IsSuccess)
+            {
+                TempData["Message"] = r.Message;
+                TempData["MessageType"] = "error";
+            }
+            else
+            {
+                // Tam URL — admin kopyalasın (bir daha gösterilmez).
+                var url = $"{Request.Scheme}://{Request.Host}/Forms/p/{id}/{r.Data!.PlainToken}";
+                TempData["PublicLink"] = url;
+                TempData["Message"] = "Public link oluşturuldu — aşağıdaki bağlantıyı kopyalayın (bir daha gösterilmez).";
+                TempData["MessageType"] = "success";
+                await _audit.LogAsync("form_public_link_create", "form_definition", id.ToString(), $"maxUses={maxUses}, expiry={expiryDays}g");
+            }
             return RedirectToAction(nameof(Details), new { id });
         }
 

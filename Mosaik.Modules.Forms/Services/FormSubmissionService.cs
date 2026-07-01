@@ -42,7 +42,9 @@ namespace Mosaik.Modules.Forms.Services
             if (errors.Count > 0)
                 return ServiceResult<int>.Failure(JsonSerializer.Serialize(errors), FieldValidationErrorCode);
 
-            if (!def.IsAnonymous && input.SubmittedById == null)
+            // Login VEYA geçerli public token yoksa reddet. Public token (PublicTokenId) kimlik
+            // doğrulama yerine geçer — public form IsAnonymous olmasa da token ile submit kabul.
+            if (!def.IsAnonymous && input.SubmittedById == null && input.PublicTokenId == null)
                 return ServiceResult<int>.Failure("Bu form anonim submit'e izin vermiyor, giriş yapmalısınız.");
 
             var fields = await db.Set<FormField>().AsNoTracking()

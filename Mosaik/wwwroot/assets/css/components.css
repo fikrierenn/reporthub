@@ -1733,6 +1733,16 @@ select.inp {
     border: 0;
 }
 
+/* ---- .hp-field — form honeypot (Plan 41 Faz 3 anti-spam). Ekrandan uzağa taşınır;
+   sr-only DEĞİL (ekran okuyucudan da gizli kalmalı — insan hiç görmemeli, bot doldurur). ---- */
+.hp-field {
+    position: absolute;
+    left: -9999px;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+}
+
 /* ---- Type chip varyantları — her modülde domain etiket renkleri ---- */
 .type-chip.type-karar    { background: var(--karar-bg-soft); color: var(--karar-ink); }
 .type-chip.type-uyari    { background: var(--uyari-bg-soft); color: var(--uyari-ink); }
