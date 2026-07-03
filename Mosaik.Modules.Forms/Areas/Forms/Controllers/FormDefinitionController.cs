@@ -20,19 +20,22 @@ namespace Mosaik.Modules.Forms.Areas.Forms.Controllers
         private readonly FormFieldService _fields;
         private readonly PublicTokenService _tokens;
         private readonly DataElementLookupService _dataElements;
+        private readonly FormSubmissionQueryService _submissions;
         private readonly Microsoft.EntityFrameworkCore.DbContext _db;
         private readonly Microsoft.AspNetCore.Hosting.IWebHostEnvironment _env;
         private readonly IAuditLog _audit;
 
         public FormDefinitionController(
             FormDefinitionService definitions, FormFieldService fields, PublicTokenService tokens,
-            DataElementLookupService dataElements, Microsoft.EntityFrameworkCore.DbContext db,
+            DataElementLookupService dataElements, FormSubmissionQueryService submissions,
+            Microsoft.EntityFrameworkCore.DbContext db,
             Microsoft.AspNetCore.Hosting.IWebHostEnvironment env, IAuditLog audit)
         {
             _definitions = definitions;
             _fields = fields;
             _tokens = tokens;
             _dataElements = dataElements;
+            _submissions = submissions;
             _db = db;
             _env = env;
             _audit = audit;
@@ -308,6 +311,43 @@ namespace Mosaik.Modules.Forms.Areas.Forms.Controllers
                 await _audit.LogAsync("form_field_move", "form_field", id.ToString(), direction);
             }
             return RedirectToAction(nameof(Details), new { id = formDefinitionId });
+        }
+
+        // Plan 56 M-A G2 — submission admin liste/detay/export. Şifreli alan decrypt YETKİ-GATED.
+        [HttpGet]
+        public async Task<IActionResult> Submissions(int id, CancellationToken ct)
+        {
+            var r = await _submissions.ListAsync(id, CurrentFirmaId, ct);
+            if (r is null) return NotFound();
+            await _audit.LogAsync("form_submissions_view", "form", id.ToString(), $"Yanıt listesi ({r.Value.Rows.Count})");
+            ViewBag.FormId = id;
+            ViewBag.FormName = r.Value.Form.Name;
+            return View(r.Value.Rows);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> SubmissionDetail(int id, CancellationToken ct)
+        {
+            // Şifreli alanı sadece İhbar Komitesi veya admin çözer; diğerine "🔒" maske (mosaik-security).
+            var canDecrypt = User.IsInRole("ihbar-komitesi") || User.IsInRole("admin");
+            var d = await _submissions.DetailAsync(id, CurrentFirmaId, canDecrypt, ct);
+            if (d is null) return NotFound();
+            await _audit.LogAsync("form_submission_view", "form_submission", id.ToString(), "Yanıt detayı");
+            // Audit "ne oldu": gerçekten çözülen alan varsa logla (yetkili+key sağlam) — sadece izinli olmak değil.
+            if (d.AnyDecrypted)
+                await _audit.LogAsync("form_submission_decrypt", "form_submission", id.ToString(), "Şifreli alan çözüldü (yetkili erişim)");
+            return View(d);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ExportSubmissions(int id, CancellationToken ct)
+        {
+            var r = await _submissions.ExportAsync(id, CurrentFirmaId, ct);
+            if (r is null) return NotFound();
+            await _audit.LogAsync("form_submissions_export", "form", id.ToString(),
+                $"Yanıtlar Excel export ({r.Value.Count} kayıt, şifreli alan maskeli)");
+            var name = $"form-{id}-yanitlar.xlsx";
+            return File(r.Value.Bytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", name);
         }
 
         private static FormDefinitionInput ToInput(FormDefinitionFormViewModel m) => new(

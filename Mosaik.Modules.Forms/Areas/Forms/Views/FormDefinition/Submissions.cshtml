@@ -1,0 +1,77 @@
+@using Mosaik.Modules.Forms
+@using Mosaik.Modules.Forms.Services
+@model IReadOnlyList<FormSubmissionQueryService.ListRow>
+@{
+    Layout = "_AppLayout";
+    ViewData["Title"] = "Form Yanıtları";
+    var formId = (int)ViewBag.FormId;
+    var formName = ViewBag.FormName as string ?? "Form";
+}
+
+@section Breadcrumb {
+    <nav class="crumbs" aria-label="Sayfa konumu">
+        <a href="/Forms/FormDefinition/Index">Formlar</a>
+        <a href="/Forms/FormDefinition/Details/@formId">@formName</a>
+        <span aria-current="page">Yanıtlar</span>
+    </nav>
+}
+
+@section TopActions {
+    <a class="btn" href="/Forms/FormDefinition/Details/@formId">Geri</a>
+    @if (Model.Count > 0)
+    {
+        <a class="btn primary" href="/Forms/FormDefinition/ExportSubmissions/@formId">
+            <i class="fas fa-file-excel" aria-hidden="true"></i> Excel indir
+        </a>
+    }
+}
+
+<div class="hero">
+    <h1><i class="fas fa-inbox" aria-hidden="true"></i> @formName — Yanıtlar</h1>
+    <p class="sub"><span class="mono">@Model.Count yanıt</span></p>
+</div>
+
+@if (Model.Count == 0)
+{
+    <div class="dashed-card">
+        <i class="fas fa-inbox dc-icon" aria-hidden="true"></i>
+        <h3>Henüz yanıt yok</h3>
+        <p>Form gönderildikçe yanıtlar burada listelenir.</p>
+    </div>
+}
+else
+{
+    <div class="content-card">
+        <table class="dt">
+            <thead>
+                <tr>
+                    <th scope="col">Tarih</th>
+                    <th scope="col">E-posta</th>
+                    <th scope="col">Durum</th>
+                    <th scope="col">Alan</th>
+                    <th scope="col" style="text-align:right;">İşlem</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var s in Model)
+                {
+                    <tr>
+                        <td><span class="ago">@s.SubmittedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</span></td>
+                        <td>@(string.IsNullOrEmpty(s.SubmitterEmail) ? "—" : s.SubmitterEmail)</td>
+                        <td><span class="status @FormLabels.StatusClass(s.Status)">@FormLabels.Status(s.Status)</span></td>
+                        <td>
+                            <span class="mono">@s.ValueCount</span>
+                            @if (s.HasEncrypted)
+                            {
+                                <span title="Şifreli alan içerir">🔒</span>
+                            }
+                        </td>
+                        <td style="text-align:right;">
+                            <a class="btn ghost sm" href="/Forms/FormDefinition/SubmissionDetail/@s.Id">Detay</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

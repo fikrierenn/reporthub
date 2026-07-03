@@ -28,9 +28,24 @@ Bir modül bitmeden sonrakine geçme. TAM modüllere kod-DOKUNMA (coding-discipl
 - **Gap 2 (🔴 işlevsel boşluk):** Faz 6 YOK — submission admin liste + Detay + Excel export hiç yazılmamış (`FormDefinitionController` grep 0). **Admin toplanan yanıtları göremiyor/dışa aktaramıyor.**
 - **Gap 3 (🟠):** Faz 7 YOK — template seed SQL yok (8 hazır form: DSAR/İhbar/Aday/İhlal/Rıza/Engelli/DPA/Review).
 
+**KAPSAM GENİŞLEDİ (audit + rakip-analiz + wiring-kontrol 2026-07-03):** Forms şu an "topla ama görme/yönlendirme yok" seviyesinde. Rakip-baseline + KVKK-bağlam önceliği:
+- 🔴 **G1 Şifreleme** ✅ (encrypt-on-write; decrypt Gap 2'de)
+- 🔴 **G2 Submission admin liste/detay/export** — yanıt görüntüleme+Excel; **decrypt yetki-gated** (İhbar Komitesi rol → çöz, yoksa 🔒 maske). = şifreleme E2E kapanışı.
+- 🔴 **G3 ConditionalLogic bağlama** — `FormField.ConditionalLogic` DB'de ölü alan; survey-core `visibleIf` + server required-if. Branching = table-stakes (KVKK/DSAR/ihbar).
+- 🔴 **G4 Submit-sonrası bildirim** — SMTP(M1) var, köprü yok; submit sessiz. Form sahibine/role email+notification.
+- 🟠 **G5 Template seed** (8 form: DSAR/İhbar/Aday/İhlal/Rıza/Engelli/DPA/Review, Status=0 taslak).
+- 🟠 **G6 Multi-page/wizard** (uzun form) — DEFER.
+- 🟠 **G7 İhbar anonim iki-yönlü diyalog** (case-no, EU Whistleblowing Directive) — ihbar ciddi use-case ise ayrı iş.
+- ⚪ **YAPMA (consumer-polish):** ödeme, calculation, quiz, i18n, prefill, Zapier connector, Typeform konuşmalı UX — on-prem iç portalda değersiz.
+
+**Sıra:** G2 (submission-admin, şifreleme E2E kapatır) → G3 (conditional) → G4 (bildirim) → G5 (template). G6/G7 defer, M-D workflow-trigger ayrı.
+
 **Danış (kod öncesi):**
-- Gap 1 → `mosaik-security` skill: AES-256-GCM mı ASP.NET DataProtection mı; key yönetimi (dev appsettings / prod env); field-level encrypt `ValueText`; decrypt yetki ("İhbar Komitesi" rol). KVKK açısından `kvkk-veri-envanteri` skill.
-- Gap 2/3 → `mosaik-csharp-razor` + `ui-ux-pro-max` (liste+export view).
+- G1 ✅ → `mosaik-security` (DataProtection, yapıldı).
+- G2 → decrypt-gate `mosaik-security` (rol-gate + maske + audit); export `VerbisExporter` deseni (ClosedXML+Safe); view `ui-patterns`+`mosaik-csharp-razor`.
+- G3 → `mosaik-forms-expert` (FormSchemaBuilder visibleIf) + `mosaik-js-expert`.
+- G4 → `mosaik-security` (email XSS/injection) + Core `INotificationService`/`IEmailService`.
+- **Her G sonrası `mosaik-forms-expert` skill güncelle** (Gap 1'de stale kaldı dersi).
 
 **Fazlar:**
 1. **FormEncryptionService** (AES-256-GCM veya DataProtection) → `BuildFieldValue` `IsEncrypted` ise şifrele; submission okuma decrypt (yetki-gated). Read-path (SemaService yok — Forms render/detail) plaintext göstermez, sadece yetkili. Migration: ValueText yeterli (nvarchar), IsEncrypted zaten var.

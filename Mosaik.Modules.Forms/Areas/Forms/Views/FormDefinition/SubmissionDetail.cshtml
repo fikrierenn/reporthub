@@ -1,0 +1,74 @@
+@using Mosaik.Modules.Forms
+@using Mosaik.Modules.Forms.Services
+@model FormSubmissionQueryService.Detail
+@{
+    Layout = "_AppLayout";
+    ViewData["Title"] = "Yanıt Detayı";
+}
+
+@section Breadcrumb {
+    <nav class="crumbs" aria-label="Sayfa konumu">
+        <a href="/Forms/FormDefinition/Index">Formlar</a>
+        <a href="/Forms/FormDefinition/Submissions/@Model.FormDefinitionId">Yanıtlar</a>
+        <span aria-current="page">Yanıt #@Model.Id</span>
+    </nav>
+}
+
+@section TopActions {
+    <a class="btn" href="/Forms/FormDefinition/Submissions/@Model.FormDefinitionId">Yanıtlara dön</a>
+}
+
+<div class="hero">
+    <h1><i class="fas fa-file-lines" aria-hidden="true"></i> Yanıt #@Model.Id</h1>
+    <p class="sub">
+        <span class="ago">@Model.SubmittedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</span>
+        <span class="status @FormLabels.StatusClass(Model.Status)">@FormLabels.Status(Model.Status)</span>
+        @if (!string.IsNullOrEmpty(Model.SubmitterEmail))
+        {
+            <span>@Model.SubmitterEmail</span>
+        }
+        @if (Model.AnyEncrypted)
+        {
+            <span class="pill">🔒 Şifreli alan</span>
+        }
+    </p>
+</div>
+
+@if (Model.Values.Any(v => v.Masked))
+{
+    <div role="alert" class="alert warn">
+        Bu yanıtta şifreli alan(lar) var. Çözme yetkiniz yok — İhbar Komitesi / yetkili erişim gerekir.
+    </div>
+}
+
+<div class="content-card">
+    <table class="dt">
+        <thead>
+            <tr><th scope="col" style="width:34%;">Alan</th><th scope="col">Yanıt</th></tr>
+        </thead>
+        <tbody>
+            @foreach (var v in Model.Values)
+            {
+                <tr>
+                    <td><strong>@v.Label</strong></td>
+                    <td>
+                        @if (v.FileId is int fid)
+                        {
+                            <a class="btn ghost sm" href="/Forms/FormDefinition/DownloadFile/@fid">
+                                <i class="fas fa-paperclip" aria-hidden="true"></i> Dosya
+                            </a>
+                        }
+                        else if (v.Encrypted && v.Masked)
+                        {
+                            <span class="text-muted">@v.Display</span>
+                        }
+                        else
+                        {
+                            @v.Display
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

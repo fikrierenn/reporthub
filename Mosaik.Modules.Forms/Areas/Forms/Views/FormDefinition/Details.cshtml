@@ -29,6 +29,9 @@
     <a href="/Forms/FormDefinition/Edit/@Model.Id" class="btn">
         <i class="fas fa-pen text-[10px]" aria-hidden="true"></i> Bilgileri Düzenle
     </a>
+    <a href="/Forms/FormDefinition/Submissions/@Model.Id" class="btn">
+        <i class="fas fa-inbox text-[10px]" aria-hidden="true"></i> Yanıtlar
+    </a>
     @if (Model.Status == 1)
     {
         <a href="/Forms/f/@Model.Slug" class="btn" target="_blank">
