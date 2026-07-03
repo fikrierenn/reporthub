@@ -15,6 +15,8 @@
 
 <link rel="stylesheet" href="~/assets/css/org-sema.css" asp-append-version="true" />
 
+@await Html.PartialAsync("_GorevSubnav")
+
 @if (ViewBag.Error != null)
 {
     <div role="alert" class="alert error">@ViewBag.Error</div>

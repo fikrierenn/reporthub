@@ -1,0 +1,11 @@
+@{
+    var ctrl = ViewContext.RouteData.Values["controller"]?.ToString();
+}
+<nav class="subnav" aria-label="Görev Tanımları gezinme">
+    <a href="/GorevTanimlari/Sema" class="@(ctrl == "Sema" ? "active" : "")" aria-current="@(ctrl == "Sema" ? "page" : null)">
+        <i class="fas fa-sitemap" aria-hidden="true"></i> Organizasyon Şeması
+    </a>
+    <a href="/GorevTanimlari/Mapping" class="@(ctrl == "Mapping" ? "active" : "")" aria-current="@(ctrl == "Mapping" ? "page" : null)">
+        <i class="fas fa-user-check" aria-hidden="true"></i> Personel Eşleme
+    </a>
+</nav>
