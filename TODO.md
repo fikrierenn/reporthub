@@ -13,6 +13,14 @@ Bu dosya AKTIF işleri ve backlog'u takip eder. Tamamlanmış işler arşiv böl
 
 ---
 
+### 🔝 Görev Tanımları modülü (`Mosaik.Modules.GorevTanimlari`)
+İçerik/karar repo: `D:\Dev\gorevtanimlari\bkm` (DECISIONS A/G/H/**I**). **Org işi öncesi ZORUNLU:** `.claude/rules/gorev-org-yapisi.md` + bkm DECISIONS.md oku. Canon: OrgPositions = bizim tasarım omurga (57), Zirve maps-in.
+- [x] **T-16** ✅ 2026-07-02 — birim test + canonical class + ViewModels.
+- [x] **Plan 55 Faz 1-5** ✅ 2026-07-03 (`035f467`/`70d9bd1`/`a4859f3`) — org.json → OrgPositions omurga import + `/GorevTanimlari/Sema` (bkm index.html chart birebir, DB-driven, pan/zoom/detay+KPI + admin sağ-tık düzenleme). Doküman-editör bu ekranda (sağ-tık görev tanımı+KPI → GorevVersions yeni versiyon). Full scan (3 agent, 1 CRIT XSS + 5 fix), 706/706 test, preview E2E.
+- [ ] **Plan 55 Faz 6 kapanış** — sidebar Şema linki + eski /OrgChart redirect kararı + ADR + plan arşiv.
+
+---
+
 ### 🔝 YARIN BAŞLANGIÇ — 2026-05-28
 - [ ] **RoslynNavigator MCP smoke** — Claude Code restart sonrası `mcp__cwm-roslyn-navigator__*` aktif. 3 query: `find_callers AiSummaryProvider.CallLocalAsync` + `detect_antipatterns Mosaik` + `find_dead_code Mosaik`. Token kazancı ölç + Kaspersky AV çatışma kontrolü. Detay: `memory/reference_roslyn_navigator_mcp.md`, journal `docs/journal/2026-05-27.md`.
 - [ ] **Yerleşik AI commit-split** — 6 uncommitted dosya 3 mantıksal commit'e (feat ai local + docs rules cherry-pick + docs claude referans).
