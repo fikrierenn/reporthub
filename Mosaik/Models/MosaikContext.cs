@@ -195,6 +195,9 @@ namespace Mosaik.Models
                 entity.Property(e => e.Code).HasMaxLength(100).IsRequired();
                 entity.Property(e => e.Title).HasMaxLength(150).IsRequired();
                 entity.Property(e => e.Description).HasMaxLength(500);
+                entity.Property(e => e.HolderName).HasMaxLength(150);
+                entity.Property(e => e.HolderPersonelno).HasMaxLength(50);
+                entity.Property(e => e.ZirveMatchKey).HasMaxLength(150);
                 entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
                 entity.HasIndex(e => e.Code).IsUnique();
                 entity.HasIndex(e => e.ParentPositionId);

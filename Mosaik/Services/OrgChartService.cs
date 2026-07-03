@@ -345,9 +345,7 @@ namespace Mosaik.Services
                 return result;
             }
 
-            var positionCodeUpper = positions
-                .Select(p => p.Code.Trim().ToUpperInvariant())
-                .ToHashSet();
+            var incoming = new List<OrgIncumbent>();
 
             try
             {
@@ -361,38 +359,16 @@ namespace Mosaik.Services
                 using var reader = await cmd.ExecuteReaderAsync();
                 while (await reader.ReadAsync())
                 {
-                    var unvan = reader.IsDBNull(2) ? string.Empty : reader.GetString(2);
-                    var unvanKey = unvan.Trim().ToUpperInvariant();
-                    var inc = new OrgIncumbent
+                    incoming.Add(new OrgIncumbent
                     {
                         PersonelNo = reader.IsDBNull(0) ? string.Empty : reader.GetString(0),
                         AdSoyad = reader.IsDBNull(1) ? string.Empty : reader.GetString(1),
-                        Unvan = unvan,
+                        Unvan = reader.IsDBNull(2) ? string.Empty : reader.GetString(2),
                         Lokasyon = reader.IsDBNull(3) ? null : reader.GetString(3),
                         AltLokasyon = reader.IsDBNull(4) ? null : reader.GetString(4),
                         Departman = reader.IsDBNull(5) ? null : reader.GetString(5),
                         Firma = reader.IsDBNull(6) ? null : reader.GetString(6)
-                    };
-
-                    if (string.IsNullOrEmpty(unvanKey))
-                    {
-                        result.UnmatchedIncumbents.Add(inc);
-                        continue;
-                    }
-
-                    if (positionCodeUpper.Contains(unvanKey))
-                    {
-                        if (!result.IncumbentsByCode.TryGetValue(unvanKey, out var list))
-                        {
-                            list = new List<OrgIncumbent>();
-                            result.IncumbentsByCode[unvanKey] = list;
-                        }
-                        list.Add(inc);
-                    }
-                    else
-                    {
-                        result.UnmatchedIncumbents.Add(inc);
-                    }
+                    });
                 }
             }
             catch (OperationCanceledException)
@@ -412,8 +388,53 @@ namespace Mosaik.Services
                 return result;
             }
 
+            MatchIncumbents(positions, incoming, result.IncumbentsByCode, result.UnmatchedIncumbents);
+
             _cache.Set(CacheKeyIncumbents, result, IncumbentsTtl);
             return result;
+        }
+
+        // Zirve incumbent'ları pozisyonlara eşler. Match anahtarı = ZirveMatchKey (yoksa Title),
+        // Code DEĞİL — Code org.json id suffix'i taşıyabilir (Plan 55). Sonuç yine pozisyon Code'u
+        // ile anahtarlanır (view Code ile lookup yapar). Bir match-key birden çok pozisyona düşebilir
+        // (aynı ünvan iki kişi) → incumbent hepsine eklenir. Saf fonksiyon — unit test edilebilir.
+        public static void MatchIncumbents(
+            IEnumerable<OrgPosition> positions,
+            IEnumerable<OrgIncumbent> incumbents,
+            Dictionary<string, List<OrgIncumbent>> incumbentsByCode,
+            List<OrgIncumbent> unmatched)
+        {
+            var matchKeyToCodes = new Dictionary<string, List<string>>();
+            foreach (var p in positions)
+            {
+                var mk = (string.IsNullOrWhiteSpace(p.ZirveMatchKey) ? p.Title : p.ZirveMatchKey)
+                    .Trim().ToUpperInvariant();
+                if (mk.Length == 0) continue;
+                var code = p.Code.Trim().ToUpperInvariant();
+                if (!matchKeyToCodes.TryGetValue(mk, out var codes))
+                    matchKeyToCodes[mk] = codes = new List<string>();
+                if (!codes.Contains(code)) codes.Add(code);
+            }
+
+            foreach (var inc in incumbents)
+            {
+                var unvanKey = (inc.Unvan ?? string.Empty).Trim().ToUpperInvariant();
+                if (unvanKey.Length == 0) { unmatched.Add(inc); continue; }
+
+                if (matchKeyToCodes.TryGetValue(unvanKey, out var codes))
+                {
+                    foreach (var code in codes)
+                    {
+                        if (!incumbentsByCode.TryGetValue(code, out var list))
+                            incumbentsByCode[code] = list = new List<OrgIncumbent>();
+                        list.Add(inc);
+                    }
+                }
+                else
+                {
+                    unmatched.Add(inc);
+                }
+            }
         }
 
         // True dönerse: candidateParent positionId'nin alt-ağacında — atama cycle yaratır.
