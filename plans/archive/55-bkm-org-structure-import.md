@@ -1,7 +1,7 @@
 # Plan 55 — BKM Org Yapısı Import (org.json → OrgPositions reuse)
 
 **Tier:** 3 (schema + cross-modül + kullanıcı-görünür /OrgChart + veri backfill)
-**Durum:** ⏳ TASLAK 2026-07-03 — onay bekliyor
+**Durum:** ✅ KAPANDI 2026-07-03 — Faz 1-6 tamam. Canon: `.claude/rules/gorev-org-yapisi.md` + bkm DECISIONS I (ayrı ADR yazılmadı — footprint-ladder, aynı bilgi iki yerde yaşamaz). `/OrgChart` (dabeng) korundu (kullanıcı B), sidebar Şema iniş + subnav (Şema|Eşleme).
 **Danışman:** `mosaik-portal-danismani` — A (OrgPositions reuse) FİZİBİL, **confidence 82**
 **Bağımlılık:** GorevDocuments(48)+GorevVersions(48) canlı; `GorevDocument.OrgPositionId` FK zaten şema-hazır (`01_GorevTanimlari.sql:15`)
 
