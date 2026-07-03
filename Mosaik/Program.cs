@@ -1,4 +1,5 @@
 using Hangfire;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
 using Mosaik.Models;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -62,10 +63,14 @@ builder.Services.AddSingleton<Mosaik.Core.Html.IContentSanitizer, Mosaik.Service
 builder.Services.AddHttpClient("ai");
 // Plan 25 — vision için ayrı timeout (sözleşme görseli 30-90s sürebilir).
 builder.Services.AddHttpClient("ai-vision", c => c.Timeout = TimeSpan.FromSeconds(120));
-// Plan 25.1 Faz 2 — API key at-rest encryption.
-// Prod'da .PersistKeysToFileSystem(new DirectoryInfo(@"D:\secrets\keys")) veya .PersistKeysToDbContext ekle;
-// dev'de memory key ring yeterli (restart sonrası key değişir → mevcut ApiKey'ler NULL'a sıfırla).
-builder.Services.AddDataProtection();
+// Plan 25.1 (Ai key) + Plan 56 M-A (Forms ihbar/DSAR alan şifreleme) — at-rest encryption.
+// Key-ring KALICI olmalı: Forms şifreli veri (ihbar/whistleblower) geri-girilemez; ephemeral memory
+// key-ring restart sonrası cipher'ı çözemez = kalıcı veri kaybı (security-reviewer H-1). App_Data private
+// (Documents/Forms disk storage ile aynı, gitignore'da). Prod çok-sunucu → shared path/cert (README).
+builder.Services.AddDataProtection()
+    .SetApplicationName("Mosaik")
+    .PersistKeysToFileSystem(new DirectoryInfo(
+        Path.Combine(builder.Environment.ContentRootPath, "App_Data", "dp-keys")));
 builder.Services.AddScoped<Mosaik.Core.Ai.IAiSettingsProvider, Mosaik.Services.AiSettingsProvider>();
 builder.Services.AddScoped<Mosaik.Core.Ai.IAiSummaryProvider, Mosaik.Services.AiSummaryProvider>();
 builder.Services.AddScoped<Mosaik.Core.Ai.ILlmService, Mosaik.Services.Ai.LlmServiceAdapter>();

@@ -20,7 +20,7 @@ namespace Mosaik.Modules.Forms.Services
     // Plan 41 Faz 1 — submission save + FormVersionId bind (§4.6 ZORUNLU). Workflow/ProcessInstance
     // trigger stub (Plan 36/42 — sonraki fazlarda gerçek çağrı eklenir).
     // Faz 4 — File/Signature alanları: base64 dataURL decode → magic-byte doğrula → disk yaz → ValueFileId.
-    public class FormSubmissionService(DbContext db, FormValidationService validation, FormFileStorage fileStorage)
+    public class FormSubmissionService(DbContext db, FormValidationService validation, FormFileStorage fileStorage, FormEncryptionService encryption)
     {
         // silent-failure-hunter HIGH — alan-bazlı hata dict'i bu koda taşınır (JSON-encoded
         // Message); controller/JS ayırt edip survey-core question.addError'a bağlar.
@@ -104,7 +104,7 @@ namespace Mosaik.Modules.Forms.Services
                 if (!input.Values.TryGetValue(field.FieldKey, out var raw) || raw == null)
                     continue;
 
-                submission.Values.Add(BuildFieldValue(field, raw));
+                submission.Values.Add(BuildFieldValue(field, raw, def.IsEncrypted));
             }
 
             // Pass 2b: decode edilmiş dosyaları diske yaz + submission graph'ına bağla + kaydet.
@@ -140,9 +140,20 @@ namespace Mosaik.Modules.Forms.Services
             return ServiceResult<int>.Ok(submission.Id);
         }
 
-        private static FormSubmissionFieldValue BuildFieldValue(FormField field, string raw)
+        private FormSubmissionFieldValue BuildFieldValue(FormField field, string raw, bool encrypt)
         {
             var value = new FormSubmissionFieldValue { FormFieldId = field.Id, FieldKey = field.FieldKey };
+            // Form şifreli ise (ihbar/DSAR): değer ValueText'e ŞİFRELİ blob olarak yazılır, tipli kolonlar
+            // null kalır (aksi halde ValueNumber/Date/Bool düz metin sızdırır). Decrypt = yetki-gated (Gap 2).
+            if (encrypt)
+            {
+                // Boş/whitespace → hiçbir kolon set etme (typed path ile tutarlı; boş değeri şifreleyip
+                // IsEncrypted=true kirliliği yaratma — security-reviewer H-2).
+                if (string.IsNullOrEmpty(raw)) return value;
+                value.ValueText = encryption.Encrypt(raw);
+                value.IsEncrypted = true;
+                return value;
+            }
             switch (field.FieldType)
             {
                 case FormFieldType.Number:

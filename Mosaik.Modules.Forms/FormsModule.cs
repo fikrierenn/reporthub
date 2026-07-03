@@ -31,8 +31,7 @@ namespace Mosaik.Modules.Forms
             services.AddScoped<Services.FormFileStorage>();          // Faz 4: ek + imza disk storage
             services.AddScoped<Services.DataElementLookupService>(); // Faz 4: KVKK DataElement picker (cross-modül read)
             services.AddMemoryCache(); // SubmitRateLimiter için (idempotent — ana proje de çağırmış olabilir)
-            // Plan 41 Faz 5 servisi (sonraki commit):
-            // services.AddScoped<Services.FormEncryptionService>();
+            services.AddScoped<Services.FormEncryptionService>(); // Plan 56 M-A — at-rest alan şifreleme (DataProtection)
         }
 
         public void ConfigureModelBuilder(ModelBuilder mb)
