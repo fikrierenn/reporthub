@@ -26,6 +26,9 @@ public class SemaEditService
         if (p is null) return (false, "Pozisyon bulunamadı.");
         p.Title = t;
         p.HolderName = h;
+        // ZirveMatchKey Title ile senkron kalmalı — aksi halde OrgChart Zirve incumbent match
+        // (ZirveMatchKey ?? Title) eski değerde takılır, rename sonrası eşleşme sessizce kırılır.
+        p.ZirveMatchKey = t;
         p.UpdatedAt = DateTime.UtcNow;
         p.UpdatedBy = user;
         await _db.SaveChangesAsync(ct);
@@ -111,7 +114,12 @@ public class SemaEditService
                 cur = parentOf.TryGetValue(cur.Value, out var pp) ? pp : null;
             }
         }
+        // Yeni sibling kümesinde DisplayOrder yeniden hesaplanmalı — aksi halde eski order
+        // yeni parent altındaki bir kardeşle çakışır, düğüm beklenmedik sıraya düşer (Add ile tutarlı).
+        var maxOrder = await _db.Set<OrgPosition>().Where(x => x.ParentPositionId == newParentId && x.Id != id)
+            .Select(x => (int?)x.DisplayOrder).MaxAsync(ct) ?? -1;
         p.ParentPositionId = newParentId;
+        p.DisplayOrder = maxOrder + 1;
         p.UpdatedAt = DateTime.UtcNow;
         p.UpdatedBy = user;
         await _db.SaveChangesAsync(ct);
