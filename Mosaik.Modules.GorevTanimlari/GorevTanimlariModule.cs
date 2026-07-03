@@ -19,6 +19,8 @@ public class GorevTanimlariModule : IMosaikModule
     public void ConfigureServices(IServiceCollection services)
     {
         services.AddScoped<Services.MappingService>();
+        services.AddScoped<Services.SemaService>();
+        services.AddScoped<Services.SemaEditService>();
     }
 
     public void ConfigureModelBuilder(ModelBuilder mb)
@@ -48,6 +50,14 @@ public class GorevTanimlariModule : IMosaikModule
             e.HasKey(m => m.Id);
             e.Property(m => m.Source).HasMaxLength(10);
             e.HasIndex(m => m.Personelno).IsUnique();
+        });
+
+        mb.Entity<GorevVersion>(e =>
+        {
+            e.ToTable("GorevVersions");
+            e.HasKey(v => v.Id);
+            e.Property(v => v.ContentJson).IsRequired();
+            e.HasIndex(v => new { v.GorevDocumentId, v.VersionNumber });
         });
     }
 

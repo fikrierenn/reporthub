@@ -111,7 +111,9 @@ body.oc-dragging .oc-children:empty::before {
     transition: background 120ms;
 }
 .oc-pub-row:hover { background: #f8fafc; }
-.oc-pub-title { font-size: 13px; font-weight: 500; flex: 1; }
+.oc-pub-title { font-size: 13px; font-weight: 600; }
+.oc-pub-holder { font-size: 12px; color: var(--ink-mute); flex: 1; }
+.oc-pub-holder i { font-size: 10px; opacity: .7; margin-right: 3px; }
 .oc-pub-code { font-size: 11px; color: var(--ink-mute); }
 .oc-pub-count {
     background: #b91c1c;

@@ -39,3 +39,19 @@ public class GorevPersonelMap
     public string? MappedBy { get; set; }
     public DateTime MappedAt { get; set; }
 }
+
+// Versiyonlu görev-tanımı içeriği (SopVersions deseni). ContentJson = {paragraphs[], kpi[{text,active}]}.
+// Status: 0=taslak, 1=yayın, 2=süperse. Şema ekranı yayın (Status=1) en yüksek VersionNumber'ı gösterir.
+public class GorevVersion
+{
+    public int Id { get; set; }
+    public int GorevDocumentId { get; set; }
+    public int VersionNumber { get; set; }
+    public string ContentJson { get; set; } = "";
+    public string? PlainTextContent { get; set; }
+    public DateTime EffectiveDate { get; set; }
+    public DateTime? SupersededDate { get; set; }
+    public byte Status { get; set; }
+    public string? CreatedBy { get; set; }
+    public DateTime CreatedAt { get; set; }
+}

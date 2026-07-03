@@ -1,0 +1,115 @@
+/* Organizasyon Şeması — bkm index.html chart'ının Mosaik'e taşınmış stili (Plan 55 Faz 5).
+   Tüm kurallar .sema-wrap altına scoped — Mosaik global .node/.modal/.badge ile çakışmaz.
+   BKM kırmızısı (#E30622) korunur (kurumsal şema kimliği). */
+.sema-wrap {
+    --sema-brand: #E30622; --sema-brand-ink: #b00417;
+    --sema-page: #eef0f3; --sema-surface: #fff; --sema-surface-2: #fafbfc;
+    --sema-ink: #171a1f; --sema-muted: #6b7280; --sema-faint: #9aa1ab;
+    --sema-line: #e2e5ea; --sema-line-strong: #cbd0d8; --sema-hover: #f0f2f5; --sema-sel: #fff1f3;
+    --r-ust: #334155; --r-mudur: #E30622; --r-lider: #b45309; --r-uzman: #1d6fb8; --r-danisman: #6d28d9; --r-diger: #64748b;
+    --sema-radius: 9px; --sema-shadow: 0 1px 2px rgba(16,24,40,.06);
+    display: flex; flex-direction: column; height: calc(100vh - 190px); min-height: 420px;
+    border: 1px solid var(--sema-line); border-radius: 12px; overflow: hidden; background: var(--sema-surface);
+    color: var(--sema-ink); font-size: 14px;
+}
+.sema-wrap .is-hidden { display: none !important; }
+.sema-wrap .ico { width: 16px; height: 16px; flex: 0 0 16px; stroke: currentColor; fill: none; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+.sema-wrap button { font: inherit; color: inherit; cursor: pointer; background: var(--sema-surface); border: 1px solid var(--sema-line-strong); border-radius: var(--sema-radius); padding: 7px 11px; display: inline-flex; align-items: center; gap: 6px; }
+.sema-wrap button:hover { background: var(--sema-hover); }
+
+/* toolbar */
+.sema-toolbar { display: flex; gap: 8px; align-items: center; padding: 9px 14px; background: var(--sema-surface); border-bottom: 1px solid var(--sema-line); flex: 0 0 auto; flex-wrap: wrap; }
+.sema-toolbar .searchbox { position: relative; width: min(240px, 38vw); }
+.sema-toolbar .searchbox .ico { position: absolute; left: 9px; top: 50%; transform: translateY(-50%); color: var(--sema-faint); }
+.sema-toolbar .searchbox input { width: 100%; padding: 7px 10px 7px 30px; border: 1px solid var(--sema-line-strong); border-radius: var(--sema-radius); background: var(--sema-surface-2); color: var(--sema-ink); font-size: 13px; }
+.sema-toolbar .searchbox input:focus { outline: none; border-color: var(--sema-brand); box-shadow: 0 0 0 3px var(--sema-sel); }
+.sema-toolbar .tspace { flex: 1; }
+.sema-toolbar .seg { display: inline-flex; border: 1px solid var(--sema-line-strong); border-radius: var(--sema-radius); overflow: hidden; }
+.sema-toolbar .seg button { border: 0; border-radius: 0; padding: 6px 11px; font-size: 12.5px; }
+.sema-toolbar .seg button.on { background: var(--sema-brand); color: #fff; }
+.sema-toolbar .legend { display: flex; flex-wrap: wrap; gap: 8px 12px; font-size: 11px; color: var(--sema-muted); align-items: center; }
+.sema-toolbar .legend .li { display: flex; align-items: center; gap: 5px; }
+.sema-toolbar .legend .d { width: 9px; height: 9px; border-radius: 50%; }
+.dot-ust { background: var(--r-ust); } .dot-mudur { background: var(--r-mudur); } .dot-lider { background: var(--r-lider); }
+.dot-uzman { background: var(--r-uzman); } .dot-danisman { background: var(--r-danisman); }
+
+/* chart */
+.sema-chart { position: relative; flex: 1; overflow: hidden; cursor: default;
+    background: radial-gradient(circle, var(--sema-line) 1px, transparent 1.4px) 0 0/24px 24px, var(--sema-page); }
+.sema-chart.grab { cursor: grabbing; }
+.sema-wrap #semaStage { position: absolute; top: 0; left: 0; transform-origin: 0 0; will-change: transform; }
+.sema-wrap #semaLinks { position: absolute; top: 0; left: 0; overflow: visible; pointer-events: none; }
+.sema-wrap .node { position: absolute; background: var(--sema-surface); border: 1px solid var(--sema-line); border-left: 3px solid var(--r-diger); border-radius: 10px; box-shadow: var(--sema-shadow); padding: 7px 10px; cursor: pointer; display: flex; flex-direction: column; justify-content: center; overflow: visible; }
+.sema-wrap .node:hover { border-color: var(--sema-line-strong); }
+.sema-wrap .node.sel { border-color: var(--sema-brand); box-shadow: 0 0 0 3px var(--sema-sel); }
+.sema-wrap .node.dim { opacity: .25; }
+.sema-wrap .node.match { border-color: var(--sema-brand); }
+.sema-wrap .npos { font-weight: 600; font-size: 11.5px; line-height: 1.2; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.sema-wrap .nname { font-size: 10.5px; color: var(--sema-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
+.sema-wrap .nname.empty { color: var(--sema-brand); font-style: italic; }
+.sema-wrap .nchip { position: absolute; top: -8px; left: 8px; font-size: 9px; color: var(--r-lider); background: var(--sema-surface); padding: 0 5px; border: 1px solid var(--r-lider); border-radius: 8px; white-space: nowrap; }
+.sema-wrap .ntog { position: absolute; left: 50%; transform: translateX(-50%); bottom: -11px; min-width: 22px; height: 20px; padding: 0 5px; font-size: 11px; font-weight: 600; border-radius: 6px; background: var(--sema-surface); border: 1px solid var(--sema-line-strong); z-index: 2; color: var(--sema-muted); }
+.sema-wrap .zoombar { position: absolute; right: 14px; bottom: 14px; display: flex; flex-direction: column; gap: 6px; z-index: 5; }
+.sema-wrap .zoombar button { width: 34px; height: 34px; padding: 0; justify-content: center; box-shadow: var(--sema-shadow); }
+
+/* detay modal */
+.sema-wrap .overlay { position: fixed; inset: 0; background: rgba(15,18,22,.5); display: none; align-items: center; justify-content: center; z-index: 50; padding: 24px; }
+.sema-wrap .overlay.open { display: flex; }
+.sema-wrap .modal { background: var(--sema-surface); border: 1px solid var(--sema-line); border-radius: 14px; width: min(740px, 96vw); max-height: 86vh; display: flex; flex-direction: column; box-shadow: 0 12px 40px rgba(0,0,0,.28); }
+.sema-wrap .modal .mh { display: flex; align-items: center; gap: 10px; padding: 14px 18px; border-bottom: 1px solid var(--sema-line); }
+.sema-wrap .modal .mh .x { margin-left: auto; }
+.sema-wrap .modal .dc { overflow: auto; padding: 18px 24px 30px; }
+.sema-wrap .badge { display: inline-flex; align-items: center; font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 20px; letter-spacing: .3px; text-transform: uppercase; }
+.sema-wrap .crumb { font-size: 11.5px; color: var(--sema-faint); margin: 2px 0 10px; }
+.sema-wrap .h-title { font-size: 21px; font-weight: 650; letter-spacing: -.3px; margin: 6px 0 2px; }
+.sema-wrap .h-name { color: var(--sema-muted); font-size: 13.5px; margin-bottom: 8px; display: flex; align-items: center; gap: 7px; }
+.sema-wrap .editrow { display: flex; gap: 8px; margin: 6px 0 14px; }
+.sema-wrap .editrow button { font-size: 12px; padding: 5px 9px; }
+.sema-wrap .callout { background: var(--sema-surface-2); border: 1px solid var(--sema-line); border-left: 3px solid var(--sema-brand); border-radius: 0 var(--sema-radius) var(--sema-radius) 0; padding: 10px 13px; font-size: 13px; margin-bottom: 8px; }
+.sema-wrap .warn { border: 1px solid var(--r-lider); border-radius: var(--sema-radius); padding: 8px 12px; font-size: 12px; color: var(--r-lider); margin: 10px 0; display: flex; gap: 8px; align-items: flex-start; }
+.sema-wrap h2.sec { font-size: 11.5px; text-transform: uppercase; letter-spacing: .6px; color: var(--sema-muted); margin: 22px 0 9px; display: flex; align-items: center; gap: 8px; }
+.sema-wrap h2.sec::after { content: ""; flex: 1; height: 1px; background: var(--sema-line); }
+.sema-wrap .dc p { font-size: 13.5px; line-height: 1.6; margin: 0 0 11px; }
+.sema-wrap .kpi { list-style: none; padding: 0; margin: 0; display: grid; gap: 7px; }
+.sema-wrap .kpi li { display: flex; gap: 9px; align-items: flex-start; background: var(--sema-surface-2); border: 1px solid var(--sema-line); border-radius: var(--sema-radius); padding: 8px 11px; font-size: 12.5px; }
+.sema-wrap .kpi li .ico { color: var(--sema-brand); margin-top: 1px; }
+.sema-wrap .kpi li.oneri { opacity: .7; }
+.sema-wrap .kpi li.oneri .ico { color: var(--sema-faint); }
+.sema-wrap .kpisub { font-size: 11px; color: var(--sema-muted); margin: -4px 0 9px; }
+.sema-wrap .kpill { margin-left: auto; flex: 0 0 auto; font-size: 10px; padding: 2px 9px; border-radius: 20px; border: 1px solid var(--sema-line-strong); background: var(--sema-surface); color: var(--sema-muted); white-space: nowrap; }
+.sema-wrap .kpi li.aktif .kpill { color: #fff; background: var(--sema-brand); border-color: var(--sema-brand); }
+
+/* sağ-tık context menü */
+.sema-ctx { position: fixed; display: none; z-index: 70; background: var(--sema-surface, #fff); border: 1px solid var(--sema-line-strong, #cbd0d8); border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,.22); padding: 5px; min-width: 200px; }
+.sema-ctx.open { display: block; }
+.sema-ctx button { display: flex; align-items: center; gap: 8px; width: 100%; border: 0; background: transparent; padding: 8px 10px; font-size: 13px; border-radius: 7px; cursor: pointer; color: var(--sema-ink, #171a1f); }
+.sema-ctx button:hover { background: var(--sema-hover, #f0f2f5); }
+.sema-ctx button.danger { color: #b00417; }
+.sema-ctx .ico { width: 16px; height: 16px; flex: 0 0 16px; stroke: currentColor; fill: none; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+.sema-ctx .sep { font-size: 10px; text-transform: uppercase; letter-spacing: .5px; color: #9aa1ab; padding: 6px 10px 2px; }
+
+/* düzenleme overlay (admin) */
+.sema-edit-overlay { position: fixed; inset: 0; background: rgba(15,18,22,.5); display: none; align-items: center; justify-content: center; z-index: 80; padding: 24px; }
+.sema-edit-overlay.open { display: flex; }
+.sema-edit-modal { background: #fff; border-radius: 14px; width: min(620px, 96vw); max-height: 88vh; display: flex; flex-direction: column; box-shadow: 0 12px 40px rgba(0,0,0,.28); color: #171a1f; }
+.sema-edit-modal .seh { display: flex; align-items: center; gap: 10px; padding: 14px 18px; border-bottom: 1px solid #e2e5ea; }
+.sema-edit-modal .seh h3 { margin: 0; font-size: 16px; font-weight: 600; }
+.sema-edit-modal .seh .x { margin-left: auto; border: 1px solid #cbd0d8; background: #fff; border-radius: 8px; padding: 5px 10px; cursor: pointer; font: inherit; }
+.sema-edit-modal .seb { overflow: auto; padding: 16px 18px 20px; }
+.sema-edit-modal .se-lab { font-size: 11px; color: #6b7280; display: block; margin: 10px 0 3px; }
+.sema-edit-modal .se-lab:first-child { margin-top: 0; }
+.sema-edit-modal .se-inp, .sema-edit-modal textarea.se-inp, .sema-edit-modal select.se-inp { width: 100%; padding: 8px 10px; border: 1px solid #cbd0d8; border-radius: 8px; background: #fff; color: #171a1f; font: inherit; font-size: 13px; }
+.sema-edit-modal textarea.se-inp { min-height: 120px; resize: vertical; line-height: 1.5; }
+.sema-edit-modal .se-inp:focus { outline: none; border-color: #E30622; box-shadow: 0 0 0 3px #fff1f3; }
+.sema-edit-modal .se-krow { display: flex; gap: 8px; align-items: center; margin-bottom: 6px; }
+.sema-edit-modal .se-krow input[type=text] { flex: 1; padding: 7px 9px; border: 1px solid #cbd0d8; border-radius: 8px; font: inherit; font-size: 13px; }
+.sema-edit-modal .se-krow label { font-size: 11.5px; color: #6b7280; display: flex; align-items: center; gap: 4px; white-space: nowrap; }
+.sema-edit-modal .se-krow .krm { border: 1px solid #cbd0d8; background: #fff; border-radius: 7px; padding: 5px 8px; cursor: pointer; }
+.sema-edit-modal .se-actions { display: flex; gap: 8px; margin-top: 16px; flex-wrap: wrap; }
+.sema-edit-modal .se-actions button { border: 1px solid #cbd0d8; background: #fff; border-radius: 8px; padding: 8px 14px; cursor: pointer; font: inherit; font-size: 13px; }
+.sema-edit-modal .se-actions button.primary { background: #E30622; border-color: #E30622; color: #fff; }
+.sema-edit-modal .se-hint { font-size: 11.5px; color: #6b7280; margin-top: 8px; }
+.sema-edit-modal .se-addrow { border: 1px dashed #cbd0d8; background: #fafbfc; border-radius: 8px; padding: 7px 10px; cursor: pointer; font: inherit; font-size: 12.5px; color: #6b7280; margin-top: 4px; }
+
+.sema-toast { position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%); background: #171a1f; color: #fff; padding: 9px 16px; border-radius: 20px; font-size: 13px; z-index: 90; opacity: 0; transition: opacity .2s; pointer-events: none; }
+.sema-toast.show { opacity: 1; }

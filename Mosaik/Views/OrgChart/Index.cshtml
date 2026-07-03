@@ -22,7 +22,7 @@
         var count = Model.IncumbentsByCode.TryGetValue(key, out var list) ? list.Count : 0;
         var children = byParent[p.Id].OrderBy(c => c.DisplayOrder).ThenBy(c => c.Title)
             .Select(c => BuildNode(c)).ToList();
-        return new { id = p.Id, code = p.Code, title = p.Title, isActive = p.IsActive, count, children };
+        return new { id = p.Id, code = p.Code, title = p.Title, holder = p.HolderName, isActive = p.IsActive, count, children };
     }
     var treeData = new {
         id = 0,
@@ -124,7 +124,10 @@
                     <li class="oc-pub-node" data-code="@p.Code">
                         <div class="oc-pub-row" data-id="@p.Id">
                             <span class="oc-pub-title">@p.Title</span>
-                            <span class="oc-pub-code mono">@p.Code</span>
+                            @if (!string.IsNullOrWhiteSpace(p.HolderName))
+                            {
+                                <span class="oc-pub-holder"><i class="fas fa-user" aria-hidden="true"></i> @p.HolderName</span>
+                            }
                             @if (cnt > 0)
                             {
                                 <span class="oc-pub-count">@cnt</span>
@@ -296,12 +299,15 @@ document.addEventListener('click', (e) => {
         }
 
         // Tek root varsa onu kullan; çoklu root → sentetik kök altında
+        // Node content = holder kişi (org.json tasarım sahibi); code modal için idToCode'da tutulur.
+        const idToCode = {};
         function transform(node) {
             const cnt = node.count || 0;
+            idToCode[String(node.id)] = node.code;
             return {
                 id: String(node.id),
                 name: node.title + (cnt > 0 ? ' (' + cnt + ')' : ''),
-                title: node.code,
+                title: node.holder ? node.holder : node.code,
                 className: node.isActive ? '' : 'oc-inactive',
                 origCode: node.code,
                 children: (node.children || []).map(transform)
@@ -329,11 +335,9 @@ document.addEventListener('click', (e) => {
         $('#oc-d3').on('click', '.node', function () {
             const id = $(this).attr('id');
             if (!id || id === '0') return;
-            const titleEl = $(this).find('.title').text().trim();
-            const codeEl = $(this).find('.content').text().trim();
-            // Title parantez kaldır
-            const cleanTitle = titleEl.replace(/\s*\(\d+\)\s*$/, '');
-            window.dispatchEvent(new CustomEvent('oc-show-personel', { detail: { code: codeEl, title: cleanTitle } }));
+            const code = idToCode[id] || '';
+            const cleanTitle = $(this).find('.title').text().replace(/\s*\(\d+\)\s*$/, '').trim();
+            window.dispatchEvent(new CustomEvent('oc-show-personel', { detail: { code, title: cleanTitle } }));
         });
     })();
     </script>

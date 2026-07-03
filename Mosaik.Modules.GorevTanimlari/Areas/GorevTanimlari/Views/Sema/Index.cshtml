@@ -1,0 +1,70 @@
+@{
+    Layout = "_AppLayout";
+    ViewData["Title"] = "Organizasyon Şeması";
+    ViewData["PageTitle"] = "Organizasyon Şeması";
+    var json = ViewBag.SemaJson as string ?? "{\"org\":[],\"advisors\":[]}";
+    var isAdmin = User.IsInRole("admin");
+}
+
+@section Breadcrumb {
+    <nav class="crumbs" aria-label="Sayfa konumu">
+        <a href="/">Ana Sayfa</a>
+        <span aria-current="page">Organizasyon Şeması</span>
+    </nav>
+}
+
+<link rel="stylesheet" href="~/assets/css/org-sema.css" asp-append-version="true" />
+
+@if (ViewBag.Error != null)
+{
+    <div role="alert" class="alert error">@ViewBag.Error</div>
+}
+
+@Html.AntiForgeryToken()
+
+<div class="sema-wrap" data-admin="@(isAdmin ? "1" : "0")">
+    <div class="sema-toolbar">
+        <div class="searchbox">
+            <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="M21 21l-4.3-4.3" /></svg>
+            <input type="search" id="semaSearch" placeholder="Ara (ünvan / kişi)" aria-label="Şemada ara" />
+        </div>
+        <span class="seg" role="group" aria-label="Yönelim">
+            <button type="button" id="semaOriH" class="on">Yatay</button>
+            <button type="button" id="semaOriV">Dikey</button>
+        </span>
+        <button type="button" id="semaFit">Sığdır</button>
+        <button type="button" id="semaUnfocus" class="is-hidden">Odak kaldır</button>
+        <span class="tspace"></span>
+        <span class="legend" aria-hidden="true">
+            <span class="li"><span class="d dot-ust"></span>Üst</span>
+            <span class="li"><span class="d dot-mudur"></span>Müdür</span>
+            <span class="li"><span class="d dot-lider"></span>Lider</span>
+            <span class="li"><span class="d dot-uzman"></span>Uzman</span>
+            <span class="li"><span class="d dot-danisman"></span>Danışman</span>
+        </span>
+    </div>
+
+    <div class="sema-chart" id="semaViewport">
+        <div id="semaStage">
+            <svg id="semaLinks" xmlns="http://www.w3.org/2000/svg"></svg>
+            <div id="semaNodes"></div>
+        </div>
+        <div class="zoombar">
+            <button type="button" id="semaZin" aria-label="Yakınlaştır">+</button>
+            <button type="button" id="semaZout" aria-label="Uzaklaştır">−</button>
+        </div>
+    </div>
+
+    <div class="overlay" id="semaDov">
+        <div class="modal detail" role="dialog" aria-modal="true" aria-label="Görev tanımı">
+            <div class="mh">
+                <span class="badge" id="semaDBadge"></span>
+                <button type="button" class="x" id="semaDClose" aria-label="Kapat">Kapat</button>
+            </div>
+            <div class="dc" id="semaDContent"></div>
+        </div>
+    </div>
+</div>
+
+<script id="sema-data" type="application/json">@Html.Raw(json)</script>
+<script src="~/assets/js/org-sema.js" asp-append-version="true"></script>
