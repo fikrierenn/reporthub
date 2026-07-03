@@ -119,7 +119,9 @@ builder.Services.AddSingleton<Mosaik.Core.AI.Local.ILlmRunner>(sp =>
 });
 
 // Plan 34.1 Faz 2 A-16 — Uygulama startup'ında AI modellerini arka planda warm-up.
-builder.Services.AddHostedService<Mosaik.Services.Ai.ModelWarmupHostedService>();
+// Ai:WarmupEnabled=false ile pasif (dev/hafif boot; ONNX embedder + LLamaSharp Qwen yüklenmez).
+if (builder.Configuration.GetValue("Ai:WarmupEnabled", true))
+    builder.Services.AddHostedService<Mosaik.Services.Ai.ModelWarmupHostedService>();
 
 // Plan 34.2 — AI Skill Catalog (App_Data/ai-skills/*.md domain expertise).
 builder.Services.AddSingleton<Mosaik.Core.AI.Skills.ISkillCatalog>(sp =>

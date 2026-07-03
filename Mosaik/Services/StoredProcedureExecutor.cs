@@ -2,6 +2,9 @@ using System.Data;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Logging;
 
+// NOT (02.07.2026): IK datasource (BKM_GENEL) connstring named-instance yerine port kullanır
+// (Server=192.168.40.25,64507). Named instance host'tan SQL Browser ile çözülemiyordu (error 26).
+
 namespace Mosaik.Services;
 
 /// <summary>

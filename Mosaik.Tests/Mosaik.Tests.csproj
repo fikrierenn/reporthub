@@ -25,6 +25,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Mosaik\Mosaik.csproj" />
+    <ProjectReference Include="..\Mosaik.Modules.GorevTanimlari\Mosaik.Modules.GorevTanimlari.csproj" />
   </ItemGroup>
 
 </Project>

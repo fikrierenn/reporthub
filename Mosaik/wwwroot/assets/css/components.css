@@ -711,6 +711,8 @@ select.inp {
 .filter-bar__field { display: flex; flex-direction: column; gap: 4px; min-width: 180px; }
 .filter-bar__field--grow { flex: 1; min-width: 240px; }
 .filter-bar__actions { display: flex; gap: 6px; align-items: flex-end; }
+/* Satır-içi checkbox etiketi (arama/filtre satırında) */
+.check-inline { display: flex; align-items: center; gap: 5px; font-size: 13px; color: var(--ink-2); }
 
 /* Quick-grid card link wrapper + id chip + meta icon */
 .qcard__link { text-decoration: none; color: inherit; display: block; }

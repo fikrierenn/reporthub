@@ -16,6 +16,7 @@
     <ProjectReference Include="..\Mosaik.Modules.Forms\Mosaik.Modules.Forms.csproj" />
     <ProjectReference Include="..\Mosaik.Modules.SOP\Mosaik.Modules.SOP.csproj" />
     <ProjectReference Include="..\Mosaik.Modules.Kvkk\Mosaik.Modules.Kvkk.csproj" />
+    <ProjectReference Include="..\Mosaik.Modules.GorevTanimlari\Mosaik.Modules.GorevTanimlari.csproj" />
   </ItemGroup>
 
   <ItemGroup>

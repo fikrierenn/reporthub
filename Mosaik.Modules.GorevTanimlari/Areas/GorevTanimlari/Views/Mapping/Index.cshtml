@@ -1,0 +1,110 @@
+@model MappingIndexViewModel
+@{
+    ViewData["Title"] = "Görev Tanımı Eşleme";
+    var mapped = Model.People.Count(p => p.DocId != null);
+    var gap = Model.People.Count - mapped;
+}
+
+@section Breadcrumb {
+    <nav class="crumbs" aria-label="Sayfa konumu">
+        <a href="/">Ana Sayfa</a>
+        <span aria-current="page">Görev Tanımı Eşleme</span>
+    </nav>
+}
+
+<div class="hero">
+    <h1><i class="fas fa-sitemap" aria-hidden="true"></i> Görev Tanımı Eşleme</h1>
+    <p class="sub">
+        <span>Zirve personeli → görev tanımı. Kişi bazında; aynı ünvan farklı tanıma gidebilir. Seçim anında kaydedilir.</span>
+        <span class="mono"><b id="stMapped">@mapped</b> eşli · <b id="stGap">@gap</b> GAP · @Model.People.Count kişi</span>
+    </p>
+</div>
+
+@Html.AntiForgeryToken()
+
+@if (ViewBag.Error != null)
+{
+    <div class="alert error" role="alert">@ViewBag.Error</div>
+}
+
+<div class="filter-bar">
+    <input type="search" id="q" class="inp filter-bar__field--grow" placeholder="Ara (ad / departman / ünvan)">
+    <label class="check-inline"><input type="checkbox" id="onlyGap"> Sadece GAP</label>
+</div>
+
+<div class="activity">
+    <table class="dt" id="grid">
+        <thead>
+            <tr>
+                <th>Ad Soyad</th>
+                <th>Departman</th>
+                <th>Ünvan</th>
+                <th>Görev tanımı</th>
+                <th>Kaynak</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var p in Model.People)
+            {
+                <tr class="prow" data-key="@((p.AdSoyad + " " + p.Departman + " " + p.Unvan).ToLowerInvariant())" data-gap="@(p.DocId == null ? 1 : 0)">
+                    <td>@p.AdSoyad</td>
+                    <td>@p.Departman</td>
+                    <td>@p.Unvan</td>
+                    <td>
+                        <select class="inp docsel" data-p="@p.Personelno">
+                            <option value="">— GAP (tanım yok) —</option>
+                            @foreach (var d in Model.Docs)
+                            {
+                                <option value="@d.Id" selected="@(p.DocId == d.Id)">@d.PositionCode</option>
+                            }
+                        </select>
+                    </td>
+                    <td class="src">
+                        <span class="status @(p.Source == "kişi" ? "ok" : p.Source == "rol" ? "warn" : "err")">@(string.IsNullOrEmpty(p.Source) ? "GAP" : p.Source)</span>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@section Scripts {
+<script>
+(function(){
+  const token=document.querySelector('input[name="__RequestVerificationToken"]').value;
+  const grid=document.getElementById('grid');
+  function badge(cls,txt){ const s=document.createElement('span'); s.className='status '+cls; s.textContent=txt; return s; }
+  function setBadge(cell,cls,txt){ cell.textContent=''; cell.appendChild(badge(cls,txt)); }
+  grid.addEventListener('change',async e=>{
+    const sel=e.target.closest('.docsel'); if(!sel) return;
+    const row=sel.closest('tr'); const src=row.querySelector('.src');
+    sel.disabled=true;
+    try{
+      const body=new URLSearchParams({personelno:sel.dataset.p});
+      if(sel.value) body.append('docId',sel.value);
+      const r=await fetch('@Url.Action("Save","Mapping")',{method:'POST',headers:{'RequestVerificationToken':token,'Content-Type':'application/x-www-form-urlencoded'},body});
+      const j=await r.json();
+      if(j.ok){ setBadge(src, sel.value?'ok':'err', sel.value?'kişi':'GAP'); row.dataset.gap=sel.value?0:1; recount(); }
+      else setBadge(src,'err','hata');
+    }catch(_){ setBadge(src,'err','hata'); }
+    sel.disabled=false;
+  });
+  function recount(){
+    const rows=[...grid.querySelectorAll('.prow')];
+    const gap=rows.filter(r=>r.dataset.gap==='1').length;
+    document.getElementById('stMapped').textContent=rows.length-gap;
+    document.getElementById('stGap').textContent=gap;
+  }
+  function filter(){
+    const q=document.getElementById('q').value.toLowerCase();
+    const og=document.getElementById('onlyGap').checked;
+    for(const r of grid.querySelectorAll('.prow')){
+      const show=(!q||r.dataset.key.includes(q))&&(!og||r.dataset.gap==='1');
+      r.style.display=show?'':'none';
+    }
+  }
+  document.getElementById('q').addEventListener('input',filter);
+  document.getElementById('onlyGap').addEventListener('change',filter);
+})();
+</script>
+}
