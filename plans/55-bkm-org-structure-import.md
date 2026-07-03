@@ -18,7 +18,11 @@ Hedef: `/OrgChart`'ta BKM'nin gerçek 53-düğüm yapısı + holder kişiler + t
 
 ## Scope
 
-**Karar (kullanıcı + danışman):** Mevcut `OrgPositions` tablosunu **yeniden kullan** (footprint-ladder basamak-1: tabloyu genişlet, yeni tablo yok). Mevcut `/OrgChart` render + Zirve-incumbent + CRUD altyapısı korunur.
+**Karar (kullanıcı 2026-07-03):** _"Zirve ile eşleştireceğim için ayrı orgchart gereksiz; bizimki ana omurga olmalı."_ → **org.json (bizim 48-53 tasarım) = ana omurga = `OrgPositions`.** Zirve personeli bu omurgaya EŞLENİR (GorevPersonelMap kişi-düzeyi + Zirve incumbent overlay), omurga Zirve'den türetilmez. Ayrı org-chart ekranı YOK — tek `/OrgChart`.
+
+> **⚠️ DECISIONS G supersede:** bkm `DECISIONS.md` G maddesi "OrgPositions = Zirve aynası (Direktör-modeli)" diyordu. Bu karar onu **geçersiz kılar** — omurga bizim tasarım, Zirve maps-in. bkm DECISIONS.md'ye "Bölüm I" olarak işlendi (2026-07-03). Eski 62 Zirve-türevi satır → IsActive=0.
+
+**Mevcut `OrgPositions` tablosunu yeniden kullan** (footprint-ladder basamak-1: tabloyu genişlet, yeni tablo yok). `/OrgChart` render + Zirve-incumbent (artık ZirveMatchKey ile) + CRUD altyapısı korunur; içerik omurga = bizim org.json.
 
 **Dokunulacak:**
 - `Mosaik/Database/` — OrgPositions ALTER (3 kolon) + org.json rebuild seed

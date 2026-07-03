@@ -2,7 +2,7 @@
 
 Bu dosya her Claude oturumunun başında okunur. **Değişmez kurallar + kimlik.** Tarihli notlar, geçmiş kararlar ve detay kurallar ayrı dosyalarda:
 
-- `.claude/rules/*.md` — davranış kuralları (konuya göre — yeni view yazmadan önce **`ui-patterns.md`** zorunlu)
+- `.claude/rules/*.md` — davranış kuralları (konuya göre — yeni view yazmadan önce **`ui-patterns.md`** zorunlu; **org / görev-tanımı / OrgChart / OrgPositions / eşleme** işine dokunmadan önce **`gorev-org-yapisi.md`** + `D:\Dev\gorevtanimlari\bkm\DECISIONS.md` zorunlu — canon orada, yeniden keşif yasak)
 - `.claude/agents/*.md` — proje agent'ları (8 kod review + commit-splitter)
 - `.claude/commands/*.md` — slash komutlar (`/feature-dev`, `/review-pr`)
 - `.claude/skills/*/SKILL.md` — proje + frontend tasarım skill'leri
