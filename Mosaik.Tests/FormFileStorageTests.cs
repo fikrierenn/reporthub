@@ -10,8 +10,11 @@ namespace Mosaik.Tests
     public class FormFileStorageTests
     {
         // env decode yolunda kullanılmaz (yalnız WriteToDisk). Stub yeterli.
+        // Encryption: ephemeral key-ring (test-içi, disk'e key yazmaz) — A2-#1 dosya-şifreleme ctor'u.
         private static FormFileStorage NewStorage() =>
-            new(new StubEnv(), NullLogger<FormFileStorage>.Instance);
+            new(new StubEnv(),
+                new FormEncryptionService(new Microsoft.AspNetCore.DataProtection.EphemeralDataProtectionProvider()),
+                NullLogger<FormFileStorage>.Instance);
 
         private static string DataUrl(string mime, byte[] bytes) =>
             $"data:{mime};base64,{Convert.ToBase64String(bytes)}";
@@ -83,6 +86,31 @@ namespace Mosaik.Tests
         {
             var r = NewStorage().DecodeSignature("bilerek-bozuk", FormFileStorage.PublicMaxBytes);
             Assert.False(r.IsSuccess);
+        }
+
+        // Plan 57 A2-#1 — dosya byte şifreleme round-trip (aynı provider çözer, ciphertext ≠ plaintext).
+        [Fact]
+        public void EncryptBytes_RoundTrip_DecryptsToOriginal()
+        {
+            var enc = new FormEncryptionService(new Microsoft.AspNetCore.DataProtection.EphemeralDataProtectionProvider());
+            var plain = Encoding.UTF8.GetBytes("ihbar kanıt dosyası içeriği");
+
+            var cipher = enc.EncryptBytes(plain);
+            Assert.NotEqual(plain, cipher);
+
+            Assert.True(enc.TryDecryptBytes(cipher, out var roundTrip));
+            Assert.Equal(plain, roundTrip);
+        }
+
+        [Fact]
+        public void TryDecryptBytes_WrongKeyRing_FailsClosed()
+        {
+            // Farklı provider (farklı key) → çözemez, exception değil false (fail-closed sinyal).
+            var enc1 = new FormEncryptionService(new Microsoft.AspNetCore.DataProtection.EphemeralDataProtectionProvider());
+            var enc2 = new FormEncryptionService(new Microsoft.AspNetCore.DataProtection.EphemeralDataProtectionProvider());
+
+            var cipher = enc1.EncryptBytes([1, 2, 3]);
+            Assert.False(enc2.TryDecryptBytes(cipher, out _));
         }
 
         private sealed class StubEnv : IWebHostEnvironment

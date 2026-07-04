@@ -30,6 +30,10 @@ namespace Mosaik.Modules.Forms.Entities
         [MaxLength(120)]
         public string? MimeType { get; set; }
 
+        // Plan 57 A2-#1 — form IsEncrypted ise disk içeriği DataProtection ile şifreli
+        // (FileSize orijinal boyut; indirme decrypt-gate arkasında çözer).
+        public bool IsEncrypted { get; set; }
+
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     }
 }

@@ -23,13 +23,15 @@ namespace Mosaik.Modules.Forms.Areas.Forms.Controllers
         private readonly FormSubmissionQueryService _submissions;
         private readonly Microsoft.EntityFrameworkCore.DbContext _db;
         private readonly Microsoft.AspNetCore.Hosting.IWebHostEnvironment _env;
+        private readonly FormEncryptionService _encryption;
         private readonly IAuditLog _audit;
 
         public FormDefinitionController(
             FormDefinitionService definitions, FormFieldService fields, PublicTokenService tokens,
             DataElementLookupService dataElements, FormSubmissionQueryService submissions,
             Microsoft.EntityFrameworkCore.DbContext db,
-            Microsoft.AspNetCore.Hosting.IWebHostEnvironment env, IAuditLog audit)
+            Microsoft.AspNetCore.Hosting.IWebHostEnvironment env,
+            FormEncryptionService encryption, IAuditLog audit)
         {
             _definitions = definitions;
             _fields = fields;
@@ -38,6 +40,7 @@ namespace Mosaik.Modules.Forms.Areas.Forms.Controllers
             _submissions = submissions;
             _db = db;
             _env = env;
+            _encryption = encryption;
             _audit = audit;
         }
 
@@ -168,9 +171,43 @@ namespace Mosaik.Modules.Forms.Areas.Forms.Controllers
             if (!abs.StartsWith(root, StringComparison.OrdinalIgnoreCase) || !System.IO.File.Exists(abs))
                 return NotFound();
 
+            // Plan 57 A2-#1 — şifreli dosya: decrypt SADECE İhbar Komitesi/admin (G2 canDecrypt kuralı).
+            // Ham ciphertext da yetkisize verilmez (anlamsız + key-id sızdırma yok) → Forbid.
+            if (file.IsEncrypted)
+            {
+                var canDecrypt = User.IsInRole("ihbar-komitesi") || User.IsInRole("admin");
+                if (!canDecrypt)
+                    return Forbid();
+
+                // Bilinçli tam-buffer (M-1): DataProtection'da streaming decrypt yok; şifreli form
+                // upload'ı 10MB cap'li (SubmitAsync maxBytes) → bellek maliyeti sınırlı, admin-only path.
+                var cipher = await System.IO.File.ReadAllBytesAsync(abs);
+                if (!_encryption.TryDecryptBytes(cipher, out var plain))
+                {
+                    // Key kayıp/bozuk — sessiz bozuk dosya İNDİRTME (silent-failure): logla + generic mesaj.
+                    // Redirect kullanıcının geldiği yanıt-detay sayfasına (mesajı orası render eder;
+                    // Index TempData göstermiyordu — silent-failure HIGH fix).
+                    await _audit.LogAsync("form_file_decrypt_failed", "form_submission_file", fileId.ToString(), file.FileName);
+                    TempData["Message"] = "Dosya çözülemedi — sistem yöneticisine bildirin.";
+                    TempData["MessageType"] = "error";
+                    return RedirectToAction(nameof(SubmissionDetail), new { id = file.FormSubmissionId });
+                }
+
+                await _audit.LogAsync("form_file_download", "form_submission_file", fileId.ToString(), $"{file.FileName} (şifreli, çözüldü)");
+                return File(plain, file.MimeType ?? "application/octet-stream", file.FileName);
+            }
+
             await _audit.LogAsync("form_file_download", "form_submission_file", fileId.ToString(), file.FileName);
-            var stream = System.IO.File.OpenRead(abs);
-            return File(stream, file.MimeType ?? "application/octet-stream", file.FileName);
+            try
+            {
+                // TOCTOU: Exists ile OpenRead arası dosya silinebilir/kilitlenebilir (AV) — 500 yerine 404.
+                var stream = System.IO.File.OpenRead(abs);
+                return File(stream, file.MimeType ?? "application/octet-stream", file.FileName);
+            }
+            catch (IOException)
+            {
+                return NotFound();
+            }
         }
 
         [HttpPost]

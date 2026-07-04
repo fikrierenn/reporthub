@@ -4,6 +4,8 @@
 @{
     Layout = "_AppLayout";
     ViewData["Title"] = "Yanıt Detayı";
+    var msg = TempData["Message"] as string;
+    var msgType = TempData["MessageType"] as string;
 }
 
 @section Breadcrumb {
@@ -33,6 +35,11 @@
         }
     </p>
 </div>
+
+@if (!string.IsNullOrWhiteSpace(msg))
+{
+    <div role="alert" class="alert @(msgType == "success" ? "success" : "error")">@msg</div>
+}
 
 @if (Model.Values.Any(v => v.Masked))
 {

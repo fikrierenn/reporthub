@@ -56,7 +56,9 @@ namespace Mosaik.Modules.Forms.Services
                 .ToListAsync(ct);
 
             // Public/anonim (token ile veya IsAnonymous) daha sıkı boyut limiti (advisor conf 80).
-            var maxBytes = def.IsAnonymous || input.PublicTokenId != null
+            // Şifreli form da sıkı limit (security M-1): decrypt DataProtection'da streaming yok →
+            // indirmede tam plaintext bellekte buffer'lanır; 10MB cap LOH baskısını sınırlar.
+            var maxBytes = def.IsAnonymous || def.IsEncrypted || input.PublicTokenId != null
                 ? FormFileStorage.PublicMaxBytes
                 : FormFileStorage.InternalMaxBytes;
 
@@ -130,7 +132,8 @@ namespace Mosaik.Modules.Forms.Services
             {
                 foreach (var (field, file) in decoded)
                 {
-                    var stored = await fileStorage.WriteToDiskAsync(file, input.FirmaId, field.FieldKey, ct);
+                    // A2-#1: şifreli formda dosya ekleri de şifreli yazılır (alan-şifrelemeyle tutarlı).
+                    var stored = await fileStorage.WriteToDiskAsync(file, input.FirmaId, field.FieldKey, def.IsEncrypted, ct);
                     written.Add(stored);
                     submission.Files.Add(stored);
                     submission.Values.Add(new FormSubmissionFieldValue

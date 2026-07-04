@@ -11,7 +11,7 @@ namespace Mosaik.Modules.Forms.Services
     // İki aşama: Decode (saf — magic-byte+boyut+base64, DİSK'e dokunmaz) → WriteToDisk (I/O).
     // Ayrım orphan-on-failure'ı önler: SubmissionService önce tüm alanları Decode eder, hepsi
     // geçerliyse WriteToDisk çağırır (bir alan geçersizse hiçbir dosya diske yazılmaz).
-    public class FormFileStorage(IWebHostEnvironment env, ILogger<FormFileStorage> logger)
+    public class FormFileStorage(IWebHostEnvironment env, FormEncryptionService encryption, ILogger<FormFileStorage> logger)
     {
         public const int PublicMaxBytes = 10 * 1024 * 1024;   // anonim/public — sıkı (advisor conf 80)
         public const int InternalMaxBytes = 50 * 1024 * 1024; // login'li dahili form
@@ -79,8 +79,10 @@ namespace Mosaik.Modules.Forms.Services
 
         // Diske yaz — GUID ad + path-traversal guard (Documents pattern, DocumentsController.cs:126-140).
         // Entity döner ama DB'ye eklenmez (SubmissionService submission graph'ına bağlar).
+        // Plan 57 A2-#1: encrypt=true (form IsEncrypted — ihbar) ise içerik DataProtection ile
+        // şifreli yazılır; FileSize orijinal boyut kalır (görüntüleme), disk boyutu farklıdır.
         public async Task<FormSubmissionFile> WriteToDiskAsync(
-            DecodedFile file, int firmaId, string fieldKey, CancellationToken ct = default)
+            DecodedFile file, int firmaId, string fieldKey, bool encrypt = false, CancellationToken ct = default)
         {
             var uploadDir = Path.Combine(env.ContentRootPath, "App_Data", "forms", firmaId.ToString());
             Directory.CreateDirectory(uploadDir);
@@ -93,7 +95,8 @@ namespace Mosaik.Modules.Forms.Services
             if (!resolved.StartsWith(rootPrefix, StringComparison.OrdinalIgnoreCase))
                 throw new InvalidOperationException("Dosya yolu doğrulaması başarısız.");
 
-            await System.IO.File.WriteAllBytesAsync(diskPath, file.Bytes, ct);
+            var payload = encrypt ? encryption.EncryptBytes(file.Bytes) : file.Bytes;
+            await System.IO.File.WriteAllBytesAsync(diskPath, payload, ct);
             var relPath = Path.GetRelativePath(env.ContentRootPath, diskPath).Replace('\\', '/');
 
             return new FormSubmissionFile
@@ -103,7 +106,8 @@ namespace Mosaik.Modules.Forms.Services
                 FileName = file.FileName,
                 DiskPath = relPath,
                 FileSize = file.Bytes.LongLength,
-                MimeType = file.Mime
+                MimeType = file.Mime,
+                IsEncrypted = encrypt
             };
         }
 

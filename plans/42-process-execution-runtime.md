@@ -2,7 +2,7 @@
 
 **Tarih:** 2026-05-21
 **Yazan:** Fikri / Claude
-**Durum:** `Taslak` (onay bekliyor)
+**Durum:** `Taslak` (onay bekliyor) · ⚠️ **REVİZYON ŞART (2026-07-04, Plan 57 §4.5 Council Verdict):** ProcessInstance İKİNCİ state machine OLAMAZ. `IProcessExecutionService` kendi başlat/ilerlet/kapat + `ProcessInstanceTransition` state-log İPTAL → ProcessInstance = ince VAKA KONTEYNERİ (türetilmiş status + EntityRelations timeline), "ilerlet" = `IWorkflowService.AdvanceAsync`'e delege. Timer = mevcut WorkflowEngine delay-step + Hangfire (yeni TimerStep yok). Tek motor = WorkflowEngine; ProcessInstance onu WRAP eder, duplicate etmez. Bu revizyon yapılmadan onaya girmez. Detay: [`plans/57-forms-workflow-bridge.md`](57-forms-workflow-bridge.md) §4.5.
 **Bağımlılık:** Plan 38 EntityRelations (✅), Plan 36 Workflow Engine (✅), Plan 40 KVKK Process tanım (Taslak), Plan 41 Form Builder (Taslak — kritik prereq), Plan 34 SOP (Taslak), Plan 31 SMTP (✅)
 **Konumu:** vNext kalbinin son birleştirici taşı. SOP + Comment + Workflow + Form + KVKK = bu plan ile **portal execution platform** olur.
 
