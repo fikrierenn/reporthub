@@ -31,7 +31,7 @@ namespace Mosaik.Modules.Forms.Entities
 
         public string? ValidationRules { get; set; }              // JSON: { minLength, maxLength, regex, custom }
         public string? Options { get; set; }                      // JSON: select/radio/checkbox seçenekler
-        public string? ConditionalLogic { get; set; }             // v2 — JSON: { showIf: [...] }
+        public string? ConditionalLogic { get; set; }             // G3 — structured JSON: { field, op(eq/ne), value }
         public string? DefaultValue { get; set; }
 
         [MaxLength(200)]

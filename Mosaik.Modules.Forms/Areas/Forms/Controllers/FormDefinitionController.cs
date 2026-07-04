@@ -261,6 +261,12 @@ namespace Mosaik.Modules.Forms.Areas.Forms.Controllers
                 return NotFound();
 
             ViewBag.FieldTypeOptions = FieldTypeOptions();
+            // G3 koşul referansı seçimi: aynı formdaki DİĞER alanların anahtarları (kendine referans yok).
+            ViewBag.SiblingFieldKeys = def!.Fields
+                .Where(f => f.Id != id)
+                .OrderBy(f => f.Order)
+                .Select(f => f.FieldKey)
+                .ToList();
             return View(FromField(field));
         }
 
@@ -374,10 +380,23 @@ namespace Mosaik.Modules.Forms.Areas.Forms.Controllers
                 rulesJson = rules.ToJsonString();
             }
 
+            // G3 koşullu görünürlük: referans alan + değer verildiyse structured JSON. op eq/ne whitelist.
+            string? conditionalJson = null;
+            if (!string.IsNullOrWhiteSpace(m.ConditionalField) && !string.IsNullOrWhiteSpace(m.ConditionalValue))
+            {
+                var op = m.ConditionalOp == "ne" ? "ne" : "eq";
+                conditionalJson = new JsonObject
+                {
+                    ["field"] = m.ConditionalField.Trim(),
+                    ["op"] = op,
+                    ["value"] = m.ConditionalValue
+                }.ToJsonString();
+            }
+
             return new FormFieldInput(
                 FieldKey: m.FieldKey, Label: m.Label, HelpText: m.HelpText, FieldType: m.FieldType,
                 IsRequired: m.IsRequired, Options: optionsJson, ValidationRules: rulesJson,
-                DefaultValue: m.DefaultValue, Placeholder: m.Placeholder);
+                DefaultValue: m.DefaultValue, Placeholder: m.Placeholder, ConditionalLogic: conditionalJson);
         }
 
         private static FormFieldFormViewModel FromField(FormField f)
@@ -409,6 +428,15 @@ namespace Mosaik.Modules.Forms.Areas.Forms.Controllers
                     if (rules?["regex"] is JsonValue rx && rx.TryGetValue(out string? pattern)) vm.Regex = pattern;
                 }
                 catch (JsonException) { /* bozuk JSON — boş bırak */ }
+            }
+
+            // G3 koşullu görünürlük: structured JSON → VM alanları (bozuksa boş, admin yeniden kurar).
+            var cond = FormConditionEvaluator.TryParse(f.ConditionalLogic);
+            if (cond != null)
+            {
+                vm.ConditionalField = cond.Field;
+                vm.ConditionalOp = cond.Op;
+                vm.ConditionalValue = cond.Value;
             }
 
             return vm;

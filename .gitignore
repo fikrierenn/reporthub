@@ -69,3 +69,7 @@ Mosaik/App_Data/models/**/*.gguf
 Mosaik/App_Data/models/**/*.onnx
 Mosaik/App_Data/models/**/*.bin
 Mosaik/App_Data/models/**/*.safetensors
+
+# Plan 56 M-A G1 — DataProtection anahtar halkası (Forms alan-şifreleme). ASLA commit'lenmez
+# (şifreleme anahtarı = sır). Prod'da güvenli persist (Key Vault/DPAPI) ayrı ele alınır.
+Mosaik/App_Data/dp-keys/

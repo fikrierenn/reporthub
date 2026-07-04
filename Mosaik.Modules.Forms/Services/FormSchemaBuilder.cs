@@ -29,6 +29,12 @@ namespace Mosaik.Modules.Forms.Services
 
             if (field.IsRequired && field.FieldType != FormFieldType.Section)
                 el["isRequired"] = true;
+
+            // Plan 56 M-A G3 — koşullu görünürlük. Structured ConditionalLogic → survey-core visibleIf
+            // (injection-güvenli literal, FormConditionEvaluator). Server ayrıca authoritative doğrular.
+            var visibleIf = FormConditionEvaluator.BuildVisibleIf(field.ConditionalLogic);
+            if (visibleIf != null)
+                el["visibleIf"] = visibleIf;
             if (!string.IsNullOrWhiteSpace(field.HelpText))
                 el["description"] = field.HelpText;
             if (!string.IsNullOrWhiteSpace(field.Placeholder))

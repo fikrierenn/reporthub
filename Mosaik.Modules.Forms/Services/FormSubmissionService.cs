@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Mosaik.Core.Domain;
 using Mosaik.Modules.Forms.Entities;
 
@@ -20,7 +21,7 @@ namespace Mosaik.Modules.Forms.Services
     // Plan 41 Faz 1 — submission save + FormVersionId bind (§4.6 ZORUNLU). Workflow/ProcessInstance
     // trigger stub (Plan 36/42 — sonraki fazlarda gerçek çağrı eklenir).
     // Faz 4 — File/Signature alanları: base64 dataURL decode → magic-byte doğrula → disk yaz → ValueFileId.
-    public class FormSubmissionService(DbContext db, FormValidationService validation, FormFileStorage fileStorage, FormEncryptionService encryption)
+    public class FormSubmissionService(DbContext db, FormValidationService validation, FormFileStorage fileStorage, FormEncryptionService encryption, ILogger<FormSubmissionService> logger)
     {
         // silent-failure-hunter HIGH — alan-bazlı hata dict'i bu koda taşınır (JSON-encoded
         // Message); controller/JS ayırt edip survey-core question.addError'a bağlar.
@@ -66,6 +67,10 @@ namespace Mosaik.Modules.Forms.Services
             {
                 if (field.FieldType is not (FormFieldType.File or FormFieldType.Signature))
                     continue;
+                // G3 AUTHORITATIVE: koşulu sağlanmayan (gizli) alanın dosyası diske yazılmaz/saklanmaz —
+                // kötü client gizli alana değer basamaz (anonimlik/koşul bütünlüğü server'da zorlanır).
+                if (!FormConditionEvaluator.IsVisible(field, input.Values))
+                    continue;
                 if (!input.Values.TryGetValue(field.FieldKey, out var raw) || string.IsNullOrWhiteSpace(raw))
                     continue;
 
@@ -101,6 +106,15 @@ namespace Mosaik.Modules.Forms.Services
                     continue;
                 if (field.FieldType is FormFieldType.File or FormFieldType.Signature)
                     continue;
+                // G3 AUTHORITATIVE: gizli alanın değeri saklanmaz (validation zaten atlar; burada da
+                // persist edilmez — aksi halde koşullu-gizli alana basılan değer sızardı).
+                if (!FormConditionEvaluator.IsVisible(field, input.Values))
+                {
+                    // Gizli alana gönderilen dolu değer atılıyor = tamper/client-drift sinyali — iz bırak.
+                    if (input.Values.TryGetValue(field.FieldKey, out var dropped) && !string.IsNullOrWhiteSpace(dropped))
+                        logger.LogWarning("Forms: gizli alana gönderilen değer atıldı. form={FormId} field={FieldKey}", def.Id, field.FieldKey);
+                    continue;
+                }
                 if (!input.Values.TryGetValue(field.FieldKey, out var raw) || raw == null)
                     continue;
 

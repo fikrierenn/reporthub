@@ -3,6 +3,7 @@
     ViewData["Title"] = "Alanı Düzenle";
     Layout = "_AppLayout";
     var fieldTypeOptions = ViewBag.FieldTypeOptions as List<(byte Value, string Text)> ?? [];
+    var siblingFieldKeys = ViewBag.SiblingFieldKeys as List<string> ?? [];
 }
 
 @section Breadcrumb {
@@ -82,6 +83,38 @@
             <div class="field">
                 <label class="lab" for="ph">Placeholder</label>
                 <input class="inp" id="ph" name="Placeholder" value="@Model.Placeholder" maxlength="200" />
+            </div>
+        </div>
+    </div>
+
+    <div class="form-section-card wide split">
+        <div class="form-section-head">
+            <p class="form-section-head__title">Koşullu Görünürlük</p>
+            <p class="form-section-head__sub">Bu alan yalnızca seçilen alan belirtilen değere eşit (veya farklı) olduğunda gösterilir. Boş bırakılırsa her zaman görünür.</p>
+        </div>
+        <div class="form-section-body">
+            <div class="grid-3col">
+                <div class="field">
+                    <label class="lab" for="cf">Referans Alan</label>
+                    <select class="inp" id="cf" name="ConditionalField">
+                        <option value="">— Koşulsuz —</option>
+                        @foreach (var key in siblingFieldKeys)
+                        {
+                            <option value="@key" selected="@(key == Model.ConditionalField)">@key</option>
+                        }
+                    </select>
+                </div>
+                <div class="field">
+                    <label class="lab" for="co">Koşul</label>
+                    <select class="inp" id="co" name="ConditionalOp">
+                        <option value="eq" selected="@(Model.ConditionalOp == "eq")">eşit</option>
+                        <option value="ne" selected="@(Model.ConditionalOp == "ne")">eşit değil</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label class="lab" for="cv">Değer</label>
+                    <input class="inp" id="cv" name="ConditionalValue" value="@Model.ConditionalValue" maxlength="300" />
+                </div>
             </div>
         </div>
     </div>

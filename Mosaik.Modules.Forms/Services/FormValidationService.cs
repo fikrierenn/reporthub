@@ -19,6 +19,13 @@ namespace Mosaik.Modules.Forms.Services
             var errors = new Dictionary<string, string>();
             foreach (var field in fields)
             {
+                // Plan 56 M-A G3 — koşullu görünürlük AUTHORITATIVE: koşulu diğer submitted değerlerle
+                // yeniden değerlendir. Görünmüyorsa required + format doğrulama atlanır (kötü client
+                // "gizliydi" diye zorunlu alanı boş bırakamaz / gizli alana değer basamaz). Bozuk koşul
+                // → görünür varsayılır (fail-closed, required zorlanır).
+                if (!FormConditionEvaluator.IsVisible(field, values))
+                    continue;
+
                 values.TryGetValue(field.FieldKey, out var raw);
                 var error = FormFieldValidator.Validate(field, raw);
                 if (error != null)

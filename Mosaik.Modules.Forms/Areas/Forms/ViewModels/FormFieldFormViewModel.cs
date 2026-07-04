@@ -28,6 +28,12 @@ namespace Mosaik.Modules.Forms.Areas.Forms.ViewModels
         public string? DefaultValue { get; set; }
         public string? Placeholder { get; set; }
 
+        // Plan 56 M-A G3 — koşullu görünürlük (opsiyonel). "ConditionalField op value" → structured JSON.
+        // Boş ConditionalField = koşulsuz (her zaman görünür).
+        public string? ConditionalField { get; set; }
+        public string ConditionalOp { get; set; } = "eq";
+        public string? ConditionalValue { get; set; }
+
         public List<(string Value, string Text)> FieldTypeOptions { get; set; } = [];
     }
 }

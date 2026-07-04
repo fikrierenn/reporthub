@@ -9,11 +9,30 @@ namespace Mosaik.Tests
     public class FormSchemaBuilderTests
     {
         private static FormField Field(byte type, string key = "f1", bool required = false,
-            string? options = null, string? validationRules = null) => new()
+            string? options = null, string? validationRules = null, string? conditionalLogic = null) => new()
         {
             FieldKey = key, Label = "Alan " + key, FieldType = type, IsRequired = required,
-            Options = options, ValidationRules = validationRules
+            Options = options, ValidationRules = validationRules, ConditionalLogic = conditionalLogic
         };
+
+        [Fact]
+        public void BuildSchemaJson_ConditionalLogic_EmitsVisibleIf()
+        {
+            var json = FormSchemaBuilder.BuildSchemaJson(
+                [Field(FormFieldType.Text, conditionalLogic: "{\"field\":\"anonim\",\"op\":\"eq\",\"value\":\"Hayır\"}")]);
+            var el = JsonNode.Parse(json)!["elements"]![0]!.AsObject();
+
+            Assert.Equal("{anonim} = \"Hayır\"", el["visibleIf"]!.GetValue<string>());
+        }
+
+        [Fact]
+        public void BuildSchemaJson_NoConditionalLogic_NoVisibleIf()
+        {
+            var json = FormSchemaBuilder.BuildSchemaJson([Field(FormFieldType.Text)]);
+            var el = JsonNode.Parse(json)!["elements"]![0]!.AsObject();
+
+            Assert.False(el.ContainsKey("visibleIf"));
+        }
 
         [Fact]
         public void BuildSchemaJson_TextField_MapsToTextType()
