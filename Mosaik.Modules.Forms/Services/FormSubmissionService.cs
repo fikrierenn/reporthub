@@ -3,6 +3,7 @@ using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Mosaik.Core.Domain;
+using Mosaik.Core.Notification;
 using Mosaik.Modules.Forms.Entities;
 
 namespace Mosaik.Modules.Forms.Services
@@ -21,7 +22,7 @@ namespace Mosaik.Modules.Forms.Services
     // Plan 41 Faz 1 — submission save + FormVersionId bind (§4.6 ZORUNLU). Workflow/ProcessInstance
     // trigger stub (Plan 36/42 — sonraki fazlarda gerçek çağrı eklenir).
     // Faz 4 — File/Signature alanları: base64 dataURL decode → magic-byte doğrula → disk yaz → ValueFileId.
-    public class FormSubmissionService(DbContext db, FormValidationService validation, FormFileStorage fileStorage, FormEncryptionService encryption, ILogger<FormSubmissionService> logger)
+    public class FormSubmissionService(DbContext db, FormValidationService validation, FormFileStorage fileStorage, FormEncryptionService encryption, INotificationService notifications, ILogger<FormSubmissionService> logger)
     {
         // silent-failure-hunter HIGH — alan-bazlı hata dict'i bu koda taşınır (JSON-encoded
         // Message); controller/JS ayırt edip survey-core question.addError'a bağlar.
@@ -147,6 +148,30 @@ namespace Mosaik.Modules.Forms.Services
             {
                 fileStorage.TryDeleteAll(written); // disk-write veya DB başarısız — yazılmış dosyaları temizle
                 throw;
+            }
+
+            // Plan 56 M-A G4 — submit sonrası bildirim: form sahibine (def.CreatedBy) in-app, BEST-EFFORT.
+            // Submission zaten commit'li (SaveChanges yukarıda); bildirim ayrı try/catch — fail'de submit
+            // BAŞARILI kalır (non-critical, kullanıcıya submit hatası yansımaz). Orphan-file catch'inin
+            // DIŞINDA (o blok rollback semantiği taşır). İçerik METADATA-ONLY (message=null): şifreli/anonim
+            // form değeri bildirime SIZMAZ (KVKK + tutarlılık); detay yetki-gated ekranda. Recipient hep
+            // owner (personel) — submitter DEĞİL. CreatedBy=0 (eski/seed form) guard.
+            if (def.CreatedBy > 0)
+            {
+                try
+                {
+                    // Notification.Title MaxLength(200); def.Name (≤200) + sabit son-ek başlığı taşırsa
+                    // CreateAsync SaveChanges throw eder → uzun-adlı formda bildirim sessizce düşerdi. Kırp.
+                    var shortName = def.Name.Length > 160 ? def.Name[..160] + "…" : def.Name;
+                    await notifications.CreateAsync(
+                        def.CreatedBy, "form_submission", submission.Id,
+                        $"'{shortName}' formuna yeni yanıt geldi", null,
+                        $"/Forms/FormDefinition/SubmissionDetail/{submission.Id}", "info", "system");
+                }
+                catch (Exception ex)
+                {
+                    logger.LogWarning(ex, "Forms: submit bildirimi gönderilemedi. form={FormId} submission={SubmissionId}", def.Id, submission.Id);
+                }
             }
 
             // Plan 36/42 — workflow/ProcessInstance trigger stub. Sonraki fazlarda gerçek çağrı.
