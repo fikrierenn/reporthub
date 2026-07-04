@@ -23,8 +23,35 @@ window.mosaikFormRender = function () {
             try { schema = JSON.parse(schemaJson); }
             catch (e) { console.error(e); this.error = 'Form şeması bozuk.'; return; }
 
+            // Türkçe UI: vendored survey-core i18n bundle yok → minimal TR sözlük override (self-contained,
+            // ek dosya indirme yok). Aksi halde "Complete"/"Select File"/"Response required" İngilizce kalır.
+            try {
+                if (window.Survey && Survey.surveyLocalization) {
+                    var loc = Survey.surveyLocalization.locales;
+                    loc.tr = loc.tr || {};
+                    var tr = loc.tr;
+                    tr.completeText = 'Gönder';
+                    tr.pageNextText = 'İleri';
+                    tr.pagePrevText = 'Geri';
+                    tr.requiredError = 'Bu alan zorunludur.';
+                    tr.chooseFileCaption = 'Dosya Seç';
+                    tr.noFileChosenCaption = 'Dosya seçilmedi';
+                    tr.dragAreaCaption = 'Dosyayı buraya sürükleyin veya seçmek için tıklayın.';
+                    tr.clearCaption = 'Temizle';
+                    tr.removeFileCaption = 'Kaldır';
+                    tr.confirmDelete = 'Kaydı silmek istiyor musunuz?';
+                    tr.otherItemText = 'Diğer (açıklayın)';
+                    tr.noneItemText = 'Hiçbiri';
+                    tr.selectAllItemText = 'Tümünü seç';
+                    tr.emptyMessage = 'Gösterilecek veri yok';
+                    tr.value = 'Değer';
+                    Survey.surveyLocalization.defaultLocale = 'tr';
+                }
+            } catch (e) { /* locale override zorunlu değil — İngilizce fallback kalır */ }
+
             try {
                 this.survey = new Survey.Model(schema);
+                this.survey.locale = 'tr';
                 var self = this;
                 this.survey.onComplete.add(function (sender) { self.submit(sender.data); });
                 this.survey.render(document.getElementById('surveyContainer'));
