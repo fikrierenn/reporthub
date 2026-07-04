@@ -121,8 +121,15 @@ Reddedilenler:
 - **B4 · Onaycı inbox linki** — `WorkflowInboxProvider` zaten "Süreçlerim"e düşürüyor (EntityUrl boşsa `/Workflow/Instance/{id}` fallback). İzin verisini görmek için `EntityUrl` → FormSubmission detay map'i: `IEntityWorkflowProvider` FormSubmission implementasyonu (Faz B4, küçük).
 - **B5 · Kapanış senkron** — advance/karar sonrası submission durum yansıması (opsiyonel Status güncelleme); TODO/journal migrate notu (Risk 2).
 
+### Part C — Org-omurga amir çözümleme (SONRAKİ FAZ, kullanıcı talebi 2026-07-05)
+Kullanıcı: _"organizasyon şemasını ekleyince amir vs çok iyi olacak."_ §4.6 çalınabilir-fikir #1'in (Frappe onaycı-hiyerarşi) gerçeklenmesi:
+- **C1 · Yeni assignee tipi:** step properties `assigneeKind:"manager"` — runtime'da SUBMITTER'ın gerçek amiri çözülür (statik rol değil). Çözüm zinciri: submitter User → Personelno → `GorevPersonelMap`/`HolderPersonelno` → `OrgPositions` düğümü → `ParentId` → amir pozisyon → holder → Mosaik User.
+- **C2 · Ön-koşul (gap):** `Users` ↔ Personelno/OrgPositions bağı henüz YOK (Mosaik users ↔ Zirve personel eşleşmesi). Karar gerek: User tablosuna Personelno kolonu mu, ayrı map mi. **`gorev-org-yapisi.md` + bkm DECISIONS oku, `bkm-gorev-danismani`/portal-danışmanına danış** (org işi — atlanamaz kural).
+- **C3 · Fallback:** amir çözülemezse (pozisyon boş/eşleşme yok) → `assigneeRole` fallback (mevcut davranış) + LogWarning. Fail-closed: onaysız geçmez.
+- Kapsam: ayrı faz — Part B walking-skeleton'u değiştirmez (rol-bazlı şablon çalışır durumda kalır).
+
 ### Sıra
-Part A (G5 + borç triage) → Part B1→B2→B3→B4→B5. Her faz: **danış→kod→4-scan→preview→commit** (faz-geliştirme disiplini).
+Part A (G5 + borç triage) → Part B1→B2→B5 kapanış. **Part C (org-amir) EN SONA ertelendi (kullanıcı kararı 2026-07-05)** — önce Plan 56 kalan modüller (M-B Documents → M-C ölü kod → M-E hijyen → M-D cross-trigger), org şeması entegrasyonu kapanış taşı. Her faz: **danış→kod→4-scan→preview→commit**.
 
 ---
 

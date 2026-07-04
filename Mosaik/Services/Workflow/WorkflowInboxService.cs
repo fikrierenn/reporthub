@@ -120,6 +120,21 @@ namespace Mosaik.Services.Workflow
                 }
             }
 
+            // Plan 57 B4 — form-tetikli onay (izin talebi vb.): inbox linki yanıt detayına gider
+            // (yetki+decrypt-gated ekran). Title = form adı (yanıt İÇERİĞİ değil — şifreli/anonim sızmaz).
+            var formSubmissionIds = instances
+                .Where(i => i.EntityType.Equals("FormSubmission", StringComparison.OrdinalIgnoreCase))
+                .Select(i => i.EntityId).Distinct().ToList();
+            if (formSubmissionIds.Count > 0)
+            {
+                var rows = await _db.Set<Mosaik.Modules.Forms.Entities.FormSubmission>().AsNoTracking()
+                    .Where(s => formSubmissionIds.Contains(s.Id))
+                    .Select(s => new { s.Id, FormName = s.FormDefinition!.Name })
+                    .ToListAsync(ct);
+                foreach (var r in rows)
+                    result[("FormSubmission", r.Id)] = ($"{r.FormName} — Yanıt #{r.Id}", $"/Forms/FormDefinition/SubmissionDetail/{r.Id}");
+            }
+
             return result;
         }
 
@@ -167,6 +182,16 @@ namespace Mosaik.Services.Workflow
                     if (!string.IsNullOrWhiteSpace(circ.CircularNumber)) cParts.Add(circ.CircularNumber);
                     cParts.Add($"Yayın: {circ.PublishedAt:dd.MM.yyyy}");
                     return (circ.Title, $"/Circular/Circular/Details/{entityId}", string.Join(" · ", cParts));
+
+                case "formsubmission":
+                    var fs = await _db.Set<Mosaik.Modules.Forms.Entities.FormSubmission>().AsNoTracking()
+                        .Where(x => x.Id == entityId)
+                        .Select(x => new { FormName = x.FormDefinition!.Name, x.SubmittedAt })
+                        .FirstOrDefaultAsync(ct);
+                    if (fs is null) return ($"Form Yanıtı #{entityId}", $"/Forms/FormDefinition/SubmissionDetail/{entityId}", string.Empty);
+                    return ($"{fs.FormName} — Yanıt #{entityId}",
+                        $"/Forms/FormDefinition/SubmissionDetail/{entityId}",
+                        $"Gönderim: {fs.SubmittedAt:dd.MM.yyyy HH:mm}");
 
                 default:
                     return ($"{entityType} #{entityId}", string.Empty, string.Empty);

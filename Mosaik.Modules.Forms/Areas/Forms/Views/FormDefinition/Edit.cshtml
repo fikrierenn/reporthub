@@ -3,6 +3,7 @@
     var isCreate = Model.Id == 0;
     ViewData["Title"] = isCreate ? "Yeni Form" : "Formu Düzenle";
     Layout = "_AppLayout";
+    var workflowTemplates = ViewBag.WorkflowTemplates as IReadOnlyList<Mosaik.Modules.Forms.Services.WorkflowTemplateLookupService.TemplateLookup> ?? [];
 }
 
 @section Breadcrumb {
@@ -20,6 +21,11 @@
 <div class="hero">
     <h1>@ViewData["Title"]</h1>
 </div>
+
+@if (ViewBag.StaleWorkflowWarning is string staleWarn)
+{
+    <div role="alert" class="alert warn">@staleWarn</div>
+}
 
 <form method="post" action="@(isCreate ? "/Forms/FormDefinition/Create" : $"/Forms/FormDefinition/Edit/{Model.Id}")">
     @Html.AntiForgeryToken()
@@ -53,6 +59,17 @@
             </div>
             <div class="field">
                 <label class="lab"><input type="checkbox" name="IsEncrypted" value="true" checked="@Model.IsEncrypted" /> Alan-seviyesi şifreleme (Faz 5, örn. ihbar formu)</label>
+            </div>
+            <div class="field">
+                <label class="lab" for="TriggersWorkflowId">Onay Akışı (opsiyonel)</label>
+                <select class="inp" id="TriggersWorkflowId" name="TriggersWorkflowId">
+                    <option value="">— Onay akışı yok —</option>
+                    @foreach (var t in workflowTemplates)
+                    {
+                        <option value="@t.Id" selected="@(t.Id == Model.TriggersWorkflowId)">@t.Name</option>
+                    }
+                </select>
+                <p class="help-text">Seçilirse her yanıt gönderiminde bu onay akışı otomatik başlar (örn. izin talebi → amir onayı → İK).</p>
             </div>
         </div>
     </div>

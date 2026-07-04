@@ -3,7 +3,9 @@ using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Mosaik.Core.Domain;
+using Mosaik.Core.Logging;
 using Mosaik.Core.Notification;
+using Mosaik.Core.Workflow;
 using Mosaik.Modules.Forms.Entities;
 
 namespace Mosaik.Modules.Forms.Services
@@ -22,7 +24,7 @@ namespace Mosaik.Modules.Forms.Services
     // Plan 41 Faz 1 — submission save + FormVersionId bind (§4.6 ZORUNLU). Workflow/ProcessInstance
     // trigger stub (Plan 36/42 — sonraki fazlarda gerçek çağrı eklenir).
     // Faz 4 — File/Signature alanları: base64 dataURL decode → magic-byte doğrula → disk yaz → ValueFileId.
-    public class FormSubmissionService(DbContext db, FormValidationService validation, FormFileStorage fileStorage, FormEncryptionService encryption, INotificationService notifications, ILogger<FormSubmissionService> logger)
+    public class FormSubmissionService(DbContext db, FormValidationService validation, FormFileStorage fileStorage, FormEncryptionService encryption, INotificationService notifications, IWorkflowService workflow, IAuditLog audit, ILogger<FormSubmissionService> logger)
     {
         // silent-failure-hunter HIGH — alan-bazlı hata dict'i bu koda taşınır (JSON-encoded
         // Message); controller/JS ayırt edip survey-core question.addError'a bağlar.
@@ -177,9 +179,81 @@ namespace Mosaik.Modules.Forms.Services
                 }
             }
 
-            // Plan 36/42 — workflow/ProcessInstance trigger stub. Sonraki fazlarda gerçek çağrı.
+            // Plan 57 B1 — form-tetikli onay köprüsü (council §4.5: tek motor = WorkflowEngine).
+            // TriggersWorkflowId bağlı ise submit sonrası workflow instance başlat. BEST-EFFORT:
+            // fail → submit BAŞARILI kalır (submission commit'li), LogWarning + devam. IsSuccess
+            // gate ZORUNLU (fail'de Data=0 → WorkflowInstanceId=0 kirliliği olurdu, council uyarı 3).
+            // İdempotency: WorkflowInstanceId zaten set ise tekrar başlatma (§4.5-5 çift-instance guard).
+            if (def.TriggersWorkflowId is int templateId && submission.WorkflowInstanceId is null)
+            {
+                try
+                {
+                    var wf = await workflow.StartAsync(new WorkflowStartInput(
+                        FirmaId: input.FirmaId,
+                        TemplateId: templateId,
+                        EntityType: "FormSubmission",
+                        EntityId: submission.Id,
+                        StartedBy: input.SubmittedById ?? 0 /* anonim → system */), ct);
+
+                    if (wf.IsSuccess)
+                    {
+                        // Geri-yazım AYRI try (silent-failure H2): instance zaten canlı — bu save fail
+                        // olursa orphan instance + WorkflowInstanceId=NULL (idempotency guard delinir).
+                        // Start-hatasıyla AYNI görünmemeli: LogError + orphan audit (instance id greppable).
+                        submission.WorkflowInstanceId = wf.Data;
+                        try { await db.SaveChangesAsync(ct); }
+                        catch (Exception ex)
+                        {
+                            logger.LogError(ex, "Forms: workflow BAŞLADI ama submission bağı yazılamadı — ORPHAN instance. submission={SubmissionId} instance={InstanceId}",
+                                submission.Id, wf.Data);
+                            await TryAuditAsync("form_workflow_link_orphaned", submission.Id, $"instance={wf.Data}");
+                        }
+                    }
+                    else
+                    {
+                        // Silent-failure H1: onay akışı başlamadı ama submit başarılı — SADECE log yetmez
+                        // (kullanıcı "onayda sanır", amir hiç görmez). Audit + form sahibine uyarı bildirimi
+                        // → stale şablon bağı ilk submit'te kendini raporlar (H3'ü de kapatır).
+                        logger.LogWarning("Forms: workflow tetiklenemedi. form={FormId} submission={SubmissionId} template={TemplateId} code={Code} sebep={Message}",
+                            def.Id, submission.Id, templateId, wf.ErrorCode, wf.Message);
+                        await TryAuditAsync("form_workflow_trigger_failed", submission.Id, $"template={templateId} code={wf.ErrorCode}");
+                        await TryNotifyOwnerTriggerFailedAsync(def, submission.Id, templateId);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    // Beklenmedik engine hatası = warning değil ERROR (config-drift'ten ayrışsın).
+                    logger.LogError(ex, "Forms: workflow tetikleme hatası. form={FormId} submission={SubmissionId} template={TemplateId}",
+                        def.Id, submission.Id, templateId);
+                    await TryAuditAsync("form_workflow_trigger_failed", submission.Id, $"template={templateId} code=exception");
+                    await TryNotifyOwnerTriggerFailedAsync(def, submission.Id, templateId);
+                }
+            }
 
             return ServiceResult<int>.Ok(submission.Id);
+        }
+
+        // Sinyal yolları da best-effort: audit/bildirim hatası submit'i KIRMAZ (log'a düşer).
+        private async Task TryAuditAsync(string eventType, int submissionId, string description)
+        {
+            try { await audit.LogAsync(eventType, "form_submission", submissionId.ToString(), description); }
+            catch (Exception ex) { logger.LogWarning(ex, "Forms: audit yazılamadı. event={Event} submission={Id}", eventType, submissionId); }
+        }
+
+        private async Task TryNotifyOwnerTriggerFailedAsync(FormDefinition def, int submissionId, int templateId)
+        {
+            if (def.CreatedBy <= 0) return;
+            try
+            {
+                await notifications.CreateAsync(
+                    def.CreatedBy, "form_submission", submissionId,
+                    "Forma bağlı onay akışı başlatılamadı", null,
+                    $"/Forms/FormDefinition/SubmissionDetail/{submissionId}", "warning", "system");
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Forms: trigger-fail bildirimi gönderilemedi. submission={Id}", submissionId);
+            }
         }
 
         private FormSubmissionFieldValue BuildFieldValue(FormField field, string raw, bool encrypt)

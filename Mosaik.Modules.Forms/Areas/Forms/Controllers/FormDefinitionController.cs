@@ -24,6 +24,7 @@ namespace Mosaik.Modules.Forms.Areas.Forms.Controllers
         private readonly Microsoft.EntityFrameworkCore.DbContext _db;
         private readonly Microsoft.AspNetCore.Hosting.IWebHostEnvironment _env;
         private readonly FormEncryptionService _encryption;
+        private readonly WorkflowTemplateLookupService _workflowTemplates;
         private readonly IAuditLog _audit;
 
         public FormDefinitionController(
@@ -31,7 +32,7 @@ namespace Mosaik.Modules.Forms.Areas.Forms.Controllers
             DataElementLookupService dataElements, FormSubmissionQueryService submissions,
             Microsoft.EntityFrameworkCore.DbContext db,
             Microsoft.AspNetCore.Hosting.IWebHostEnvironment env,
-            FormEncryptionService encryption, IAuditLog audit)
+            FormEncryptionService encryption, WorkflowTemplateLookupService workflowTemplates, IAuditLog audit)
         {
             _definitions = definitions;
             _fields = fields;
@@ -41,6 +42,7 @@ namespace Mosaik.Modules.Forms.Areas.Forms.Controllers
             _db = db;
             _env = env;
             _encryption = encryption;
+            _workflowTemplates = workflowTemplates;
             _audit = audit;
         }
 
@@ -58,19 +60,27 @@ namespace Mosaik.Modules.Forms.Areas.Forms.Controllers
         }
 
         [HttpGet]
-        public IActionResult Create() => View("Edit", new FormDefinitionFormViewModel());
+        public async Task<IActionResult> Create()
+        {
+            ViewBag.WorkflowTemplates = await _workflowTemplates.ListForFormsAsync(CurrentFirmaId);
+            return View("Edit", new FormDefinitionFormViewModel());
+        }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(FormDefinitionFormViewModel model)
         {
             if (!ModelState.IsValid)
+            {
+                ViewBag.WorkflowTemplates = await _workflowTemplates.ListForFormsAsync(CurrentFirmaId);
                 return View("Edit", model);
+            }
 
             var r = await _definitions.CreateAsync(ToInput(model), CurrentFirmaId, CurrentUserId);
             if (!r.IsSuccess)
             {
                 ModelState.AddModelError(string.Empty, r.Message);
+                ViewBag.WorkflowTemplates = await _workflowTemplates.ListForFormsAsync(CurrentFirmaId);
                 return View("Edit", model);
             }
 
@@ -87,11 +97,17 @@ namespace Mosaik.Modules.Forms.Areas.Forms.Controllers
             if (def == null)
                 return NotFound();
 
+            var templates = await _workflowTemplates.ListForFormsAsync(CurrentFirmaId);
+            ViewBag.WorkflowTemplates = templates;
+            // Silent-failure H3: bağlı şablon sonradan silinmiş/pasifleşmişse admin'e görünür uyarı —
+            // aksi halde stale bağ submit'te sessizce TEMPLATE_NOT_FOUND üretirdi.
+            if (def.TriggersWorkflowId is int boundId && templates.All(t => t.Id != boundId))
+                ViewBag.StaleWorkflowWarning = "Bu forma bağlı onay şablonu artık aktif değil — akış tetiklenmeyecek. Yeni bir şablon seçin veya bağı kaldırın.";
             return View(new FormDefinitionFormViewModel
             {
                 Id = def.Id, Slug = def.Slug, Name = def.Name, Description = def.Description,
                 Category = def.Category, IsPublic = def.IsPublic, IsAnonymous = def.IsAnonymous,
-                IsEncrypted = def.IsEncrypted
+                IsEncrypted = def.IsEncrypted, TriggersWorkflowId = def.TriggersWorkflowId
             });
         }
 
@@ -101,12 +117,16 @@ namespace Mosaik.Modules.Forms.Areas.Forms.Controllers
         {
             if (id != model.Id) return BadRequest();
             if (!ModelState.IsValid)
+            {
+                ViewBag.WorkflowTemplates = await _workflowTemplates.ListForFormsAsync(CurrentFirmaId);
                 return View(model);
+            }
 
             var r = await _definitions.UpdateAsync(id, ToInput(model), CurrentFirmaId);
             if (!r.IsSuccess)
             {
                 ModelState.AddModelError(string.Empty, r.Message);
+                ViewBag.WorkflowTemplates = await _workflowTemplates.ListForFormsAsync(CurrentFirmaId);
                 return View(model);
             }
 
@@ -395,7 +415,8 @@ namespace Mosaik.Modules.Forms.Areas.Forms.Controllers
 
         private static FormDefinitionInput ToInput(FormDefinitionFormViewModel m) => new(
             Slug: m.Slug, Name: m.Name, Description: m.Description, Category: m.Category,
-            IsPublic: m.IsPublic, IsAnonymous: m.IsAnonymous, IsEncrypted: m.IsEncrypted);
+            IsPublic: m.IsPublic, IsAnonymous: m.IsAnonymous, IsEncrypted: m.IsEncrypted,
+            TriggersWorkflowId: m.TriggersWorkflowId);
 
         // Options: satır satır girilen metin → JSON string dizisi. ValidationRules: minLength/maxLength/regex → JSON.
         private static FormFieldInput ToFieldInput(FormFieldFormViewModel m)

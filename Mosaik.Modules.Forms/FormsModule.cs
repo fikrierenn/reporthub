@@ -33,6 +33,7 @@ namespace Mosaik.Modules.Forms
             services.AddMemoryCache(); // SubmitRateLimiter için (idempotent — ana proje de çağırmış olabilir)
             services.AddScoped<Services.FormEncryptionService>(); // Plan 56 M-A — at-rest alan şifreleme (DataProtection)
             services.AddScoped<Services.FormSubmissionQueryService>(); // Plan 56 M-A G2 — submission admin liste/detay/export
+            services.AddScoped<Services.WorkflowTemplateLookupService>(); // Plan 57 B3 — form→onay şablonu picker (cross-modül read)
         }
 
         public void ConfigureModelBuilder(ModelBuilder mb)

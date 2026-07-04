@@ -21,5 +21,8 @@ namespace Mosaik.Modules.Forms.Areas.Forms.ViewModels
         public bool IsPublic { get; set; }
         public bool IsAnonymous { get; set; }
         public bool IsEncrypted { get; set; }
+
+        // Plan 57 B3 — submit'te tetiklenecek onay şablonu (opsiyonel; null = tetikleme yok).
+        public int? TriggersWorkflowId { get; set; }
     }
 }

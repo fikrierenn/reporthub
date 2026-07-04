@@ -6,10 +6,12 @@ namespace Mosaik.Modules.Forms.Services
 {
     public sealed record FormDefinitionInput(
         string Slug, string Name, string? Description, string? Category,
-        bool IsPublic, bool IsAnonymous, bool IsEncrypted);
+        bool IsPublic, bool IsAnonymous, bool IsEncrypted, int? TriggersWorkflowId = null);
 
     // Plan 41 Faz 2 — FormDefinition CRUD + Taslak→Yayında (snapshot) + Arşiv/Geri Yükle.
-    public class FormDefinitionService(DbContext db)
+    // Plan 57 B3 — TriggersWorkflowId: submit'te tetiklenecek workflow şablonu (opsiyonel,
+    // WorkflowTemplateLookupService ile fail-closed doğrulanır).
+    public class FormDefinitionService(DbContext db, WorkflowTemplateLookupService workflowTemplates)
     {
         private DbSet<FormDefinition> Definitions => db.Set<FormDefinition>();
 
@@ -35,6 +37,9 @@ namespace Mosaik.Modules.Forms.Services
             if (slugExists)
                 return ServiceResult<int>.Failure("Bu slug zaten kullanılıyor.");
 
+            if (input.TriggersWorkflowId is int twcId && !await workflowTemplates.ExistsAsync(twcId, firmaId, ct))
+                return ServiceResult<int>.Failure("Seçilen onay şablonu bulunamadı veya bu form tipine uygun değil.");
+
             var def = new FormDefinition
             {
                 FirmaId = firmaId,
@@ -45,6 +50,7 @@ namespace Mosaik.Modules.Forms.Services
                 IsPublic = input.IsPublic,
                 IsAnonymous = input.IsAnonymous,
                 IsEncrypted = input.IsEncrypted,
+                TriggersWorkflowId = input.TriggersWorkflowId,
                 Status = 0,
                 CreatedBy = createdBy
             };
@@ -67,6 +73,10 @@ namespace Mosaik.Modules.Forms.Services
                     return ServiceResult<bool>.Failure("Bu slug zaten kullanılıyor.");
             }
 
+            if (input.TriggersWorkflowId is int twId && def.TriggersWorkflowId != twId
+                && !await workflowTemplates.ExistsAsync(twId, firmaId, ct))
+                return ServiceResult<bool>.Failure("Seçilen onay şablonu bulunamadı veya bu form tipine uygun değil.");
+
             def.Slug = input.Slug.Trim();
             def.Name = input.Name.Trim();
             def.Description = input.Description;
@@ -74,6 +84,7 @@ namespace Mosaik.Modules.Forms.Services
             def.IsPublic = input.IsPublic;
             def.IsAnonymous = input.IsAnonymous;
             def.IsEncrypted = input.IsEncrypted;
+            def.TriggersWorkflowId = input.TriggersWorkflowId;
             def.UpdatedAt = DateTime.UtcNow;
             await db.SaveChangesAsync(ct);
             return ServiceResult<bool>.Ok(true);

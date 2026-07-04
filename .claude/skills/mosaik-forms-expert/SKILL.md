@@ -52,5 +52,14 @@ _Kaynak: kılcal mimari dalış 2026-07-03 (Plan 56 M-A Faz 0). Forms işine dok
 **Dosya-eki şifreleme ✅ KAPANDI (2026-07-05, plan 57 A2-#1):** şifreli formda dosya App_Data'da DÜZ METİN kalıyordu (G1'i deliyordu). `FormEncryptionService.EncryptBytes/TryDecryptBytes` (**ayrı purpose** `Forms.FileEncryption.v1` — M-2 defense-in-depth) + `FormSubmissionFile.IsEncrypted` (migration 78) + `WriteToDiskAsync(encrypt)` (FileSize=orijinal, disk=ciphertext) + `DownloadFile` decrypt-gate (ihbar-komitesi/admin; yetkisize ciphertext bile verilmez → Forbid; TryDecrypt fail → audit `form_file_decrypt_failed` + TempData → **SubmissionDetail'e** redirect — Index TempData render etmiyor, silent-fail HIGH dersi). **Şifreli form upload cap 10MB** (M-1: DataProtection streaming yok, decrypt tam-buffer). E2E: disk ciphertext (PNG magic yok) + download 200 orijinal PNG doğrulandı.
 **KALAN Forms backlog (LOW, triage 2026-07-05):** submission liste pagination yok (`FormSubmissionQueryService:29`) · export UTC ham tarih (`:91`) · survey-core file "Select" caption locale key.
 
+## Workflow köprüsü (Plan 57 Part B ✅, 2026-07-05)
+Form-tetikli onay CANLI (council §4.5: tek motor = WorkflowEngine, ikinci state machine YASAK):
+- **Tetik:** `FormDefinition.TriggersWorkflowId` bağlı ise `SubmitAsync` SaveChanges SONRASI `IWorkflowService.StartAsync(EntityType:"FormSubmission", EntityId:submission.Id, StartedBy:SubmittedById??0)` — **best-effort** (fail→LogWarning, submit BAŞARILI kalır) + **IsSuccess gate** (fail'de Data=0 kirliliği önlenir) + **idempotency** (`WorkflowInstanceId is null` guard). Başarıda `submission.WorkflowInstanceId=Data` + 2. SaveChanges.
+- **Şablon bağlama:** `WorkflowTemplateLookupService` (raw SQL cross-modül, DataElementLookup deseni; EntityType='FormSubmission'+IsActive+FirmaId; ExistsAsync fail-closed) → `FormDefinitionService` Create/Update doğrular → Edit.cshtml "Onay Akışı" dropdown.
+- **Inbox:** `WorkflowInboxService` (ana proje) FormSubmission preview case — Title=form adı+Yanıt # (İÇERİK asla — şifreli/anonim sızmaz), Url=SubmissionDetail (yetki+decrypt-gated).
+- **Seed:** `Mosaik/Database/82` "İzin Talebi Onayı" (s1 approval assigneeRole=yonetim → s2 notify ik). İzin formu dev'de id=8 slug `izin-talebi` canlı.
+- E2E kanıt: submit→instance→amir inbox(SubmissionDetail link)→Respond onay→notify İK→InstanceCompleted + 3 bildirim zinciri. Security scan 0/0/0.
+- **Part C (EN SONA ertelendi):** `assigneeKind:"manager"` — gerçek amir OrgPositions ParentId+GorevPersonelMap'ten; ön-koşul Users↔Personelno bağı (plan 57 Part C, org kuralı `gorev-org-yapisi.md` oku).
+
 ## İlişkili
 - Plan 56 (program) + `mosaik-security` (Gap 1 AES key) + `kvkk-veri-envanteri` (ihbar/DSAR domain) + `mosaik-csharp-razor`/`ui-ux-pro-max` (Gap 2 view).
