@@ -134,6 +134,15 @@ namespace Mosaik.Controllers
 
             if (contractFile is null) return NotFound();
 
+            // Plan 57 M-B D2 (security C-1): DocumentPermission gate — Documents.Download ile AYNI
+            // dosyalar buradan da iniyor; gate'siz kalırsa kısıtlı dosya bypass edilir. Admin bypass.
+            if (!User.IsInRole("admin"))
+            {
+                var perms = HttpContext.RequestServices.GetRequiredService<IDocumentPermissionService>();
+                if (!await perms.CanReadAsync(_currentUser.UserId ?? 0, contractFile.FirmaId, contractFile.Id))
+                    return Forbid();
+            }
+
             var fullPath = Path.GetFullPath(Path.Combine(_env.ContentRootPath, contractFile.FilePath.Replace('/', Path.DirectorySeparatorChar)));
             var allowedRoot = Path.GetFullPath(Path.Combine(_env.ContentRootPath, "App_Data", "contracts"));
 

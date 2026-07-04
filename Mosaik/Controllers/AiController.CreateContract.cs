@@ -30,6 +30,15 @@ namespace Mosaik.Controllers
                 .FirstOrDefaultAsync(f => f.Id == fileId && firmas.Contains(f.FirmaId));
             if (file is null) return NotFound();
 
+            // Plan 57 M-B D2 (security C-2): AI chat dosya İÇERİĞİNİ döner — DocumentPermission
+            // read-gate şart (aksi kısıtlı belge AI üzerinden okunur). Admin bypass.
+            if (!User.IsInRole("admin"))
+            {
+                var perms = HttpContext.RequestServices.GetRequiredService<IDocumentPermissionService>();
+                if (!await perms.CanReadAsync(_currentUser.UserId ?? 0, file.FirmaId, file.Id))
+                    return Forbid();
+            }
+
             // RawText önceliği: bu dosyaya bağlı en son AwaitingReview/Approved extraction'da varsa onu kullan.
             // Yoksa PdfPig ile fresh extract et.
             var extraction = await _db.ContractAiExtractions

@@ -1,0 +1,146 @@
+@model IReadOnlyList<Mosaik.Models.DocumentPermission>
+@{
+    Layout = "_AppLayout";
+    var file = ViewBag.File as Mosaik.Models.ContractFile;
+    var users = ViewBag.Users as List<(int Id, string Name)> ?? new();
+    var roles = ViewBag.Roles as List<(int Id, string Name)> ?? new();
+    ViewData["Title"] = "Belge İzinleri";
+    var userMap = users.ToDictionary(u => u.Id, u => u.Name);
+    var roleMap = roles.ToDictionary(r => r.Id, r => r.Name);
+    string SubjectName(Mosaik.Models.DocumentPermission p) =>
+        p.SubjectType == "user"
+            ? userMap.GetValueOrDefault(p.SubjectId, $"kullanıcı #{p.SubjectId}")
+            : roleMap.GetValueOrDefault(p.SubjectId, $"rol #{p.SubjectId}");
+    string LevelLabel(byte l) => l switch { 1 => "Oku", 2 => "Yaz", 3 => "Yönet", _ => l.ToString() };
+    var msg = TempData["Success"] as string;
+    var err = TempData["Error"] as string;
+}
+
+@section Breadcrumb {
+    <nav class="crumbs" aria-label="Sayfa konumu">
+        <a href="/">Ana Sayfa</a>
+        <a href="/Documents">Belgeler</a>
+        <span aria-current="page">İzinler</span>
+    </nav>
+}
+
+@section TopActions {
+    <a href="/Documents" class="btn">Geri Dön</a>
+}
+
+<div class="hero">
+    <h1><i class="fas fa-user-lock" aria-hidden="true"></i> Belge İzinleri</h1>
+    <p class="sub">
+        <span class="mono">@file?.FileName</span>
+        <span class="pill">@Model.Count kural</span>
+        <span>Kural yoksa belge firma içinde herkese açıktır; ilk kural eklendiğinde yalnız izinliler erişir.</span>
+    </p>
+</div>
+
+@if (!string.IsNullOrWhiteSpace(msg))
+{
+    <div role="alert" class="alert success">@msg</div>
+}
+@if (!string.IsNullOrWhiteSpace(err))
+{
+    <div role="alert" class="alert error">@err</div>
+}
+
+<div class="form-section-card wide split">
+    <div class="form-section-head"><p class="form-section-head__title">Yeni İzin</p></div>
+    <div class="form-section-body">
+        <form method="post" action="/Documents/GrantPermission?id=@file?.Id">
+            @Html.AntiForgeryToken()
+            <div class="grid-3col" x-data="{ st: 'user' }">
+                <div class="field">
+                    <label class="lab" for="st">Kime</label>
+                    <select class="inp" id="st" name="subjectType" x-model="st">
+                        <option value="user">Kullanıcı</option>
+                        <option value="role">Rol</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label class="lab" for="sid">Kullanıcı / Rol</label>
+                    @* İki ayrı select — option üstünde x-show güvenilmez; disabled input POST edilmez. *@
+                    <select class="inp" id="sid" name="subjectId" x-show="st === 'user'" :disabled="st !== 'user'">
+                        @foreach (var u in users)
+                        {
+                            <option value="@u.Id">@u.Name</option>
+                        }
+                    </select>
+                    <select class="inp" id="sidRole" name="subjectId" aria-label="Rol seç" x-show="st === 'role'" :disabled="st !== 'role'" x-cloak>
+                        @foreach (var r in roles)
+                        {
+                            <option value="@r.Id">@r.Name</option>
+                        }
+                    </select>
+                </div>
+                <div class="field">
+                    <label class="lab" for="lvl">Seviye</label>
+                    <select class="inp" id="lvl" name="level">
+                        <option value="1">Oku</option>
+                        <option value="2">Yaz</option>
+                        <option value="3">Yönet</option>
+                    </select>
+                </div>
+            </div>
+            <div class="grid-2col">
+                <div class="field">
+                    <label class="lab" for="vu">Geçerlilik Sonu (opsiyonel)</label>
+                    <input class="inp" id="vu" name="validUntil" type="date" />
+                </div>
+                <div class="field">
+                    <span class="lab" aria-hidden="true">&nbsp;</span>
+                    <button type="submit" class="btn primary">İzin Ekle</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="content-card">
+    <table class="dt">
+        <thead>
+            <tr>
+                <th scope="col">Tür</th>
+                <th scope="col">Kim</th>
+                <th scope="col">Seviye</th>
+                <th scope="col">Geçerlilik</th>
+                <th scope="col" class="ta-right">İşlem</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model.Count == 0)
+            {
+                <tr><td colspan="5" class="text-muted">Kural yok — belge firma içinde herkese açık.</td></tr>
+            }
+            @foreach (var p in Model)
+            {
+                <tr>
+                    <td><span class="pill">@(p.SubjectType == "user" ? "Kullanıcı" : "Rol")</span></td>
+                    <td>@SubjectName(p)</td>
+                    <td><span class="status @(p.Level >= 3 ? "warn" : "ok")">@LevelLabel(p.Level)</span></td>
+                    <td>
+                        @if (p.ValidUntil.HasValue)
+                        {
+                            <span class="ago">@p.ValidUntil.Value.ToLocalTime().ToString("dd.MM.yyyy")</span>
+                        }
+                        else
+                        {
+                            <span class="text-muted">Süresiz</span>
+                        }
+                    </td>
+                    <td class="ta-right">
+                        <form method="post" action="/Documents/RevokePermission?id=@file?.Id" class="inline-form">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="permissionId" value="@p.Id" />
+                            <button type="submit" class="btn sm danger">Kaldır</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@await Html.PartialAsync("_FooterHint", (string?)$"{Model.Count} izin kuralı")

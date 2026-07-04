@@ -221,7 +221,9 @@
                                 </div>
                                 @if (isPdf)
                                 {
-                                    <a href="/@f.FilePath" target="_blank" class="btn sm ghost" title="PDF önizleme">
+                                    @* M-1 security: raw FilePath URL değil yetkili Download endpoint'i
+                                       (App_Data private + DocumentPermission gate buradan da geçer). *@
+                                    <a href="@Url.Action("Download", "Contracts", new { id = f.Id })" target="_blank" class="btn sm ghost" title="PDF önizleme">
                                         <i class="fa fa-eye text-[9px]" aria-hidden="true"></i>
                                     </a>
                                     @if (fileExt != null)

@@ -34,7 +34,7 @@
     </div>
 </div>
 
-@await Html.PartialAsync("_AlertMessage", TempData["Success"] != null ? ("success", TempData["Success"]!.ToString()!) : TempData["Error"] != null ? ("error", TempData["Error"]!.ToString()!) : ("", ""))
+@await Html.PartialAsync("_AlertMessage", TempData["Success"] != null ? ("success", TempData["Success"]!.ToString()!) : TempData["Error"] != null ? ("error", TempData["Error"]!.ToString()!) : TempData["Warning"] != null ? ("warn", TempData["Warning"]!.ToString()!) : ("", ""))
 
 <div x-data="{ q: '@(q ?? "")' }">
 
@@ -232,6 +232,18 @@ else
                                     data-version-file-name="@f.FileName">
                                 <i class="fas fa-code-branch text-[9px]" aria-hidden="true"></i>
                             </button>
+                            @if (f.Version > 1)
+                            {
+                                <a href="/Documents/Versions/@f.Id" class="btn sm ghost" title="Versiyon geçmişi">
+                                    <i class="fas fa-clock-rotate-left text-[9px]" aria-hidden="true"></i>
+                                </a>
+                            }
+                            @if (User.IsInRole("admin"))
+                            {
+                                <a href="/Documents/Permissions/@f.Id" class="btn sm ghost" title="Belge izinleri">
+                                    <i class="fas fa-user-lock text-[9px]" aria-hidden="true"></i>
+                                </a>
+                            }
                             <form method="post" action="/Documents/Delete" class="inline-form" onsubmit="return confirm('Bu belge silinsin mi?')">
                                 @Html.AntiForgeryToken()
                                 <input type="hidden" name="id" value="@f.Id">

@@ -10,13 +10,17 @@ namespace Mosaik.Services
         Task GrantAsync(int contractFileId, string subjectType, int subjectId, int firmaId, byte level, int grantedById, DateTime? validUntil, CancellationToken ct = default);
         Task RevokeAsync(int id, CancellationToken ct = default);
         Task<IReadOnlyList<DocumentPermission>> GetForFileAsync(int contractFileId, CancellationToken ct = default);
+
+        // Plan 57/M-B D2 — liste görünümü için batch: verilen dosyalardan kullanıcının OKUYABİLDİKLERİ.
+        // Kuralsız dosya = serbest (açık varsayılan); kurallı dosya = user/role eşleşmesi şart.
+        Task<IReadOnlyList<int>> FilterReadableIdsAsync(int userId, IReadOnlyList<int> firmaIds, IReadOnlyList<int> fileIds, CancellationToken ct = default);
     }
 
     public class DocumentPermissionService(MosaikContext db, ILogger<DocumentPermissionService> logger)
         : IDocumentPermissionService
     {
-        // Admin ve yönetici rolleri her zaman tam erişim alır — izin tablosu yalnızca
-        // kısıtlı dosyalar için gerekli. Tablo boşsa = herkese açık (varsayılan izin).
+        // Admin bypass CONTROLLER'da (User.IsInRole — bu servis rol adı bilmez, comment-rot fix
+        // 2026-07-05). İzin kaydı olmayan dosya = herkese açık (varsayılan); kayıt varsa eşleşme şart.
         public async Task<bool> CanReadAsync(int userId, int firmaId, int contractFileId, CancellationToken ct = default)
             => await HasLevelAsync(userId, firmaId, contractFileId, 1, ct);
 
@@ -80,6 +84,41 @@ namespace Mosaik.Services
             db.DocumentPermissions.Remove(perm);
             await db.SaveChangesAsync(ct);
             logger.LogInformation("DocPerm revoked: id={Id}", id);
+        }
+
+        public async Task<IReadOnlyList<int>> FilterReadableIdsAsync(
+            int userId, IReadOnlyList<int> firmaIds, IReadOnlyList<int> fileIds, CancellationToken ct = default)
+        {
+            if (fileIds.Count == 0) return [];
+            var now = DateTime.UtcNow;
+
+            // Tek sorgu: listelenen dosyalara ait tüm kurallar (N+1 yok — Index 200 satır cap'li).
+            var rules = await db.DocumentPermissions.AsNoTracking()
+                .Where(p => p.ContractFileId != null
+                         && fileIds.Contains(p.ContractFileId.Value)
+                         && firmaIds.Contains(p.FirmaId))
+                .Select(p => new { FileId = p.ContractFileId!.Value, p.SubjectType, p.SubjectId, p.Level, p.ValidUntil })
+                .ToListAsync(ct);
+
+            if (rules.Count == 0) return fileIds; // hiç kural yok — hepsi serbest
+
+            var userRoleIds = await db.UserRoles.AsNoTracking()
+                .Where(ur => ur.UserId == userId)
+                .Select(ur => ur.RoleId)
+                .ToListAsync(ct);
+
+            var restricted = rules.GroupBy(r => r.FileId).ToDictionary(g => g.Key, g => g.ToList());
+            var result = new List<int>(fileIds.Count);
+            foreach (var id in fileIds)
+            {
+                if (!restricted.TryGetValue(id, out var fileRules)) { result.Add(id); continue; } // kuralsız = serbest
+                var allowed = fileRules.Any(r => r.Level >= 1
+                    && (r.ValidUntil == null || r.ValidUntil > now)
+                    && ((r.SubjectType == "user" && r.SubjectId == userId)
+                     || (r.SubjectType == "role" && userRoleIds.Contains(r.SubjectId))));
+                if (allowed) result.Add(id);
+            }
+            return result;
         }
 
         public Task<IReadOnlyList<DocumentPermission>> GetForFileAsync(int contractFileId, CancellationToken ct = default)
