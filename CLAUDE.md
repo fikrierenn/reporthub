@@ -128,10 +128,10 @@ Ayrıntılı kurallar `.claude/rules/` altında — burada sadece değişmez pre
 
 ## 3. Mimari Durumu
 
-**Olgunluk (iki ölçü — karıştırma):**
-- **Mevcut özellik seti:** ~%75. Reports + Dashboard + Contracts/Obligations + AI extraction + Tamim + OrgChart canlı kullanıma hazır.
-- **vNext "iç portal" vaadi:** ~%40-50. 10 modülden 3 tam (Reports, Dashboard, Tamim), 1 yarım (Documents), 6 yok (SOP, Comment/Mention, Form/Anket, Workflow Designer, Duyuru, KPI/OKR).
-- **Yön belgesi:** [`docs/VISION.md`](docs/VISION.md) — vNext kalbi **SOP+Comment+Workflow Designer üçlüsü** (~6-9 hafta).
+**Olgunluk (2026-07-05 Plan 56 audit + M-A/M-B/M-C sonrası):**
+- **Mevcut özellik seti:** ~%85. Reports + Dashboard + Contracts/Obligations + AI + Tamim + OrgChart/GorevTanimlari + SOP + KVKK + Forms + Documents + Comment + Search + Inbox + Workflow (form-tetikli onay canlı) hazır.
+- **vNext "iç portal" vaadi:** ~%80. 20-modül audit: 18 TAM, Forms+Documents Plan 56'da tamamlandı. Gerçek eksik: **Duyuru, KPI/OKR** (2 modül) + Plan 42 execution-runtime (ertelendi — WorkflowInstance canonical, plan 57 §4.5).
+- **Yön belgesi:** [`docs/VISION.md`](docs/VISION.md) + [`plans/57-forms-workflow-bridge.md`](plans/57-forms-workflow-bridge.md) §4.5 tek-motor kararı.
 
 Detaylı mimari notlar ve bilinen tutarsızlıklar: [`.claude/rules/architecture.md`](.claude/rules/architecture.md).
 

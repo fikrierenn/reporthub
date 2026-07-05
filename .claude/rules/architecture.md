@@ -117,13 +117,13 @@ _Şu an açık YÜKSEK risk yok._ (M-03 final 2026-05-20'de kapandı — `Dashbo
 
 **Tam mimari harita:** `memory/project_architecture_map.md`
 
-## Proje Durumu (snapshot — 2026-05-14 VISION.md uyumu)
+## Proje Durumu (snapshot — 2026-07-05 Plan 56 audit sonrası)
 
-- **Mevcut özellik olgunluğu:** ~%75. Reports + Dashboard + Contracts/Obligations + AI extraction + Tamim + OrgChart canlı kullanıma hazır.
-- **vNext "iç portal" vaadi:** ~%40-50. 10 vNext modülünden 3 tam (Reports, Dashboard, Tamim), 1 yarım (Documents), 6 yok (SOP, Comment/Mention, Form/Anket, Workflow Designer, Duyuru, KPI/OKR).
-- **İki olgunluğu karıştırma** — "%75 hazır" mevcut iddiası için doğru, vNext için yanıltıcı. Detay: [`docs/VISION.md`](../../docs/VISION.md).
+- **Mevcut özellik olgunluğu:** ~%85. Reports + Dashboard + Contracts/Obligations + AI + Tamim + OrgChart/GorevTanimlari + SOP + KVKK + Forms + Documents + Comment + Search + Inbox + Workflow (form-tetikli onay) canlı.
+- **vNext vaadi:** ~%80 — 20-modül audit (2026-07-03): 18 TAM; Forms M-A + Documents M-B Plan 56/57'de kapandı. Gerçek eksik: **Duyuru, KPI/OKR**. Plan 42 execution-runtime ERTELENDİ (tek motor = WorkflowEngine, plan 57 §4.5 council kararı; ProcessInstance = ince vaka konteyneri olacak).
+- **Onay omurgası:** WorkflowEngine canonical (form-tetikli onay canlı — izin şablonu 82). `ApprovalService` SİLİNDİ (2026-07-05 M-C); `ApprovalRequest/Step` entity'leri SOP kullanıyor, ileride WorkflowEngine'e migrate borcu (VISION:83).
 - **Uncommitted:** tipik olarak 0.
-- **Aktif controller (16):** Admin, Ai, Auth, Calendar, Compliance, Contracts, Dashboard, Documents, Home, Logs, Notifications, Obligations, OrgChart, Profile, Reports, Test.
+- **Aktif controller (21):** CLAUDE.md AUTO listesi canonical (Admin…Workflow).
 - **Modül ayrımı:** Sadece `Mosaik.Modules.Circular` ayrı csproj. Diğer 4 modül (Documents, Contracts, OrgChart, Calendar) ana projede — [ADR-015](../../docs/ADR/015-new-modules-separate-assembly.md) ile 1/ay tempoda çıkarılacak.
 
 ## Module ayrımı disiplini (ADR-002 + ADR-015)

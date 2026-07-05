@@ -2,7 +2,11 @@
 
 **Statü:** Canlı belge. Yön kararları burada yaşar — implementasyon detayı `plans/NN-*.md`'de, kararın gerekçesi `docs/ADR/`'da. Bu dosya **ne** ve **neden** sorularını cevaplar; **nasıl** sorusu plana havale edilir.
 
-**Son güncelleme:** 2026-05-21 (KVKK Process Backbone + Form Builder + Process Execution Runtime — vNext kalbi altılı; portal = execution platform).
+**Son güncelleme:** 2026-07-05 (Plan 56/57 sonrası durum + tek-motor kararı).
+
+> **Tek-motor kararı (2026-07-05, llm-council 5+3 — Plan 57 §4.5):** Portal yürütme omurgası = **WorkflowEngine (WorkflowInstance), TEK motor**. Form-tetikli onay CANLI (izin: form→amir→İK, `ff3a94f`). Plan 42 ProcessInstance **ikinci state machine OLAMAZ** → ince vaka konteyneri (status türetilir, ilerletme delege, timeline=EntityRelations) olarak revize edilmeden onaya girmez. Endüstri doğrulaması: Flowable CMMN CaseInstance + Camunda businessKey + ServiceNow record-producer→case (Plan 57 §4.6). Yeni onay tüketicisi = kod değil **template** (`TriggersWorkflowId` deseni).
+>
+> **Durum düzeltmesi (2026-07-03 20-modül audit + Plan 56):** "SOP/Comment/Form/Workflow yok" iddiaları ESKİDİ — 18 modül TAM; Forms + Documents Plan 56'da kapandı. Gerçek eksik: **Duyuru, KPI/OKR**. Aşağıdaki modül-durum satırları tarihsel bağlam; canlı durum: `CLAUDE.md §3` + `plans/56` + `plans/57`.
 
 > **Kapsam sınırı + rakip benchmark (2026-06-29):** [`docs/COMPETITIVE_SCOPE_2026-06-29.md`](COMPETITIVE_SCOPE_2026-06-29.md) — portalda ne OLMALI/OLMAMALI (CORE/ADJACENT/OUT) + global/TR rakip parity gap. Eksik must-have: unified inbox + cross-module search + dashboard→alert (CORE bağ-dokusu) · e-imza + İK self-servis + KVKK tamamlama (DSAR/VERBİS/ihlal) (TR table-stakes). CUT review: Plan 49 biyometrik / 51 differential-privacy / 50 shadow-org (onaylı ama scope-creep). Differentiator/wedge: **local-LLM KVKK-safe on-prem AI** (rakip yapısal eşleşemez). OUT/integrate: ERP/CRM/HRIS-bordro/e-Devlet.
 >
