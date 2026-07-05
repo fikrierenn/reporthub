@@ -18,8 +18,8 @@ Bu dosya AKTIF işleri ve backlog'u takip eder. Tamamlanmış işler arşiv böl
 - [x] **Plan 57 Part B — form-tetikli onay** ✅ 2026-07-05 (`ff3a94f`): Forms→IWorkflowService köprü + izin şablonu (82) + admin bağlama UI + inbox linki. E2E: form→amir onay→İK. Council §4.5: TEK MOTOR = WorkflowEngine; Plan 42 revizyon-şart damgalı.
 - [x] **M-B Documents** ✅ 2026-07-05 (`7a43a94`) — versiyon geçmişi UI + DocumentPermission enforce+admin UI (2 CRITICAL bypass kapandı: Contracts.Download + Ai.AskDocument) + orphan fix. `mosaik-documents-expert` skill.
 - [x] **M-C ölü kod** ✅ 2026-07-05 (`25557b9`) — ApprovalService silindi; sop-editor rol seed (83); XlsxImporter canlı-tutuldu.
-- [ ] **M-E doc hijyen** — bu commit'te (CLAUDE §3 + architecture snapshot + TODO senkron).
-- [ ] **M-D cross-modül workflow trigger yaygınlaştırma** — sonraki tüketiciler (masraf/doküman onayı) = template + `TriggersWorkflowId` deseni.
+- [x] **M-E doc hijyen** ✅ 2026-07-05 (`718ca53`) — CLAUDE §3 + architecture snapshot + VISION banner + TODO senkron.
+- [x] **M-D cross-modül trigger** ✅ desen-hazır — Part B köprüsü generic (`EntityType`+`TriggersWorkflowId`+template); yeni tüketici (masraf/doküman onayı) = kod değil TEMPLATE (YAGNI: spekülatif tüketici kurulmadı). **PLAN 56 KAPANDI.**
 - [ ] **Part C org-amir** — EN SON (satır 21).
 
 ### 🔝 Görev Tanımları modülü (`Mosaik.Modules.GorevTanimlari`)
