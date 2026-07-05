@@ -5,6 +5,23 @@
     var i = Model.Instance;
     var msg = TempData["Success"] as string;
     var err = TempData["Error"] as string;
+
+    // Timeline görseli Workflow/Instance.cshtml ile birebir aynı dil (.wf-timeline) —
+    // vaka aynı WorkflowInstanceLogs akışını gösterir, tasarım bütünlüğü için ortak desen.
+    string KindIcon(string k) => k switch
+    {
+        "instance" => "fas fa-circle-play",
+        "aspect" => "fas fa-link",
+        "workflow" => "fas fa-arrow-right-long",
+        _ => "fas fa-circle"
+    };
+    string EventColor(ProcessInstanceQueryService.TimelineEvent t)
+    {
+        var l = t.Label.ToLowerInvariant();
+        if (l.Contains("iptal") || l.Contains("reddedildi")) return "err";
+        if (l.Contains("kapandı") || l.Contains("tamamlandı") || l.Contains("onaylandı")) return "ok";
+        return "";
+    }
 }
 
 @section Breadcrumb {
@@ -17,11 +34,17 @@
 
 @section TopActions {
     <a class="btn" href="/Process/Instance">Geri Dön</a>
+    @if (i.WorkflowInstanceId.HasValue)
+    {
+        <a class="btn primary" href="/Workflow/Instance/@i.WorkflowInstanceId">
+            <i class="fas fa-up-right-from-square text-[10px]" aria-hidden="true"></i> Akışı Aç
+        </a>
+    }
 }
 
 <div class="hero">
     <h1><i class="fas fa-diagram-project" aria-hidden="true"></i> @i.Title</h1>
-    <p class="sub">
+    <div class="sub">
         <span class="mono">@i.InstanceCode</span>
         <span class="status @ProcessInstanceQueryService.StatusClass(i.Status)">@ProcessInstanceQueryService.StatusLabel(i.Status)</span>
         <span class="pill">@i.SourceTrigger</span>
@@ -29,11 +52,7 @@
         {
             <span class="pill">@i.ResultCode</span>
         }
-        @if (i.WorkflowInstanceId.HasValue)
-        {
-            <a class="pill" href="/Workflow/Instance/@i.WorkflowInstanceId">akış #@i.WorkflowInstanceId</a>
-        }
-    </p>
+    </div>
 </div>
 
 @if (!string.IsNullOrWhiteSpace(msg))
@@ -45,47 +64,83 @@
     <div role="alert" class="alert error">@err</div>
 }
 
-<div class="content-card">
-    <table class="dt">
-        <thead>
-            <tr>
-                <th scope="col">Zaman</th>
-                <th scope="col">Tür</th>
-                <th scope="col">Olay</th>
-                <th scope="col">Detay</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var t in Model.Timeline)
-            {
-                <tr>
-                    <td><span class="ago">@t.At.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</span></td>
-                    <td><span class="pill">@t.Kind</span></td>
-                    <td>@t.Label</td>
-                    <td>
-                        @if (!string.IsNullOrEmpty(t.Detail))
-                        {
-                            <span class="mono">@t.Detail</span>
-                        }
-                        else
-                        {
-                            <span class="text-muted">—</span>
-                        }
-                    </td>
-                </tr>
-            }
-        </tbody>
-    </table>
-</div>
+<div class="detail-header-grid">
 
-@if (i.Status == ProcessInstanceStatus.Open)
-{
-    <form method="post" action="/Process/Instance/Cancel" class="inline-form mt-16" onsubmit="return confirm('Vaka iptal edilsin mi?')">
-        @Html.AntiForgeryToken()
-        <input type="hidden" name="id" value="@i.Id" />
-        <input type="hidden" name="reason" value="Kullanıcı iptali" />
-        <button type="submit" class="btn danger">Vakayı İptal Et</button>
-    </form>
-}
+    @* Sol kolon: Olay zaman çizelgesi (Workflow ile ortak .wf-timeline) *@
+    <div>
+        <div class="form-section-card">
+            <div class="form-section-head">Olay Zaman Çizelgesi</div>
+            <div class="form-section-body">
+                <ul class="wf-timeline">
+                    @foreach (var t in Model.Timeline)
+                    {
+                        <li class="wf-timeline-item">
+                            <span class="wf-timeline-dot @EventColor(t)">
+                                <i class="@KindIcon(t.Kind)" aria-hidden="true"></i>
+                            </span>
+                            <div class="wf-timeline-body">
+                                <div class="wf-timeline-title">@t.Label</div>
+                                <div class="text-muted text-xs">
+                                    @t.At.ToLocalTime().ToString("dd.MM.yyyy HH:mm")
+                                    @if (!string.IsNullOrEmpty(t.Detail))
+                                    {
+                                        <span> · @t.Detail</span>
+                                    }
+                                </div>
+                            </div>
+                        </li>
+                    }
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    @* Sağ kolon: Vaka künyesi + iptal *@
+    <div>
+        <div class="form-section-card">
+            <div class="form-section-head">Vaka Künyesi</div>
+            <div class="form-section-body">
+                <dl class="wf-step-meta">
+                    <dt>Durum</dt>
+                    <dd><span class="status @ProcessInstanceQueryService.StatusClass(i.Status)">@ProcessInstanceQueryService.StatusLabel(i.Status)</span></dd>
+                    <dt>Kaynak</dt><dd>@i.SourceTrigger</dd>
+                    <dt>Başladı</dt><dd>@i.StartedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</dd>
+                    @if (i.DueAt.HasValue)
+                    {
+                        <dt>Termin</dt><dd>@i.DueAt.Value.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</dd>
+                    }
+                    @if (i.CompletedAt.HasValue)
+                    {
+                        <dt>Kapandı</dt><dd>@i.CompletedAt.Value.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</dd>
+                    }
+                    @if (!string.IsNullOrEmpty(i.ResultCode))
+                    {
+                        <dt>Sonuç</dt><dd>@i.ResultCode</dd>
+                    }
+                    @if (i.WorkflowInstanceId.HasValue)
+                    {
+                        <dt>Akış</dt><dd><a href="/Workflow/Instance/@i.WorkflowInstanceId">#@i.WorkflowInstanceId</a></dd>
+                    }
+                </dl>
+            </div>
+        </div>
+
+        @if (i.Status == ProcessInstanceStatus.Open)
+        {
+            <div class="form-section-card">
+                <div class="form-section-head">İşlem</div>
+                <div class="form-section-body">
+                    <form method="post" action="/Process/Instance/Cancel" onsubmit="return confirm('Vaka iptal edilsin mi?')">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@i.Id" />
+                        <input type="hidden" name="reason" value="Kullanıcı iptali" />
+                        <button type="submit" class="btn danger block">Vakayı İptal Et</button>
+                    </form>
+                </div>
+            </div>
+        }
+    </div>
+
+</div>
 
 @await Html.PartialAsync("_FooterHint", (string?)$"{Model.Timeline.Count} olay")
