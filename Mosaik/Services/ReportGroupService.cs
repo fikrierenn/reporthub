@@ -54,7 +54,7 @@ namespace Mosaik.Services
         public async Task<AdminOperationResult> UpdateAsync(int groupId, string? name, string? description, bool isActive)
         {
             var group = await _context.ReportGroups.FindAsync(groupId);
-            if (group == null) return AdminOperationResult.Fail("Grup bulunamadi.");
+            if (group == null) return AdminOperationResult.Fail("Grup bulunamadı.");
 
             var trimmedName = (name ?? "").Trim();
             if (string.IsNullOrWhiteSpace(trimmedName))
@@ -83,13 +83,13 @@ namespace Mosaik.Services
                 IsSuccess = true
             });
 
-            return AdminOperationResult.Ok("Grup guncellendi.");
+            return AdminOperationResult.Ok("Grup güncellendi.");
         }
 
         public async Task<AdminOperationResult> DeleteAsync(int groupId)
         {
             var group = await _context.ReportGroups.FindAsync(groupId);
-            if (group == null) return AdminOperationResult.Fail("Grup bulunamadi.");
+            if (group == null) return AdminOperationResult.Fail("Grup bulunamadı.");
 
             var oldSnap = new { group.GroupId, group.Name, group.Description, group.IsActive };
 

@@ -96,7 +96,7 @@ namespace Mosaik.Controllers
                 // Plan 07 Faz 4: deny-by-default — atlanan/eksik veri filtresi → 403.
                 await LogDataFilterDenyAsync(ex, context.SelectedReport.ReportId, context.SelectedReport.DataSourceKey);
                 Response.StatusCode = 403;
-                model.RunError = "Veri filtreniz atanmamis. Lütfen yöneticinize başvurun.";
+                model.RunError = "Veri filtreniz atanmamış. Lütfen yöneticinize başvurun.";
                 return View("Run", model);
             }
 
@@ -253,7 +253,7 @@ namespace Mosaik.Controllers
             catch (UserDataFilterDeniedException ex)
             {
                 await LogDataFilterDenyAsync(ex, context.SelectedReport.ReportId, context.SelectedReport.DataSourceKey);
-                return StatusCode(403, "Veri filtreniz atanmamis. Lütfen yöneticinize başvurun.");
+                return StatusCode(403, "Veri filtreniz atanmamış. Lütfen yöneticinize başvurun.");
             }
 
             var result = await _spExecutor.ExecuteAsync(

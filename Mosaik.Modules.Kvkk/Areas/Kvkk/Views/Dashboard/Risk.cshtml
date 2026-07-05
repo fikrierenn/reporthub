@@ -2,7 +2,7 @@
 @using Mosaik.Modules.Kvkk
 @using System.Text.Json
 @{
-    ViewData["Title"] = "KVKK Risk Dashboard";
+    ViewData["Title"] = "KVKK Risk Panosu";
 }
 
 @section Breadcrumb {
@@ -11,7 +11,7 @@
         <span class="sep" aria-hidden="true">/</span>
         <a href="/Kvkk/Process">KVKK Envanteri</a>
         <span class="sep" aria-hidden="true">/</span>
-        <span class="current" aria-current="page">Risk Dashboard</span>
+        <span class="current" aria-current="page">Risk Panosu</span>
     </nav>
 }
 
@@ -25,7 +25,7 @@
 }
 
 <div class="hero">
-    <h1>KVKK Risk Dashboard</h1>
+    <h1>KVKK Risk Panosu</h1>
     <div class="sub">
         <span class="mono">@Model.TotalProcesses süreç</span>
         <span class="pill"><span class="dot @(Model.TotalOpenFindings > 0 ? "err" : "ok")"></span>@Model.TotalOpenFindings açık bütünlük bulgusu</span>

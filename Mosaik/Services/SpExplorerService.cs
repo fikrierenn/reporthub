@@ -34,7 +34,7 @@ public class SpExplorerService
             .FirstOrDefaultAsync(d => d.DataSourceKey == dataSourceKey && d.IsActive);
         if (ds == null)
         {
-            return new SpListResult(false, "DataSource bulunamadi veya pasif.", Array.Empty<SpInfo>());
+            return new SpListResult(false, "DataSource bulunamadı veya pasif.", Array.Empty<SpInfo>());
         }
 
         var procs = new List<SpInfo>();
@@ -179,7 +179,7 @@ ORDER BY p.parameter_id;";
             .FirstOrDefaultAsync(d => d.DataSourceKey == dataSourceKey && d.IsActive);
         if (ds == null)
         {
-            return new SpPreviewResult(false, "DataSource bulunamadi.", Array.Empty<SpPreviewResultSet>());
+            return new SpPreviewResult(false, "DataSource bulunamadı.", Array.Empty<SpPreviewResultSet>());
         }
 
         // maxRows guvenlik clamp: 1..100

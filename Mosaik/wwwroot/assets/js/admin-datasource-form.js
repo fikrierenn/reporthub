@@ -63,17 +63,17 @@
         const connString = document.getElementById('connString')?.value.trim() || '';
 
         if (!dataSourceKey) {
-            alert('Anahtar alani zorunludur!');
+            alert('Anahtar alanı zorunludur!');
             return false;
         }
 
         if (!title) {
-            alert('Baslik alani zorunludur!');
+            alert('Başlık alanı zorunludur!');
             return false;
         }
 
         if (!connString) {
-            alert('Baglanti string olusturulamadi! Lutfen tum alanlari doldurun.');
+            alert('Bağlantı metni oluşturulamadı! Lütfen tüm alanları doldurun.');
             return false;
         }
 

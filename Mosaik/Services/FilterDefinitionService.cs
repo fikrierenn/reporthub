@@ -87,7 +87,7 @@ namespace Mosaik.Services
             bool isActive, int displayOrder)
         {
             var entity = await _context.FilterDefinitions.FindAsync(filterDefinitionId);
-            if (entity == null) return AdminOperationResult.Fail("Filtre tanimi bulunamadi.");
+            if (entity == null) return AdminOperationResult.Fail("Filtre tanımı bulunamadı.");
 
             var validation = await ValidateAsync(filterDefinitionId, filterKey, label, scope, dataSourceKey, optionsQuery);
             if (!validation.Success) return validation;
@@ -135,13 +135,13 @@ namespace Mosaik.Services
                 IsSuccess = true
             });
 
-            return AdminOperationResult.Ok("Filtre tanimi guncellendi.");
+            return AdminOperationResult.Ok("Filtre tanimi güncellendi.");
         }
 
         public async Task<AdminOperationResult> DeleteAsync(int filterDefinitionId)
         {
             var entity = await _context.FilterDefinitions.FindAsync(filterDefinitionId);
-            if (entity == null) return AdminOperationResult.Fail("Filtre tanimi bulunamadi.");
+            if (entity == null) return AdminOperationResult.Fail("Filtre tanımı bulunamadı.");
 
             var hasUsage = await _context.UserDataFilters
                 .AnyAsync(udf => udf.FilterKey == entity.FilterKey);
@@ -225,12 +225,12 @@ namespace Mosaik.Services
                 if (string.IsNullOrWhiteSpace(optionsQuery))
                     return AdminOperationResult.Fail("spInjection scope icin OptionsQuery zorunludur.");
                 if (!IsSafeOptionsQuery(optionsQuery, out var reason))
-                    return AdminOperationResult.Fail($"OptionsQuery gecersiz: {reason}");
+                    return AdminOperationResult.Fail($"OptionsQuery geçersiz: {reason}");
 
                 var dsExists = await _context.DataSources.AsNoTracking()
                     .AnyAsync(d => d.DataSourceKey == dataSourceKey);
                 if (!dsExists)
-                    return AdminOperationResult.Fail("Belirtilen DataSourceKey bulunamadi.");
+                    return AdminOperationResult.Fail("Belirtilen DataSourceKey bulunamadı.");
             }
             else // reportAccess
             {

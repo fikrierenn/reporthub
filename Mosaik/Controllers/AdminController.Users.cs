@@ -29,7 +29,7 @@ namespace Mosaik.Controllers
             var input = BuildUserFormInput(user);
             if (!ModelState.IsValid)
                 return View(await BuildAdminUserFormAsync(user, input.SelectedRoleIds, postedFilters: null,
-                    message: "Form gecersiz, hatalari duzeltin.", messageType: "error"));
+                    message: "Form geçersiz, hataları düzeltin.", messageType: "error"));
 
             var result = await _userService.CreateAsync(input);
             if (result.Success)
@@ -48,7 +48,7 @@ namespace Mosaik.Controllers
             var user = await _context.Users.FindAsync(id);
             if (user == null)
             {
-                TempData["Message"] = "Kullanici bulunamadi";
+                TempData["Message"] = "Kullanıcı bulunamadı";
                 TempData["MessageType"] = "error";
                 return RedirectToAction("Index", new { tab = "users" });
             }
@@ -79,7 +79,7 @@ namespace Mosaik.Controllers
 
             if (!ModelState.IsValid)
                 return View(await BuildAdminUserFormAsync(user, input.SelectedRoleIds, postedFilters: null,
-                    message: "Form gecersiz, hatalari duzeltin.", messageType: "error"));
+                    message: "Form geçersiz, hataları düzeltin.", messageType: "error"));
 
             var result = await _userService.UpdateAsync(id, input);
             if (result.Success)

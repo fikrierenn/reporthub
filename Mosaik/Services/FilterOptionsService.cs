@@ -97,7 +97,7 @@ public class FilterOptionsService
         if (ds == null)
         {
             _logger.LogWarning(
-                "FilterDefinition '{FilterKey}' DataSource '{DataSourceKey}' bulunamadi veya pasif.",
+                "FilterDefinition '{FilterKey}' DataSource '{DataSourceKey}' bulunamadı veya pasif.",
                 def.FilterKey, def.DataSourceKey);
             return new FilterOptionsResult(true, null, Array.Empty<FilterOption>());
         }

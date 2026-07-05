@@ -11,7 +11,7 @@
             const result = await response.json();
 
             if (result.success) {
-                alert('Basarili: ' + result.message);
+                alert('Başarılı: ' + result.message);
                 location.reload();
             } else {
                 alert('Hata: ' + result.message);

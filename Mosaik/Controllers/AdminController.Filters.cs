@@ -66,7 +66,7 @@ namespace Mosaik.Controllers
             var def = await _context.FilterDefinitions.FindAsync(id);
             if (def == null)
             {
-                TempData["Message"] = "Filtre tanimi bulunamadi.";
+                TempData["Message"] = "Filtre tanımı bulunamadı.";
                 TempData["MessageType"] = "error";
                 return RedirectToAction("Index", new { tab = "filters" });
             }

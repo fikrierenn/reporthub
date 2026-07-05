@@ -23,13 +23,13 @@ namespace Mosaik.Services
         {
             var normalizedKey = (key ?? "").Trim().ToUpperInvariant();
             if (string.IsNullOrWhiteSpace(normalizedKey))
-                return AdminOperationResult.Fail("Veri kaynagi anahtari zorunludur.");
+                return AdminOperationResult.Fail("Veri kaynağı anahtari zorunludur.");
             if (string.IsNullOrWhiteSpace(title))
                 return AdminOperationResult.Fail("Baslik zorunludur.");
 
             var exists = await _context.DataSources.AnyAsync(d => d.DataSourceKey == normalizedKey);
             if (exists)
-                return AdminOperationResult.Fail("Ayni anahtar ile veri kaynagi zaten var.");
+                return AdminOperationResult.Fail("Ayni anahtar ile veri kaynağı zaten var.");
 
             var entity = new DataSource
             {
@@ -59,7 +59,7 @@ namespace Mosaik.Services
         {
             if (string.IsNullOrWhiteSpace(key)) return AdminOperationResult.Fail("Anahtar gerekli.");
             var ds = await _context.DataSources.FindAsync(key);
-            if (ds == null) return AdminOperationResult.Fail("Veri kaynagi bulunamadi.");
+            if (ds == null) return AdminOperationResult.Fail("Veri kaynağı bulunamadı.");
 
             if (string.IsNullOrWhiteSpace(title))
                 return AdminOperationResult.Fail("Baslik zorunludur.");
@@ -90,7 +90,7 @@ namespace Mosaik.Services
         {
             if (string.IsNullOrWhiteSpace(key)) return AdminOperationResult.Fail("Anahtar gerekli.");
             var ds = await _context.DataSources.FindAsync(key);
-            if (ds == null) return AdminOperationResult.Fail("Veri kaynagi bulunamadi.");
+            if (ds == null) return AdminOperationResult.Fail("Veri kaynağı bulunamadı.");
 
             var oldSnap = new { ds.DataSourceKey, ds.Title, ds.IsActive };
             _context.DataSources.Remove(ds);
@@ -118,7 +118,7 @@ namespace Mosaik.Services
         {
             if (string.IsNullOrWhiteSpace(key)) return AdminOperationResult.Fail("Anahtar gerekli.");
             var ds = await _context.DataSources.FindAsync(key);
-            if (ds == null) return AdminOperationResult.Fail("Veri kaynagi bulunamadi.");
+            if (ds == null) return AdminOperationResult.Fail("Veri kaynağı bulunamadı.");
 
             try
             {

@@ -54,7 +54,7 @@ namespace Mosaik.Services
         public async Task<AdminOperationResult> UpdateAsync(int roleId, string? name, string? description, bool isActive)
         {
             var role = await _context.Roles.FindAsync(roleId);
-            if (role == null) return AdminOperationResult.Fail("Rol bulunamadi.");
+            if (role == null) return AdminOperationResult.Fail("Rol bulunamadı.");
 
             var trimmedName = (name ?? "").Trim();
             if (string.IsNullOrWhiteSpace(trimmedName))
@@ -89,13 +89,13 @@ namespace Mosaik.Services
                 IsSuccess = true
             });
 
-            return AdminOperationResult.Ok("Rol guncellendi.");
+            return AdminOperationResult.Ok("Rol güncellendi.");
         }
 
         public async Task<AdminOperationResult> DeleteAsync(int roleId)
         {
             var role = await _context.Roles.FindAsync(roleId);
-            if (role == null) return AdminOperationResult.Fail("Rol bulunamadi.");
+            if (role == null) return AdminOperationResult.Fail("Rol bulunamadı.");
 
             var oldSnap = new { role.RoleId, role.Name, role.Description, role.IsActive };
 

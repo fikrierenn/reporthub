@@ -81,7 +81,7 @@ namespace Mosaik.Services
         public async Task<AdminOperationResult> UpdateAsync(int reportId, ReportFormInput input)
         {
             var report = await _context.ReportCatalog.FindAsync(reportId);
-            if (report == null) return AdminOperationResult.Fail("Rapor bulunamadi.");
+            if (report == null) return AdminOperationResult.Fail("Rapor bulunamadı.");
 
             var err = Validate(input);
             if (err != null) return AdminOperationResult.Fail(err);
@@ -123,13 +123,13 @@ namespace Mosaik.Services
                 IsSuccess = true
             });
 
-            return AdminOperationResult.Ok("Rapor guncellendi.");
+            return AdminOperationResult.Ok("Rapor güncellendi.");
         }
 
         public async Task<AdminOperationResult> DeleteAsync(int reportId)
         {
             var report = await _context.ReportCatalog.FindAsync(reportId);
-            if (report == null) return AdminOperationResult.Fail("Rapor bulunamadi.");
+            if (report == null) return AdminOperationResult.Fail("Rapor bulunamadı.");
 
             var oldSnap = new { report.ReportId, report.Title, report.DataSourceKey, report.ProcName, report.AllowedRoles, report.IsActive };
             _context.ReportCatalog.Remove(report);
@@ -153,7 +153,7 @@ namespace Mosaik.Services
         private static string? Validate(ReportFormInput input)
         {
             if (string.IsNullOrWhiteSpace(input.Title)) return "Baslik zorunludur.";
-            if (string.IsNullOrWhiteSpace(input.DataSourceKey)) return "Veri kaynagi secilmeli.";
+            if (string.IsNullOrWhiteSpace(input.DataSourceKey)) return "Veri kaynağı secilmeli.";
             if (string.IsNullOrWhiteSpace(input.ProcName)) return "Prosedur adi zorunludur.";
             return null;
         }

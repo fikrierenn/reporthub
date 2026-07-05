@@ -80,7 +80,7 @@ namespace Mosaik.Controllers
 
             if (string.IsNullOrWhiteSpace(model.FullName))
             {
-                model.Message = "Ad soyad bos birakilamaz.";
+                model.Message = "Ad soyad boş bırakılamaz.";
                 model.MessageType = "error";
                 model.Username = user.Username;
                 model.Roles = rolesJoined;
@@ -94,7 +94,7 @@ namespace Mosaik.Controllers
             {
                 if (string.IsNullOrWhiteSpace(model.NewPassword) || model.NewPassword != model.ConfirmPassword)
                 {
-                    model.Message = "Yeni sifreler eslesmiyor.";
+                    model.Message = "Yeni şifreler eşleşmiyor.";
                     model.MessageType = "error";
                     model.Username = user.Username;
                     model.Roles = rolesJoined;
@@ -148,7 +148,7 @@ namespace Mosaik.Controllers
                 });
             }
 
-            TempData["Message"] = "Profil guncellendi";
+            TempData["Message"] = "Profil güncellendi";
             TempData["MessageType"] = "success";
             return RedirectToAction("Index");
         }

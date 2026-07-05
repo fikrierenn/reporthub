@@ -65,7 +65,7 @@ namespace Mosaik.Controllers
             {
                 await LogDataFilterDenyAsync(ex, context.SelectedReport.ReportId, context.SelectedReport.DataSourceKey);
                 Response.StatusCode = 403;
-                return Json(new { success = false, error = "Veri filtreniz atanmamis. Lütfen yöneticinize başvurun." });
+                return Json(new { success = false, error = "Veri filtreniz atanmamış. Lütfen yöneticinize başvurun." });
             }
 
             var stopwatch = System.Diagnostics.Stopwatch.StartNew();
@@ -184,7 +184,7 @@ namespace Mosaik.Controllers
             {
                 await LogDataFilterDenyAsync(ex, null, dataSourceKey);
                 Response.StatusCode = 403;
-                return Json(new { success = false, error = "Veri filtreniz atanmamis. Lütfen yöneticinize başvurun." });
+                return Json(new { success = false, error = "Veri filtreniz atanmamış. Lütfen yöneticinize başvurun." });
             }
 
             var stopwatch = System.Diagnostics.Stopwatch.StartNew();
@@ -322,7 +322,7 @@ namespace Mosaik.Controllers
             {
                 await LogDataFilterDenyAsync(ex, reportId, dataSourceKey);
                 Response.StatusCode = 403;
-                return Json(new { success = false, error = "Veri filtreniz atanmamis. Lütfen yöneticinize başvurun." });
+                return Json(new { success = false, error = "Veri filtreniz atanmamış. Lütfen yöneticinize başvurun." });
             }
 
             var stopwatch = System.Diagnostics.Stopwatch.StartNew();

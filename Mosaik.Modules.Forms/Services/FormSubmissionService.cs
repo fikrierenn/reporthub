@@ -22,7 +22,7 @@ namespace Mosaik.Modules.Forms.Services
         int? PublicTokenId);
 
     // Plan 41 Faz 1 — submission save + FormVersionId bind (§4.6 ZORUNLU). Workflow/ProcessInstance
-    // trigger stub (Plan 36/42 — sonraki fazlarda gerçek çağrı eklenir).
+    // trigger CANLI (Plan 57 B1 — TriggersWorkflowId ise IWorkflowService.StartAsync; stale-stub yorumu düzeltildi).
     // Faz 4 — File/Signature alanları: base64 dataURL decode → magic-byte doğrula → disk yaz → ValueFileId.
     public class FormSubmissionService(DbContext db, FormValidationService validation, FormFileStorage fileStorage, FormEncryptionService encryption, INotificationService notifications, IWorkflowService workflow, IAuditLog audit, ILogger<FormSubmissionService> logger)
     {

@@ -3,8 +3,8 @@
 @model CircularDashboardViewModel
 @{
     var tr = new CultureInfo("tr-TR");
-    ViewData["Title"] = "Tamim Dashboard";
-    ViewData["PageTitle"] = "Tamim Dashboard";
+    ViewData["Title"] = "Tamim Panosu";
+    ViewData["PageTitle"] = "Tamim Panosu";
     var maxBlock = Model.DepartmentParticipation.Any() ? Model.DepartmentParticipation.Max(d => d.BlockCount) : 1;
 }
 
@@ -14,7 +14,7 @@
         <span class="sep" aria-hidden="true">/</span>
         <a href="@Url.Action("Index", "Circular")">Tamim</a>
         <span class="sep" aria-hidden="true">/</span>
-        <span class="current" aria-current="page">Dashboard</span>
+        <span class="current" aria-current="page">Pano</span>
     </nav>
 }
 
@@ -26,7 +26,7 @@
 }
 
 <div class="hero">
-    <h1>Tamim Dashboard</h1>
+    <h1>Tamim Panosu</h1>
     <div class="sub">
         <span>Son 30 gün — okuma oranları, departman katılımı, eksik giriş</span>
     </div>

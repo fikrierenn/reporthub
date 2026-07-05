@@ -45,18 +45,18 @@ namespace Mosaik.Services
             var fullName = (input.FullName ?? "").Trim();
 
             if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(fullName) || input.SelectedRoleIds.Count == 0)
-                return AdminOperationResult.Fail("Zorunlu alanlar bos birakilamaz.");
+                return AdminOperationResult.Fail("Zorunlu alanlar boş bırakılamaz.");
             if (!input.IsAdUser && string.IsNullOrWhiteSpace(input.Password))
-                return AdminOperationResult.Fail("Sifre alani zorunludur.");
+                return AdminOperationResult.Fail("Şifre alanı zorunludur.");
 
             if (await _context.Users.AnyAsync(u => u.Username == username))
-                return AdminOperationResult.Fail("Bu kullanici adi zaten mevcut.");
+                return AdminOperationResult.Fail("Bu kullanıcı adı zaten mevcut.");
 
             // Part C H-1: filtered-unique IX_Users_Personelno ihlali 500 üretirdi — Username
             // deseniyle dostça pre-check (TOCTOU backstop: index yine korur).
             var personelno = string.IsNullOrWhiteSpace(input.Personelno) ? null : input.Personelno.Trim();
             if (personelno is not null && await _context.Users.AnyAsync(u => u.Personelno == personelno))
-                return AdminOperationResult.Fail("Bu personel kodu zaten baska bir kullaniciya atanmis.");
+                return AdminOperationResult.Fail("Bu personel kodu zaten başka bir kullanıcıya atanmış.");
 
             var now = DateTime.UtcNow;
             var entity = new User
@@ -99,33 +99,33 @@ namespace Mosaik.Services
                 IsSuccess = true
             });
 
-            return AdminOperationResult.Ok("Kullanici eklendi");
+            return AdminOperationResult.Ok("Kullanıcı eklendi");
         }
 
         public async Task<AdminOperationResult> UpdateAsync(int userId, UserFormInput input)
         {
             var existing = await _context.Users.FindAsync(userId);
-            if (existing == null) return AdminOperationResult.Fail("Kullanici bulunamadi");
+            if (existing == null) return AdminOperationResult.Fail("Kullanıcı bulunamadı");
 
             var username = NormalizeUsername(input.Username);
             var fullName = (input.FullName ?? "").Trim();
 
             if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(fullName) || input.SelectedRoleIds.Count == 0)
-                return AdminOperationResult.Fail("Zorunlu alanlar bos birakilamaz.");
+                return AdminOperationResult.Fail("Zorunlu alanlar boş bırakılamaz.");
 
             if (await _context.Users.AnyAsync(u => u.Username == username && u.UserId != existing.UserId))
-                return AdminOperationResult.Fail("Bu kullanici adi zaten mevcut.");
+                return AdminOperationResult.Fail("Bu kullanıcı adı zaten mevcut.");
 
             // Part C H-1: dup Personelno pre-check (Create ile aynı — index ihlali 500 üretmesin).
             var personelno = string.IsNullOrWhiteSpace(input.Personelno) ? null : input.Personelno.Trim();
             if (personelno is not null && await _context.Users.AnyAsync(u => u.Personelno == personelno && u.UserId != existing.UserId))
-                return AdminOperationResult.Fail("Bu personel kodu zaten baska bir kullaniciya atanmis.");
+                return AdminOperationResult.Fail("Bu personel kodu zaten başka bir kullanıcıya atanmış.");
 
             var wasAdUser = existing.IsAdUser;
 
             // AD user -> local user geçişi: şifre zorunlu.
             if (!input.IsAdUser && wasAdUser && string.IsNullOrWhiteSpace(input.Password))
-                return AdminOperationResult.Fail("Sifre alani zorunludur.");
+                return AdminOperationResult.Fail("Şifre alanı zorunludur.");
 
             existing.Username = username;
             existing.FullName = fullName;
@@ -169,13 +169,13 @@ namespace Mosaik.Services
                 IsSuccess = true
             });
 
-            return AdminOperationResult.Ok("Kullanici guncellendi");
+            return AdminOperationResult.Ok("Kullanıcı güncellendi");
         }
 
         public async Task<AdminOperationResult> DeleteAsync(int userId)
         {
             var user = await _context.Users.FindAsync(userId);
-            if (user == null) return AdminOperationResult.Fail("Kullanici bulunamadi");
+            if (user == null) return AdminOperationResult.Fail("Kullanıcı bulunamadı");
 
             var roleNames = await _context.UserRoles
                 .Where(ur => ur.UserId == user.UserId)
@@ -204,7 +204,7 @@ namespace Mosaik.Services
                 IsSuccess = true
             });
 
-            return AdminOperationResult.Ok("Kullanici silindi");
+            return AdminOperationResult.Ok("Kullanıcı silindi");
         }
 
         // ---- internals ----

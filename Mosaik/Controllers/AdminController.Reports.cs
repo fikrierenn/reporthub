@@ -51,12 +51,12 @@ namespace Mosaik.Controllers
                 {
                     if (allDataSources.Any())
                     {
-                        TempData["Message"] = $"Toplam {allDataSources.Count} veri kaynagi var ama hicbiri aktif degil. Veri kaynaklarini aktif hale getirin.";
+                        TempData["Message"] = $"Toplam {allDataSources.Count} veri kaynağı var ama hiçbiri aktif değil. Veri kaynaklarını aktif hale getirin.";
                         TempData["MessageType"] = "warning";
                     }
                     else
                     {
-                        TempData["Message"] = "Hic veri kaynagi bulunamadi. Once veri kaynagi eklemeniz gerekiyor.";
+                        TempData["Message"] = "Hiç veri kaynağı bulunamadı. Önce veri kaynağı eklemeniz gerekiyor.";
                         TempData["MessageType"] = "warning";
                     }
                 }
@@ -181,7 +181,7 @@ namespace Mosaik.Controllers
             var report = await _context.ReportCatalog.FindAsync(id);
             if (report == null)
             {
-                TempData["Message"] = "Rapor bulunamadi";
+                TempData["Message"] = "Rapor bulunamadı";
                 TempData["MessageType"] = "error";
                 return RedirectToAction("Index", new { tab = "reports" });
             }
@@ -218,7 +218,7 @@ namespace Mosaik.Controllers
             // Debug icin
             if (!dataSources.Any())
             {
-                TempData["Message"] = "Aktif veri kaynagi bulunamadi. Once veri kaynagi eklemeniz gerekiyor.";
+                TempData["Message"] = "Aktif veri kaynağı bulunamadı. Önce veri kaynağı eklemeniz gerekiyor.";
                 TempData["MessageType"] = "warning";
             }
 
