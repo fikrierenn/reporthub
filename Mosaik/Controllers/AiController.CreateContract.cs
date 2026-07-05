@@ -235,6 +235,61 @@ namespace Mosaik.Controllers
             }
             await _db.SaveChangesAsync();
 
+            // AI-Y1 fix (2026-07-05): onaylanan ContractEvent önerileri de materyalize edilir.
+            // Önceden SADECE Obligation işleniyordu → takvim önerisi onaylanıp "Approved" oluyor
+            // ama hiçbir ContractEvent satırı oluşmuyordu (sessiz dead-end onay). Obligation deseni.
+            var approvedEvents = await _db.AiSuggestions
+                .Where(s => s.ExtractionId == id
+                            && s.SuggestionType == SuggestionType.ContractEvent
+                            && s.Status == SuggestionStatus.Approved)
+                .ToListAsync();
+
+            var eventPairs = new List<(AiSuggestion Suggestion, ContractEvent Event)>(approvedEvents.Count);
+            foreach (var s in approvedEvents)
+            {
+                var eventDate = fallback;
+                var evType = EventType.Deadline;
+                if (!string.IsNullOrWhiteSpace(s.SuggestionDataJson))
+                {
+                    try
+                    {
+                        using var sd = JsonDocument.Parse(s.SuggestionDataJson);
+                        var sr = sd.RootElement;
+                        var parsed = ParseDateOnly(StrOrNull(sr, "eventDate") ?? StrOrNull(sr, "dueDate") ?? StrOrNull(sr, "date"));
+                        if (parsed.HasValue) eventDate = parsed.Value;
+                        evType = ParseEventType(StrOrNull(sr, "eventType"));
+                    }
+                    catch (JsonException jex)
+                    {
+                        _logger.LogWarning(jex, "ApplySuggestions: ContractEvent SuggestionId={Id} JSON parse fail — varsayılan değerler.", s.Id);
+                    }
+                }
+                var ev = new ContractEvent
+                {
+                    FirmaId = extraction.FirmaId,
+                    ContractId = contract.Id,
+                    Title = Truncate(s.Title, 200),
+                    EventDate = eventDate,
+                    EventType = evType,
+                    Status = EventStatus.Upcoming,
+                    Notes = s.Description is { Length: > 0 } ? Truncate(s.Description, 500) : null,
+                    Source = EventSource.AiSuggested,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow,
+                    CreatedBy = _currentUser.Username,
+                    UpdatedBy = _currentUser.Username
+                };
+                _db.ContractEvents.Add(ev);
+                eventPairs.Add((s, ev));
+            }
+            if (eventPairs.Count > 0)
+            {
+                await _db.SaveChangesAsync();
+                foreach (var (suggestion, ev) in eventPairs)
+                    suggestion.CreatedEventId = ev.Id;
+                await _db.SaveChangesAsync();
+            }
+
             // Audit
             await _auditLog.LogAsync(new AuditLogEntry
             {
@@ -242,10 +297,11 @@ namespace Mosaik.Controllers
                 EventType = "contract_created_from_ai",
                 TargetType = "contract",
                 TargetKey = contract.Id.ToString(),
-                Description = $"AI çıkarımdan sözleşme taslağı oluşturuldu (Extraction #{id}, {approvedObligations.Count} yükümlülük)"
+                Description = $"AI çıkarımdan sözleşme taslağı oluşturuldu (Extraction #{id}, {approvedObligations.Count} yükümlülük, {approvedEvents.Count} takvim etkinliği)"
             });
 
-            TempData["Success"] = $"Sözleşme taslağı oluşturuldu. Lütfen alanları kontrol edip kaydedin. {approvedObligations.Count} yükümlülük eklendi.";
+            var eventNote = approvedEvents.Count > 0 ? $" {approvedEvents.Count} takvim etkinliği eklendi." : "";
+            TempData["Success"] = $"Sözleşme taslağı oluşturuldu. Lütfen alanları kontrol edip kaydedin. {approvedObligations.Count} yükümlülük eklendi.{eventNote}";
             return RedirectToAction("Edit", "Contracts", new { id = contract.Id });
         }
 
@@ -256,6 +312,16 @@ namespace Mosaik.Controllers
             if (string.IsNullOrWhiteSpace(iso)) return null;
             return DateOnly.TryParse(iso, out var d) ? d : null;
         }
+
+        private static EventType ParseEventType(string? code) => code?.ToLowerInvariant() switch
+        {
+            "payment"    => EventType.Payment,
+            "renewal"    => EventType.Renewal,
+            "tax"        => EventType.Tax,
+            "compliance" => EventType.Compliance,
+            "operation"  => EventType.Operation,
+            _            => EventType.Deadline
+        };
 
         private static ContractCategory ParseCategory(string? code) => code?.ToLowerInvariant() switch
         {
