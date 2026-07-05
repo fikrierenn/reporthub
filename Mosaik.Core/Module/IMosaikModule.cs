@@ -8,8 +8,8 @@ namespace Mosaik.Core.Module
     // implement eder. ModuleLoader assembly'leri tarayıp self-register yapar.
     //
     // Convention: modüller arası direkt referans yasak. Cross-modül iletişim
-    // sadece Mosaik.Core üzerinden (IUserDataScope, ApprovalService,
-    // LookupService gibi shared abstraction'lar).
+    // sadece Mosaik.Core üzerinden (IUserDataScope, IWorkflowService,
+    // ILookupService gibi shared abstraction'lar).
     public interface IMosaikModule
     {
         // Plan 12 AppModule.ModuleKey ile eşleşir (DB-driven enable/disable)

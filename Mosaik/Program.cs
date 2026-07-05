@@ -83,7 +83,6 @@ builder.Services.AddMemoryCache();
 var turkeyTz = Mosaik.Core.Domain.SystemBusinessClock.ResolveTurkeyTimeZone();
 builder.Services.AddSingleton<Mosaik.Core.Domain.IBusinessClock>(
     new Mosaik.Core.Domain.SystemBusinessClock(turkeyTz));
-builder.Services.AddScoped<Mosaik.Services.ApprovalService>();
 builder.Services.AddScoped<Mosaik.Services.LookupService>();
 builder.Services.AddScoped<Mosaik.Core.Lookup.ILookupService>(
     sp => sp.GetRequiredService<Mosaik.Services.LookupService>());
