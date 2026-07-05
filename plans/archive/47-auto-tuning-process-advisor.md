@@ -434,3 +434,5 @@ Açıklama (opsiyonel): _____________
 - LLM rolü daraldı: sadece narrative generation (heuristic core), template fallback graceful degrade
 - Reject feedback fine-tune data (Plan 34.1 Faz 7 LoRA pattern reuse)
 - **Implementasyon:** Plan 36 (Workflow log + immutable versioning) ✅ + Plan 42 (Process Runtime instance data) sonrası
+
+> **Arşiv notu (2026-07-05 stale-triage):** ONAYLI — sıra Plan 54 modül-sırasında; zamanı gelince arşivden geri açılır.

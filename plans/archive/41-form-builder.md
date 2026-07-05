@@ -569,3 +569,5 @@ Toplam: 54-70h, 4-5 hafta
 
 ---
 > **DÜZELTME 2026-06-29 (Plan 54 / research):** `FormVersion` snapshot (FK Form + version + tam SchemaJson + publishedAt) + `submission.FormVersionId` ZORUNLU — submission render edildiği versiyona göre validate. SurveyJS engine+builder REUSE (kendi renderer yazma); sadece ince Mosaik wrapper (entity/version/DataElement-map/HMAC/encryption/anti-spam). Anti-spam katmanlı: honeypot→timing→IP-rate-limit(IP yazma)→CAPTCHA-son. field→DataElement map OPTIONAL. Not: `FormDefinitionVersion.cs` zaten var (§4.6).
+
+> **Arşiv notu (2026-07-05 stale-triage):** FİİLEN KAPANDI — Forms modülü canlı (12 field tipi, public link+anonim+şifreli, template seed, DataElement map, submission admin, workflow köprüsü = Plan 56/57). Kalan tek parça v2 drag-drop builder — ihtiyaç doğarsa YENİ plan.

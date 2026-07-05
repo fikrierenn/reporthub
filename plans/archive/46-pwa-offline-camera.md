@@ -377,3 +377,5 @@ Plan 46 v2 scope adayı (Faz 6+).
 - 5 açık soru cevaplandı + plan'a karar olarak gömüldü
 - Implementation Plan 41 Faz 0-3 tamamlandığında başlar
 - Saha SSL sertifika INSTALL.md prereq olarak eklenecek (deployment guide)
+
+> **Arşiv notu (2026-07-05 stale-triage):** ONAYLI — sıra Plan 54 modül-sırasında; zamanı gelince arşivden geri açılır.

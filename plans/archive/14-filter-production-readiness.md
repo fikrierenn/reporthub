@@ -309,3 +309,5 @@ Faz B Faz A'yla paralel (subagent BKM_GENEL keşfi). Faz C Plan 16.5 Faz B sonra
 6. (Plan 16.5 Faz C+D + Plan 17+ — ayrı oturumlar)
 
 **Plan 14 toplam:** ~4 saat (Faz A 1.5h + B 0.75h + C 1.5h + D dropped). Önceki tahmin 4-6 saat.
+
+> **Arşiv notu (2026-07-05 stale-triage):** Fiilen kapalı (kendi durum satırı); Faz B implement ihtiyacı doğarsa yeniden açılır.

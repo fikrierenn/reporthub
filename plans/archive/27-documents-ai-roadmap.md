@@ -274,3 +274,5 @@ Bu iki açık tek bir koordineli yol haritasında çözülmeli — birçok patte
 **Önümüzdeki hafta:** Faz B (3 quick AI win) → kullanıcı görünür değer.
 
 **Sonra:** Faz C — DMS Foundation. Faz D + E backlog'a.
+
+> **Arşiv notu (2026-07-05 stale-triage):** Kısmi-implement kapanış: versioning UI + permission enforce Plan 56 M-B'de bitti (7a43a94). Kalan (FTS+metadata+RAG Faz E) TODO D-01 + Plan 44 prereq olarak izleniyor.

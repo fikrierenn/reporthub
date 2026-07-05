@@ -163,3 +163,5 @@ masraf onayı · doküman onayı (Documents) · sözleşme imza (Contracts) · s
 - `plans/56-modul-tamamlama-programi.md` (Forms M-A parent) · `.claude/skills/mosaik-forms-expert/SKILL.md`.
 - `Mosaik.Core/Workflow/IWorkflowService.cs` (köprü abstraction) · `Mosaik/Services/Workflow/WorkflowEngine.cs` (canonical motor) · `Mosaik/Services/Inbox/WorkflowInboxProvider.cs`.
 - VISION.md:83 (IApprovalService birleştirme borcu — ADR-024 adayı, ertelendi).
+
+> **Arşiv notu (2026-07-05 stale-triage):** ✅ TAMAMLANDI (Part A/B/C) — arşive taşındı.

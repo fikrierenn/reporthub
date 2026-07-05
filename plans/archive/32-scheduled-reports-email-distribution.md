@@ -191,3 +191,5 @@ Plan 31 ile `IEmailService` altyapısı geldi (`Mosaik.Core.Email`). Hangfire ku
 - [ ] Soru 1-6 cevaplandı
 - [ ] Onay alındı: ___
 - [ ] Implementation başladı (Faz 1)
+
+> **Arşiv notu (2026-07-05 stale-triage):** 54 gün onaysız taslak — soğutuldu; yeniden ısıtılınca geri açılır.

@@ -140,3 +140,5 @@ vNext kalbi (Plan 36+40+41+42+44) production'da 3 ay stabil olduktan sonra. **Er
 3. **LLM parse'ı her save'de mi, manuel "Süreçleştir" butonu ile mi?** — Önerim: manuel buton (hata maliyeti yüksek + transparency).
 4. **Versioning: eski versiyon prosedür → eski IR'lar canlı kalır mı?** — Önerim: SopVersion approve → yeni IR aktif, eski IR cancel + audit. Dual-run window 24h.
 5. **Override: LLM IR yanlış parse ederse manuel düzeltme?** — Önerim: IR editor (JSON edit UI) admin için + audit log.
+
+> **Arşiv notu (2026-07-05 stale-triage):** Araştırma taslağı — strateji kararı verilmedi; soğutuldu.

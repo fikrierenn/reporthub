@@ -371,3 +371,5 @@ Yabancı geliştirici: "Niye Excel? Excel zaten ETL/BI'de var (Power Query, Tabl
 - 5 açık soru cevaplandı + plan'a karar olarak gömüldü
 - §3.5 SQL Schema Autogen genişletildi + §3.6 Schema Drift bölümü eklendi
 - Implementation Plan 41 Faz 0-3 tamamlandığında başlar
+
+> **Arşiv notu (2026-07-05 stale-triage):** ONAYLI — sıra Plan 54 modül-sırasında; zamanı gelince arşivden geri açılır.

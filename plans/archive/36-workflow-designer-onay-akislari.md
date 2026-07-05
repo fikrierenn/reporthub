@@ -187,3 +187,5 @@ Mosaik'te yükümlülük, SOP adımı, sözleşme onayı, tamim onayı gibi işl
 - [x] Plan kullanıcıya gösterildi
 - [x] Geri bildirim alındı — sequential-workflow-designer onaylandı, eksikler proje içinde genişletilecek
 - [x] Onay alındı: 2026-05-19, Fikri
+
+> **Arşiv notu (2026-07-05 stale-triage):** ✅ FİİLEN TAMAMLANDI — WorkflowEngine+template+inbox+Respond canlı; Plan 57 form-tetikli onay + org-amir üstüne kuruldu.
