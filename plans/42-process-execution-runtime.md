@@ -2,7 +2,7 @@
 
 **Tarih:** 2026-05-21
 **Yazan:** Fikri / Claude
-**Durum:** `Taslak REV 3` (2026-07-05 — council-uyumlu revize TAMAM, onaya hazır)
+**Durum:** ✅ **ONAYLANDI 2026-07-05 (kullanıcı: "42")** — REV 3 kapsamıyla implementasyon başladı.
 **Bağımlılık:** Plan 38 EntityRelations (✅), Plan 36 Workflow Engine (✅ CANLI — form-tetikli onay + org-amir Plan 57), Plan 40 KVKK Process tanım (Taslak), Plan 41 Form Builder (✅ FİİLEN KAPANDI — Forms modülü canlı), Plan 34 SOP (✅), Plan 31 SMTP (✅)
 **Konumu:** vNext kalbinin son birleştirici taşı. SOP + Comment + Workflow + Form + KVKK = bu plan ile **portal execution platform** olur.
 

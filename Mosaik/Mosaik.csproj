@@ -17,6 +17,7 @@
     <ProjectReference Include="..\Mosaik.Modules.SOP\Mosaik.Modules.SOP.csproj" />
     <ProjectReference Include="..\Mosaik.Modules.Kvkk\Mosaik.Modules.Kvkk.csproj" />
     <ProjectReference Include="..\Mosaik.Modules.GorevTanimlari\Mosaik.Modules.GorevTanimlari.csproj" />
+    <ProjectReference Include="..\Mosaik.Modules.ProcessRuntime\Mosaik.Modules.ProcessRuntime.csproj" />
   </ItemGroup>
 
   <ItemGroup>

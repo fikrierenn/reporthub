@@ -3,7 +3,7 @@
 @using System.Text.Json
 @{
     Layout = "_AppLayout";
-    ViewData["Title"] = $"Workflow #{Model.Instance.Id}";
+    ViewData["Title"] = $"Onay Akışı #{Model.Instance.Id}";
 
     string EventLabel(string e) => e switch
     {
@@ -16,6 +16,8 @@
         "DelayScheduled" => "Bekleme başladı",
         "InstanceCompleted" => "Akış tamamlandı",
         "InstanceCancelled" => "Akış iptal edildi",
+        "ManagerResolved" => "Amir belirlendi (org şeması)",
+        "ManagerResolutionFailed" => "Amir belirlenemedi — rol grubuna atandı",
         _ => e
     };
     string EventIcon(string e) => e switch
@@ -29,7 +31,18 @@
         "DelayScheduled" => "fas fa-hourglass-half",
         "InstanceCompleted" => "fas fa-flag-checkered",
         "InstanceCancelled" => "fas fa-ban",
+        "ManagerResolved" => "fas fa-sitemap",
+        "ManagerResolutionFailed" => "fas fa-sitemap",
         _ => "fas fa-circle"
+    };
+    // Entity tipi Türkçe etiket (kart başlığı ham EntityType basıyordu — turkish-ui).
+    string EntityTypeLabel(string t) => t?.ToLowerInvariant() switch
+    {
+        "formsubmission" => "Form Yanıtı",
+        "processinstance" => "Vaka",
+        "contract" => "Sözleşme",
+        "circular" or "tamim" => "Tamim",
+        _ => t ?? ""
     };
     string EventColor(string e) => e switch
     {
@@ -67,8 +80,18 @@
                 var extras = new List<string>();
                 foreach (var p in r.EnumerateObject())
                 {
-                    if (p.Name == "comment" || p.Name == "auto") continue;
-                    extras.Add($"{p.Name}: {p.Value}");
+                    if (p.Name is "comment" or "auto") continue;
+                    // TR + gürültü temizliği: approved→Karar, reason→Sebep; boş değer gösterme.
+                    var val = p.Value.ToString();
+                    if (string.IsNullOrWhiteSpace(val)) continue;
+                    var label = p.Name switch
+                    {
+                        "approved" => p.Value.ValueKind == JsonValueKind.True ? "Karar: Onay" : "Karar: Red",
+                        "reason" => val == "auto-notify" ? "Sebep: otomatik bilgilendirme" : $"Sebep: {val}",
+                        "payload" => null, // iç teknik alan — gösterme
+                        _ => $"{p.Name}: {val}"
+                    };
+                    if (label != null) extras.Add(label);
                 }
                 if (extras.Count > 0) other = string.Join(" · ", extras);
             }
@@ -84,7 +107,7 @@
 @section Breadcrumb {
     <nav class="crumbs" aria-label="Sayfa konumu">
         <a href="/">Ana Sayfa</a>
-        <a href="/Workflow/Inbox">Workflow</a>
+        <a href="/Workflow/Inbox">Onay Akışları</a>
         <span aria-current="page">#@inst.Id</span>
     </nav>
 }
@@ -105,7 +128,7 @@
 }
 
 <div class="hero">
-    <h1>@(inst.Template?.Name ?? "Workflow") #@inst.Id</h1>
+    <h1>@(inst.Template?.Name ?? "Onay Akışı") #@inst.Id</h1>
     <div class="sub">
         <span class="pill"><span class="dot @statusCls"></span>@statusLbl</span>
         @if (!string.IsNullOrEmpty(Model.StartedByName))
@@ -126,7 +149,7 @@
     @* Sol kolon: Entity preview + Timeline *@
     <div>
         <div class="form-section-card">
-            <div class="form-section-head">@inst.EntityType</div>
+            <div class="form-section-head">@EntityTypeLabel(inst.EntityType)</div>
             <div class="form-section-body">
                 <h2 class="wf-entity-card__title">@Model.EntityTitle</h2>
                 @if (!string.IsNullOrEmpty(Model.EntitySummary))
@@ -144,7 +167,7 @@
                     {
                         var (cmt, auto, other) = ParsePayload(log.PayloadJson);
                         var actorName = log.ActorId.HasValue
-                            ? Model.ActorNames.GetValueOrDefault(log.ActorId.Value, $"UserId {log.ActorId}")
+                            ? Model.ActorNames.GetValueOrDefault(log.ActorId.Value, $"Kullanıcı #{log.ActorId}")
                             : null;
                         var colorCls = EventColor(log.EventType);
                         <li class="wf-timeline-item">

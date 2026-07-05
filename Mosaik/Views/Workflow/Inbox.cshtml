@@ -2,13 +2,22 @@
 @{
     ViewData["Title"] = "Bekleyen Onaylar";
     Layout = "_AppLayout";
+    // Ham EntityType ("FormSubmission #12") yerine Türkçe etiket (turkish-ui).
+    string EntityTypeLabel(string t) => t?.ToLowerInvariant() switch
+    {
+        "formsubmission" => "Form Yanıtı",
+        "processinstance" => "Vaka",
+        "contract" => "Sözleşme",
+        "circular" or "tamim" => "Tamim",
+        _ => t ?? ""
+    };
 }
 
 @section Breadcrumb {
     <nav class="crumbs" aria-label="Sayfa konumu">
         <a href="/">Ana sayfa</a>
         <span>›</span>
-        <span aria-current="page">Workflow · Bana Atanmış</span>
+        <span aria-current="page">Onay Akışları · Bana Atanmış</span>
     </nav>
 }
 
@@ -51,10 +60,10 @@ else
                 {
                     <tr>
                         <td>
-                            <strong>@(string.IsNullOrEmpty(item.EntityTitle) ? $"{item.EntityType} #{item.EntityId}" : item.EntityTitle)</strong>
+                            <strong>@(string.IsNullOrEmpty(item.EntityTitle) ? $"{EntityTypeLabel(item.EntityType)} #{item.EntityId}" : item.EntityTitle)</strong>
                             @if (!string.IsNullOrEmpty(item.EntityTitle))
                             {
-                                <div class="text-xs text-muted">@item.EntityType #@item.EntityId</div>
+                                <div class="text-xs text-muted">@EntityTypeLabel(item.EntityType) #@item.EntityId</div>
                             }
                         </td>
                         <td><strong>@item.StepLabel</strong></td>

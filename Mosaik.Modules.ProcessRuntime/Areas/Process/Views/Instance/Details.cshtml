@@ -1,0 +1,91 @@
+@model ProcessInstanceQueryService.Detail
+@{
+    Layout = "_AppLayout";
+    ViewData["Title"] = "Vaka Detayı";
+    var i = Model.Instance;
+    var msg = TempData["Success"] as string;
+    var err = TempData["Error"] as string;
+}
+
+@section Breadcrumb {
+    <nav class="crumbs" aria-label="Sayfa konumu">
+        <a href="/">Ana Sayfa</a>
+        <a href="/Process/Instance">Süreçler</a>
+        <span aria-current="page">@i.InstanceCode</span>
+    </nav>
+}
+
+@section TopActions {
+    <a class="btn" href="/Process/Instance">Geri Dön</a>
+}
+
+<div class="hero">
+    <h1><i class="fas fa-diagram-project" aria-hidden="true"></i> @i.Title</h1>
+    <p class="sub">
+        <span class="mono">@i.InstanceCode</span>
+        <span class="status @ProcessInstanceQueryService.StatusClass(i.Status)">@ProcessInstanceQueryService.StatusLabel(i.Status)</span>
+        <span class="pill">@i.SourceTrigger</span>
+        @if (!string.IsNullOrEmpty(i.ResultCode))
+        {
+            <span class="pill">@i.ResultCode</span>
+        }
+        @if (i.WorkflowInstanceId.HasValue)
+        {
+            <a class="pill" href="/Workflow/Instance/@i.WorkflowInstanceId">akış #@i.WorkflowInstanceId</a>
+        }
+    </p>
+</div>
+
+@if (!string.IsNullOrWhiteSpace(msg))
+{
+    <div role="alert" class="alert success">@msg</div>
+}
+@if (!string.IsNullOrWhiteSpace(err))
+{
+    <div role="alert" class="alert error">@err</div>
+}
+
+<div class="content-card">
+    <table class="dt">
+        <thead>
+            <tr>
+                <th scope="col">Zaman</th>
+                <th scope="col">Tür</th>
+                <th scope="col">Olay</th>
+                <th scope="col">Detay</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var t in Model.Timeline)
+            {
+                <tr>
+                    <td><span class="ago">@t.At.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</span></td>
+                    <td><span class="pill">@t.Kind</span></td>
+                    <td>@t.Label</td>
+                    <td>
+                        @if (!string.IsNullOrEmpty(t.Detail))
+                        {
+                            <span class="mono">@t.Detail</span>
+                        }
+                        else
+                        {
+                            <span class="text-muted">—</span>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@if (i.Status == ProcessInstanceStatus.Open)
+{
+    <form method="post" action="/Process/Instance/Cancel" class="inline-form mt-16" onsubmit="return confirm('Vaka iptal edilsin mi?')">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="id" value="@i.Id" />
+        <input type="hidden" name="reason" value="Kullanıcı iptali" />
+        <button type="submit" class="btn danger">Vakayı İptal Et</button>
+    </form>
+}
+
+@await Html.PartialAsync("_FooterHint", (string?)$"{Model.Timeline.Count} olay")

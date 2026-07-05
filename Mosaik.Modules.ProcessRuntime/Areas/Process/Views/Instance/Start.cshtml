@@ -1,0 +1,69 @@
+@{
+    Layout = "_AppLayout";
+    ViewData["Title"] = "Yeni Vaka";
+    var templates = ViewBag.WorkflowTemplates as List<Mosaik.Modules.ProcessRuntime.Areas.Process.Controllers.InstanceController.TemplateRow> ?? [];
+    var err = TempData["Error"] as string;
+}
+
+@section Breadcrumb {
+    <nav class="crumbs" aria-label="Sayfa konumu">
+        <a href="/">Ana Sayfa</a>
+        <a href="/Process/Instance">Süreçler</a>
+        <span aria-current="page">Yeni Vaka</span>
+    </nav>
+}
+
+@section TopActions {
+    <a href="/Process/Instance" class="btn">İptal</a>
+}
+
+<div class="hero">
+    <h1>Yeni Vaka</h1>
+    <p class="sub"><span>Manuel vaka açar; onay akışı seçilirse WorkflowEngine üstünde başlar.</span></p>
+</div>
+
+@if (!string.IsNullOrWhiteSpace(err))
+{
+    <div role="alert" class="alert error">@err</div>
+}
+
+<form method="post" action="/Process/Instance/Start">
+    @Html.AntiForgeryToken()
+    <div class="form-section-card wide">
+        <div class="form-section-body">
+            <div class="field">
+                <label class="lab" for="ti">Başlık</label>
+                <input class="inp" id="ti" name="title" required maxlength="300" placeholder="DSAR başvurusu — ..." />
+            </div>
+            <div class="grid-3col">
+                <div class="field">
+                    <label class="lab" for="wt">Onay Akışı (opsiyonel)</label>
+                    <select class="inp" id="wt" name="workflowTemplateId">
+                        <option value="">— Akışsız kayıt vakası —</option>
+                        @foreach (var t in templates)
+                        {
+                            <option value="@t.Id">@t.Name</option>
+                        }
+                    </select>
+                </div>
+                <div class="field">
+                    <label class="lab" for="pr">Öncelik</label>
+                    <select class="inp" id="pr" name="priority">
+                        <option value="0">Düşük</option>
+                        <option value="1" selected>Normal</option>
+                        <option value="2">Yüksek</option>
+                        <option value="3">Acil</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label class="lab" for="da">Termin (opsiyonel)</label>
+                    <input class="inp" id="da" name="dueAt" type="date" />
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="action-row" role="group" aria-label="Vaka işlemleri">
+        <a href="/Process/Instance" class="btn ghost">Geri Dön</a>
+        <button type="submit" class="btn primary">Vakayı Aç</button>
+    </div>
+</form>

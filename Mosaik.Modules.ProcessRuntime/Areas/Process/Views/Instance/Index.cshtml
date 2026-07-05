@@ -1,0 +1,94 @@
+@model IReadOnlyList<ProcessInstanceQueryService.ListRow>
+@{
+    Layout = "_AppLayout";
+    ViewData["Title"] = "Süreçlerim";
+    var isAdmin = (bool)(ViewBag.IsAdmin ?? false);
+    byte? statusFilter = ViewBag.StatusFilter as byte?;
+    var msg = TempData["Success"] as string;
+    var err = TempData["Error"] as string;
+}
+
+@section Breadcrumb {
+    <nav class="crumbs" aria-label="Sayfa konumu">
+        <a href="/">Ana Sayfa</a>
+        <span aria-current="page">Süreçler</span>
+    </nav>
+}
+
+@section TopActions {
+    @if (isAdmin)
+    {
+        <a class="btn primary" href="/Process/Instance/Start"><i class="fas fa-plus text-[10px]" aria-hidden="true"></i> Yeni Vaka</a>
+    }
+}
+
+<div class="hero">
+    <h1><i class="fas fa-diagram-project" aria-hidden="true"></i> Süreçler</h1>
+    <p class="sub">
+        <span class="mono">@Model.Count vaka</span>
+        <span>@(isAdmin ? "Tüm vakalar" : "Başlattığınız vakalar")</span>
+    </p>
+</div>
+
+@if (!string.IsNullOrWhiteSpace(msg))
+{
+    <div role="alert" class="alert success">@msg</div>
+}
+@if (!string.IsNullOrWhiteSpace(err))
+{
+    <div role="alert" class="alert error">@err</div>
+}
+
+@if (Model.Count == 0)
+{
+    <div class="empty-state">
+        <i class="fas fa-folder-open" aria-hidden="true"></i>
+        <h3>Vaka yok</h3>
+        <p>Form gönderimi veya manuel başlatma ile vaka açıldığında burada listelenir.</p>
+    </div>
+}
+else
+{
+    <div class="content-card">
+        <table class="dt">
+            <thead>
+                <tr>
+                    <th scope="col">Kod</th>
+                    <th scope="col">Başlık</th>
+                    <th scope="col">Durum</th>
+                    <th scope="col">Kaynak</th>
+                    <th scope="col">Başlangıç</th>
+                    <th scope="col">Termin</th>
+                    <th scope="col" class="ta-right">İşlem</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var r in Model)
+                {
+                    <tr>
+                        <td><span class="mono">@r.InstanceCode</span></td>
+                        <td>@r.Title</td>
+                        <td><span class="status @ProcessInstanceQueryService.StatusClass(r.Status)">@ProcessInstanceQueryService.StatusLabel(r.Status)</span></td>
+                        <td><span class="pill">@r.SourceTrigger</span></td>
+                        <td><span class="ago">@r.StartedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</span></td>
+                        <td>
+                            @if (r.DueAt.HasValue)
+                            {
+                                <span class="ago">@r.DueAt.Value.ToLocalTime().ToString("dd.MM.yyyy")</span>
+                            }
+                            else
+                            {
+                                <span class="text-muted">—</span>
+                            }
+                        </td>
+                        <td class="ta-right">
+                            <a class="btn ghost sm" href="/Process/Instance/Details/@r.Id">Detay</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@await Html.PartialAsync("_FooterHint", (string?)$"{Model.Count} vaka")
