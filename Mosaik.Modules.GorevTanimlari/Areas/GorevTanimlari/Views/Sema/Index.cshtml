@@ -69,4 +69,7 @@
 </div>
 
 <script id="sema-data" type="application/json">@Html.Raw(json)</script>
-<script src="~/assets/js/org-sema.js" asp-append-version="true"></script>
+@* 412-satır org-sema.js hard-limit (350) split (js-conventions) — sıra önemli: core namespace kurar. *@
+<script src="~/assets/js/org-sema/org-sema-core.js" asp-append-version="true"></script>
+<script src="~/assets/js/org-sema/org-sema-detail.js" asp-append-version="true"></script>
+<script src="~/assets/js/org-sema/org-sema-edit.js" asp-append-version="true"></script>
