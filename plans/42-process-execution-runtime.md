@@ -2,9 +2,30 @@
 
 **Tarih:** 2026-05-21
 **Yazan:** Fikri / Claude
-**Durum:** `Taslak` (onay bekliyor) · ⚠️ **REVİZYON ŞART (2026-07-04, Plan 57 §4.5 Council Verdict):** ProcessInstance İKİNCİ state machine OLAMAZ. `IProcessExecutionService` kendi başlat/ilerlet/kapat + `ProcessInstanceTransition` state-log İPTAL → ProcessInstance = ince VAKA KONTEYNERİ (türetilmiş status + EntityRelations timeline), "ilerlet" = `IWorkflowService.AdvanceAsync`'e delege. Timer = mevcut WorkflowEngine delay-step + Hangfire (yeni TimerStep yok). Tek motor = WorkflowEngine; ProcessInstance onu WRAP eder, duplicate etmez. Bu revizyon yapılmadan onaya girmez. Detay: [`plans/57-forms-workflow-bridge.md`](57-forms-workflow-bridge.md) §4.5.
-**Bağımlılık:** Plan 38 EntityRelations (✅), Plan 36 Workflow Engine (✅), Plan 40 KVKK Process tanım (Taslak), Plan 41 Form Builder (Taslak — kritik prereq), Plan 34 SOP (Taslak), Plan 31 SMTP (✅)
+**Durum:** `Taslak REV 3` (2026-07-05 — council-uyumlu revize TAMAM, onaya hazır)
+**Bağımlılık:** Plan 38 EntityRelations (✅), Plan 36 Workflow Engine (✅ CANLI — form-tetikli onay + org-amir Plan 57), Plan 40 KVKK Process tanım (Taslak), Plan 41 Form Builder (✅ FİİLEN KAPANDI — Forms modülü canlı), Plan 34 SOP (✅), Plan 31 SMTP (✅)
 **Konumu:** vNext kalbinin son birleştirici taşı. SOP + Comment + Workflow + Form + KVKK = bu plan ile **portal execution platform** olur.
+
+---
+
+## REV 3 — Council Uyum Deltası (2026-07-05, Plan 57 §4.5 verdict — BAĞLAYICI)
+
+llm-council (5 danışman + 3 peer) + endüstri doğrulaması (Flowable CMMN CaseInstance, Camunda businessKey, ServiceNow record-producer→case — Plan 57 §4.6): **portalda TEK yürütme motoru = WorkflowEngine (WorkflowInstance).** Aşağıdaki delta, bu belgenin eski bölümlerindeki çelişen her ifadeyi **geçersiz kılar**:
+
+| # | Eski (rev 2) | REV 3 (bağlayıcı) |
+|---|---|---|
+| 1 | `IProcessExecutionService` başlat/**ilerlet**/iptal/kapat (kendi state machine) | **İlerlet İPTAL.** ProcessInstance'ta adım-ilerletme YOK — "ilerlet" = `IWorkflowService.AdvanceAsync`'e **delege**. Servis sadece: vaka aç (Start = ProcessInstance insert + `IWorkflowService.StartAsync`), iptal (Workflow Cancel + vaka kapat), kapat (workflow-completed projeksiyonu). |
+| 2 | `ProcessInstanceTransitions` tablosu (state geçiş log) | **TABLO İPTAL.** Geçiş otoritesi = `WorkflowInstanceLogs` event stream (tek doğruluk kaynağı — iki log tablosu = senkron bug). Vaka-timeline'ı = WorkflowInstanceLogs + Aspects birleşik READ görünümü. |
+| 3 | `ProcessInstance.Status` kendi lifecycle'ı (5 durum + Suspended) | **Kaba status TÜRETİLİR:** Açık / Tamamlandı / İptal (3 durum). Bağlı WorkflowInstance status'undan projeksiyon (workflow-completed → vaka kapat). Step-level state ASLA ProcessInstance'ta yaşamaz. |
+| 4 | `AssignedToId`/`AssignedToRole` ProcessInstance kolonları | **KALDIR** — assignee otoritesi workflow current-step (+ Plan 57 `ResolvedAssigneesJson` dondurulmuş amir). Kopyalamak = drift. "Süreçlerim" inbox'ı zaten `WorkflowInboxService`'ten okur. |
+| 5 | `ProcessSlaTimers` ayrı timer altyapısı | **Mevcut mekanizma:** WorkflowEngine delay-step (`waitDays` + `TickDelayedStepsAsync` + Hangfire `WorkflowStepProcessor`). DSAR 30-gün = delay-step'li şablon. Ayrı SLA-timer tablosu ancak takvim-görünümü (ICS) READ ihtiyacı için minimal tutulur — tetikleyici DEĞİL, hatırlatma projeksiyon. |
+| 6 | Workflow step callback → ProcessInstance state güncelle (çift-yazma) | **Tek-yön projeksiyon:** workflow event'i yazılır (otorite); ProcessInstance kaba-status'u ya okuma-anında türetilir ya da idempotent tek-yön handler günceller. ProcessInstance'tan workflow'a state YAZILMAZ. |
+| 7 | 6 aspect (rev 2 zaten tek polymorphic `ProcessInstanceAspects` tablosu — VISION research "tek stream" ile uyumlu) | **KORUNUR** — aspect'ler yürütme değil KORELASYON (hangi form/doc/karar bu vakaya ait). Plan 38 EntityRelations ile örtüşme: aspect yazımı EntityRelations'a da mirror edilir (çifte-görünürlük, Plan 38 pattern). |
+| 8 | KVKK imha recursion "instance kendini tetikler" | **Ayrı korelasyonlu vaka:** imha süreci YENİ ProcessInstance + YENİ WorkflowInstance açar; parent'a Aspect/EntityRelations `SubInstance` ile bağlanır. İç içe state YOK. |
+
+**Değişmeyenler:** İnstanceCode insan-dostu kod, public/anonim başlatma, "Süreçlerim" birleşik görünüm, Result rendering (Gotenberg+MigraDoc PDF/Word — OSS stack), ICS feed, KvkkProcessingActivity log, trigger çeşitleri (manuel/public/cron/event). Bunlar **motor değil çıktı/okuma katmanı** — council kararıyla çelişmez.
+
+**Zaten hazır olan zemin (plan yazıldığından beri kapandı):** Forms→Workflow köprüsü + `TriggersWorkflowId` deseni (`ff3a94f`), org-amir çözümleme + `ResolvedAssigneesJson` (`e5a13dc`), RAG permission guard (Plan 44 ✅). Plan 42'nin işi büyük ölçüde **vaka-konteyner + okuma katmanı + sonuç üretimi**ne daraldı — effort tahmini 64-84h → **~40-55h**.
 
 ---
 
