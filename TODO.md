@@ -13,6 +13,21 @@ Bu dosya AKTIF işleri ve backlog'u takip eder. Tamamlanmış işler arşiv böl
 
 ---
 
+### 🔍 ŞÜPHECİ TAMAMLANMIŞLIK DENETİMİ — 2026-07-05 (3 paralel code-explorer, "TAM"lar dahil yeniden bakıldı)
+**TAM doğrulananlar:** Reports · Dashboard · Admin CRUD · Auth · Notifications · Escalation · Logs · Obligations · Compliance · Circular · SOP (RAG+approval+enrichment) · Kvkk (integrity job canlı) · Workflow motoru (designer+template CRUD gerçek).
+**YÜKSEK (kullanıcı-görünür yarım iş):**
+- [ ] **AI-Y1: ContractEvent önerisi dead-end onay** — Review'da "Takvim Etkinlikleri" onaylanıyor, Approved oluyor ama `CreateContract` SADECE Obligation materyalize ediyor → ContractEvent satırı ASLA oluşmuyor (sessiz kayıp hissi). `AiController.CreateContract.cs:172-177` + `Review.cshtml:317-358`.
+- [ ] **CAL-Y2: ImportantDate tablosu UI'sız** — Calendar'da kaynak-chip olarak görünür ama hiçbir Create/Edit/Delete yolu yok (sadece elle SQL). Ya mini CRUD ekle ya chip'i kaldır.
+- [ ] **PR-Y3: Forms→ProcessInstance köprüsü yok** — form submit yalnız WorkflowInstance açıyor; "her form bir vaka" henüz doğru değil (Plan 42 Faz 1 işi: FormDefinition.LinkedProcessId→vaka aç + Form aspect).
+- [ ] **PR-Y4: AddAspectAsync 0-caller** — Form/Document/Decision aspect'leri hiç yazılmıyor; timeline fiilen tek-aspect (Plan 42 Faz 1).
+**ORTA:**
+- [ ] GOREV-O1: Sema/Mapping admin POST'ları (Rename/Add/Delete/Move/SaveDefinition/Save) **audit'siz** + `GorevVersion.PlainTextContent` write-only (arama/RAG bağlanmamış).
+- [ ] PR-O2: Process Index'te status-filtre UI yok + `Take(200)` pagination'sız.
+- [ ] FORMS-O3: Form/submission listeleri pagination/arama yok (bilinen backlog).
+- [ ] CONTRACTS-O4: Delete/Arşiv action yok — kasıtlı mı (yasal iz)? **Kullanıcı kararı gerekli.**
+- [ ] DOCS-O5: FTS gerçek FULLTEXT değil LIKE-fallback (bilinen) + FolderId dangling (bilinen).
+**DÜŞÜK:** Comments circular-branch ölü (ViewComponent Circular'a konmamış) · Search "sop" ikonu var provider yok · AdminController.Filters.cs:156 sessiz catch (log ekle) · Lookup hard-delete yok (kasıtlı soft) · Inbox circular ertelendi (dokümante).
+
 ### 🔝 Plan 56 Modül Tamamlama + Plan 57 Forms→Workflow (AKTİF)
 - [x] **M-A Forms** ✅ 2026-07-04/05 — G1 şifreleme `aaff92f` · G2 submission admin `a9f824d` · G3 conditional-logic `c05ae66` · G4 owner-bildirim `c2955cd` · G5 template seed + şifreli dosya ekleri `69f8cf9`.
 - [x] **Plan 57 Part B — form-tetikli onay** ✅ 2026-07-05 (`ff3a94f`): Forms→IWorkflowService köprü + izin şablonu (82) + admin bağlama UI + inbox linki. E2E: form→amir onay→İK. Council §4.5: TEK MOTOR = WorkflowEngine; Plan 42 revizyon-şart damgalı.
