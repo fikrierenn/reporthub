@@ -168,6 +168,10 @@ namespace Mosaik.Controllers
                 new("userId", user.UserId.ToString())
             };
 
+            // Plan 44 §10.1 — RAG clearance override claim'i (NULL = role-map'ten türetilir, claim eklenmez).
+            if (user.SecurityClearance is byte clearance)
+                claims.Add(new Claim("clearance", clearance.ToString()));
+
             // ADR-012 — FirmaIds CSV: her firma için ayrı "firmaId" claim'i ("1,2,3" → 3 claim).
             // Boş/NULL ise hiç claim yok = modül kapalı.
             if (!string.IsNullOrWhiteSpace(user.FirmaIds))

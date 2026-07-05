@@ -126,10 +126,15 @@ namespace Mosaik.Modules.SOP.Areas.SOP.Controllers
                 .Where(c => c.Type == ClaimTypes.Role)
                 .Select(c => c.Value)
                 .ToList();
+            // Plan 44 §10.1 — kullanıcı-özel clearance override ("clearance" claim, login'de
+            // Users.SecurityClearance'tan gömülür); yoksa role-map default.
+            var clearance = byte.TryParse(User.FindFirst("clearance")?.Value, out var cl)
+                ? cl
+                : RagUserContext.ClearanceFromRoles(roleNames);
             var userCtx = new RagUserContext(
                 UserId: CurrentUserId,
                 FirmaId: CurrentFirmaId,
-                SecurityClearance: RagUserContext.ClearanceFromRoles(roleNames),
+                SecurityClearance: clearance,
                 RoleNames: roleNames,
                 DepartmentIds: Array.Empty<int>());   // dept claims henüz yok — Faz 3'te
 

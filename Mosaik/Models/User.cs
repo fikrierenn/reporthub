@@ -39,6 +39,10 @@ namespace Mosaik.Models
         [MaxLength(50)]
         public string? Personelno { get; set; }
 
+        // Plan 44 §10.1 — RAG erişim seviyesi override (0-3). NULL = rollerden türetilir
+        // (RagUserContext.ClearanceFromRoles). Login'de "clearance" claim'ine gömülür.
+        public byte? SecurityClearance { get; set; }
+
         // ADR-012 — firma güvenlik sınırı (çoklu erişim CSV).
         // Format: "1,2,3" veya "1" veya NULL. NULL/boş = modül kapalı.
         // Login'de claim'lere parse edilir.

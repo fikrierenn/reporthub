@@ -16,13 +16,16 @@ namespace Mosaik.Modules.SOP.Services
     {
         private readonly DbContext _db;
         private readonly IRagAccessPolicy _policy;
+        private readonly Mosaik.Core.Logging.IAuditLog? _audit; // Plan 44 done-criteria: rag_chunk_blocked audit (opsiyonel — testler audit'siz kurar)
         private readonly ILogger<SopChunkRetriever> _logger;
 
-        public SopChunkRetriever(DbContext db, IRagAccessPolicy policy, ILogger<SopChunkRetriever> logger)
+        public SopChunkRetriever(DbContext db, IRagAccessPolicy policy, ILogger<SopChunkRetriever> logger,
+            Mosaik.Core.Logging.IAuditLog? audit = null)
         {
             _db = db;
             _policy = policy;
             _logger = logger;
+            _audit = audit;
         }
 
         // RagUserContext ile çağrılan ana overload (Plan 44).
@@ -98,9 +101,22 @@ namespace Mosaik.Modules.SOP.Services
             }
 
             if (blocked > 0)
+            {
                 _logger.LogInformation(
                     "SopChunkRetriever: {Blocked} chunk erişim engellendi (UserId={UserId}, FirmaId={FirmaId})",
                     blocked, user.UserId, user.FirmaId);
+                // Plan 44 done-criteria — audit: yetkisiz chunk erişim denemesi kalıcı iz
+                // (log dosyası değil audit tablosu; KVKK denetiminde "kim neyi göremedi" kanıtı).
+                if (_audit is not null)
+                {
+                    try
+                    {
+                        await _audit.LogAsync("rag_chunk_blocked", "sop_chunk", user.UserId.ToString(),
+                            $"blocked={blocked} clearance={user.SecurityClearance} firma={user.FirmaId}");
+                    }
+                    catch (Exception ex) { _logger.LogWarning(ex, "rag_chunk_blocked audit yazılamadı."); }
+                }
+            }
 
             return hits
                 .OrderByDescending(h => h.Score)
