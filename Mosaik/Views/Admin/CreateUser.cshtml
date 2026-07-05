@@ -87,6 +87,11 @@
                     <input type="email" name="Email" value="@user.Email" class="inp" placeholder="ornek@bkmkitap.com" />
                 </div>
                 <div class="field mb-0">
+                    <label class="lab" for="personelno">Personel No (Zirve)</label>
+                    <input id="personelno" name="Personelno" value="@user.Personelno" class="inp" maxlength="50" placeholder="4634-BKM" />
+                    <p class="help-text">Org şemasıyla eşleme — izin onayı gerçek amire bu koddan gider.</p>
+                </div>
+                <div class="field mb-0">
                     <label class="lab">Firma Erişimi</label>
                     <div class="checkbox-grid">
                         @if (!firmaList.Any())

@@ -16,7 +16,7 @@ BEGIN
     INSERT INTO dbo.WorkflowTemplates (FirmaId, Name, EntityType, DefinitionJson, IsActive, CreatedAt)
     VALUES (1, N'İzin Talebi Onayı', N'FormSubmission',
         N'{"properties":{},"sequence":[' +
-        N'{"id":"s1","componentType":"task","type":"approval","name":"Amir Onayı","properties":{"name":"Amir Onayı","assigneeRole":"yonetim","requireComment":false}},' +
+        N'{"id":"s1","componentType":"task","type":"approval","name":"Amir Onayı","properties":{"name":"Amir Onayı","assigneeKind":"manager","assigneeRole":"yonetim","requireComment":false}},' +
         N'{"id":"s2","componentType":"task","type":"notify","name":"İK Bilgilendirme","properties":{"name":"İK Bilgilendirme","assigneeRole":"ik"}}' +
         N']}',
         1, SYSUTCDATETIME());

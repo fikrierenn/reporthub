@@ -20,14 +20,14 @@ Bu dosya AKTIF işleri ve backlog'u takip eder. Tamamlanmış işler arşiv böl
 - [x] **M-C ölü kod** ✅ 2026-07-05 (`25557b9`) — ApprovalService silindi; sop-editor rol seed (83); XlsxImporter canlı-tutuldu.
 - [x] **M-E doc hijyen** ✅ 2026-07-05 (`718ca53`) — CLAUDE §3 + architecture snapshot + VISION banner + TODO senkron.
 - [x] **M-D cross-modül trigger** ✅ desen-hazır — Part B köprüsü generic (`EntityType`+`TriggersWorkflowId`+template); yeni tüketici (masraf/doküman onayı) = kod değil TEMPLATE (YAGNI: spekülatif tüketici kurulmadı). **PLAN 56 KAPANDI.**
-- [ ] **Part C org-amir** — EN SON (satır 21).
+- [x] **Part C org-amir** ✅ 2026-07-05 — PLAN 56 + 57 TÜMÜYLE KAPANDI.
 
 ### 🔝 Görev Tanımları modülü (`Mosaik.Modules.GorevTanimlari`)
 İçerik/karar repo: `D:\Dev\gorevtanimlari\bkm` (DECISIONS A/G/H/**I**). **Org işi öncesi ZORUNLU:** `.claude/rules/gorev-org-yapisi.md` + bkm DECISIONS.md oku. Canon: OrgPositions = bizim tasarım omurga (57), Zirve maps-in.
 - [x] **T-16** ✅ 2026-07-02 — birim test + canonical class + ViewModels.
 - [x] **Plan 55 Faz 1-5** ✅ 2026-07-03 (`035f467`/`70d9bd1`/`a4859f3`) — org.json → OrgPositions omurga import + `/GorevTanimlari/Sema` (bkm index.html chart birebir, DB-driven, pan/zoom/detay+KPI + admin sağ-tık düzenleme). Doküman-editör bu ekranda (sağ-tık görev tanımı+KPI → GorevVersions yeni versiyon). Full scan (3 agent, 1 CRIT XSS + 5 fix), 706/706 test, preview E2E.
 - [x] **Plan 55 Faz 6 kapanış** ✅ 2026-07-03 (`c6f14ed` + arşiv `d7e4139`) — sidebar Şema + subnav; plan arşivde.
-- [ ] **Plan 57 Part C — org-amir çözümleme** (EN SONA, kullanıcı kararı 2026-07-05): `assigneeKind:"manager"` — izin onayı submitter'ın GERÇEK amirine (OrgPositions ParentId + GorevPersonelMap). Ön-koşul: Users↔Personelno bağı kararı. Detay: `plans/57-forms-workflow-bridge.md` Part C.
+- [x] **Plan 57 Part C — org-amir çözümleme** ✅ 2026-07-05 — `assigneeKind:"manager"` canlı: Users.Personelno köprüsü (mig 84) + IManagerResolver zinciri + StartAsync dondurma + E2E (amir tek onaycı). **SAHA İŞİ:** OrgPositions.HolderPersonelno 57/0 boş — Mapping ekranından kişi-eşleme dolana kadar rol-fallback çalışır. PLAN 57 KOMPLE.
 
 ---
 

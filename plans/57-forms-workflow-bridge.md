@@ -1,6 +1,6 @@
 # Plan 57 — Forms → Workflow Köprüsü + Forms M-A Kapanış
 
-**Durum:** TASLAK · **Tarih:** 2026-07-04 · **Tier:** 3 (modüller-arası, kullanıcı-görünür, yeni pattern)
+**Durum:** ✅ TAMAMLANDI 2026-07-05 — Part A (`69f8cf9`) + Part B (`ff3a94f`) + **Part C org-amir** (bkz. §Part C ✅). Saha ön-koşulu: OrgPositions.HolderPersonelno kişi-eşlemesi (Mapping ekranı) dolana kadar amir-çözüm rol-fallback'te çalışır. · **Tarih:** 2026-07-04 · **Tier:** 3
 **Danışman:** `mosaik-portal-danismani` (2026-07-04, conf 80-92) · **Bağlam:** Plan 56 M-A Forms (G1-G4 ✅), Plan 36 (WorkflowEngine), Plan 42 (ProcessInstance — ERTELENDİ).
 
 ---
@@ -121,7 +121,10 @@ Reddedilenler:
 - **B4 · Onaycı inbox linki** — `WorkflowInboxProvider` zaten "Süreçlerim"e düşürüyor (EntityUrl boşsa `/Workflow/Instance/{id}` fallback). İzin verisini görmek için `EntityUrl` → FormSubmission detay map'i: `IEntityWorkflowProvider` FormSubmission implementasyonu (Faz B4, küçük).
 - **B5 · Kapanış senkron** — advance/karar sonrası submission durum yansıması (opsiyonel Status güncelleme); TODO/journal migrate notu (Risk 2).
 
-### Part C — Org-omurga amir çözümleme (SONRAKİ FAZ, kullanıcı talebi 2026-07-05)
+### Part C — Org-omurga amir çözümleme ✅ KAPANDI (2026-07-05)
+Uygulandı: `Users.Personelno` + `WorkflowInstances.ResolvedAssigneesJson [BindNever]` (mig 84) · `IManagerResolver` (Core) + `ManagerResolverService` + saf `ManagerChainResolver` (8 test) · StartAsync'te çöz+dondur + `ManagerResolved/ManagerResolutionFailed` event · `IsAssignedToUser` override · admin Create/EditUser Personelno alanı (dup pre-check) · izin şablonu s1 `assigneeKind:"manager"`. Scan: security 0 CRIT/HIGH (M-1/M-2 fix) + silent-failure H-1/H-2/M-1/M-2 fix. E2E: dondurulmuş amir tek onaycı (admin rol-sahibi bile Forbid). **Saha ön-koşulu:** HolderPersonelno 57/0 boş — kişi-eşleme dolana kadar rol-fallback. Bilinen sınırlama: fallback rol-grubuna genişler (SoD notu — harcama/sözleşme akışına taşınırsa yeniden değerlendir).
+
+_Orijinal tasarım (tarihsel):_
 Kullanıcı: _"organizasyon şemasını ekleyince amir vs çok iyi olacak."_ §4.6 çalınabilir-fikir #1'in (Frappe onaycı-hiyerarşi) gerçeklenmesi:
 - **C1 · Yeni assignee tipi:** step properties `assigneeKind:"manager"` — runtime'da SUBMITTER'ın gerçek amiri çözülür (statik rol değil). Çözüm zinciri: submitter User → Personelno → `GorevPersonelMap`/`HolderPersonelno` → `OrgPositions` düğümü → `ParentId` → amir pozisyon → holder → Mosaik User.
 - **C2 · Ön-koşul (gap):** `Users` ↔ Personelno/OrgPositions bağı henüz YOK (Mosaik users ↔ Zirve personel eşleşmesi). Karar gerek: User tablosuna Personelno kolonu mu, ayrı map mi. **`gorev-org-yapisi.md` + bkm DECISIONS oku, `bkm-gorev-danismani`/portal-danışmanına danış** (org işi — atlanamaz kural).

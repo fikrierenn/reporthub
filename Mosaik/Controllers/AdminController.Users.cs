@@ -124,7 +124,8 @@ namespace Mosaik.Controllers
                 Password: Request.Form["Password"],
                 FirmaIds: firmaIdsCsv,
                 SelectedRoleIds: ParseIds(Request.Form["SelectedRoles"]),
-                DataFilters: filters);
+                DataFilters: filters,
+                Personelno: Request.Form["Personelno"]); // Part C — entity [BindNever] değil ama form adı çakışmıyor; explicit oku
         }
 
         // 3 cagri noktasi: CreateUser GET (postedFilters=empty), CreateUser POST error

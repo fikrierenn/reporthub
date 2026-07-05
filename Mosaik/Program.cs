@@ -146,6 +146,9 @@ builder.Services.AddScoped<Mosaik.Services.Workflow.WorkflowInboxService>();
 builder.Services.AddScoped<Mosaik.Core.Workflow.IEntityWorkflowProvider>(sp =>
     sp.GetRequiredService<Mosaik.Services.Workflow.WorkflowInboxService>());
 builder.Services.AddScoped<Mosaik.Core.Workflow.IWorkflowService, Mosaik.Services.Workflow.WorkflowEngine>();
+// Plan 57 Part C — org-omurga amir çözümleme (assigneeKind:"manager"). Interface Core'da,
+// impl ana projede (IEntityWorkflowProvider emsali). WorkflowEngine opsiyonel inject eder.
+builder.Services.AddScoped<Mosaik.Core.Workflow.IManagerResolver, Mosaik.Services.Workflow.ManagerResolverService>();
 
 // M2 Unified Inbox — explicit provider kaydı (reflection YOK). Circular kendi modülünde.
 builder.Services.AddScoped<Mosaik.Core.Module.Capabilities.IInboxProvider, Mosaik.Services.Inbox.WorkflowInboxProvider>();

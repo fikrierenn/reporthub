@@ -39,5 +39,15 @@ namespace Mosaik.Models.Workflow
         public DateTime? CompletedAt { get; set; }
 
         public string? PayloadJson { get; set; }
+
+        // Plan 57 Part C — StartAsync anında çözülen assigneeKind:"manager" atamaları
+        // {"s1":42}. Instance-başına DONDURULUR (audit: onay başladığındaki amir karar verir;
+        // org sonradan değişse bile). Şablon DefinitionJson paylaşımlı → oraya yazılamaz;
+        // PayloadJson caller-payload → çakışmasın diye ayrı kolon.
+        // [BindNever]: yetki taşıyan alan — ileride WorkflowInstance bind edilirse
+        // self-approve injection kapısı olmasın (security M-2, mass-assignment checklist).
+        [BindNever]
+        [MaxLength(400)]
+        public string? ResolvedAssigneesJson { get; set; }
     }
 }

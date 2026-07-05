@@ -33,6 +33,12 @@ namespace Mosaik.Models
 
         public bool IsActive { get; set; } = true;
 
+        // Plan 57 Part C — Zirve personel kodu köprüsü ("4634-BKM"). Amir çözümleme
+        // (IManagerResolver) OrgPositions.HolderPersonelno ↔ bu alan üzerinden User bulur.
+        // Trim'lenmiş saklanır; filtered-unique index (bir personel = bir user).
+        [MaxLength(50)]
+        public string? Personelno { get; set; }
+
         // ADR-012 — firma güvenlik sınırı (çoklu erişim CSV).
         // Format: "1,2,3" veya "1" veya NULL. NULL/boş = modül kapalı.
         // Login'de claim'lere parse edilir.

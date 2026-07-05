@@ -20,6 +20,7 @@ namespace Mosaik.Services.Workflow
         private readonly IDecisionLogService _decisionLog;
         private readonly IEntityRelationService _entityRelations;
         private readonly WorkflowNotifier? _notifier;
+        private readonly IManagerResolver? _managerResolver; // Plan 57 Part C — opsiyonel (testler resolver'sız)
         private readonly ILogger<WorkflowEngine> _logger;
 
         public WorkflowEngine(
@@ -27,12 +28,14 @@ namespace Mosaik.Services.Workflow
             IDecisionLogService decisionLog,
             IEntityRelationService entityRelations,
             ILogger<WorkflowEngine> logger,
-            WorkflowNotifier? notifier = null)
+            WorkflowNotifier? notifier = null,
+            IManagerResolver? managerResolver = null)
         {
             _context = context;
             _decisionLog = decisionLog;
             _entityRelations = entityRelations;
             _notifier = notifier;
+            _managerResolver = managerResolver;
             _logger = logger;
         }
 
@@ -49,6 +52,43 @@ namespace Mosaik.Services.Workflow
 
             var firstStep = definition.Steps[0];
 
+            // Plan 57 Part C — assigneeKind:"manager" step'leri BAŞLANGIÇTA bir kez çöz + dondur
+            // (audit tutarlılığı: onay başladığındaki amir karar verir; org sonradan değişse bile).
+            // Şablon DefinitionJson paylaşımlı → instance-scoped ResolvedAssigneesJson'a yazılır.
+            // Çözülemezse null bırakılır → IsAssignedToUser şablondaki assigneeRole fallback'ine
+            // düşer (fail-closed: onaysız geçiş yok) + ManagerResolutionFailed event log'lanır.
+            string? resolvedJson = null;
+            var managerSteps = definition.Steps
+                .Where(s => s.Properties is not null
+                         && s.Properties.TryGetValue("assigneeKind", out var kind)
+                         && kind.ValueKind == System.Text.Json.JsonValueKind.String
+                         && kind.GetString() == "manager")
+                .ToList();
+            var resolutionFailures = new List<string>();
+            if (managerSteps.Count > 0 && _managerResolver is not null)
+            {
+                var managerUserId = await _managerResolver.ResolveManagerUserIdAsync(input.StartedBy, ct);
+                if (managerUserId is int muid)
+                {
+                    var map = managerSteps.ToDictionary(s => s.Id, _ => muid);
+                    resolvedJson = System.Text.Json.JsonSerializer.Serialize(map);
+                }
+                else
+                {
+                    resolutionFailures.AddRange(managerSteps.Select(s => s.Id));
+                    _logger.LogWarning("Workflow {TemplateId}: amir çözülemedi (StartedBy={UserId}) — {Steps} şablon assigneeRole fallback'ine düşecek.",
+                        input.TemplateId, input.StartedBy, string.Join(',', resolutionFailures));
+                }
+            }
+            else if (managerSteps.Count > 0)
+            {
+                // H-2: resolver DI'da YOK = yapılandırma hatası — veri sorunundan (yukarıdaki dal)
+                // DAHA alarmlı; sessiz kalamaz. Fallback yine çalışır ama iz bırakılır.
+                resolutionFailures.AddRange(managerSteps.Select(s => s.Id));
+                _logger.LogError("Workflow {TemplateId}: IManagerResolver kayıtlı DEĞİL — {Steps} manager step'i assigneeRole fallback'ine düştü (DI yapılandırması kontrol edin).",
+                    input.TemplateId, string.Join(',', resolutionFailures));
+            }
+
             var instance = new WorkflowInstance
             {
                 FirmaId = input.FirmaId,
@@ -59,13 +99,19 @@ namespace Mosaik.Services.Workflow
                 Status = WorkflowInstanceStatus.Active,
                 StartedAt = DateTime.UtcNow,
                 StartedBy = input.StartedBy,
-                PayloadJson = input.PayloadJson
+                PayloadJson = input.PayloadJson,
+                ResolvedAssigneesJson = resolvedJson
             };
             _context.WorkflowInstances.Add(instance);
             await _context.SaveChangesAsync(ct);
 
             _context.WorkflowInstanceLogs.Add(NewLog(instance.Id, null, WorkflowEventType.InstanceStarted, input.StartedBy, input.PayloadJson));
             _context.WorkflowInstanceLogs.Add(NewLog(instance.Id, firstStep.Id, WorkflowEventType.StepEntered, input.StartedBy));
+            // Part C — çözüm sonucu event-stream'e (denetim izi: kim/neden atandı ya da neden fallback).
+            if (resolvedJson is not null)
+                _context.WorkflowInstanceLogs.Add(NewLog(instance.Id, null, "ManagerResolved", input.StartedBy, resolvedJson));
+            foreach (var failedStep in resolutionFailures)
+                _context.WorkflowInstanceLogs.Add(NewLog(instance.Id, failedStep, "ManagerResolutionFailed", input.StartedBy));
             await _context.SaveChangesAsync(ct);
 
             await NotifyStepEnteredSafeAsync(instance.Id, firstStep.Id, ct);

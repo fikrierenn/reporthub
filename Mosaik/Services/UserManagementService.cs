@@ -14,7 +14,8 @@ namespace Mosaik.Services
         string? Password,
         string? FirmaIds,
         HashSet<int> SelectedRoleIds,
-        List<UserFilterInput> DataFilters);
+        List<UserFilterInput> DataFilters,
+        string? Personelno = null); // Plan 57 Part C — Zirve personel kodu (amir çözümleme köprüsü)
 
     /// <summary>
     /// M-01: User CRUD. CreateUser + EditUser form action'lari ve delete_user
@@ -51,12 +52,19 @@ namespace Mosaik.Services
             if (await _context.Users.AnyAsync(u => u.Username == username))
                 return AdminOperationResult.Fail("Bu kullanici adi zaten mevcut.");
 
+            // Part C H-1: filtered-unique IX_Users_Personelno ihlali 500 üretirdi — Username
+            // deseniyle dostça pre-check (TOCTOU backstop: index yine korur).
+            var personelno = string.IsNullOrWhiteSpace(input.Personelno) ? null : input.Personelno.Trim();
+            if (personelno is not null && await _context.Users.AnyAsync(u => u.Personelno == personelno))
+                return AdminOperationResult.Fail("Bu personel kodu zaten baska bir kullaniciya atanmis.");
+
             var now = DateTime.UtcNow;
             var entity = new User
             {
                 Username = username,
                 FullName = fullName,
                 Email = string.IsNullOrWhiteSpace(input.Email) ? null : input.Email.Trim(),
+                Personelno = personelno,
                 IsAdUser = input.IsAdUser,
                 IsActive = input.IsActive,
                 FirmaIds = input.FirmaIds,
@@ -108,6 +116,11 @@ namespace Mosaik.Services
             if (await _context.Users.AnyAsync(u => u.Username == username && u.UserId != existing.UserId))
                 return AdminOperationResult.Fail("Bu kullanici adi zaten mevcut.");
 
+            // Part C H-1: dup Personelno pre-check (Create ile aynı — index ihlali 500 üretmesin).
+            var personelno = string.IsNullOrWhiteSpace(input.Personelno) ? null : input.Personelno.Trim();
+            if (personelno is not null && await _context.Users.AnyAsync(u => u.Personelno == personelno && u.UserId != existing.UserId))
+                return AdminOperationResult.Fail("Bu personel kodu zaten baska bir kullaniciya atanmis.");
+
             var wasAdUser = existing.IsAdUser;
 
             // AD user -> local user geçişi: şifre zorunlu.
@@ -117,6 +130,7 @@ namespace Mosaik.Services
             existing.Username = username;
             existing.FullName = fullName;
             existing.Email = string.IsNullOrWhiteSpace(input.Email) ? null : input.Email.Trim();
+            existing.Personelno = personelno;
             existing.IsAdUser = input.IsAdUser;
             existing.IsActive = input.IsActive;
             existing.FirmaIds = input.FirmaIds;

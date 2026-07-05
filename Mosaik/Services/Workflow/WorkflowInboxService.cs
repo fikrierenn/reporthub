@@ -13,10 +13,24 @@ namespace Mosaik.Services.Workflow
     public class WorkflowInboxService : IEntityWorkflowProvider
     {
         private readonly MosaikContext _db;
+        private readonly ILogger<WorkflowInboxService>? _logger;
 
-        public WorkflowInboxService(MosaikContext db)
+        public WorkflowInboxService(MosaikContext db, ILogger<WorkflowInboxService>? logger = null)
         {
             _db = db;
+            _logger = logger;
+        }
+
+        // Part C M-1: bozuk ResolvedAssigneesJson read-side'da sessizce şablona düşüyordu —
+        // hiç iz yoktu ("amir ataması neden rol grubuna döndü?" debug kabusu). Tespit + tek log.
+        private void WarnIfCorruptOverride(WorkflowInstance instance)
+        {
+            if (string.IsNullOrWhiteSpace(instance.ResolvedAssigneesJson)) return;
+            try { JsonSerializer.Deserialize<Dictionary<string, int>>(instance.ResolvedAssigneesJson); }
+            catch (JsonException)
+            {
+                _logger?.LogWarning("WorkflowInstance {Id}: ResolvedAssigneesJson BOZUK — dondurulmuş amir ataması yok sayılıp şablon assigneeRole fallback'i çalışıyor.", instance.Id);
+            }
         }
 
         // Aktif step'i userId'ye atanmış instance'ları döner. limit null → hepsi.
@@ -45,7 +59,8 @@ namespace Mosaik.Services.Workflow
                 var definition = WorkflowDefinition.Parse(instance.Template.DefinitionJson);
                 var step = definition?.Steps.FirstOrDefault(s => s.Id == instance.CurrentStepId);
                 if (step is null) continue;
-                if (!IsAssignedToUser(step, userId, userRoles)) continue;
+                WarnIfCorruptOverride(instance);
+                if (!IsAssignedToUser(step, userId, userRoles, instance.ResolvedAssigneesJson)) continue;
                 matched.Add(instance);
                 if (limit.HasValue && matched.Count >= limit.Value) break;
             }
@@ -308,9 +323,30 @@ namespace Mosaik.Services.Workflow
                 var definition = WorkflowDefinition.Parse(instance.Template.DefinitionJson);
                 var step = definition?.Steps.FirstOrDefault(s => s.Id == instance.CurrentStepId);
                 if (step is null) continue;
-                if (IsAssignedToUser(step, userId, userRoles)) count++;
+                if (IsAssignedToUser(step, userId, userRoles, instance.ResolvedAssigneesJson)) count++;
             }
             return count;
+        }
+
+        // Plan 57 Part C — instance-scoped çözülmüş atama (assigneeKind:"manager" → StartAsync'te
+        // dondurulan {"stepId":userId}) şablon kurallarından ÖNCE okunur. Çözüm yoksa şablon
+        // assigneeRole fallback'i çalışır (fail-closed: boş atama = kimse göremez, onaysız geçmez).
+        public static bool IsAssignedToUser(WorkflowDefinitionStep step, int userId, ISet<string> userRoles, string? resolvedAssigneesJson)
+        {
+            if (!string.IsNullOrWhiteSpace(resolvedAssigneesJson))
+            {
+                try
+                {
+                    var map = JsonSerializer.Deserialize<Dictionary<string, int>>(resolvedAssigneesJson);
+                    if (map is not null && map.TryGetValue(step.Id, out var resolvedUserId))
+                        return resolvedUserId == userId; // dondurulmuş amir — şablonu EZER
+                }
+                catch (JsonException)
+                {
+                    // Bozuk override — şablon kurallarına düş (fail-open değil: şablon yine kısıtlar).
+                }
+            }
+            return IsAssignedToUser(step, userId, userRoles);
         }
 
         // Step.properties.assigneeUserId | assigneeUserIds | assigneeRole assignee check.

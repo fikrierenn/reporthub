@@ -172,7 +172,7 @@ namespace Mosaik.Controllers
             var step = definition?.Steps.FirstOrDefault(s => s.Id == instance.CurrentStepId);
             if (step is null) return BadRequest();
 
-            if (!WorkflowInboxService.IsAssignedToUser(step, actorId, GetUserRoles())) return Forbid();
+            if (!WorkflowInboxService.IsAssignedToUser(step, actorId, GetUserRoles(), instance.ResolvedAssigneesJson)) return Forbid();
 
             var advance = new WorkflowAdvanceInput(
                 ActorId: actorId,
